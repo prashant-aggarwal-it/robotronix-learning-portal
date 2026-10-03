@@ -1,0 +1,20 @@
+"use client";
+import {useEffect,useMemo,useState} from "react";
+import {createDeliveryCenter,listDeliveryCenters} from "@/lib/repository";
+import type {DeliveryCenterRecord} from "@/lib/types";
+
+const TYPES=[
+ ["play_school","Play School"],["activity_center","Activity Center"],["school","School"],["robotronix_center","Robotronix Center"],["other","Other"]
+] as const;
+
+export function OfflineLocationField({value,onChange,required=false}:{value:string;onChange:(value:string)=>void;required?:boolean}){
+ const[centers,setCenters]=useState<DeliveryCenterRecord[]>([]);const[mode,setMode]=useState<"select"|"manual">("select");const[adding,setAdding]=useState(false);const[msg,setMsg]=useState("");
+ const[form,setForm]=useState({name:"",centerType:"play_school" as DeliveryCenterRecord["centerType"],area:"",city:"",state:"",country:"India",address:"",contactPerson:"",contactNumber:""});
+ async function refresh(){setCenters(await listDeliveryCenters())}
+ useEffect(()=>{refresh()},[]);
+ const selected=useMemo(()=>centers.find(c=>c.name===value||`${c.name} · ${c.area||c.city}`===value),[centers,value]);
+ async function saveCenter(){if(!form.name.trim()||!form.city.trim()||!form.address.trim()){setMsg("Center name, city and address are required.");return}const r=await createDeliveryCenter({...form,active:true});if(!r.ok){setMsg(r.error??"Unable to save center.");return}await refresh();onChange(form.name.trim());setAdding(false);setMsg("")}
+ return <div className="formGroup span2 offlineLocationField"><label>Delivery location / center {required?"*":""}</label>{mode==="select"?<><select className="input" value={selected?.name??(value&&!selected?"__manual":"")} onChange={e=>{if(e.target.value==="__manual"){setMode("manual");return}onChange(e.target.value)}}><option value="">Choose a saved center</option>{centers.map(c=><option value={c.name} key={c.id}>{c.name}{c.area||c.city?` · ${c.area||c.city}`:""} · {TYPES.find(x=>x[0]===c.centerType)?.[1]||"Center"}</option>)}<option value="__manual">Other / enter location manually</option></select><div className="fieldHelp">Reuse a saved play school, activity center, school or Robotronix venue.</div><button type="button" className="textButton" onClick={()=>setAdding(v=>!v)}>+ Add recurring center</button></>:<><input className="input" value={value} onChange={e=>onChange(e.target.value)} placeholder="Enter one-off location / venue"/><button type="button" className="textButton" onClick={()=>setMode("select")}>Choose saved center instead</button></>}
+ {adding&&<div className="nestedFormCard"><div className="formGrid"><input className="input" placeholder="Center name *" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/><select className="input" value={form.centerType} onChange={e=>setForm(f=>({...f,centerType:e.target.value as any}))}>{TYPES.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select><input className="input" placeholder="Area" value={form.area} onChange={e=>setForm(f=>({...f,area:e.target.value}))}/><input className="input" placeholder="City *" value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value}))}/><input className="input" placeholder="State / Province" value={form.state} onChange={e=>setForm(f=>({...f,state:e.target.value}))}/><input className="input" placeholder="Country" value={form.country} onChange={e=>setForm(f=>({...f,country:e.target.value}))}/><input className="input span2" placeholder="Full address *" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/><input className="input" placeholder="Contact person" value={form.contactPerson} onChange={e=>setForm(f=>({...f,contactPerson:e.target.value}))}/><input className="input" placeholder="Contact number" value={form.contactNumber} onChange={e=>setForm(f=>({...f,contactNumber:e.target.value}))}/></div><div className="formActions"><button type="button" className="button ghost" onClick={()=>setAdding(false)}>Cancel</button><button type="button" className="button" onClick={saveCenter}>Save center</button></div>{msg&&<div className="inlineFieldError">{msg}</div>}</div>}
+ </div>
+}

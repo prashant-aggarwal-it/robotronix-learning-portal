@@ -1,0 +1,3 @@
+"use client";
+import {AppShell} from "@/components/AppShell";import {RoleGuard} from "@/components/RoleGuard";import {AdminPageHeader} from "@/components/admin/AdminPageHeader";import {NotificationCenter} from "@/components/NotificationCenter";
+export default function Page(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><AdminPageHeader eyebrow="COMMUNICATION" title="Notifications" description="A focused queue of important operational, learner and communication events. Routine activity stays quiet so urgent items are easier to act on."/><NotificationCenter role="admin"/></AppShell></RoleGuard>}

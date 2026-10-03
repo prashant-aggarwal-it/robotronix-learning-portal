@@ -1,0 +1,3 @@
+"use client";
+import {AppShell} from "@/components/AppShell";import {RoleGuard} from "@/components/RoleGuard";import {AdminPageHeader} from "@/components/admin/AdminPageHeader";import {CommunicationInbox} from "@/components/CommunicationInbox";
+export default function Page(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><AdminPageHeader eyebrow="COMMUNICATION" title="Message Center" description="Manage parent and trainer conversations in one controlled support workspace. Review context, respond, and close resolved conversations without exposing private family contact data."/><CommunicationInbox role="admin"/></AppShell></RoleGuard>}

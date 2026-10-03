@@ -1,0 +1,28 @@
+"use client";
+import Link from "next/link";
+import {useEffect,useMemo,useState} from "react";
+import {AppShell} from "@/components/AppShell";
+import {RoleGuard} from "@/components/RoleGuard";
+import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
+import {KpiCard} from "@/components/admin/KpiCard";
+import {listCorrectionRequests,listPortalAuditLog,resolveCorrectionRequest} from "@/lib/repository";
+import {displayLabel} from "@/lib/display";
+import type {CorrectionRequestRecord,PortalAuditRecord} from "@/lib/types";
+
+function when(value:string){return new Date(value).toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}
+export default function CorrectionsAuditPage(){
+ const[requests,setRequests]=useState<CorrectionRequestRecord[]>([]);const[audit,setAudit]=useState<PortalAuditRecord[]>([]);const[status,setStatus]=useState("open");const[q,setQ]=useState("");const[msg,setMsg]=useState("");
+ async function refresh(){const[r,a]=await Promise.all([listCorrectionRequests(),listPortalAuditLog(150)]);setRequests(r);setAudit(a)}
+ useEffect(()=>{refresh()},[]);
+ const filtered=useMemo(()=>requests.filter(r=>(status==="all"||r.status===status)&&`${r.entityType} ${r.entityId} ${r.reason} ${r.requestedChanges}`.toLowerCase().includes(q.toLowerCase())),[requests,status,q]);
+ async function close(row:CorrectionRequestRecord,next:"approved"|"rejected"|"completed"){const note=window.prompt("Admin note (optional)",row.adminNote||"")||"";const r=await resolveCorrectionRequest(row.id,next,note);setMsg(r.ok?`Request marked ${displayLabel(next)}.`:r.error??"Unable to update request.");if(r.ok)refresh()}
+ return <RoleGuard allow={["admin"]}><AppShell role="admin">
+  <AdminPageHeader eyebrow="CONTROL & GOVERNANCE" title="Corrections & Audit" description="Trainers request changes instead of altering protected records. Admin decisions and consequential record changes remain traceable." actions={<Link className="button ghost" href="/admin/classes">Open classes</Link>}/>
+  <section className="dashboardKpis"><KpiCard label="Open requests" value={requests.filter(r=>r.status==="open").length} detail="Waiting for Admin review" tone="amber"/><KpiCard label="Completed" value={requests.filter(r=>r.status==="completed").length} detail="Corrections applied and closed" tone="teal"/><KpiCard label="Audit events" value={audit.length} detail="Latest protected changes" tone="purple"/><KpiCard label="Access" value="Admin only" detail="Contacts and finance remain restricted" tone="slate"/></section>
+  {msg&&<div className={msg.includes("Unable")?"errorBanner":"successBanner"}>{msg}</div>}
+  <section className="dataSection"><div className="panelHeader"><div><div className="eyebrow">CORRECTION QUEUE</div><h2>Requested record changes</h2><p>Approve the intent, apply the correction in its owning screen, then mark it completed.</p></div></div><div className="dataToolbar"><div className="toolbarSearch"><input className="input" value={q} onChange={e=>setQ(e.target.value)} placeholder="Search reason, record or requested change…"/></div><select className="input compactInput" value={status} onChange={e=>setStatus(e.target.value)}><option value="open">Open</option><option value="approved">Approved</option><option value="completed">Completed</option><option value="rejected">Rejected</option><option value="all">All statuses</option></select></div>
+   <div className="correctionGrid">{filtered.length?filtered.map(r=><article className="correctionCard" key={r.id}><div className="row between"><span className={`statusBadge status-${r.status}`}>{displayLabel(r.status)}</span><small>{when(r.createdAt)}</small></div><h3>{displayLabel(r.entityType)} · {r.entityId}</h3><p><b>Reason:</b> {r.reason}</p><p><b>Requested:</b> {r.requestedChanges}</p>{r.adminNote&&<div className="entityBoundaryNote"><b>Admin note</b><span>{r.adminNote}</span></div>}<div className="formActions"><Link className="button ghost smallButton" href={r.entityType==="schedule_event"?`/admin/classes/${r.entityId}`:"/admin"}>Open record</Link>{r.status==="open"&&<><button className="button secondary smallButton" onClick={()=>close(r,"approved")}>Approve request</button><button className="button ghost smallButton" onClick={()=>close(r,"rejected")}>Reject</button></>}{r.status==="approved"&&<button className="button smallButton" onClick={()=>close(r,"completed")}>Mark completed</button>}</div></article>):<div className="emptyState compact">No correction requests match this view.</div>}</div>
+  </section>
+  <section className="dataSection"><div className="panelHeader"><div><div className="eyebrow">AUDIT HISTORY</div><h2>Latest protected changes</h2><p>Who changed what, when, and on which record. Sensitive JSON details stay collapsed by default.</p></div></div><div className="tableWrap professionalTable"><table><thead><tr><th>When</th><th>Record</th><th>Action</th><th>Actor</th><th>Change detail</th></tr></thead><tbody>{audit.length?audit.map(a=><tr key={a.id}><td>{when(a.createdAt)}</td><td><b>{displayLabel(a.entityType)}</b><div className="cellSub">{a.entityId}</div></td><td><span className="softBadge">{displayLabel(a.action)}</span></td><td>{a.actorProfileId||"System / demo"}</td><td><details><summary className="linkButton">View change</summary><pre className="auditJson">{JSON.stringify({before:a.beforeData,after:a.afterData},null,2)}</pre></details></td></tr>):<tr><td colSpan={5}><div className="emptyState compact">Audit entries will appear after protected records change.</div></td></tr>}</tbody></table></div></section>
+ </AppShell></RoleGuard>
+}

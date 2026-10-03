@@ -1,0 +1,22 @@
+import type {TrainerCompensationPlan,TrainerEarningRecord,TrainerPayoutRecord} from "./types";
+
+const plans=[
+ ["vikas",300,400,350,450],["shamsher",300,400,350,450],["arvind",300,400,350,450],["meera",350,450,400,500],["nandita",300,400,350,450]
+] as const;
+export const demoTrainerCompensationPlans:TrainerCompensationPlan[]=plans.map(([trainerId,oneToOneDay,oneToOneNight,groupDay,groupNight])=>({id:`payplan-${trainerId}`,trainerId,timezone:"Asia/Kolkata",dayStart:"08:00",dayEnd:"22:00",oneToOneDay,oneToOneNight,groupDay,groupNight,demoDay:80,demoNight:100,demoConversionDay:50,demoConversionNight:100,noShowPercent:0,cancelledPercent:0,effectiveFrom:"2026-01-01",notes:"Fictional QA rate card.",updatedAt:"2026-09-14T08:00:00Z"}));
+
+export const demoTrainerEarnings:TrainerEarningRecord[]=[
+ {id:"earn-001",trainerId:"vikas",scheduleEventId:"hist-2-3",earningDate:"2026-09-05",sessionType:"one_to_one",payBand:"day",durationMinutes:60,learnerCount:1,classOutcome:"completed",baseRate:300,durationFactor:1,conversionBonus:0,adjustment:0,totalAmount:300,conversionApplied:false,status:"paid",paidAt:"2026-09-10T10:00:00Z",paymentReference:"QA-AUG-PAID",createdAt:"2026-09-05T12:00:00Z",updatedAt:"2026-09-10T10:00:00Z"},
+ {id:"earn-002",trainerId:"vikas",scheduleEventId:"hist-8-2",earningDate:"2026-09-12",sessionType:"one_to_one",payBand:"night",durationMinutes:60,learnerCount:1,classOutcome:"completed",baseRate:400,durationFactor:1,conversionBonus:0,adjustment:50,totalAmount:450,conversionApplied:false,status:"approved",adjustmentReason:"Extra project review",createdAt:"2026-09-12T13:00:00Z",updatedAt:"2026-09-14T10:00:00Z"},
+ {id:"earn-003",trainerId:"shamsher",scheduleEventId:"hist-0-2",earningDate:"2026-09-13",sessionType:"one_to_one",payBand:"day",durationMinutes:60,learnerCount:1,classOutcome:"completed",baseRate:300,durationFactor:1,conversionBonus:0,adjustment:0,totalAmount:300,conversionApplied:false,status:"approved",createdAt:"2026-09-13T12:00:00Z",updatedAt:"2026-09-14T09:00:00Z"},
+ {id:"earn-004",trainerId:"arvind",scheduleEventId:"hist-1-2",earningDate:"2026-09-14",sessionType:"small_group",payBand:"day",durationMinutes:60,learnerCount:3,classOutcome:"completed",baseRate:350,durationFactor:1,conversionBonus:0,adjustment:0,totalAmount:350,conversionApplied:false,status:"pending",createdAt:"2026-09-14T12:00:00Z",updatedAt:"2026-09-14T12:00:00Z"},
+ {id:"earn-005",trainerId:"meera",scheduleEventId:"ev-demo-conducted-meera",earningDate:"2026-09-14",sessionType:"demo",payBand:"day",durationMinutes:45,learnerCount:1,classOutcome:"completed",baseRate:80,durationFactor:.75,conversionBonus:50,adjustment:0,totalAmount:110,conversionApplied:true,status:"pending",createdAt:"2026-09-18T12:00:00Z",updatedAt:"2026-09-18T12:00:00Z"},
+ {id:"earn-006",trainerId:"arvind",scheduleEventId:"ev-qa-delivered-90",earningDate:"2026-09-12",sessionType:"one_to_one",payBand:"day",durationMinutes:90,learnerCount:1,classOutcome:"completed",baseRate:300,durationFactor:1.5,conversionBonus:0,adjustment:0,totalAmount:450,conversionApplied:false,status:"pending",createdAt:"2026-09-12T12:00:00Z",updatedAt:"2026-09-12T12:00:00Z"},
+ {id:"earn-007",trainerId:"arvind",scheduleEventId:"ev-qa-group-delivered-120",earningDate:"2026-09-11",sessionType:"small_group",payBand:"day",durationMinutes:120,learnerCount:2,classOutcome:"completed",baseRate:350,durationFactor:2,conversionBonus:0,adjustment:0,totalAmount:700,conversionApplied:false,status:"pending",createdAt:"2026-09-11T12:00:00Z",updatedAt:"2026-09-11T12:00:00Z"}
+];
+
+export const demoTrainerPayouts:TrainerPayoutRecord[]=[
+ {id:"payout-vikas-2026-08",trainerId:"vikas",periodMonth:"2026-08",grossAmount:7200,adjustmentAmount:0,payableAmount:7200,status:"paid",approvedAt:"2026-09-03T08:00:00Z",paidAt:"2026-09-05T08:00:00Z",paymentReference:"QA-PAYOUT-001",notes:"Fictional paid payout used to test locked history.",updatedAt:"2026-09-05T08:00:00Z"},
+ {id:"payout-shamsher-2026-09",trainerId:"shamsher",periodMonth:"2026-09",grossAmount:3450,adjustmentAmount:0,payableAmount:3450,status:"approved",approvedAt:"2026-09-17T08:00:00Z",notes:"QA approved payout awaiting payment.",updatedAt:"2026-09-17T08:00:00Z"},
+ {id:"payout-arvind-2026-09",trainerId:"arvind",periodMonth:"2026-09",grossAmount:2850,adjustmentAmount:-100,payableAmount:2750,status:"draft",notes:"QA draft payout with adjustment.",updatedAt:"2026-09-18T08:00:00Z"}
+];

@@ -1,0 +1,37 @@
+{
+  "name": "robotronix-learning-portal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "check:structure": "node scripts/check-structure.mjs",
+    "check:communication": "node scripts/check-communication-security.mjs",
+    "check:finance": "node --experimental-strip-types scripts/check-student-finance.mjs",
+    "check:production-env": "node scripts/check-production-env.mjs",
+    "check:release": "npm run typecheck && npm run check:structure && npm run check:communication && npm run check:finance",
+    "qa:auth-check": "playwright test qa/auth.setup.ts --project=auth-setup",
+    "qa:roles": "playwright test qa/admin.spec.ts qa/roles.spec.ts qa/permissions.spec.ts --project=desktop-chromium",
+    "qa:workflow": "playwright test qa/workflows.spec.ts --project=desktop-chromium",
+    "qa:release": "playwright test --project=desktop-chromium",
+    "qa:report": "playwright show-report",
+    "qa:create-users": "node scripts/create-qa-auth-users.mjs",
+    "qa:delete-users": "node scripts/delete-qa-auth-users.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "next": "16.3.8",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.2",
+    "@playwright/test": "^1.55.0"
+  }
+}

@@ -1,0 +1,20 @@
+/* Shared operational readability and onboarding availability controls. */
+.professionalTable th{font-size:12px!important;line-height:1.35;padding:14px 16px}
+.professionalTable td{font-size:14.5px!important;line-height:1.45;padding:15px 16px}
+.professionalTable .cellSub{font-size:12.5px!important;line-height:1.4;margin-top:4px}
+.professionalTable .softBadge,.professionalTable .statusBadge{font-size:11.5px!important;line-height:1.2;padding:6px 10px}
+.professionalTable .tableAction{font-size:13px!important}
+.dataToolbar .input{font-size:14px!important;padding:12px 13px}
+.paginationBar,.pageCounter{font-size:12.5px!important}
+.professionalTabs .tabButton{font-size:13px!important}
+.preferredTimingGroup{margin-top:20px}
+.preferredDayChoices{display:flex;flex-wrap:wrap;gap:8px;margin-top:7px}
+.preferredDayChoices button{border:1px solid #dddfea;background:#fff;color:#5f687d;border-radius:999px;padding:9px 13px;font-size:13px;font-weight:800;cursor:pointer}
+.preferredDayChoices button.selected{border-color:#7650d7;background:#eee9ff;color:#5f37bc;box-shadow:0 0 0 2px rgba(118,80,215,.08)}
+.timingWindowInput{min-height:92px;resize:vertical;line-height:1.5}
+.courseDisclosure{position:relative}
+.courseDisclosure summary{list-style:none;cursor:pointer;color:#6241b8;font-size:12.5px;font-weight:850;padding:5px 8px;border-radius:9px;background:#f4f0ff;width:max-content}
+.courseDisclosure summary::-webkit-details-marker{display:none}
+.courseDisclosure[open] summary{margin-bottom:7px}
+.courseDisclosure .allCourseTags{display:flex;flex-wrap:wrap;gap:6px;max-width:390px}
+@media(max-width:760px){.professionalTable th{font-size:11.5px!important}.professionalTable td{font-size:14px}.professionalTable .cellSub{font-size:12px}.dataToolbar .input{font-size:14px}.preferredDayChoices button{flex:1 1 72px}}

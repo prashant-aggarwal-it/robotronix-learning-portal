@@ -1,0 +1,3 @@
+"use client";
+import {AppShell} from "@/components/AppShell";import {RoleGuard} from "@/components/RoleGuard";import {PageIntro} from "@/components/PageIntro";import {CommunicationInbox} from "@/components/CommunicationInbox";
+export default function Page(){return <RoleGuard allow={["parent"]}><AppShell role="parent"><main className="experiencePage"><PageIntro eyebrow="SUPPORT & COMMUNICATION" title="Messages" text="Keep schedule, progress and support conversations in one place instead of scattered chats. Your family contact details stay private."/><CommunicationInbox role="parent"/></main></AppShell></RoleGuard>}
