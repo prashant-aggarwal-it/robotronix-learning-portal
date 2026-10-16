@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root=process.cwd();
-const schema=fs.readFileSync(path.join(root,'supabase','production-v1-baseline.sql'),'utf8');
+const schema=fs.readFileSync(path.join(root,'database','01_install','01_CREATE_SCHEMA.sql'),'utf8');
 const repo=fs.readFileSync(path.join(root,'lib','communication-repository.ts'),'utf8');
 const required=[
   "recipient_role='trainer' and trainer_id=public.current_trainer_id()",

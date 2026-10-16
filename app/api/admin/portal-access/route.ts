@@ -128,9 +128,32 @@ export async function POST(request:NextRequest){
     if(other)return failure("This account is already linked to a different trainer.");
    }
   }
-  const user=found|| (await admin.auth.admin.inviteUserByEmail(email,{redirectTo:process.env.NEXT_PUBLIC_SITE_URL?`${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/,"")}/`:request.nextUrl.origin})).data.user;
+  const portalRole=type==="trainer"?"trainer":"parent";
+  const portalLabel=type==="trainer"?"Trainer Portal":"Parent Portal";
+  const invitationData={
+   portal_role:portalRole,
+   portal_name:target.name||email,
+   portal_label:portalLabel,
+   target_type:type,
+  };
+  let user=found;
+  if(!user){
+   const inviteResult=await admin.auth.admin.inviteUserByEmail(email,{
+    redirectTo:process.env.NEXT_PUBLIC_SITE_URL?`${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/,"")}/`:request.nextUrl.origin,
+    data:invitationData,
+   });
+   if(inviteResult.error)throw new Error(inviteResult.error.message);
+   user=inviteResult.data.user;
+  }else{
+   // Keep invite metadata useful for branded templates, but authorization still
+   // comes only from public.profiles.role below — never from user_metadata.
+   const mergedMetadata={...(user.user_metadata||{}),...invitationData};
+   const{data:updated,error:updateError}=await admin.auth.admin.updateUserById(user.id,{user_metadata:mergedMetadata});
+   if(updateError)throw new Error(updateError.message);
+   user=updated.user||user;
+  }
   if(!user)return failure("Unable to create the invitation.",500);
-  const role=type==="trainer"?"trainer":"parent";
+  const role=portalRole;
   const{error:profileError}=await admin.from("profiles").upsert({id:user.id,role,full_name:target.name||email,active:true},{onConflict:"id"});
   if(profileError)throw new Error(profileError.message);
   if(type==="trainer"){

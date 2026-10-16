@@ -1,9 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { test, expect } from '@playwright/test';
-import { qaCredentials, type QaRole } from './env';
+import { test, expect, type Page } from '@playwright/test';
+import {
+  qaCredentials,
+  authConfig,
+  type QaRole,
+} from './env';
+
+test.setTimeout(75_000);
 
 const roles: QaRole[] = ['admin', 'trainer', 'parent', 'student'];
+
 const authDir = path.resolve('.qa-auth');
 fs.mkdirSync(authDir, { recursive: true });
 
@@ -11,56 +18,136 @@ export function authStatePath(role: QaRole) {
   return path.join(authDir, `${role}.json`);
 }
 
-async function authenticate(page: import('@playwright/test').Page, role: QaRole) {
+
+/**
+ * Creates a QA session directly through Supabase Auth instead of typing into
+ * the React login form.
+ *
+ * The actual login page should still be tested separately as a UI smoke test,
+ * but reusable QA authentication should not depend on controlled-input timing.
+ */
+async function authenticate(page: Page, role: QaRole) {
   const { email, password } = qaCredentials(role);
+
   if (!email || !password) {
-    throw new Error(`Missing QA_${role.toUpperCase()}_EMAIL / QA_${role.toUpperCase()}_PASSWORD in .env.local`);
+    throw new Error(
+      `Missing QA/SANITY credentials for role ${role}.`,
+    );
   }
 
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  const panel = page.locator('.accessPanel');
-  const emailInput = panel.locator('input[type="email"]');
-  const passwordInput = panel.locator('input[type="password"]');
-  const errorBanner = panel.locator('.errorBanner');
-  const signInButton = panel.getByRole('button', { name: /^Sign in$/ });
+  const { url, anonKey, storageKey } = authConfig();
 
-  await expect(emailInput).toBeVisible({ timeout: 10_000 });
-  await expect(passwordInput).toBeVisible({ timeout: 10_000 });
+  const tokenResponse = await page.request.post(
+    `${url}/auth/v1/token?grant_type=password`,
+    {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        email,
+        password,
+      },
+    },
+  );
 
-  // React-controlled fields were intermittently losing values when Playwright used
-  // fill() followed immediately by submit. Type like a real user and verify the
-  // browser field values before submitting.
-  await emailInput.click();
-  await emailInput.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
-  await emailInput.press('Backspace');
-  await emailInput.pressSequentially(email, { delay: 8 });
+  const raw = await tokenResponse.text();
 
-  await passwordInput.click();
-  await passwordInput.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
-  await passwordInput.press('Backspace');
-  await passwordInput.pressSequentially(password, { delay: 8 });
+  if (!tokenResponse.ok()) {
+    let detail = raw;
 
-  await expect(emailInput).toHaveValue(email);
-  await expect(passwordInput).toHaveValue(password);
+    try {
+      const parsed = JSON.parse(raw);
+      detail =
+        parsed?.msg ||
+        parsed?.message ||
+        parsed?.error_description ||
+        parsed?.error ||
+        raw;
+    } catch {
+      // Keep the raw response if it is not JSON.
+    }
 
-  // Give React one micro-turn to commit controlled input state before submit.
-  await page.waitForTimeout(100);
-  await signInButton.click();
-
-  const expected = `/${role}`;
-  const outcome = await Promise.race([
-    page.waitForURL(url => url.pathname === expected || url.pathname.startsWith(`${expected}/`), { timeout: 15_000 })
-      .then(() => ({ ok: true as const })),
-    errorBanner.waitFor({ state: 'visible', timeout: 15_000 })
-      .then(async () => ({ ok: false as const, message: (await errorBanner.textContent())?.trim() || 'Unknown sign-in error' })),
-  ]).catch(() => ({ ok: false as const, message: `Timed out waiting for ${expected}; current URL: ${page.url()}` }));
-
-  if (!outcome.ok) {
-    throw new Error(`QA ${role} sign-in failed for ${email}: ${outcome.message}`);
+    throw new Error(
+      `QA ${role} Supabase authentication failed for ${email}: HTTP ${tokenResponse.status()} ${detail}`,
+    );
   }
 
-  expect(new URL(page.url()).pathname.startsWith(expected)).toBe(true);
-  await page.context().storageState({ path: authStatePath(role) });
+  let session: any;
+
+  try {
+    session = JSON.parse(raw);
+  } catch {
+    throw new Error(
+      `QA ${role} authentication returned a non-JSON response from Supabase.`,
+    );
+  }
+
+  if (!session?.access_token || !session?.refresh_token || !session?.user?.id) {
+    throw new Error(
+      `QA ${role} authentication did not return a complete Supabase session.`,
+    );
+  }
+
+  // Visit the app origin first so localStorage can be written for localhost.
+  await page.goto('/login', {
+    waitUntil: 'domcontentloaded',
+  });
+
+  const persistedSession = {
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_in: session.expires_in,
+    expires_at:
+      session.expires_at ||
+      Math.floor(Date.now() / 1000) + Number(session.expires_in || 3600),
+    token_type: session.token_type || 'bearer',
+    user: session.user,
+  };
+
+  await page.evaluate(
+    ({ key, value }) => {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    },
+    {
+      key: storageKey,
+      value: persistedSession,
+    },
+  );
+
+  const expectedPath = `/${role}`;
+
+  await page.goto(expectedPath, {
+    waitUntil: 'domcontentloaded',
+  });
+
+  await page.waitForLoadState('networkidle').catch(() => {
+    // Next.js dev mode can keep connections open. URL verification below is
+    // the authoritative check.
+  });
+
+  // Compatible with older Playwright versions:
+  // poll a boolean and assert true instead of using toSatisfy().
+  await expect
+    .poll(
+      () => {
+        const pathname = new URL(page.url()).pathname;
+        return (
+          pathname === expectedPath ||
+          pathname.startsWith(`${expectedPath}/`)
+        );
+      },
+      {
+        timeout: 15_000,
+        message: `Expected QA ${role} to remain inside ${expectedPath}; current URL: ${page.url()}`,
+      },
+    )
+    .toBe(true);
+
+  await page.context().storageState({
+    path: authStatePath(role),
+  });
 }
 
 for (const role of roles) {

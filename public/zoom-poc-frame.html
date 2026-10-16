@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Robotronix Zoom POC</title>
+<link rel="stylesheet" href="https://source.zoom.us/6.5.0/css/bootstrap.css"/>
+<link rel="stylesheet" href="https://source.zoom.us/6.5.0/css/react-select.css"/>
+<style>html,body{margin:0;width:100%;height:100%;background:#0b1730}#boot{font:16px system-ui;color:white;padding:24px}#zmmtg-root{display:none}</style></head><body><div id="boot">Loading secure Robotronix Zoom classroom…</div>
+<script src="https://source.zoom.us/6.5.0/lib/vendor/react.min.js"></script>
+<script src="https://source.zoom.us/6.5.0/lib/vendor/react-dom.min.js"></script>
+<script src="https://source.zoom.us/6.5.0/lib/vendor/redux.min.js"></script>
+<script src="https://source.zoom.us/6.5.0/lib/vendor/redux-thunk.min.js"></script>
+<script src="https://source.zoom.us/6.5.0/lib/vendor/react-redux.min.js"></script>
+<script src="https://source.zoom.us/6.5.0/lib/vendor/lodash.min.js"></script>
+<script src="https://source.zoom.us/zoom-meeting-6.5.0.min.js"></script>
+<script>
+(function(){
+ const send=(type,message)=>parent.postMessage({type,message},location.origin);
+ let started=false;
+ window.addEventListener('message',function(event){
+  if(event.origin!==location.origin||event.source!==parent||event.data?.type!=='ROBOTRONIX_ZOOM_JOIN'||started)return;
+  started=true;const p=event.data.payload||{};
+  try{
+   document.getElementById('boot').textContent='Initializing Zoom Meeting SDK…';
+   ZoomMtg.setZoomJSLib('https://source.zoom.us/6.5.0/lib','/av');ZoomMtg.preLoadWasm();ZoomMtg.prepareWebSDK();
+   document.getElementById('zmmtg-root').style.display='block';
+   ZoomMtg.init({leaveUrl:'/admin/zoom-test',patchJsMedia:true,success:function(){
+    send('ROBOTRONIX_ZOOM_STATUS','Zoom initialized. Joining meeting…');
+    ZoomMtg.join({signature:p.signature,meetingNumber:p.meetingNumber,passWord:p.password||'',userName:p.userName||'Robotronix User',zak:p.zak||'',success:function(){document.getElementById('boot').style.display='none';send('ROBOTRONIX_ZOOM_STATUS','Connected to Zoom classroom.');},error:function(err){send('ROBOTRONIX_ZOOM_ERROR',(err&&err.reason)||JSON.stringify(err));}});
+   },error:function(err){send('ROBOTRONIX_ZOOM_ERROR',(err&&err.reason)||JSON.stringify(err));}});
+  }catch(err){send('ROBOTRONIX_ZOOM_ERROR',err&&err.message?err.message:String(err));}
+ });
+ send('ROBOTRONIX_ZOOM_STATUS','Zoom frame loaded. Waiting for secure session…');
+})();
+</script></body></html>

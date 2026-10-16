@@ -18,11 +18,12 @@ export function buildLearnerProgressRows(input:{
   return input.enrollments.filter(e=>e.status!=="cancelled").map(enrollment=>{
     const student=input.students.find(s=>s.id===enrollment.studentId); const course=input.courses.find(c=>c.id===enrollment.courseId); const trainer=input.trainers.find(t=>t.id===enrollment.trainerId);
     const attendance=input.attendance.filter(a=>a.enrollmentId===enrollment.id);
-    const attended=attendance.filter(a=>attendedStatuses.has(a.status)).length;
+    const portalAttended=attendance.filter(a=>attendedStatuses.has(a.status)).length;
+    const attended=(enrollment.openingCompletedSessions??0)+portalAttended;
     const absent=attendance.filter(a=>a.status==="absent").length;
     const excused=attendance.filter(a=>a.status==="excused").length;
-    const denominator=attended+absent;
-    const attendanceRate=pct(attended,denominator);
+    const denominator=portalAttended+absent;
+    const attendanceRate=pct(portalAttended,denominator);
     const attendedDates=attendance.filter(a=>attendedStatuses.has(a.status)).map(a=>eventById.get(a.scheduleEventId)?.date).filter(Boolean) as string[];
     attendedDates.sort();
     const observations=input.observations.filter(o=>o.enrollmentId===enrollment.id).map(o=>({id:o.id,signal:o.signal,createdAt:o.createdAt}));
@@ -36,7 +37,7 @@ export function buildLearnerProgressRows(input:{
     const alerts=(input.alerts??[]).filter(a=>a.enrollmentId===enrollment.id&&["open","reviewed"].includes(a.status));
     return {
       studentId:enrollment.studentId,enrollmentId:enrollment.id,studentName:student?.fullName??"Learner",grade:student?.grade??"",courseId:enrollment.courseId,courseTitle:course?.shortTitle||course?.title||"Course",trainerId:enrollment.trainerId,trainerName:trainer?.fullName??"Trainer",enrollmentStatus:enrollment.status,enrollmentType:enrollment.enrollmentType,
-      sessionsAttended:attended,totalSessions:course?.totalSessions??0,plannedHours:enrollment.plannedHours,hoursCompleted:enrollment.hoursCompleted,hoursRemaining:enrollment.hoursRemaining,progressPercent:enrollment.progressPercent,attendanceRate,attendanceRecorded:denominator,absentCount:absent,excusedCount:excused,currentSignal,recentSignalCount:recent.filter(o=>o.signal!=="on_track").length,lastAttendedDate:attendedDates.at(-1),projectsTotal:projects.length,projectsCompleted:projects.filter(p=>p.status==="completed").length,projectsAwaitingReview:projects.filter(p=>p.status==="submitted").length,activeHold,openAlertCount:alerts.length
+      sessionsAttended:attended,totalSessions:enrollment.plannedSessions??course?.totalSessions??0,plannedHours:enrollment.plannedHours,hoursCompleted:enrollment.hoursCompleted,hoursRemaining:enrollment.hoursRemaining,progressPercent:enrollment.progressPercent,attendanceRate,attendanceRecorded:denominator,absentCount:absent,excusedCount:excused,currentSignal,recentSignalCount:recent.filter(o=>o.signal!=="on_track").length,lastAttendedDate:attendedDates.at(-1),projectsTotal:projects.length,projectsCompleted:projects.filter(p=>p.status==="completed").length,projectsAwaitingReview:projects.filter(p=>p.status==="submitted").length,activeHold,openAlertCount:alerts.length
     };
   });
 }

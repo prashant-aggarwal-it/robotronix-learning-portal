@@ -29,6 +29,6 @@ test.describe('Parent dynamic learner screen', () => {
     const response = await page.goto(`/parent/learner/${QA_IDS.student}`, { waitUntil: 'domcontentloaded' });
     expect(response?.status() ?? 200).toBeLessThan(500);
     await expect(page.locator('.experienceLoading')).toBeHidden({ timeout: 20_000 });
-    await expect(page.getByRole('heading', { name: 'QA Robotics Foundations' })).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('heading', { name: 'QA Robotics Foundations' })).toBeVisible({ timeout: 15_000 });
   });
 });

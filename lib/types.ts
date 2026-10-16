@@ -33,6 +33,7 @@ export interface SessionUpdateInput { studentId:string; enrollmentId?:string; co
 
 export interface StudentAdminRecord {
   id:string; fullName:string; dob:string; grade:string; school:string; city:string; country:string; state?:string; timezone:string;
+  addressLine1?:string; addressLine2?:string; postalCode?:string; billingName?:string; billingEmail?:string; billingPhone?:string;
   preferredClassDays?:string[]; preferredTimeWindows?:string;
   motherName:string; motherMobile:string; fatherName:string; fatherMobile:string;
   primaryGuardianName?:string; primaryGuardianRelationship?:GuardianRelationship; primaryGuardianMobile?:string;
@@ -57,7 +58,7 @@ export type TrainerClassFinanceOutcome = "completed" | "no_show" | "cancelled";
 export interface TrainerCompensationPlan {
   id:string; trainerId:string; timezone:string; dayStart:string; dayEnd:string;
   oneToOneDay:number; oneToOneNight:number; groupDay:number; groupNight:number; demoDay:number; demoNight:number;
-  demoConversionDay:number; demoConversionNight:number; noShowPercent:number; cancelledPercent:number;
+  demoConversionDay:number; demoConversionNight:number; trainerNoShowPenaltyPercent:number; lateGraceMinutes:number; latePenaltyPercent:number;
   effectiveFrom:string; notes:string; updatedAt:string;
 }
 
@@ -85,6 +86,21 @@ export interface PortalAuditRecord {
   beforeData?:Record<string,unknown>; afterData?:Record<string,unknown>; createdAt:string;
 }
 
+export interface ParentCommunityProfile {
+  parentId:string; profession:string; organization:string; designation:string; linkedinUrl:string; instagramHandle:string; facebookUrl:string; expertise:string[];
+  contributionInterests:string[]; foundationInterests:string[]; ambassadorInterest:boolean; socialTagConsent:boolean; communityContactConsent:boolean; updatedAt?:string;
+}
+
+export interface FamilyIntroductionRecord {
+  id:string; parentId:string; introducedName:string; introducedContact:string; note:string; status:"introduced"|"contacted"|"demo_scheduled"|"enrolled"|"closed";
+  convertedAt?:string; benefitStatus:"none"|"available"|"redeemed"|"donated"; benefitValueInr?:number; createdAt:string; updatedAt:string;
+}
+
+export interface TrainerFinanceChangeRequest {
+  id:string; trainerId:string; accountHolderName:string; bankName:string; accountNumber:string; ifsc:string; upiId:string; pan:string; preferredPayoutMethod:"bank"|"upi"|"other";
+  status:"pending"|"approved"|"rejected"|"correction_requested"; trainerNote:string; adminNote:string; submittedAt:string; reviewedAt?:string; reviewedBy?:string;
+}
+
 export interface TrainerFinanceRecord {
   id:string; trainerId:string; accountHolderName:string; bankName:string; accountNumber:string; ifsc:string; upiId:string;
   preferredPayoutMethod:"bank"|"upi"|"other"; paymentModel:"per_class"|"hourly"|"monthly"|"retainer"|"other"; paymentRate?:number;
@@ -104,7 +120,7 @@ export interface OnboardingSubmission {
   primaryGuardianName?:string; primaryGuardianRelationship?:GuardianRelationship; primaryGuardianMobile?:string;
   secondaryGuardianName?:string; secondaryGuardianRelationship?:GuardianRelationship; secondaryGuardianMobile?:string;
   primaryContact:"mother"|"father"|"guardian"; primaryWhatsApp:string; alternateWhatsApp:string;
-  city:string; country:string; state?:string; timezone:string; childName:string; childDob:string; grade:string; school:string;
+  city:string; country:string; state?:string; timezone:string; addressLine1:string; addressLine2?:string; postalCode:string; billingName:string; billingEmail:string; billingPhone:string; childName:string; childDob:string; grade:string; school:string;
   preferredClassDays?:string[]; preferredTimeWindows?:string;
   interests:string[]; goal:string; codingExperience:string; roboticsExperience:string; source:string;
   dataConsent:boolean; portfolioConsent:boolean; marketingMediaConsent?:boolean;
@@ -120,7 +136,9 @@ export interface EnrollmentAdminRecord {
   deliveryChannel?:DeliveryChannel; centerLocation?:string; scheduleMode?:ScheduleMode;
   scheduleTimezone:string; scheduleRules:WeeklyScheduleSlot[];
   holdReason?:"exams"|"medical"|"travel"|"family"|"other"; holdFrom?:string; holdUntil?:string; holdNote?:string;
-  // Derived from delivered class records; never manually edited. Session count remains secondary; hours are canonical.
+  programModel?:"fixed_program"|"short_package"|"open_ended"; plannedSessions?:number; paidSessionBalance?:number; plannedEndDate?:string; autoCompleteOnSessionLimit?:boolean; scheduleOverrideConfirmed?:boolean; scheduleOverrideNote?:string;
+  migrationType?:"native"|"active_existing"; openingCompletedSessions?:number; openingCompletedMinutes?:number; migrationNote?:string; portalTrackingStartedAt?:string;
+  // Derived from opening position + delivered class records. Session count remains secondary; hours are canonical.
   sessionsCompleted:number; plannedHours?:number; hoursCompleted?:number; hoursRemaining?:number; progressPercent:number;
 }
 
@@ -173,7 +191,7 @@ export type ProgressAlertType = "attendance" | "learning" | "project" | "hold" |
 
 export interface LearningObservationRecord {
   id:string; scheduleEventId:string; studentId:string; enrollmentId:string; trainerId:string;
-  signal:LearningStatus; strength:string; nextFocus:string; feedback:string; createdAt:string; updatedAt?:string;
+  signal:LearningStatus; strength:string; nextFocus:string; feedback:string; internalNote?:string; createdAt:string; updatedAt?:string;
 }
 
 export interface TrainerFeedbackRecord {
