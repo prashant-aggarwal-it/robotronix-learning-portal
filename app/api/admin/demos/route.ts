@@ -30,7 +30,11 @@ export async function GET(request:NextRequest){
   .select("id,session_type,focus,status,created_at,schedule_event:schedule_events(id,date,start_time,end_time,timezone,title,status),trainer:trainers(id,full_name),participants:demo_session_participants(id,attendance,summary_published_at,parent_rating,lead:demo_leads(id,parent_name,parent_whatsapp,parent_email,child_name,grade,interest,experience_level,source,status))")
   .order("created_at",{ascending:false}).limit(200);
  if(error)return NextResponse.json({ok:false,error:error.message},{status:500});
- return NextResponse.json({ok:true,sessions:data||[]},{headers:{"Cache-Control":"no-store"}});
+ const {data:requests,error:rErr}=await auth.admin.from("demo_guest_requests")
+  .select("id,demo_session_participant_id,request_type,message,status,created_at")
+  .eq("status","open").order("created_at",{ascending:false}).limit(100);
+ if(rErr)return NextResponse.json({ok:false,error:rErr.message},{status:500});
+ return NextResponse.json({ok:true,sessions:data||[],requests:requests||[]},{headers:{"Cache-Control":"no-store"}});
 }
 
 export async function POST(request:NextRequest){
