@@ -70,6 +70,20 @@ create table if not exists public.demo_session_participants (
 create index if not exists demo_participants_session_idx on public.demo_session_participants(demo_session_id);
 create index if not exists demo_participants_lead_idx on public.demo_session_participants(lead_id);
 
+
+create table if not exists public.demo_guest_requests (
+  id uuid primary key default gen_random_uuid(),
+  demo_session_participant_id uuid not null references public.demo_session_participants(id) on delete cascade,
+  request_type text not null check (request_type in ('reschedule','help')),
+  message text not null default '',
+  status text not null default 'open' check (status in ('open','resolved','closed')),
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+create index if not exists demo_guest_requests_status_idx on public.demo_guest_requests(status, created_at desc);
+alter table public.demo_guest_requests enable row level security;
+grant all on table public.demo_guest_requests to service_role;
+
 alter table public.demo_leads enable row level security;
 alter table public.demo_sessions enable row level security;
 alter table public.demo_session_participants enable row level security;
