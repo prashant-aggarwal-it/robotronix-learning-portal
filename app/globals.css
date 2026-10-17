@@ -1254,3 +1254,41 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 
 /* Admin onboarding: summary vs working detail, balanced learning setup */
 .availabilitySnapshotGrid{grid-template-columns:1fr!important}.assignmentContextGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:16px}.assignmentContextGrid>div,.finalPlanSnapshot>div{display:grid;gap:3px;padding:11px 12px;border:1px solid #e7e8f0;border-radius:12px;background:#fafbfe}.assignmentContextGrid span,.finalPlanSnapshot span{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.06em;color:#7c8498}.assignmentContextGrid b,.finalPlanSnapshot b{font-size:13px;color:#283149}.scheduleMatchSummary{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.scheduleMatchSummary span{padding:7px 9px;border-radius:10px;background:#f6f4fc;color:#5f527f;font-size:11px}.scheduleMatchSummary b{color:#332657}.finalPlanSnapshot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.assignmentWorkspace{align-items:start}.assignmentSetupCard,.schedulingAssistColumn{align-self:start}@media(max-width:1100px){.finalPlanSnapshot{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.assignmentContextGrid,.finalPlanSnapshot{grid-template-columns:1fr}}
+
+
+/* Parent customer delight hub */
+.delightHub{margin:22px 0;display:grid;gap:16px}
+.delightHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:2px 2px}
+.delightHeader h2{margin:5px 0 6px;font-size:25px;letter-spacing:-.025em}
+.delightHeader p{margin:0;color:#6f7890;max-width:760px}
+.delightGrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
+.delightCard{position:relative;overflow:hidden;border:1px solid #e6e4ef;border-radius:22px;background:#fff;padding:20px;box-shadow:0 12px 34px rgba(42,38,72,.05);display:grid;gap:12px}
+.delightCard h3{margin:0;font-size:18px;line-height:1.25;color:#252d43}
+.delightCard p{margin:0;color:#6a748a;line-height:1.55}
+.postClassCard{grid-column:span 7;background:linear-gradient(145deg,#fff 0%,#fbf9ff 100%)}
+.attentionCard{grid-column:span 5}
+.milestoneCard,.renewalCard,.supportCard,.advocacyCard{grid-column:span 6}
+.delightCardTop{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.delightSummaryRows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.delightSummaryRows>div{display:grid;gap:4px;padding:11px 12px;border:1px solid #ebe8f3;border-radius:14px;background:rgba(255,255,255,.76)}
+.delightSummaryRows span,.attentionList span{font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#8a90a2}
+.delightSummaryRows b{font-size:13px;line-height:1.4;color:#343c51}
+.delightMeta{font-size:12px;color:#6d7486;font-weight:700}
+.attentionList{display:grid;gap:8px}
+.attentionList>div{display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #f0eef5}
+.attentionList>div:last-child{border-bottom:0}
+.attentionList b{font-size:13px;color:#31394f}
+.attentionList a,.attentionList button{font-size:12px}
+.milestoneCard{background:linear-gradient(145deg,#fffaf0,#fff 48%,#faf7ff)}
+.milestoneBurst{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#fff1c7;color:#a46e00;font-size:20px;font-weight:900}
+.milestoneStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.milestoneStats>div{padding:10px;border-radius:13px;background:rgba(255,255,255,.72);border:1px solid #eee7d7;display:grid;gap:2px}
+.milestoneStats b{font-size:20px}.milestoneStats span{font-size:10px;color:#7d8291;text-transform:uppercase;font-weight:800}
+.renewalNotice{display:grid;gap:4px;padding:11px 12px;border:1px solid #eadbb1;border-radius:14px;background:#fff8e7}
+.renewalNotice b{color:#7a5711}.renewalNotice span{font-size:12px;color:#74633d}
+.supportCard{background:linear-gradient(145deg,#f8fbff,#fff)}
+.advocacyCard{background:linear-gradient(145deg,#fbf8ff,#fff)}
+.delightDrawer{border:1px solid #ded8eb;border-radius:22px;background:#fff;padding:20px;box-shadow:0 18px 44px rgba(43,37,74,.08);display:grid;gap:15px}
+.delightDrawer .panelHeader{margin:0}
+@media(max-width:1100px){.postClassCard,.attentionCard,.milestoneCard,.renewalCard,.supportCard,.advocacyCard{grid-column:span 12}}
+@media(max-width:700px){.delightHeader{flex-direction:column}.delightSummaryRows{grid-template-columns:1fr}.attentionList>div{grid-template-columns:1fr;gap:4px}.delightCard{padding:17px}.delightGrid{gap:11px}}
