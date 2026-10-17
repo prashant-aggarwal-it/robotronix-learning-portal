@@ -11,7 +11,7 @@ type Classroom={
 export function ZoomClassActions({scheduleEventId,compact=false}:{scheduleEventId:string;compact?:boolean}){
  const[data,setData]=useState<Classroom|null>(null),[error,setError]=useState("");
  useEffect(()=>{let live=true;portalApi("/api/zoom/classroom/"+encodeURIComponent(scheduleEventId)).then(x=>{if(live)setData(x.classroom)}).catch(e=>{if(live)setError(e instanceof Error?e.message:String(e))});return()=>{live=false}},[scheduleEventId]);
- async function watch(){if(!data?.meeting?.recordingId)return;try{const x=await portalApi("/api/zoom/recordings/"+data.meeting.recordingId);window.open(x.recording.streamUrl,"_blank","noopener,noreferrer")}catch(e){setError(e instanceof Error?e.message:String(e))}}
+ async function watch(){if(!data?.meeting?.recordingId)return;const win=window.open("","_blank");try{const x=await portalApi("/api/zoom/recordings/"+data.meeting.recordingId);if(win){win.opener=null;win.location.href=x.recording.streamUrl}else window.location.href=x.recording.streamUrl}catch(e){if(win)win.close();setError(e instanceof Error?e.message:String(e))}}
  if(error)return compact?null:<small className="muted">Online classroom unavailable: {error}</small>;
  if(!data)return compact?<span className="softBadge">Checking classroom…</span>:<small className="muted">Checking online classroom…</small>;
  if(!data.available&&!data.meeting?.recordingId)return compact?null:<small className="muted">Online classroom has not been provisioned yet.</small>;
