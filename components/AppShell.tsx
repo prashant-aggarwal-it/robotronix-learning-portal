@@ -8,13 +8,13 @@ import type { UserRole } from "@/lib/types";
 
 const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}>> = {
   student: [
-    {label:"Home",href:"/student"},{label:"My Profile",href:"/student/profile"},{label:"My Course",href:"/student/course"},{label:"My Projects",href:"/student/portfolio"},{label:"Notifications",href:"/student/notifications"}
+    {label:"Home",href:"/student"},{label:"My Calendar",href:"/student/calendar"},{label:"My Profile",href:"/student/profile"},{label:"My Course",href:"/student/course"},{label:"My Projects",href:"/student/portfolio"},{label:"Notifications",href:"/student/notifications"}
   ],
   parent: [
-    {label:"Family Dashboard",href:"/parent"},{label:"Family Profile",href:"/parent/profile"},{label:"Learner View",href:"/parent/learner"},{label:"Messages",href:"/parent/messages"},{label:"Notifications",href:"/parent/notifications"},{label:"Add learner",href:"/onboarding"}
+    {label:"Family Dashboard",href:"/parent"},{label:"Calendar",href:"/parent/calendar"},{label:"Family Profile",href:"/parent/profile"},{label:"Learner View",href:"/parent/learner"},{label:"Messages",href:"/parent/messages"},{label:"Notifications",href:"/parent/notifications"},{label:"Add learner",href:"/onboarding"}
   ],
   trainer: [
-    {label:"Home",href:"/trainer"},{label:"My Profile",href:"/trainer/profile"},{label:"Learner Progress",href:"/trainer/progress"},{label:"My Classes",href:"/trainer/classes"},{label:"My Schedule",href:"/trainer/schedule"},{label:"My Courses",href:"/trainer/courses"},{label:"My Earnings",href:"/trainer/earnings"},{label:"Messages",href:"/trainer/messages"},{label:"Notifications",href:"/trainer/notifications"}
+    {label:"Home",href:"/trainer"},{label:"My Profile",href:"/trainer/profile"},{label:"Learner Progress",href:"/trainer/progress"},{label:"Demo Experience",href:"/trainer/demos"},{label:"My Classes",href:"/trainer/classes"},{label:"My Schedule",href:"/trainer/schedule"},{label:"My Courses",href:"/trainer/courses"},{label:"My Earnings",href:"/trainer/earnings"},{label:"Messages",href:"/trainer/messages"},{label:"Notifications",href:"/trainer/notifications"}
   ],
   admin: [
     {label:"Overview",href:"/admin",group:"Workspace"},{label:"My Account",href:"/admin/account",group:"Workspace"},{label:"Parent Community",href:"/admin/community",group:"Workspace"},
@@ -23,8 +23,10 @@ const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}
     {label:"Trainers",href:"/admin/trainers",group:"Delivery"},
     {label:"Courses",href:"/admin/courses",group:"Delivery"},
     {label:"Enrollments & Cohorts",href:"/admin/enrollments",group:"Delivery"},
+    {label:"Demo Experience",href:"/admin/demos",group:"Delivery"},
     {label:"Schedule",href:"/admin/schedule",group:"Operations"},
     {label:"Classes",href:"/admin/classes",group:"Operations"},
+    {label:"Zoom Classroom",href:"/admin/zoom",group:"Operations"},
     {label:"Operational Alerts",href:"/admin/alerts",group:"Operations"},
     {label:"Corrections & Audit",href:"/admin/audit",group:"Operations"},
     {label:"Fees & Earnings",href:"/admin/finance",group:"Finance"},

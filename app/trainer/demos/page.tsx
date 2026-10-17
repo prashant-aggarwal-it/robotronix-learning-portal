@@ -1,0 +1,44 @@
+"use client";
+import {useEffect,useMemo,useState} from "react";
+import {AppShell} from "@/components/AppShell";
+import {RoleGuard} from "@/components/RoleGuard";
+import {PageIntro} from "@/components/PageIntro";
+import {portalApi} from "@/lib/portal-api-client";
+
+type Course={id:string;title:string;public_name?:string};
+type Session={id:string;session_type:"one_to_one"|"group";focus:string;status:string;zoom_meeting_id?:string;schedule_event:any;trainer:any;participants:any[]};
+
+export default function TrainerDemos(){return <RoleGuard allow={["trainer"]}><AppShell role="trainer"><Workspace/></AppShell></RoleGuard>}
+
+function Workspace(){
+ const[sessions,setSessions]=useState<Session[]>([]),[courses,setCourses]=useState<Course[]>([]),[selected,setSelected]=useState<any|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false);
+ const[form,setForm]=useState({attendance:"attended",engagement:"good",understanding:"good",problemSolving:"good",confidence:"comfortable",explored:"",strengths:"Curiosity, Logical thinking",mentorNote:"",recommendedCourseId:"",recommendedFormat:"one_to_one",recommendedFrequency:"Once a week",fit:"strong"});
+ async function load(){setError("");try{const x=await portalApi("/api/demos/trainer");setSessions(x.sessions||[]);setCourses(x.courses||[])}catch(e){setError(e instanceof Error?e.message:String(e))}}
+ useEffect(()=>{load()},[]);
+ const upcoming=useMemo(()=>sessions.filter(s=>s.status==="scheduled"),[sessions]);
+ const selectedSession=selected? sessions.find(s=>s.participants?.some((p:any)=>p.id===selected.id)):null;
+ function edit(p:any){setSelected(p);setForm({attendance:p.attendance==="scheduled"?"attended":p.attendance,engagement:p.engagement||"good",understanding:p.understanding||"good",problemSolving:p.problem_solving||"good",confidence:p.confidence||"comfortable",explored:p.explored||"",strengths:(p.strengths||["Curiosity","Logical thinking"]).join(", "),mentorNote:p.mentor_note||"",recommendedCourseId:p.recommended_course_id||"",recommendedFormat:p.recommended_format||"one_to_one",recommendedFrequency:p.recommended_frequency||"Once a week",fit:p.fit||"strong"})}
+ async function save(){if(!selected)return;setBusy(true);setError("");setNotice("");try{await portalApi("/api/demos/trainer",{method:"POST",body:JSON.stringify({participantId:selected.id,...form,strengths:form.strengths.split(",").map(x=>x.trim()).filter(Boolean)})});setNotice(form.attendance==="attended"?"Demo outcome saved and the family summary is now ready.":"Attendance saved.");setSelected(null);await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
+ return <>
+  <PageIntro eyebrow="DISCOVERY SESSIONS" title="Demo Experience" text="Deliver a warm, focused first session. You see only the learner context you need—family contact details stay private."/>
+  {error&&<p className="errorBanner" role="alert">{error}</p>}{notice&&<p className="successBanner" role="status">{notice}</p>}
+  <section className="dataSection"><div className="panelHeader"><div><div className="eyebrow">UPCOMING</div><h2>Your discovery sessions</h2><p>Group demos share one session, but each learner receives an individual private summary.</p></div></div>
+   <div className="demoTrainerList">{upcoming.map(s=><article className="demoTrainerCard" key={s.id}><div className="demoTrainerCardTop"><div><span className="softBadge">{s.session_type==="group"?"Group Discovery":"1-to-1 Discovery"}</span><h3>{s.focus}</h3><p>{s.schedule_event?.date} · {String(s.schedule_event?.start_time||"").slice(0,5)} · {s.schedule_event?.timezone}</p></div>{s.zoom_meeting_id&&<a className="button" href={"/trainer/demo-room/"+s.zoom_meeting_id}>Start Demo</a>}</div><div className="demoParticipantGrid">{s.participants?.map((p:any)=><div className="demoParticipantMini" key={p.id}><b>{p.lead?.child_name}</b><span>{p.lead?.grade} · {p.lead?.interest}</span><small>Experience: {p.lead?.experience_level==="new"?"New":p.lead?.experience_level==="some"?"Some experience":"Experienced"}</small><button className="button secondary small" onClick={()=>edit(p)}>Add outcome</button></div>)}</div></article>)}{!upcoming.length&&<div className="emptyState compact">No upcoming demos assigned to you.</div>}</div>
+  </section>
+  <section className="dataSection"><div className="panelHeader"><div><div className="eyebrow">RECENT</div><h2>Completed demos</h2><p>Use these records to remember what was observed and recommended.</p></div></div><div className="tableWrap"><table><thead><tr><th>Demo</th><th>Learners</th><th>Date</th><th>Status</th></tr></thead><tbody>{sessions.filter(s=>s.status!=="scheduled").map(s=><tr key={s.id}><td><b>{s.focus}</b></td><td>{s.participants?.map((p:any)=><div key={p.id}>{p.lead?.child_name} · {p.engagement||p.attendance}</div>)}</td><td>{s.schedule_event?.date}</td><td><span className="statusBadge status-active">{s.status}</span></td></tr>)}</tbody></table></div></section>
+  {selected&&<div className="demoModalBackdrop" onMouseDown={()=>setSelected(null)}><section className="demoModal demoOutcomeModal" onMouseDown={e=>e.stopPropagation()}><span className="demoPill neutral">DEMO OUTCOME</span><h2>{selected.lead?.child_name}</h2><p>{selectedSession?.focus} · Keep this concise and parent-friendly.</p><div className="demoOutcomeForm">
+   <label><span>Attendance</span><select className="select" value={form.attendance} onChange={e=>setForm(v=>({...v,attendance:e.target.value}))}><option value="attended">Attended</option><option value="no_show">No-show</option><option value="cancelled">Cancelled</option></select></label>
+   {form.attendance==="attended"&&<><label><span>Engagement</span><select className="select" value={form.engagement} onChange={e=>setForm(v=>({...v,engagement:e.target.value}))}><option value="good">Good</option><option value="excellent">Excellent</option><option value="low">Low</option></select></label>
+   <label><span>Understanding</span><select className="select" value={form.understanding} onChange={e=>setForm(v=>({...v,understanding:e.target.value}))}><option value="good">Good</option><option value="strong">Strong</option><option value="developing">Developing</option></select></label>
+   <label><span>Problem solving</span><select className="select" value={form.problemSolving} onChange={e=>setForm(v=>({...v,problemSolving:e.target.value}))}><option value="good">Good</option><option value="strong">Strong</option><option value="developing">Developing</option></select></label>
+   <label><span>Confidence</span><select className="select" value={form.confidence} onChange={e=>setForm(v=>({...v,confidence:e.target.value}))}><option value="comfortable">Comfortable</option><option value="high">High</option><option value="low">Low</option></select></label>
+   <label className="span2"><span>What did you explore?</span><input className="input" value={form.explored} onChange={e=>setForm(v=>({...v,explored:e.target.value}))} placeholder="e.g. Arduino + sensor activity"/></label>
+   <label className="span2"><span>Strengths noticed</span><input className="input" value={form.strengths} onChange={e=>setForm(v=>({...v,strengths:e.target.value}))} placeholder="Curiosity, Logical thinking"/></label>
+   <label className="span2"><span>Mentor note</span><textarea className="input" rows={3} value={form.mentorNote} onChange={e=>setForm(v=>({...v,mentorNote:e.target.value}))} placeholder="One warm, specific observation for the family"/></label>
+   <label><span>Recommended course</span><select className="select" value={form.recommendedCourseId} onChange={e=>setForm(v=>({...v,recommendedCourseId:e.target.value}))}><option value="">Choose later</option>{courses.map(c=><option value={c.id} key={c.id}>{c.public_name||c.title}</option>)}</select></label>
+   <label><span>Recommended format</span><select className="select" value={form.recommendedFormat} onChange={e=>setForm(v=>({...v,recommendedFormat:e.target.value}))}><option value="one_to_one">1-to-1</option><option value="small_group">Small group</option></select></label>
+   <label><span>Suggested frequency</span><input className="input" value={form.recommendedFrequency} onChange={e=>setForm(v=>({...v,recommendedFrequency:e.target.value}))}/></label>
+   <label><span>Fit</span><select className="select" value={form.fit} onChange={e=>setForm(v=>({...v,fit:e.target.value}))}><option value="strong">Strong fit</option><option value="possible">Possible fit</option><option value="not_now">Not right now</option></select></label></>}
+  </div><div className="row topGap"><button className="button" disabled={busy} onClick={save}>{busy?"Saving…":"Save outcome"}</button><button className="button secondary" onClick={()=>setSelected(null)}>Cancel</button></div></section></div>}
+ </>;
+}

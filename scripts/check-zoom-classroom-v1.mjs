@@ -1,0 +1,35 @@
+import fs from "node:fs";
+
+const required=[
+ "app/api/zoom/schedule/sync/route.ts",
+ "app/api/zoom/classroom/[scheduleEventId]/route.ts",
+ "app/api/zoom/webhook/route.ts",
+ "app/api/zoom/overview/route.ts",
+ "app/api/zoom/meetings/route.ts",
+ "app/api/zoom/recordings/[recordingId]/route.ts",
+ "app/api/zoom/recordings/[recordingId]/stream/route.ts",
+ "app/admin/zoom/page.tsx",
+ "app/admin/zoom/meeting/[meetingId]/page.tsx",
+ "app/classroom/[scheduleEventId]/page.tsx",
+ "components/ZoomClassActions.tsx",
+ "lib/server/zoom-classroom.ts",
+ "lib/server/zoom-recording.ts",
+ "database/04_upgrade/01_ZOOM_CLASSROOM_V1.sql"
+];
+for(const file of required)if(!fs.existsSync(file))throw new Error("Missing Zoom Classroom V1 file: "+file);
+
+const migration=fs.readFileSync("database/04_upgrade/01_ZOOM_CLASSROOM_V1.sql","utf8");
+for(const token of ["'general'","zoom_participant_sessions","zoom_recordings","zoom_webhook_events","attempt_count","protected_from_deletion"]){
+ if(!migration.includes(token))throw new Error("Zoom Classroom V1 migration is missing: "+token);
+}
+const sdk=fs.readFileSync("app/api/zoom/sdk-session/route.ts","utf8");
+if(!sdk.includes("/users/me/zak"))throw new Error("Zoom host session must use the ZAK endpoint.");
+const webhook=fs.readFileSync("app/api/zoom/webhook/route.ts","utf8");
+for(const event of ["meeting.started","meeting.ended","meeting.participant_joined","meeting.participant_left","recording.completed","recording.deleted"]){
+ if(!webhook.includes(event))throw new Error("Zoom webhook handling is missing: "+event);
+}
+const admin=fs.readFileSync("app/admin/zoom/page.tsx","utf8");
+for(const marker of ["New Meeting","General meetings","Cloud recordings","Zoom accounts"]){
+ if(!admin.includes(marker))throw new Error("Zoom Admin UI is missing: "+marker);
+}
+console.log("Zoom Classroom V1 structure: OK");

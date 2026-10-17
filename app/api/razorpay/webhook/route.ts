@@ -1,24 +1,72 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 import {NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
 import {verifyRazorpayWebhook} from "@/lib/server/razorpay";
+import {applyRazorpayInvoiceEntity} from "@/lib/server/razorpay-invoices";
+
+export const dynamic="force-dynamic";
+
+function eventKey(raw:string,event:any){
+ const id=String(event?.id||"").trim();
+ return id?"id:"+id:"sha256:"+crypto.createHash("sha256").update(raw).digest("hex");
+}
 
 export async function POST(request:Request){
- const raw=await request.text();const sig=request.headers.get("x-razorpay-signature")||"";
- if(!verifyRazorpayWebhook(raw,sig))return NextResponse.json({ok:false},{status:401});
- let event:any;try{event=JSON.parse(raw)}catch{return NextResponse.json({ok:false},{status:400})}
- const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL,secret=process.env.SUPABASE_SERVICE_ROLE_KEY;
- if(!url||!secret)return NextResponse.json({ok:false},{status:503});
+ const raw=await request.text();
+ const sig=request.headers.get("x-razorpay-signature")||"";
+ if(!verifyRazorpayWebhook(raw,sig))return NextResponse.json({ok:false,error:"Invalid Razorpay webhook signature."},{status:401});
+
+ let event:any;
+ try{event=JSON.parse(raw)}catch{return NextResponse.json({ok:false,error:"Invalid webhook JSON."},{status:400})}
+
+ const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
+ const secret=process.env.SUPABASE_SERVICE_ROLE_KEY;
+ if(!url||!secret)return NextResponse.json({ok:false,error:"Server database configuration is missing."},{status:503});
  const db=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
- const entity=event?.payload?.invoice?.entity;if(!entity?.id)return NextResponse.json({ok:true,ignored:true});
- const {data:invoice}=await db.from("student_invoices").select("*").eq("razorpay_invoice_id",entity.id).maybeSingle();if(!invoice)return NextResponse.json({ok:true,ignored:true});
- const unit=["BHD","KWD","OMR"].includes(invoice.currency)?1000:100;
- const status=String(entity.status||invoice.status);const paid=Number(entity.amount_paid||0)/unit,due=Number(entity.amount_due||0)/unit,paymentId=entity.payment_id||event?.payload?.payment?.entity?.id||null;
- const patch:any={status,amount_paid:paid,amount_due:due,razorpay_short_url:entity.short_url||invoice.razorpay_short_url,razorpay_payment_id:paymentId||invoice.razorpay_payment_id,razorpay_response:entity,updated_at:new Date().toISOString()};
- if(status==="paid")patch.paid_at=new Date().toISOString();if(status==="cancelled")patch.cancelled_at=new Date().toISOString();
- await db.from("student_invoices").update(patch).eq("id",invoice.id);
- if(status==="paid"&&paymentId){
-  await db.from("student_fee_payments").upsert({id:crypto.randomUUID(),package_id:invoice.fee_package_id,amount:paid||invoice.foreign_amount,payment_date:new Date().toISOString().slice(0,10),method:"Razorpay",reference:paymentId,kind:"payment"},{onConflict:"package_id,reference",ignoreDuplicates:true});
+
+ const key=eventKey(raw,event),eventType=String(event?.event||"unknown");
+ const entity=event?.payload?.invoice?.entity;
+ const razorpayInvoiceId=entity?.id?String(entity.id):null;
+
+ const {error:claimError}=await db.from("razorpay_webhook_events").insert({
+  event_key:key,event_type:eventType,razorpay_event_id:event?.id?String(event.id):null,
+  razorpay_invoice_id:razorpayInvoiceId,attempt_count:1
+ });
+ if(claimError&&String(claimError.code)!=="23505")return NextResponse.json({ok:false,error:claimError.message},{status:500});
+ if(claimError&&String(claimError.code)==="23505"){
+  const {data:existing,error:readError}=await db.from("razorpay_webhook_events").select("processed_at,processing_error,attempt_count").eq("event_key",key).maybeSingle();
+  if(readError)return NextResponse.json({ok:false,error:readError.message},{status:500});
+  if(existing?.processed_at&&!existing.processing_error)return NextResponse.json({ok:true,duplicate:true});
+  const {error:retryError}=await db.from("razorpay_webhook_events").update({
+   processed_at:null,processing_error:null,attempt_count:Number(existing?.attempt_count||0)+1
+  }).eq("event_key",key);
+  if(retryError)return NextResponse.json({ok:false,error:retryError.message},{status:500});
  }
- return NextResponse.json({ok:true});
+
+ try{
+  if(!entity?.id){
+   const {error}=await db.from("razorpay_webhook_events").update({processed_at:new Date().toISOString(),processing_error:null}).eq("event_key",key);
+   if(error)throw new Error(error.message);
+   return NextResponse.json({ok:true,ignored:true});
+  }
+
+  const {data:invoice,error:invoiceError}=await db.from("student_invoices").select("*").eq("razorpay_invoice_id",entity.id).maybeSingle();
+  if(invoiceError)throw new Error(invoiceError.message);
+  if(!invoice){
+   const {error}=await db.from("razorpay_webhook_events").update({processed_at:new Date().toISOString(),processing_error:null}).eq("event_key",key);
+   if(error)throw new Error(error.message);
+   return NextResponse.json({ok:true,ignored:true,reason:"invoice_not_found"});
+  }
+
+  const paymentId=entity.payment_id||event?.payload?.payment?.entity?.id||null;
+  await applyRazorpayInvoiceEntity(db,invoice,entity,"webhook",paymentId);
+
+  const {error:doneError}=await db.from("razorpay_webhook_events").update({processed_at:new Date().toISOString(),processing_error:null}).eq("event_key",key);
+  if(doneError)throw new Error(doneError.message);
+  return NextResponse.json({ok:true});
+ }catch(error){
+  const message=error instanceof Error?error.message:String(error);
+  await db.from("razorpay_webhook_events").update({processed_at:null,processing_error:message}).eq("event_key",key);
+  return NextResponse.json({ok:false,error:message},{status:500});
+ }
 }

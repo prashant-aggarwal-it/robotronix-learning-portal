@@ -3422,3 +3422,156 @@ grant all on table public.zoom_host_accounts to service_role;
 grant all on table public.zoom_meetings to service_role;
 
 notify pgrst, 'reload schema';
+
+
+-- ============================================================================
+-- FINAL RELEASE CONSOLIDATION: RAZORPAY OPERATIONS HARDENING
+-- ============================================================================
+
+alter table public.student_invoices add column if not exists last_synced_at timestamptz;
+alter table public.student_invoices add column if not exists sync_error text;
+
+create unique index if not exists student_invoices_fee_package_unique
+  on public.student_invoices(fee_package_id)
+  where fee_package_id is not null;
+
+create table if not exists public.razorpay_webhook_events (
+  event_key text primary key,
+  event_type text not null,
+  razorpay_event_id text,
+  razorpay_invoice_id text,
+  received_at timestamptz not null default now(),
+  processed_at timestamptz,
+  attempt_count integer not null default 1,
+  processing_error text
+);
+
+create index if not exists razorpay_webhook_events_invoice_idx
+  on public.razorpay_webhook_events(razorpay_invoice_id, received_at desc);
+
+alter table public.razorpay_webhook_events enable row level security;
+grant all on table public.razorpay_webhook_events to service_role;
+
+notify pgrst, 'reload schema';
+
+
+-- ============================================================================
+-- FINAL RELEASE CONSOLIDATION: CALENDAR SUBSCRIPTIONS
+-- ============================================================================
+
+create table if not exists public.calendar_subscription_tokens (
+  id uuid primary key default gen_random_uuid(),
+  owner_role text not null check (owner_role in ('trainer')),
+  owner_id uuid not null,
+  token_hash text not null unique,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz,
+  revoked_at timestamptz
+);
+
+create index if not exists calendar_subscription_owner_idx
+  on public.calendar_subscription_tokens(owner_role, owner_id, active);
+
+alter table public.calendar_subscription_tokens enable row level security;
+grant all on table public.calendar_subscription_tokens to service_role;
+
+notify pgrst, 'reload schema';
+
+
+-- ============================================================================
+-- FINAL RELEASE CONSOLIDATION: DEMO EXPERIENCE V1
+-- ============================================================================
+
+alter table public.zoom_meetings drop constraint if exists zoom_meetings_purpose_check;
+alter table public.zoom_meetings add constraint zoom_meetings_purpose_check
+  check (purpose in ('class','poc','general','demo'));
+
+create table if not exists public.demo_leads (
+  id uuid primary key default gen_random_uuid(),
+  parent_name text not null,
+  parent_whatsapp text not null,
+  parent_email text,
+  child_name text not null,
+  grade text not null,
+  interest text not null,
+  experience_level text not null default 'new' check (experience_level in ('new','some','experienced')),
+  source text not null default 'manual',
+  status text not null default 'new' check (status in ('new','contacted','demo_scheduled','demo_completed','follow_up','converted','lost')),
+  admin_note text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists demo_leads_status_idx on public.demo_leads(status, updated_at desc);
+create index if not exists demo_leads_whatsapp_idx on public.demo_leads(parent_whatsapp);
+
+create table if not exists public.demo_sessions (
+  id uuid primary key default gen_random_uuid(),
+  schedule_event_id uuid not null unique references public.schedule_events(id) on delete restrict,
+  trainer_id uuid not null references public.trainers(id) on delete restrict,
+  session_type text not null check (session_type in ('one_to_one','group')),
+  focus text not null default 'Discovery Session',
+  status text not null default 'scheduled' check (status in ('scheduled','completed','cancelled','no_show')),
+  zoom_meeting_id uuid references public.zoom_meetings(id) on delete set null,
+  created_by uuid references public.profiles(id) on delete set null,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists demo_sessions_trainer_idx on public.demo_sessions(trainer_id, status);
+
+create table if not exists public.demo_session_participants (
+  id uuid primary key default gen_random_uuid(),
+  demo_session_id uuid not null references public.demo_sessions(id) on delete cascade,
+  lead_id uuid not null references public.demo_leads(id) on delete restrict,
+  guest_token_hash text not null unique,
+  guest_token_expires_at timestamptz not null,
+  attendance text not null default 'scheduled' check (attendance in ('scheduled','attended','no_show','cancelled')),
+  engagement text check (engagement in ('low','good','excellent')),
+  understanding text check (understanding in ('developing','good','strong')),
+  problem_solving text check (problem_solving in ('developing','good','strong')),
+  confidence text check (confidence in ('low','comfortable','high')),
+  explored text,
+  strengths text[] not null default '{}',
+  mentor_note text,
+  recommended_course_id uuid references public.courses(id) on delete set null,
+  recommended_format text check (recommended_format in ('one_to_one','small_group')),
+  recommended_frequency text,
+  fit text check (fit in ('strong','possible','not_now')),
+  summary_published_at timestamptz,
+  summary_viewed_at timestamptz,
+  parent_rating text check (parent_rating in ('excellent','good','not_sure')),
+  parent_feedback text,
+  converted_student_id uuid references public.students(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(demo_session_id, lead_id)
+);
+create index if not exists demo_participants_session_idx on public.demo_session_participants(demo_session_id);
+create index if not exists demo_participants_lead_idx on public.demo_session_participants(lead_id);
+
+create table if not exists public.demo_guest_requests (
+  id uuid primary key default gen_random_uuid(),
+  demo_session_participant_id uuid not null references public.demo_session_participants(id) on delete cascade,
+  request_type text not null check (request_type in ('reschedule','help')),
+  message text not null default '',
+  status text not null default 'open' check (status in ('open','resolved','closed')),
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+create index if not exists demo_guest_requests_status_idx on public.demo_guest_requests(status, created_at desc);
+
+alter table public.demo_leads enable row level security;
+alter table public.demo_sessions enable row level security;
+alter table public.demo_session_participants enable row level security;
+alter table public.demo_guest_requests enable row level security;
+grant all on table public.demo_leads to service_role;
+grant all on table public.demo_sessions to service_role;
+grant all on table public.demo_session_participants to service_role;
+grant all on table public.demo_guest_requests to service_role;
+
+create unique index if not exists zoom_meetings_demo_schedule_event_unique
+  on public.zoom_meetings(schedule_event_id)
+  where schedule_event_id is not null and purpose='demo';
+
+notify pgrst, 'reload schema';

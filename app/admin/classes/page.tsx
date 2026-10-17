@@ -9,6 +9,7 @@ import {Pagination} from "@/components/admin/Pagination";
 import {SortableTh} from "@/components/admin/SortableTh";
 import {listAdminCohorts,listAdminCourses,listAdminStudents,listAdminTrainers,listClassAttendance,listScheduleEvents} from "@/lib/repository";
 import {displayLabel} from "@/lib/display";
+import {exportWorkbook} from "@/lib/export-workbook";
 import {IST_TIMEZONE,shortTimeZoneLabel,zonedRangeParts} from "@/lib/timezones";
 import type {CohortAdminRecord,CourseAdminRecord,ScheduleEvent,StudentAdminRecord,TrainerAdminRecord} from "@/lib/types";
 
@@ -32,8 +33,23 @@ export default function ClassesPage(){
  useEffect(()=>setPage(1),[q,trainer,course,status,delivery,occurrence,view,sortKey,sortDir]);const paged=filtered.slice((page-1)*pageSize,page*pageSize);
  const todayRows=events.filter(e=>istDate(e)===today&&!['cancelled','rescheduled'].includes(e.status));const tomorrowRows=events.filter(e=>istDate(e)===tomorrow&&scheduled(e));const pending=events.filter(e=>isPast(e)&&scheduled(e)).length;const recentExceptions=events.filter(e=>istDate(e)>=thirtyDaysAgo&&istDate(e)<=today&&(['cancelled','rescheduled','missed','makeup'].includes(e.status)||(e.occurrenceKind&&e.occurrenceKind!=="regular"))).length;const todayCompleted=todayRows.filter(e=>e.status==="conducted").length;const todayRemaining=todayRows.filter(scheduled).length;
  function sort(column:SortKey){if(sortKey===column)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortKey(column);setSortDir("asc")}}
+ async function exportClasses(){
+  const ids=new Set(filtered.map(e=>e.id));
+  await exportWorkbook(`Robotronix-Classes-${view}-${new Date().toISOString().slice(0,10)}.xlsx`,[
+   {name:"Classes",rows:filtered.map(e=>{const x=istRange(e);const a=attendance.filter(y=>y.scheduleEventId===e.id);const attended=a.filter(y=>y.status==="attended"||y.status==="late").length;return{
+    "Class ID":e.id,"Class / Learner or Cohort":classLabel(e),"Delivery":classSub(e),"Course":courseName(e.courseId),"Trainer":trainerName(e.trainerId),
+    "IST Date":x.startDate,"IST Start":x.startTime,"IST End":x.endTime,"Original Timezone":e.timezone,"Local Start":e.startTime,"Local End":e.endTime,
+    "Status":displayLabel(e.status),"Occurrence":displayLabel(e.occurrenceKind??"regular"),"Actual Duration Min":e.actualDurationMinutes??"",
+    "Attendance Recorded":a.length,"Attended / Late":attended,"Absent / Excused":a.length-attended,"Notes":e.notes||""
+   }})},
+   {name:"Attendance",rows:attendance.filter(a=>ids.has(a.scheduleEventId)).map(a=>{const e=events.find(ev=>ev.id===a.scheduleEventId);return{
+    "Class ID":a.scheduleEventId,"Date":e?istDate(e):"","Class":e?classLabel(e):"","Course":e?courseName(e.courseId):"",
+    "Trainer":e?trainerName(e.trainerId):"","Student":studentName(a.studentId),"Attendance":displayLabel(a.status),"Note":a.note||"","Updated At":a.updatedAt||""
+   }})}
+  ]);
+ }
  const tabs:Array<[View,string]>=[["today","Today"],["tomorrow","Tomorrow"],["next7","Next 7 Days"],["needs_update","Needs Update"],["exceptions","Exceptions"],["history","History"]];
- return <RoleGuard allow={["admin"]}><AppShell role="admin"><AdminPageHeader title="Classes" description="See what is happening today, tomorrow and over the next week, then resolve missing outcomes and exceptions. Full future planning stays in Schedule." actions={<Link href="/admin/schedule" className="button">Open schedule</Link>}/>
+ return <RoleGuard allow={["admin"]}><AppShell role="admin"><AdminPageHeader title="Classes" description="See what is happening today, tomorrow and over the next week, then resolve missing outcomes and exceptions. Full future planning stays in Schedule." actions={<><button className="button ghost" onClick={exportClasses}>Export Excel</button><Link href="/admin/schedule" className="button">Open schedule</Link></>}/>
  <section className="dashboardKpis"><KpiCard label="Classes today" value={todayRows.length} detail={`${todayRemaining} remaining · ${todayCompleted} completed`} tone="purple"/><KpiCard label="Tomorrow" value={tomorrowRows.length} detail="Scheduled teaching sessions" tone="teal"/><KpiCard label="Past classes needing update" value={pending} detail={pending?"Attendance or outcome still missing":"No overdue class outcomes"} tone="amber"/><KpiCard label="Recent exceptions" value={recentExceptions} detail="Last 30 days · missed, cancelled, rescheduled or makeup" tone="slate"/></section>
  <div className="tabRow professionalTabs classViewTabs">{tabs.map(([k,label])=><button key={k} className={`tabButton ${view===k?'active':''}`} onClick={()=>setView(k)}>{label}</button>)}</div>
  <section className="dataSection"><div className="dataToolbar classFilters"><div className="toolbarSearch"><input className="input" placeholder="Search learner/cohort, trainer or course…" value={q} onChange={e=>setQ(e.target.value)}/></div><select className="input compactInput" value={course} onChange={e=>setCourse(e.target.value)}><option value="all">All courses</option>{courses.map(c=><option value={c.id} key={c.id}>{c.publicName||c.title}</option>)}</select><select className="input compactInput" value={trainer} onChange={e=>setTrainer(e.target.value)}><option value="all">All trainers</option>{trainers.map(t=><option value={t.id} key={t.id}>{t.fullName}</option>)}</select><select className="input compactInput" value={delivery} onChange={e=>setDelivery(e.target.value)}><option value="all">All delivery</option><option value="one_to_one">1-to-1</option><option value="small_group">Cohort</option></select><select className="input compactInput" value={occurrence} onChange={e=>setOccurrence(e.target.value)}><option value="all">All class types</option><option value="regular">Regular</option><option value="rescheduled_replacement">Replacement</option><option value="makeup">Makeup</option><option value="ad_hoc">Ad hoc</option><option value="extra">Extra</option></select><select className="input compactInput" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses</option>{['scheduled','tentative','conducted','rescheduled','makeup','missed','cancelled'].map(x=><option key={x} value={x}>{displayLabel(x)}</option>)}</select></div>

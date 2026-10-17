@@ -4,7 +4,7 @@ import {createClient,type SupabaseClient} from "@supabase/supabase-js";
 const ZOOM_API="https://api.zoom.us/v2";
 const ZOOM_OAUTH="https://zoom.us/oauth/token";
 
-export type ZoomHostSafe={id:string;label:string;zoomUserId:string;zoomEmail:string;zoomAccountId:string|null;status:string;connectedAt:string;lastSyncAt:string|null};
+export type ZoomHostSafe={id:string;label:string;zoomUserId:string;zoomEmail:string;zoomAccountId:string|null;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;connectedAt:string;lastSyncAt:string|null};
 
 type ZoomHostRow={
  id:string;label:string;zoom_user_id:string;zoom_email:string;zoom_account_id:string|null;status:string;
@@ -98,7 +98,7 @@ export async function zoomApi(hostId:string,path:string,init:RequestInit={}){
  return json;
 }
 
-export function safeHost(row:any):ZoomHostSafe{return{id:row.id,label:row.label,zoomUserId:row.zoom_user_id,zoomEmail:row.zoom_email,zoomAccountId:row.zoom_account_id,status:row.status,connectedAt:row.connected_at,lastSyncAt:row.last_sync_at}}
+export function safeHost(row:any):ZoomHostSafe{return{id:row.id,label:row.label,zoomUserId:row.zoom_user_id,zoomEmail:row.zoom_email,zoomAccountId:row.zoom_account_id,status:row.status,enabled:row.enabled!==false,priority:Number(row.priority??100),recordingEnabled:row.recording_enabled!==false,recordingRetentionDays:Number(row.recording_retention_days??60),learnerRecordingDefault:Boolean(row.learner_recording_default),connectedAt:row.connected_at,lastSyncAt:row.last_sync_at}}
 
 export function createMeetingSdkJwt(meetingNumber:string,role:0|1){
  const now=Math.floor(Date.now()/1000)-30,exp=now+60*60*2;
@@ -106,4 +106,14 @@ export function createMeetingSdkJwt(meetingNumber:string,role:0|1){
  const payload=b64url(JSON.stringify({appKey:zoomClientId(),mn:String(meetingNumber),role,iat:now,exp,tokenExp:exp,video_webrtc_mode:1}));
  const unsigned=`${header}.${payload}`;const signature=crypto.createHmac("sha256",zoomClientSecret()).update(unsigned).digest("base64url");
  return `${unsigned}.${signature}`;
+}
+
+
+export async function zoomAuthorizedFetchUrl(hostId:string,url:string,init:RequestInit={}){
+ const db=zoomServiceClient();let row=await activeHost(db,hostId);
+ const request=async(token:string)=>fetch(url,{...init,cache:"no-store",headers:{Authorization:`Bearer ${token}`,...(init.headers||{})}});
+ let response=await request(decryptZoomSecret(row.access_token_encrypted));
+ if(response.status===401){row=await refreshHostToken(db,row);response=await request(decryptZoomSecret(row.access_token_encrypted));}
+ await db.from("zoom_host_accounts").update({last_sync_at:new Date().toISOString()}).eq("id",hostId);
+ return response;
 }

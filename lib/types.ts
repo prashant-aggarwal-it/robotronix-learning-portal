@@ -232,6 +232,7 @@ export interface LearnerProgressRow {
 // ---------------- Experience Layer ----------------
 export interface ExperienceRecentClass {
   scheduleEventId:string; date:string; startTime:string; endTime:string; title:string; attendance:AttendanceStatus;
+  actualDurationMinutes?:number; sessionTopic?:string; projectWorkedOn?:string; skillsWorked?:string[];
 }
 
 export interface LearnerExperienceSnapshot {
@@ -240,6 +241,7 @@ export interface LearnerExperienceSnapshot {
   nextClass?:ScheduleEvent; upcomingClassCount:number; recentClasses:ExperienceRecentClass[];
   projects:LearnerProjectRecord[]; feedback:TrainerFeedbackRecord[]; observations:LearningObservationRecord[];
   activeHold?:EnrollmentHoldRecord; attendanceRecorded:number; absentCount:number; excusedCount:number;
+  plannedSessions?:number; paidSessionBalance?:number; plannedEndDate?:string; scheduleTimezone?:string; cohortId?:string;
 }
 
 // ---------------- Notifications + Communication ----------------

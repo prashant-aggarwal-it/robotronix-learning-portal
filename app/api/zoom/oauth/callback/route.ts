@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {encryptZoomSecret,exchangeZoomCode,readZoomState,zoomServiceClient} from "@/lib/server/zoom";
 export const dynamic="force-dynamic";
 export async function GET(request:NextRequest){
- const base=new URL("/admin/zoom-test",request.url);
+ const base=new URL("/admin/zoom",request.url);
  try{
   const error=request.nextUrl.searchParams.get("error");if(error)throw new Error(request.nextUrl.searchParams.get("reason")||error);
   const code=request.nextUrl.searchParams.get("code"),state=request.nextUrl.searchParams.get("state");if(!code||!state)throw new Error("Zoom did not return an authorization code and state.");
