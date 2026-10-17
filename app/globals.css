@@ -1292,3 +1292,17 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .delightDrawer .panelHeader{margin:0}
 @media(max-width:1100px){.postClassCard,.attentionCard,.milestoneCard,.renewalCard,.supportCard,.advocacyCard{grid-column:span 12}}
 @media(max-width:700px){.delightHeader{flex-direction:column}.delightSummaryRows{grid-template-columns:1fr}.attentionList>div{grid-template-columns:1fr;gap:4px}.delightCard{padding:17px}.delightGrid{gap:11px}}
+
+
+/* Calendar experience */
+.calendarWorkspace{display:grid;gap:18px}
+.learnerCalendarPanel{overflow:hidden}
+.monthCalendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:#e8e6ef;border:1px solid #e8e6ef;border-radius:18px;overflow:hidden}
+.monthDayName{background:#f7f6fb;padding:10px;text-align:center;font-size:11px;font-weight:850;color:#687187;text-transform:uppercase;letter-spacing:.06em}
+.monthCell{min-height:112px;background:#fff;border:0;padding:10px;display:grid;align-content:start;gap:8px;text-align:left;cursor:pointer}
+.monthCell:hover{background:#fbfaff}.monthCell.outside{background:#fafafa;color:#a5a9b5}.monthCell.selected{box-shadow:inset 0 0 0 2px #7756d8;background:#fbf9ff}
+.monthCell>span{font-weight:850;font-size:13px}.monthCell>div{display:grid;gap:5px}.monthCell i{font-style:normal;font-size:10.5px;line-height:1.35;color:#4f5670;background:#f1eefb;border-radius:8px;padding:5px 6px}.monthCell small{font-size:10px;color:#7d8497}
+.calendarEventList{display:grid;gap:10px}.calendarEventCard{display:flex;justify-content:space-between;gap:18px;align-items:center;border:1px solid #e7e5ef;border-radius:16px;padding:15px 16px;background:#fff}.calendarEventCard h3{margin:7px 0 3px;font-size:15px}.calendarEventCard p{margin:0;color:#737b90;font-size:12px}.calendarEventActions{display:grid;gap:8px;justify-items:end}.calendarActions{gap:6px}
+.trainerCalendarSubscription .calendarSubscribeHelp{margin-top:12px;display:grid;gap:7px;padding:13px;border-radius:14px;background:#f8f7fc;border:1px solid #e8e5f2}.calendarSubscribeHelp span{font-size:12px;color:#687187}.calendarSubscribeHelp code{display:block;max-width:100%;overflow-wrap:anywhere;padding:9px 10px;border-radius:9px;background:#fff;border:1px solid #e7e4ef;font-size:11px;color:#4b4760}
+@media(max-width:900px){.monthCell{min-height:88px;padding:7px}.monthCell i{font-size:9.5px}.calendarEventCard{align-items:flex-start;flex-direction:column}.calendarEventActions{justify-items:start}}
+@media(max-width:640px){.monthCalendar{grid-template-columns:repeat(7,minmax(40px,1fr));overflow:auto}.monthCell{min-height:68px}.monthCell i{display:none}.monthDayName{padding:7px 3px;font-size:9px}}
