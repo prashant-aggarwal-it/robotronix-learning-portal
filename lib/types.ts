@@ -240,6 +240,7 @@ export interface LearnerExperienceSnapshot {
   nextClass?:ScheduleEvent; upcomingClassCount:number; recentClasses:ExperienceRecentClass[];
   projects:LearnerProjectRecord[]; feedback:TrainerFeedbackRecord[]; observations:LearningObservationRecord[];
   activeHold?:EnrollmentHoldRecord; attendanceRecorded:number; absentCount:number; excusedCount:number;
+  plannedSessions?:number; paidSessionBalance?:number; plannedEndDate?:string; scheduleTimezone?:string;
 }
 
 // ---------------- Notifications + Communication ----------------
