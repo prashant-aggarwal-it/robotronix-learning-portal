@@ -25,6 +25,7 @@ const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}
     {label:"Enrollments & Cohorts",href:"/admin/enrollments",group:"Delivery"},
     {label:"Schedule",href:"/admin/schedule",group:"Operations"},
     {label:"Classes",href:"/admin/classes",group:"Operations"},
+    {label:"Zoom Classroom",href:"/admin/zoom",group:"Operations"},
     {label:"Operational Alerts",href:"/admin/alerts",group:"Operations"},
     {label:"Corrections & Audit",href:"/admin/audit",group:"Operations"},
     {label:"Fees & Earnings",href:"/admin/finance",group:"Finance"},
