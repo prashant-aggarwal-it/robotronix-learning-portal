@@ -20,7 +20,7 @@
    document.getElementById('boot').textContent='Initializing Zoom Meeting SDK…';
    ZoomMtg.setZoomJSLib('https://source.zoom.us/6.5.0/lib','/av');ZoomMtg.preLoadWasm();ZoomMtg.prepareWebSDK();
    document.getElementById('zmmtg-root').style.display='block';
-   ZoomMtg.init({leaveUrl:'/admin/zoom-test',patchJsMedia:true,success:function(){
+   ZoomMtg.init({leaveUrl:p.leaveUrl||'/admin/zoom-test',patchJsMedia:true,success:function(){
     send('ROBOTRONIX_ZOOM_STATUS','Zoom initialized. Joining meeting…');
     ZoomMtg.join({signature:p.signature,meetingNumber:p.meetingNumber,passWord:p.password||'',userName:p.userName||'Robotronix User',zak:p.zak||'',success:function(){document.getElementById('boot').style.display='none';send('ROBOTRONIX_ZOOM_STATUS','Connected to Zoom classroom.');},error:function(err){send('ROBOTRONIX_ZOOM_ERROR',(err&&err.reason)||JSON.stringify(err));}});
    },error:function(err){send('ROBOTRONIX_ZOOM_ERROR',(err&&err.reason)||JSON.stringify(err));}});
