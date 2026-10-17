@@ -73,6 +73,7 @@ create table if not exists public.zoom_recordings (
   recording_end timestamptz,
   play_url text,
   download_url text,
+  share_passcode_encrypted text,
   status text not null default 'completed' check(status in ('processing','completed','deleted','failed')),
   learner_visible boolean not null default false,
   retain_until timestamptz,
