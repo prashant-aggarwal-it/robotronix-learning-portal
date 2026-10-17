@@ -14,10 +14,17 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{schedule
    .eq("schedule_event_id",scheduleEventId).eq("purpose","class").maybeSingle();
   if(error)throw new Error(error.message);
   const window=classJoinWindow(access.event,auth.profile.role);
+  let recordingId:string|null=null;
+  if(meeting?.id&&meeting.recording_status==="ready"){
+   const {data:recording}=await auth.admin.from("zoom_recordings").select("id,learner_visible,status")
+    .eq("zoom_meeting_id",meeting.id).eq("status","completed").order("created_at",{ascending:false}).limit(1).maybeSingle();
+   const privileged=auth.profile.role==="admin"||Boolean(access.canHost);
+   if(recording&&(privileged||(meeting.learner_recording_visible&&recording.learner_visible)))recordingId=recording.id;
+  }
   return NextResponse.json({ok:true,classroom:{
    available:Boolean(meeting&&!["cancelled","error"].includes(meeting.status)),
    canHost:access.canHost,canJoin:access.canJoin,withinJoinWindow:window.allowed,opensAt:window.opensAt,closesAt:window.closesAt,
-   meeting:meeting?{id:meeting.id,status:meeting.status,recordingEnabled:meeting.recording_enabled,recordingStatus:meeting.recording_status,learnerRecordingVisible:meeting.learner_recording_visible,lastError:meeting.last_error}:null
+   meeting:meeting?{id:meeting.id,status:meeting.status,recordingEnabled:meeting.recording_enabled,recordingStatus:meeting.recording_status,learnerRecordingVisible:meeting.learner_recording_visible,recordingId,lastError:meeting.last_error}:null
   }},{headers:{"Cache-Control":"no-store"}});
  }catch(error){
   return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:400});
