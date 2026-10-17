@@ -127,6 +127,8 @@ Important production values include:
 ```text
 NEXT_PUBLIC_APP_ENV=production
 NEXT_PUBLIC_SITE_URL=https://portal.robotronixstemlab.com
+# Optional: direct Google "Write a review" link used only after positive learner milestones
+NEXT_PUBLIC_GOOGLE_REVIEW_URL=
 ZOOM_REDIRECT_URI=https://portal.robotronixstemlab.com/api/zoom/oauth/callback
 ```
 
