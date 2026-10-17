@@ -102,6 +102,7 @@ create table if not exists public.zoom_webhook_events (
   processing_error text,
   attempt_count integer not null default 0
 );
+alter table public.zoom_webhook_events add column if not exists attempt_count integer not null default 0;
 
 alter table public.zoom_join_intents enable row level security;
 alter table public.zoom_participant_sessions enable row level security;
