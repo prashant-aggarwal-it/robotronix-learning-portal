@@ -27,8 +27,15 @@ export async function POST(request:NextRequest){
     .select("id,host_account_id,zoom_meeting_id,passcode,purpose,status,schedule_event_id")
     .eq("id",body.meetingId).maybeSingle();
    if(error)throw new Error(error.message);meeting=data;
-   if(!meeting||meeting.purpose!=="poc")throw new Error("POC meeting not found.");
-   if(mode==="host"&&!["admin","trainer"].includes(auth.profile.role))return NextResponse.json({ok:false,error:"Only Admin or Trainer can start the POC classroom."},{status:403});
+   if(!meeting)throw new Error("Zoom meeting not found.");
+   if(meeting.purpose==="general"){
+    if(auth.profile.role!=="admin")return NextResponse.json({ok:false,error:"Administrator access required for this meeting."},{status:403});
+    if(mode!=="host")return NextResponse.json({ok:false,error:"External guests should use the shared invitation link."},{status:403});
+   }else if(meeting.purpose==="poc"){
+    if(mode==="host"&&!["admin","trainer"].includes(auth.profile.role))return NextResponse.json({ok:false,error:"Only Admin or Trainer can start the POC classroom."},{status:403});
+   }else{
+    throw new Error("This meeting must be opened from its scheduled classroom.");
+   }
   }else throw new Error("Meeting or schedule event id is required.");
 
   if(!meeting)throw new Error("Zoom classroom has not been provisioned for this class yet.");
@@ -53,7 +60,7 @@ export async function POST(request:NextRequest){
   return NextResponse.json({ok:true,session:{
    meetingNumber:String(meeting.zoom_meeting_id),password:String(meeting.passcode||""),
    signature:createMeetingSdkJwt(String(meeting.zoom_meeting_id),role),zak,userName,role,
-   leaveUrl:scheduleEventId?"/"+auth.profile.role:"/admin/zoom-test"
+   leaveUrl:scheduleEventId?"/"+auth.profile.role:(meeting.purpose==="general"?"/admin/zoom":"/admin/zoom-test")
   }},{headers:{"Cache-Control":"no-store"}});
  }catch(error){
   return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:400});
