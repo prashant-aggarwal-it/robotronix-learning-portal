@@ -676,3 +676,25 @@ BEGIN
   IF to_regclass('public.zoom_host_accounts') IS NULL THEN RAISE EXCEPTION 'Missing zoom_host_accounts'; END IF;
   IF to_regclass('public.zoom_meetings') IS NULL THEN RAISE EXCEPTION 'Missing zoom_meetings'; END IF;
 END $$;
+
+
+-- K. DEMO EXPERIENCE V1
+SELECT
+  'K_DEMO_EXPERIENCE_TABLES' AS section,
+  table_name
+FROM information_schema.tables
+WHERE table_schema='public'
+  AND table_name IN ('demo_leads','demo_sessions','demo_session_participants','demo_guest_requests')
+ORDER BY table_name;
+
+DO $$
+BEGIN
+  IF to_regclass('public.demo_leads') IS NULL THEN RAISE EXCEPTION 'Missing demo_leads'; END IF;
+  IF to_regclass('public.demo_sessions') IS NULL THEN RAISE EXCEPTION 'Missing demo_sessions'; END IF;
+  IF to_regclass('public.demo_session_participants') IS NULL THEN RAISE EXCEPTION 'Missing demo_session_participants'; END IF;
+  IF to_regclass('public.demo_guest_requests') IS NULL THEN RAISE EXCEPTION 'Missing demo_guest_requests'; END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE schemaname='public' AND indexname='zoom_meetings_demo_schedule_event_unique'
+  ) THEN RAISE EXCEPTION 'Missing demo Zoom schedule uniqueness index'; END IF;
+END $$;
