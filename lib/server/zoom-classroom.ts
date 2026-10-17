@@ -8,7 +8,7 @@ type ScheduleRow={
 };
 
 type HostRow={
- id:string;label:string;status:string;enabled:boolean;priority:number;recording_enabled:boolean;
+ id:string;label:string;zoom_email:string;status:string;enabled:boolean;priority:number;recording_enabled:boolean;
  recording_retention_days:number;learner_recording_default:boolean;
 };
 
@@ -38,7 +38,7 @@ async function deliveryIsOnline(db:SupabaseClient,event:ScheduleRow){
 
 async function loadHosts(db:SupabaseClient){
  const {data,error}=await db.from("zoom_host_accounts")
-  .select("id,label,status,enabled,priority,recording_enabled,recording_retention_days,learner_recording_default")
+  .select("id,label,zoom_email,status,enabled,priority,recording_enabled,recording_retention_days,learner_recording_default")
   .eq("status","connected").eq("enabled",true)
   .order("priority",{ascending:true}).order("connected_at",{ascending:true});
  if(error)throw new Error(error.message);
@@ -256,7 +256,7 @@ export async function createGeneralZoomMeeting(db:SupabaseClient,input:{
   await deleteRemoteMeetingSafely(host.id,String(created.id));
   throw new Error(error.message);
  }
- return {...data,hostLabel:host.label,hostEmail:(host as any).zoom_email||""};
+ return {...data,hostLabel:host.label,hostEmail:host.zoom_email||""};
 }
 
 export async function cancelGeneralZoomMeeting(db:SupabaseClient,meetingId:string){
