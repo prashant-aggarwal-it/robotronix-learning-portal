@@ -1,7 +1,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 const root=process.cwd();
-const required=['package.json','app/layout.tsx','app/page.tsx','app/globals.css','lib/repository.ts','lib/supabase/browser.ts','supabase/production-v1-baseline.sql','.env.example','netlify.toml'];
+const required=[
+  'package.json',
+  'app/layout.tsx',
+  'app/page.tsx',
+  'app/globals.css',
+  'lib/repository.ts',
+  'lib/supabase/browser.ts',
+  'database/99_dev_tools/00_DEV_ONLY_RESET_PUBLIC_SCHEMA.sql',
+  'database/01_install/01_CREATE_SCHEMA.sql',
+  'database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql',
+  'database/03_verify/01_VERIFY_RELEASE.sql',
+  '.env.example',
+  'netlify.toml'
+];
 let errors=[];
 for(const f of required){if(!fs.existsSync(path.join(root,f))) errors.push(`Missing ${f}`)}
 function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)])}

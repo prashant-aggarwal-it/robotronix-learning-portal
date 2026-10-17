@@ -1,67 +1,10 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { getCurrentAuthUser, getCurrentProfile } from "@/lib/repository";
-
-export default function AuthCallbackPage() {
-  const router = useRouter();
-  const [message, setMessage] = useState("Finishing your secure sign-in…");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function routeSignedInUser() {
-      try {
-        // Supabase detects the OAuth session from the callback URL in the browser.
-        // Give the client a moment to persist the session before resolving the role.
-        let user = await getCurrentAuthUser();
-        if (!user) {
-          await new Promise(resolve => setTimeout(resolve, 350));
-          user = await getCurrentAuthUser();
-        }
-
-        if (cancelled) return;
-
-        if (!user) {
-          router.replace("/");
-          return;
-        }
-
-        const profile = await getCurrentProfile();
-        if (cancelled) return;
-
-        if (!profile) {
-          // A brand-new Google user has authenticated successfully but has not yet
-          // been linked to an Admin / Trainer / Parent / Student portal profile.
-          router.replace("/onboarding");
-          return;
-        }
-
-        const destination = {
-          admin: "/admin",
-          trainer: "/trainer",
-          parent: "/parent",
-          student: "/student",
-        }[profile.role];
-
-        router.replace(destination ?? "/");
-      } catch (error) {
-        console.error("Unable to complete OAuth role routing", error);
-        if (!cancelled) {
-          setMessage("We could not finish signing you in. Returning to the login page…");
-          window.setTimeout(() => router.replace("/"), 1200);
-        }
-      }
-    }
-
-    routeSignedInUser();
-    return () => { cancelled = true; };
-  }, [router]);
-
-  return (
-    <main className="loginShell">
-      <div className="card">{message}</div>
-    </main>
-  );
+import {useEffect,useState} from "react";
+import {useRouter} from "next/navigation";
+import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {getCurrentAccountAccess} from "@/lib/repository";
+const sleep=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+export default function AuthCallbackPage(){
+ const router=useRouter();const[message,setMessage]=useState("Finishing your secure sign-in…");
+ useEffect(()=>{let cancelled=false;async function finish(){try{const supabase=getSupabaseBrowserClient();if(!supabase)throw new Error("Supabase is not configured.");const params=new URLSearchParams(window.location.search);const code=params.get("code");if(code){setMessage("Securing your Google session…");const{error}=await supabase.auth.exchangeCodeForSession(code);if(error&&!/code verifier/i.test(error.message))throw error;}let session=(await supabase.auth.getSession()).data.session;for(let i=0;!session&&i<12;i++){await sleep(250);session=(await supabase.auth.getSession()).data.session;}if(cancelled)return;if(!session?.user){setMessage("Google sign-in completed, but the portal session could not be restored. Please try again.");await sleep(1400);router.replace("/");return;}const access=await getCurrentAccountAccess();if(cancelled)return;if(access.state==="disabled"){setMessage("Your Robotronix™ portal access is disabled. Please contact Robotronix Admin.");return;}if(access.state==="unlinked"){router.replace("/onboarding");return;}const destination={admin:"/admin",trainer:"/trainer",parent:"/parent",student:"/student"}[access.role!];router.replace(destination||"/");}catch(error){console.error("Unable to complete OAuth role routing",error);if(!cancelled)setMessage("We could not finish signing you in. Please return to the login page and try again.");}}void finish();return()=>{cancelled=true}},[router]);return <main className="loginShell"><div className="card authCallbackCard">{message}</div></main>;
 }

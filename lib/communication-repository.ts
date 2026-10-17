@@ -175,7 +175,17 @@ export async function listNotifications(
   if (options.trainerId) q = q.or(`trainer_id.is.null,trainer_id.eq.${options.trainerId}`);
   if (options.studentId) q = q.or(`student_id.is.null,student_id.eq.${options.studentId}`);
   const { data } = await q;
-  return (data ?? []).map((r: any) => ({
+  let scoped=data??[];
+  if(role==="parent"){
+    const{data:{session}}=await supabase.auth.getSession();
+    if(session?.user){
+      const{data:parent}=await supabase.from("parents").select("id").eq("profile_id",session.user.id).maybeSingle();
+      const{data:links}=parent?.id?await supabase.from("parent_students").select("student_id").eq("parent_id",parent.id):{data:[] as any[]};
+      const allowed=new Set((links??[]).map((x:any)=>x.student_id));
+      scoped=scoped.filter((r:any)=>r.recipient_profile_id===session.user.id||(r.student_id&&allowed.has(r.student_id)));
+    }
+  }
+  return scoped.map((r: any) => ({
     id: r.id,
     recipientRole: r.recipient_role,
     recipientProfileId: r.recipient_profile_id ?? undefined,
@@ -268,7 +278,17 @@ export async function listCommunicationThreads(
   if (role === "trainer" && options.trainerId) q = q.eq("trainer_id", options.trainerId);
   if (role === "parent" && options.parentId) q = q.eq("parent_id", options.parentId);
   const { data } = await q;
-  return (data ?? []).map((r: any) => ({
+  let scoped=data??[];
+  if(role==="parent"){
+    const{data:{session}}=await supabase.auth.getSession();
+    if(session?.user){
+      const{data:parent}=await supabase.from("parents").select("id").eq("profile_id",session.user.id).maybeSingle();
+      const{data:links}=parent?.id?await supabase.from("parent_students").select("student_id").eq("parent_id",parent.id):{data:[] as any[]};
+      const allowed=new Set((links??[]).map((x:any)=>x.student_id));
+      scoped=scoped.filter((r:any)=>r.recipient_profile_id===session.user.id||(r.student_id&&allowed.has(r.student_id)));
+    }
+  }
+  return scoped.map((r: any) => ({
     id: r.id,
     category: r.category,
     status: r.status,

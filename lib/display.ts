@@ -7,7 +7,7 @@ const human:Record<string,string>={
   one_to_one:'1-to-1',small_group:'Cohort',online:'Online',offline:'Offline',hybrid:'Hybrid',
   recurring:'Recurring',flexible:'Flexible',ad_hoc:'Ad-hoc',rescheduled_replacement:'Rescheduled Replacement',extra:'Extra',regular:'Regular',
   waiting_for_team:'Waiting for Team',waiting_for_parent:'Waiting for Parent',follow_up:'Needs Attention',reinforce:'Review Next Class',on_track:'On Track',
-  per_class:'Per Class',hourly:'Hourly',monthly:'Monthly',retainer:'Retainer',needs_update:'Needs Update',verified:'Verified',pending:'Pending',approved:'Approved',paid:'Paid',void:'Void',day:'Day',night:'Night',no_show:'No Show',bank:'Bank Transfer',upi:'UPI',demo:'Demo',school:'School Session',workshop:'Workshop',other:'Other'
+  fixed_program:'Fixed Program',short_package:'Short Package',open_ended:'Open-ended',per_class:'Per Class',hourly:'Hourly',monthly:'Monthly',retainer:'Retainer',needs_update:'Needs Update',verified:'Verified',pending:'Pending',approved:'Approved',paid:'Paid',void:'Void',day:'Day',night:'Night',no_show:'No Show',bank:'Bank Transfer',upi:'UPI',demo:'Demo',school:'School Session',workshop:'Workshop',other:'Other'
 };
 export function displayLabel(value?:string|null){if(!value)return '—';return human[value]??value.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());}
 export function learningSignalLabel(value:LearningStatus){return value==='on_track'?'On Track':value==='reinforce'?'Review Next Class':'Needs Attention';}

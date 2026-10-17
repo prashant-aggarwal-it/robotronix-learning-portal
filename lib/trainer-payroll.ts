@@ -3,7 +3,7 @@ import {IST_TIMEZONE,zonedRangeParts} from "./timezones";
 
 export const DEFAULT_COMP_PLAN:Omit<TrainerCompensationPlan,"id"|"trainerId"|"updatedAt">={
  timezone:IST_TIMEZONE,dayStart:"08:00",dayEnd:"22:00",oneToOneDay:300,oneToOneNight:400,groupDay:350,groupNight:450,
- demoDay:80,demoNight:100,demoConversionDay:50,demoConversionNight:100,noShowPercent:0,cancelledPercent:0,
+ demoDay:80,demoNight:100,demoConversionDay:50,demoConversionNight:100,trainerNoShowPenaltyPercent:100,lateGraceMinutes:5,latePenaltyPercent:0,
  effectiveFrom:"2026-01-01",notes:""
 };
 
@@ -32,12 +32,12 @@ export function calculateTrainerEarning(input:{event:ScheduleEvent;plan:TrainerC
  else if(type==="demo")baseRate=payBand==="day"?plan.demoDay:plan.demoNight;
  const taughtMinutes=event.status==="conducted"&&Number(event.actualDurationMinutes)>0?Number(event.actualDurationMinutes):range.durationMinutes;
  const durationFactor=type==="demo"?1:Math.max(.25,taughtMinutes/60);
- const percent=classOutcome==="no_show"?plan.noShowPercent:classOutcome==="cancelled"?plan.cancelledPercent:100;
+ const percent=classOutcome==="completed"?100:0;
  const calculatedBase=baseRate*durationFactor*(percent/100);
  const conversionApplied=input.conversionApplied??existing?.conversionApplied??false;
  const conversionBonus=conversionApplied&&type==="demo"?(payBand==="day"?plan.demoConversionDay:plan.demoConversionNight):0;
  const adjustment=input.adjustment??existing?.adjustment??0;
- const totalAmount=Math.max(0,Math.round((calculatedBase+conversionBonus+adjustment)*100)/100);
+ const totalAmount=Math.round((calculatedBase+conversionBonus+adjustment)*100)/100;
  return {earningDate:range.startDate,sessionType:type,payBand,durationMinutes:taughtMinutes,learnerCount,classOutcome,baseRate,durationFactor,conversionBonus,adjustment,totalAmount,conversionApplied,adjustmentReason:input.adjustmentReason??existing?.adjustmentReason??""};
 }
 

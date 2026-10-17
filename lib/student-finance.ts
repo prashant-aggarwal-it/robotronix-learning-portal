@@ -1,18 +1,19 @@
 import type {ClassAttendanceRecord, ScheduleEvent, TrainerEarningRecord} from "./types";
-export interface FeePackage {id:string; enrollment_id:string; name:string; scheme:string; currency:string; amount:number; sessions:number; start_date:string; end_date:string; installments:{due:string;amount:number}[]; created_at?:string}
-export interface FeePayment {id:string; package_id:string; amount:number; payment_date:string; method:string; reference:string; kind:"payment"|"refund"; created_at?:string}
+export interface FeePackage {id:string; enrollment_id:string; name:string; scheme:string; currency:string; amount:number; sessions:number; start_date:string; end_date:string; installments:{due:string;amount:number}[]; source?:"portal"|"migration"; notes?:string; created_at?:string}
+export interface FeePayment {id:string; package_id:string; amount:number; payment_date:string; method:string; reference:string; kind:"payment"|"refund"; source?:"portal"|"migration"; created_at?:string}
 export const cents=(n:number)=>Math.round(n*100);
 export const money=(n:number,c="INR")=>new Intl.NumberFormat("en-IN",{style:"currency",currency:c}).format(n);
-export function packageSummary(p:FeePackage,payments:FeePayment[],attendance:ClassAttendanceRecord[],events:ScheduleEvent[],asOf:string,month=""){
+export function packageSummary(p:FeePackage,payments:FeePayment[],attendance:ClassAttendanceRecord[],events:ScheduleEvent[],asOf:string,month="",openingSessions=0){
  const receipts=payments.filter(x=>x.package_id===p.id&&x.payment_date<=asOf);
  const collected=receipts.reduce((s,x)=>s+(x.kind==="refund"?-1:1)*cents(x.amount),0)/100;
  const ids=new Set(attendance.filter(a=>a.enrollmentId===p.enrollment_id&&["attended","late"].includes(a.status)).map(a=>a.scheduleEventId));
  const completed=events.filter(e=>ids.has(e.id)&&e.status==="conducted"&&e.date>=p.start_date&&e.date<=p.end_date&&e.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id)).slice(0,p.sessions);
- const earnedCents=(n:number)=>Math.round(cents(p.amount)*n/p.sessions);
- const earned=earnedCents(completed.length)/100;
+ const earnedCents=(n:number)=>Math.round(cents(p.amount)*Math.min(p.sessions,n)/p.sessions);
+ const completedTotal=Math.min(p.sessions,Math.max(0,openingSessions)+completed.length);
+ const earned=earnedCents(completedTotal)/100;
  const periodEarned=month?(earnedCents(completed.filter(e=>e.date.slice(0,7)<=month).length)-earnedCents(completed.filter(e=>e.date.slice(0,7)<month).length))/100:earned;
  const due=p.installments.filter(i=>i.due<=asOf).reduce((s,i)=>s+cents(i.amount),0)/100;
- return {collected,balance:Math.max(0,p.amount-collected),credit:Math.max(0,collected-p.amount),overdue:Math.max(0,due-collected),earned,periodEarned,advance:Math.max(0,collected-earned),completed:completed.length};
+ return {collected,balance:Math.max(0,p.amount-collected),credit:Math.max(0,collected-p.amount),overdue:Math.max(0,due-collected),earned,periodEarned,advance:Math.max(0,collected-earned),completed:completedTotal,portalCompleted:completed.length};
 }
 export function allocatedCost(enrollmentId:string,earnings:TrainerEarningRecord[],attendance:ClassAttendanceRecord[],events:ScheduleEvent[],month:string){
  return earnings.filter(e=>e.status!=="void"&&(!month||e.earningDate.startsWith(month))).reduce((sum,e)=>{

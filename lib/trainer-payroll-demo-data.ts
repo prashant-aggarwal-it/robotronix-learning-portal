@@ -3,7 +3,7 @@ import type {TrainerCompensationPlan,TrainerEarningRecord,TrainerPayoutRecord} f
 const plans=[
  ["vikas",300,400,350,450],["shamsher",300,400,350,450],["arvind",300,400,350,450],["meera",350,450,400,500],["nandita",300,400,350,450]
 ] as const;
-export const demoTrainerCompensationPlans:TrainerCompensationPlan[]=plans.map(([trainerId,oneToOneDay,oneToOneNight,groupDay,groupNight])=>({id:`payplan-${trainerId}`,trainerId,timezone:"Asia/Kolkata",dayStart:"08:00",dayEnd:"22:00",oneToOneDay,oneToOneNight,groupDay,groupNight,demoDay:80,demoNight:100,demoConversionDay:50,demoConversionNight:100,noShowPercent:0,cancelledPercent:0,effectiveFrom:"2026-01-01",notes:"Fictional QA rate card.",updatedAt:"2026-09-14T08:00:00Z"}));
+export const demoTrainerCompensationPlans:TrainerCompensationPlan[]=plans.map(([trainerId,oneToOneDay,oneToOneNight,groupDay,groupNight])=>({id:`payplan-${trainerId}`,trainerId,timezone:"Asia/Kolkata",dayStart:"08:00",dayEnd:"22:00",oneToOneDay,oneToOneNight,groupDay,groupNight,demoDay:80,demoNight:100,demoConversionDay:50,demoConversionNight:100,trainerNoShowPenaltyPercent:100,lateGraceMinutes:5,latePenaltyPercent:0,effectiveFrom:"2026-01-01",notes:"Fictional QA rate card.",updatedAt:"2026-09-14T08:00:00Z"}));
 
 export const demoTrainerEarnings:TrainerEarningRecord[]=[
  {id:"earn-001",trainerId:"vikas",scheduleEventId:"hist-2-3",earningDate:"2026-09-05",sessionType:"one_to_one",payBand:"day",durationMinutes:60,learnerCount:1,classOutcome:"completed",baseRate:300,durationFactor:1,conversionBonus:0,adjustment:0,totalAmount:300,conversionApplied:false,status:"paid",paidAt:"2026-09-10T10:00:00Z",paymentReference:"QA-AUG-PAID",createdAt:"2026-09-05T12:00:00Z",updatedAt:"2026-09-10T10:00:00Z"},

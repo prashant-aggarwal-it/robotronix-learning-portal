@@ -5,16 +5,15 @@ import {AppShell} from "@/components/AppShell";
 import {SessionCycleProgress} from "@/components/SessionCycleProgress";
 import {RoleGuard} from "@/components/RoleGuard";
 import {FeedbackCard,NextClassCard,ParentActionCard,ProjectSpotlight,learningStatusCopy} from "@/components/experience/ExperienceCards";
-import {getParentLearnerExperiences} from "@/lib/repository";
+import {getParentLearnerExperiences,getCurrentParentSetupState} from "@/lib/repository";
 import type {LearnerExperienceSnapshot} from "@/lib/types";
 
 export default function ParentPage(){
- const[children,setChildren]=useState<LearnerExperienceSnapshot[]|undefined>(undefined);const[selectedId,setSelectedId]=useState<string>("");
- useEffect(()=>{getParentLearnerExperiences().then(rows=>{setChildren(rows);setSelectedId(current=>current||rows[0]?.learner.id||"")})},[]);
+ const[children,setChildren]=useState<LearnerExperienceSnapshot[]|undefined>(undefined);const[selectedId,setSelectedId]=useState<string>("");const[setup,setSetup]=useState<{pending:number;submitted:number}|null>(null);
+ useEffect(()=>{Promise.all([getParentLearnerExperiences(),getCurrentParentSetupState()]).then(([rows,state])=>{setChildren(rows);setSetup(state);setSelectedId(current=>current||rows[0]?.learner.id||"")})},[]);
  const selected=useMemo(()=>children?.find(x=>x.learner.id===selectedId)??children?.[0],[children,selectedId]);
- if(selected){/* keep derived values close to rendering for easy demo/live parity */}
  return <RoleGuard allow={["parent"]}><AppShell role="parent">
-  {children===undefined?<div className="experienceLoading">Loading your family learning space…</div>:!children.length?<div className="experienceEmpty premiumEmpty"><div className="experienceEmptyIcon">◎</div><h2>Your child’s learning space will appear here</h2><p>Complete onboarding or wait for Robotronix™ Admin to activate the enrollment. Once active, progress, projects, classes and mentor insights will connect automatically.</p><Link className="button" href="/onboarding">Complete onboarding</Link></div>:selected&&(()=>{
+  {children===undefined?<div className="experienceLoading">Loading your family learning space…</div>:!children.length?<div className="experienceEmpty premiumEmpty"><div className="experienceEmptyIcon">◎</div>{(setup?.submitted||0)>0?<><h2>Your family setup has been submitted</h2><p>We’re reviewing your learner details. Once an enrollment is activated, classes, progress, projects and mentor updates will appear here automatically.</p><div className="row"><span className="statusBadge status-planned">Pending activation</span><Link className="button ghost" href="/onboarding">+ Add another child</Link></div></>:<><h2>Set up your child’s learning profile</h2><p>Add your child’s details, learning interests and preferred class timings. You can add more than one child to the same family account.</p><Link className="button" href="/onboarding">Start Family Setup</Link></>}</div>:selected&&(()=>{
    const firstName=selected.learner.name.split(" ")[0];
    const status=learningStatusCopy(selected.learner.status);
    const attendedRecent=selected.recentClasses.filter(x=>x.attendance==="attended"||x.attendance==="late").length;
@@ -31,7 +30,7 @@ export default function ParentPage(){
       <div className="parentHeroMetrics"><div><b>{flexible?selected.learner.sessionsCompleted:`${selected.learner.progress}%`}</b><span>{flexible?"Sessions attended":"Course journey"}</span></div><div><b>{selected.learner.attendance}%</b><span>Attendance</span></div><div><b>{completedProjects}</b><span>Projects completed</span></div></div>
       <div className="parentMilestone"><span>Latest momentum</span><b>{milestone}</b></div>
     </div>
-    <div className="familySwitcher"><div className="familySwitcherHead"><span>Viewing learner</span><small>{children.length>1?`${children.length} learners linked`:"Family account"}</small></div><div className="childSwitchRow">{children.map(child=><button key={child.learner.id} className={`childSwitch ${selected.learner.id===child.learner.id?"active":""}`} onClick={()=>setSelectedId(child.learner.id)}><span className="childAvatar">{child.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><span><b>{child.learner.name}</b><small>{child.learner.grade} · {child.courseTitle}</small></span><span className="childSwitchArrow">→</span></button>)}</div><Link className="familyLearnerLink" href={`/parent/learner/${selected.learner.id}`}>Open {firstName}’s learner view →</Link></div>
+    <div className="familySwitcher"><div className="familySwitcherHead"><span>Viewing learner</span><small>{children.length>1?`${children.length} learners linked`:"Family account"}</small></div><div className="childSwitchRow">{children.map(child=><button key={child.learner.id} className={`childSwitch ${selected.learner.id===child.learner.id?"active":""}`} onClick={()=>setSelectedId(child.learner.id)}><span className="childAvatar">{child.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><span><b>{child.learner.name}</b><small>{child.learner.grade} · {child.courseTitle}</small></span><span className="childSwitchArrow">→</span></button>)}</div><Link className="familyLearnerLink" href={`/parent/learner/${selected.learner.id}`}>Open {firstName}’s learner view →</Link><Link className="familyLearnerLink addLearnerLink" href="/onboarding">+ Add another child</Link></div>
    </section>
 
    <section className="parentStoryGrid">

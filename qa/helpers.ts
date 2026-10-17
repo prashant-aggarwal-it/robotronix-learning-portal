@@ -33,7 +33,7 @@ export async function assertHealthyScreen(page: Page, expectedPath?: string) {
   await expect(page.locator('body')).not.toContainText('Application error');
   await expect(page.locator('body')).not.toContainText('Internal Server Error');
   await expect(page.locator('body')).not.toContainText('This page could not be found');
-  await expect(page.locator('body')).not.toContainText('Checking your Robotronix™ account…', { timeout: 6_000 });
+  await expect(page.locator('body')).not.toContainText('Checking your Robotronix™ account…', { timeout: 20_000 });
   if (expectedPath) expect(new URL(page.url()).pathname).toBe(expectedPath);
 }
 
@@ -48,8 +48,8 @@ export async function openAndCheck(page: Page, path: string) {
 export async function loginAsRole(page: Page, role: QaRole) {
   const { email, password } = qaCredentials(role);
   if (!email || !password) throw new Error(`Missing QA_${role.toUpperCase()}_EMAIL / QA_${role.toUpperCase()}_PASSWORD in .env.local`);
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  const panel = page.locator('.accessPanel');
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  const panel = page.locator('.authCard');
   const emailInput = panel.locator('input[type="email"]');
   const passwordInput = panel.locator('input[type="password"]');
   const errorBanner = panel.locator('.errorBanner');

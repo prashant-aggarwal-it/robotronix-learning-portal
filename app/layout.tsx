@@ -4,8 +4,29 @@ import {GridHorizontalScrollBridge} from "@/components/admin/GridHorizontalScrol
 import {productionConfigurationError} from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "Robotronix™ Learning Portal",
-  description: "Secure learning and operations portal for Robotronix™ families, learners, trainers and administrators.",
+  metadataBase: new URL("https://portal.robotronixstemlab.com"),
+  applicationName: "Robotronix™ Learning Portal",
+  title: {
+    default: "Robotronix™ Learning Portal",
+    template: "%s | Robotronix™ Learning Portal",
+  },
+  description:
+    "Secure learning and operations portal for Robotronix™ families, learners, trainers and administrators.",
+  keywords: [
+    "Robotronix",
+    "Robotronix STEM Lab",
+    "STEM education",
+    "robotics education",
+    "coding classes",
+    "Arduino training",
+    "online robotics classes",
+    "student learning portal",
+    "trainer portal",
+    "parent learning portal",
+  ],
+  creator: "Robotronix™",
+  publisher: "Robotronix™",
+  category: "education",
   robots: {
     index: false,
     follow: false,

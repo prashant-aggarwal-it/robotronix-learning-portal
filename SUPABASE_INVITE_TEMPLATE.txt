@@ -1,0 +1,44 @@
+ROBOTRONIX — SUPABASE INVITE USER TEMPLATE
+
+After replacing the portal files, configure this in:
+Supabase -> Authentication -> Emails -> Templates -> Invite user
+
+Suggested subject:
+You're invited to the Robotronix {{ .Data.portal_label }}
+
+Suggested HTML body:
+
+<h2>Welcome to Robotronix</h2>
+
+<p>Hello {{ .Data.portal_name }},</p>
+
+{{ if eq .Data.portal_role "trainer" }}
+<p>You have been invited to access the Robotronix Learning Portal as a trainer.</p>
+{{ else if eq .Data.portal_role "parent" }}
+<p>You have been invited to access your Robotronix family account.</p>
+{{ else }}
+<p>You have been invited to access the Robotronix Learning Portal.</p>
+{{ end }}
+
+<p>Please click the button below to activate your account and sign in.</p>
+
+<p>
+  <a href="{{ .ConfirmationURL }}">Activate your account</a>
+</p>
+
+<p>If you were not expecting this invitation, you can safely ignore this email.</p>
+
+<p>
+Robotronix™ Learning Portal<br>
+portal.robotronixstemlab.com
+</p>
+
+METADATA PASSED BY THE PORTAL
+- .Data.portal_role : trainer or parent
+- .Data.portal_name : trainer/guardian display name
+- .Data.portal_label: Trainer Portal or Parent Portal
+- .Data.target_type : trainer or student
+
+IMPORTANT
+Authorization still comes from public.profiles.role in the database.
+The email metadata is only for presentation and must never be used as the security authority.
