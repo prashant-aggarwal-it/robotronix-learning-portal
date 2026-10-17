@@ -107,3 +107,13 @@ export function createMeetingSdkJwt(meetingNumber:string,role:0|1){
  const unsigned=`${header}.${payload}`;const signature=crypto.createHmac("sha256",zoomClientSecret()).update(unsigned).digest("base64url");
  return `${unsigned}.${signature}`;
 }
+
+
+export async function zoomAuthorizedFetchUrl(hostId:string,url:string,init:RequestInit={}){
+ const db=zoomServiceClient();let row=await activeHost(db,hostId);
+ const request=async(token:string)=>fetch(url,{...init,cache:"no-store",headers:{Authorization:`Bearer ${token}`,...(init.headers||{})}});
+ let response=await request(decryptZoomSecret(row.access_token_encrypted));
+ if(response.status===401){row=await refreshHostToken(db,row);response=await request(decryptZoomSecret(row.access_token_encrypted));}
+ await db.from("zoom_host_accounts").update({last_sync_at:new Date().toISOString()}).eq("id",hostId);
+ return response;
+}
