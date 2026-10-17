@@ -16,8 +16,10 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
   const {data:meeting,error:meetingError}=await db.from("zoom_meetings").select("id,host_account_id,schedule_event_id,purpose,learner_recording_visible").eq("id",recording.zoom_meeting_id).maybeSingle();
   if(meetingError||!meeting)return new NextResponse("Recording meeting is unavailable.",{status:404});
   let allowed=profile.role==="admin";
-  if(!allowed&&meeting.purpose==="class"&&meeting.schedule_event_id&&recording.learner_visible&&meeting.learner_recording_visible){
-   const access=await classAccessForProfile(db,meeting.schedule_event_id,profile as any);allowed=Boolean(access?.canJoin);
+  if(!allowed&&meeting.purpose==="class"&&meeting.schedule_event_id){
+   const access=await classAccessForProfile(db,meeting.schedule_event_id,profile as any);
+   if(profile.role==="trainer")allowed=Boolean(access?.canHost);
+   else if(recording.learner_visible&&meeting.learner_recording_visible)allowed=Boolean(access?.canJoin);
   }
   if(!allowed)return new NextResponse("You do not have access to this recording.",{status:403});
   const range=request.headers.get("range");
