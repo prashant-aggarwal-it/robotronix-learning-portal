@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { LearnerExperienceSnapshot, LearningStatus, ScheduleEvent } from "@/lib/types";
 import {shortTimeZoneLabel} from "@/lib/timezones";
 import {displayLabel} from "@/lib/display";
+import {ZoomClassActions} from "@/components/ZoomClassActions";
 
 export function learningStatusCopy(status:LearningStatus){
   if(status==="reinforce") return {label:"Strengthening concepts",tone:"amber",title:"Building confidence in key concepts",body:"Your mentor is revisiting a recent concept so the next step feels more confident and independent."};
@@ -40,7 +41,7 @@ export function ProjectVisual({title,compact=false}:{title:string;compact?:boole
 }
 
 export function NextClassCard({event,trainer}:{event?:ScheduleEvent;trainer:string}){
-  return <div className="experienceCard nextClassCard"><div className="nextClassAccent"><span>UP NEXT</span><b>{event?new Intl.DateTimeFormat("en-IN",{day:"2-digit"}).format(new Date(`${event.date}T12:00:00`)):"—"}</b><small>{event?new Intl.DateTimeFormat("en-IN",{month:"short"}).format(new Date(`${event.date}T12:00:00`)):"TBD"}</small></div><div className="experienceCardBody"><span className="experienceLabel">NEXT CLASS</span>{event?<><h3>{formatShortDate(event.date)} · {formatTime(event.startTime)} {shortTimeZoneLabel(event.timezone)}</h3><p>{event.title}</p><div className="experienceMeta"><span>Mentor {trainer}</span><span>{event.deliveryMode.replaceAll("_"," ")}</span></div></>:<><h3>No class scheduled yet</h3><p>Your next class will appear here as soon as the schedule is confirmed.</p></>}</div></div>
+  return <div className="experienceCard nextClassCard"><div className="nextClassAccent"><span>UP NEXT</span><b>{event?new Intl.DateTimeFormat("en-IN",{day:"2-digit"}).format(new Date(`${event.date}T12:00:00`)):"—"}</b><small>{event?new Intl.DateTimeFormat("en-IN",{month:"short"}).format(new Date(`${event.date}T12:00:00`)):"TBD"}</small></div><div className="experienceCardBody"><span className="experienceLabel">NEXT CLASS</span>{event?<><h3>{formatShortDate(event.date)} · {formatTime(event.startTime)} {shortTimeZoneLabel(event.timezone)}</h3><p>{event.title}</p><div className="experienceMeta"><span>Mentor {trainer}</span><span>{event.deliveryMode.replaceAll("_"," ")}</span></div><ZoomClassActions scheduleEventId={event.id}/></>:<><h3>No class scheduled yet</h3><p>Your next class will appear here as soon as the schedule is confirmed.</p></>}</div></div>
 }
 
 export function ParentActionCard({snapshot}:{snapshot:LearnerExperienceSnapshot}){
