@@ -127,9 +127,17 @@ export async function POST(request:NextRequest){
 
   const db=zoomServiceClient();
   const hash=eventHash(raw);
-  const {error:claimError}=await db.from("zoom_webhook_events").insert({event_hash:hash,event_type:String(body.event||"unknown")});
+  const {error:claimError}=await db.from("zoom_webhook_events").insert({event_hash:hash,event_type:String(body.event||"unknown"),attempt_count:1});
   if(claimError&&String(claimError.code)!=="23505")throw new Error(claimError.message);
-  if(claimError&&String(claimError.code)==="23505")return NextResponse.json({ok:true,duplicate:true});
+  if(claimError&&String(claimError.code)==="23505"){
+   const {data:existing,error:existingError}=await db.from("zoom_webhook_events").select("processed_at,processing_error,attempt_count").eq("event_hash",hash).maybeSingle();
+   if(existingError)throw new Error(existingError.message);
+   if(existing?.processed_at&&!existing.processing_error)return NextResponse.json({ok:true,duplicate:true});
+   const {error:retryError}=await db.from("zoom_webhook_events").update({
+    processed_at:null,processing_error:null,attempt_count:Number(existing?.attempt_count||0)+1
+   }).eq("event_hash",hash);
+   if(retryError)throw new Error(retryError.message);
+  }
 
   try{
    const meeting=await findMeeting(db,body?.payload?.object||{});
@@ -151,7 +159,7 @@ export async function POST(request:NextRequest){
    }
    await db.from("zoom_webhook_events").update({processed_at:new Date().toISOString(),processing_error:null}).eq("event_hash",hash);
   }catch(error){
-   await db.from("zoom_webhook_events").update({processed_at:new Date().toISOString(),processing_error:error instanceof Error?error.message:String(error)}).eq("event_hash",hash);
+   await db.from("zoom_webhook_events").update({processed_at:null,processing_error:error instanceof Error?error.message:String(error)}).eq("event_hash",hash);
    throw error;
   }
   return NextResponse.json({ok:true});
