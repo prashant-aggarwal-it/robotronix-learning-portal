@@ -5,6 +5,7 @@ import {AppShell} from "@/components/AppShell";
 import {SessionCycleProgress} from "@/components/SessionCycleProgress";
 import {RoleGuard} from "@/components/RoleGuard";
 import {FeedbackCard,NextClassCard,ParentActionCard,ProjectSpotlight,learningStatusCopy} from "@/components/experience/ExperienceCards";
+import {ParentDelightHub} from "@/components/experience/ParentDelightHub";
 import {getParentLearnerExperiences,getCurrentParentSetupState} from "@/lib/repository";
 import type {LearnerExperienceSnapshot} from "@/lib/types";
 
@@ -40,6 +41,7 @@ export default function ParentPage(){
 
    <section className="experienceKpis parentKpis"><div className="experienceKpi kpiProgress"><span>{flexible?"Learning sessions":"Course progress"}</span><b>{flexible?selected.learner.sessionsCompleted:`${selected.learner.progress}%`}</b><small>{flexible?"Attended sessions · 8-session rhythm":`${selected.learner.hoursCompleted??0} of ${selected.learner.plannedHours??0} instructional hours · ${selected.learner.hoursRemaining??0} left`}</small></div><div className="experienceKpi kpiAttendance"><span>Attendance</span><b>{selected.learner.attendance}%</b><small>{selected.attendanceRecorded} recorded classes</small></div><div className="experienceKpi kpiProjects"><span>Practical builds</span><b>{completedProjects}</b><small>{selected.projects.length} project records</small></div><div className="experienceKpi kpiSignal"><span>Learning status</span><b className={`statusText ${selected.learner.status}`}>{status.label}</b><small>Based on recent mentor signals</small></div></section>
 
+   <ParentDelightHub snapshot={selected}/>
    <section className="experienceGrid parentDashboardGrid"><div className="experienceStack"><ParentActionCard snapshot={selected}/><FeedbackCard snapshot={selected}/></div><div className="experienceStack"><NextClassCard event={selected.nextClass} trainer={selected.trainerName}/><ProjectSpotlight snapshot={selected} href={`/parent/learner/${selected.learner.id}`}/></div></section>
    <section className="experienceSection recentLearningSection"><div className="experienceSectionHead"><div><span className="experienceLabel">RECENT LEARNING RHYTHM</span><h2>Consistency at a glance</h2><p>Attendance history stays transparent, while only attended classes move course progress forward.</p></div></div><div className="recentClassStrip">{selected.recentClasses.length?selected.recentClasses.map(item=><div className={`recentClass recent-${item.attendance}`} key={item.scheduleEventId}><span className={`attendanceDot ${item.attendance}`}/><div><b>{new Intl.DateTimeFormat("en-IN",{day:"numeric",month:"short"}).format(new Date(`${item.date}T12:00:00`))}</b><small>{item.attendance.charAt(0).toUpperCase()+item.attendance.slice(1)}</small></div></div>):<div className="experienceEmpty compact"><p>No attendance records yet.</p></div>}</div></section>
   </>})()}
