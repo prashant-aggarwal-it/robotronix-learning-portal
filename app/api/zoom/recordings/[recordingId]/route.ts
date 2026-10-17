@@ -18,8 +18,10 @@ async function load(auth:any,recordingId:string){
 }
 async function allowed(auth:any,meeting:any,recording:any){
  if(auth.profile.role==="admin")return true;
- if(meeting.purpose!=="class"||!meeting.schedule_event_id||!recording.learner_visible||!meeting.learner_recording_visible)return false;
+ if(meeting.purpose!=="class"||!meeting.schedule_event_id)return false;
  const access=await classAccessForProfile(auth.admin,meeting.schedule_event_id,auth.profile);
+ if(auth.profile.role==="trainer")return Boolean(access?.canHost);
+ if(!recording.learner_visible||!meeting.learner_recording_visible)return false;
  return Boolean(access?.canJoin);
 }
 
