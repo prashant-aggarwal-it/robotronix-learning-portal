@@ -37,6 +37,14 @@ export async function POST(request:NextRequest){
  const auth=await requireAdmin(request);if("error" in auth)return auth.error;
  const body=await request.json().catch(()=>({})) as any;
  try{
+  if(body.action==="regenerate_link"){
+   const participantId=String(body.participantId||"");if(!participantId)throw new Error("Demo participant is required.");
+   const raw=token(),expires=new Date(Date.now()+30*24*60*60_000).toISOString();
+   const {data,error}=await auth.admin.from("demo_session_participants").update({guest_token_hash:hash(raw),guest_token_expires_at:expires,updated_at:new Date().toISOString()}).eq("id",participantId).select("id").maybeSingle();
+   if(error)throw new Error(error.message);if(!data)throw new Error("Demo participant not found.");
+   return NextResponse.json({ok:true,guestUrl:publicUrl(request,raw)},{headers:{"Cache-Control":"no-store"}});
+  }
+
   if(body.action==="add_participant"){
    const sessionId=String(body.sessionId||"");
    const {data:session,error:sErr}=await auth.admin.from("demo_sessions").select("id,session_type,status").eq("id",sessionId).maybeSingle();
