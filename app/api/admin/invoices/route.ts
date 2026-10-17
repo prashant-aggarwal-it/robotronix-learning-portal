@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin,apiFailure} from "@/lib/server/admin-api";
 import {razorpayMode,razorpayRequest} from "@/lib/server/razorpay";
+import {applyRazorpayInvoiceEntity,syncRazorpayInvoice} from "@/lib/server/razorpay-invoices";
 
 const EXPORT_DECLARATION="SUPPLY MEANT FOR EXPORT UNDER LETTER OF UNDERTAKING WITHOUT PAYMENT OF INTEGRATED TAX";
 const SUPPLIER={
@@ -45,7 +46,7 @@ function billingFromContext(ctx:any){
   country:String((usePrimary?a.country:b.billing_country)||g.billing_country||ctx.student.country||"").trim()
  };
 }
-function uiInvoice(i:any){return{...i,package_id:i.fee_package_id,amount:Number(i.foreign_amount||0),amount_due:Number(i.amount_due??i.foreign_amount??0),amount_paid:Number(i.amount_paid||0),exchange_rate_to_inr:Number(i.fx_rate_to_inr||0),exchange_rate_source:i.fx_source||"",service_name:i.service_title||"",sessions:i.session_count,terms:i.terms_text||"",provider_response:i.razorpay_response||{},provider_request:i.razorpay_payload||{}}}
+function uiInvoice(i:any){return{...i,package_id:i.fee_package_id,amount:Number(i.foreign_amount||0),amount_due:Number(i.amount_due??i.foreign_amount??0),amount_paid:Number(i.amount_paid||0),exchange_rate_to_inr:Number(i.fx_rate_to_inr||0),exchange_rate_source:i.fx_source||"",service_name:i.service_title||"",sessions:i.session_count,terms:i.terms_text||"",provider_response:i.razorpay_response||{},provider_request:i.razorpay_payload||{},last_notification_at:i.metadata?.last_notification_at||null,last_notification_medium:i.metadata?.last_notification_medium||null}}
 
 export async function GET(request:NextRequest){
  const ctx=await requireAdmin(request);if(ctx.error)return ctx.error;const admin=ctx.admin!;
@@ -78,6 +79,9 @@ export async function POST(request:NextRequest){
     const packageId=String(body.packageId||"");const rate=Number(body.exchangeRate);const rateSource=String(body.exchangeRateSource||"");const fxFetchedAt=String(body.fxFetchedAt||"");
     if(!packageId||!Number.isFinite(rate)||rate<=0||!rateSource||!fxFetchedAt)return apiFailure("A fresh automatic exchange rate is required.");
     if(!body.exportEligibilityConfirmed)return apiFailure("Confirm the export-service/LUT eligibility review before creating the invoice.");
+    const {data:existingInvoice,error:existingError}=await admin.from("student_invoices").select("*").eq("fee_package_id",packageId).maybeSingle();
+    if(existingError)throw new Error(existingError.message);
+    if(existingInvoice)return NextResponse.json({ok:true,reused:true,invoice:uiInvoice(existingInvoice)});
     const c=await packageContext(admin,packageId),b=billingFromContext(c);
     if(String(c.pkg.currency).toUpperCase()==="INR")return apiFailure("Razorpay invoice creation is restricted to international fee packages.");
     if(String(b.country).trim().toLowerCase()==="india")return apiFailure("This workflow is for international customers only.");
@@ -99,7 +103,11 @@ export async function POST(request:NextRequest){
     const rzp=await razorpayRequest("/invoices",{method:"POST",body:payload});
     const unit=["BHD","KWD","OMR"].includes(c.pkg.currency)?1000:100;
     const row={fee_package_id:c.pkg.id,enrollment_id:c.enr.id,student_id:c.student.id,parent_id:c.parentId,invoice_number:invoiceNumber,internal_reference:internalRef(c.student.full_name,c.course.code),razorpay_invoice_id:rzp.id,razorpay_invoice_number:rzp.invoice_number||invoiceNumber,razorpay_short_url:rzp.short_url||null,razorpay_payment_id:null,status:rzp.status||"draft",currency:c.pkg.currency,foreign_amount:amount,amount_paid:Number(rzp.amount_paid||0)/unit,amount_due:Number(rzp.amount_due??smallestUnit(amount,c.pkg.currency))/unit,fx_rate_to_inr:rate,fx_source:rateSource,fx_fetched_at:fxFetchedAt,invoice_value_inr:inr,issue_date:issueDate,due_date:dueDate,service_title:serviceName,service_description:serviceDescription,session_count:c.pkg.sessions,customer_name:b.name,customer_email:b.email,customer_phone:b.phone,billing_address_line1:b.line1,billing_address_line2:b.line2,billing_city:b.city,billing_state:b.state,billing_postal_code:b.postal,billing_country:b.country,supplier_name:SUPPLIER.name,supplier_gstin:SUPPLIER.gstin,supplier_address:SUPPLIER.address,supplier_email:SUPPLIER.email,supplier_phone:SUPPLIER.phone,sac_code:SUPPLIER.sac,igst_rate:0,igst_amount:0,cgst_sgst_applicable:false,reverse_charge:false,export_under_lut:true,place_of_supply:place,country_of_destination:b.country,export_declaration:EXPORT_DECLARATION,purpose_code:SUPPLIER.purpose,export_eligibility_confirmed:true,terms_text:invoiceTerms,admin_reviewed_at:new Date().toISOString(),admin_reviewed_by:actorId,razorpay_payload:payload,razorpay_response:rzp,created_by:actorId,updated_at:new Date().toISOString()};
-    const {data,error}=await admin.from("student_invoices").insert(row).select("*").single();if(error)throw new Error(`Razorpay draft ${rzp.id} was created, but the portal ledger could not save it: ${error.message}`);
+    const {data,error}=await admin.from("student_invoices").insert(row).select("*").single();
+    if(error){
+      let compensation="";try{await razorpayRequest("/invoices/"+encodeURIComponent(String(rzp.id))+"/cancel",{method:"POST"});compensation=" The orphan Razorpay draft was automatically cancelled."}catch(cancelError){compensation=" Automatic cancellation of the orphan Razorpay draft also failed; review Razorpay invoice "+rzp.id+" manually."}
+      throw new Error("Razorpay draft "+rzp.id+" was created, but the portal ledger could not save it: "+error.message+compensation);
+    }
     return NextResponse.json({ok:true,invoice:uiInvoice(data)});
   }
   const id=String(body.id||"");if(!id)return apiFailure("Invoice id is required.");
@@ -108,15 +116,23 @@ export async function POST(request:NextRequest){
   if(action==="issue"){
     if(invoice.status!=="draft")return apiFailure("Only a draft invoice can be issued.");
     const rzp=await razorpayRequest(`/invoices/${invoice.razorpay_invoice_id}/issue`,{method:"POST"});
-    const {data,error:ue}=await admin.from("student_invoices").update({status:rzp.status||"issued",razorpay_short_url:rzp.short_url||invoice.razorpay_short_url,razorpay_invoice_number:rzp.invoice_number||invoice.razorpay_invoice_number,razorpay_response:rzp,updated_at:new Date().toISOString()}).eq("id",id).select("*").single();if(ue)throw new Error(ue.message);return NextResponse.json({ok:true,invoice:uiInvoice(data)});
+    const data=await applyRazorpayInvoiceEntity(admin,invoice,rzp,"action");return NextResponse.json({ok:true,invoice:uiInvoice(data)});
   }
   if(action==="notify"){
     if(!["issued","partially_paid"].includes(invoice.status))return apiFailure("Issue the invoice before sending it.");
-    const medium=body.medium==="sms"?"sms":"email";const r=await razorpayRequest(`/invoices/${invoice.razorpay_invoice_id}/notify_by/${medium}`,{method:"POST"});return NextResponse.json({ok:true,...r});
+    const medium=body.medium==="sms"?"sms":"email";const r=await razorpayRequest(`/invoices/${invoice.razorpay_invoice_id}/notify_by/${medium}`,{method:"POST"});
+    const metadata={...(invoice.metadata||{}),last_notification_at:new Date().toISOString(),last_notification_medium:medium};
+    const {error:notifySaveError}=await admin.from("student_invoices").update({metadata,updated_at:new Date().toISOString()}).eq("id",invoice.id);
+    if(notifySaveError)throw new Error("Invoice notification was sent, but the notification audit could not be saved: "+notifySaveError.message);
+    return NextResponse.json({ok:true,...r});
   }
   if(action==="cancel"){
     if(["paid","cancelled","expired"].includes(invoice.status))return apiFailure("This invoice cannot be cancelled in its current state.");
-    const rzp=await razorpayRequest(`/invoices/${invoice.razorpay_invoice_id}/cancel`,{method:"POST"});const {data,error:ue}=await admin.from("student_invoices").update({status:"cancelled",cancelled_at:new Date().toISOString(),razorpay_response:rzp,updated_at:new Date().toISOString()}).eq("id",id).select("*").single();if(ue)throw new Error(ue.message);return NextResponse.json({ok:true,invoice:uiInvoice(data)});
+    const rzp=await razorpayRequest(`/invoices/${invoice.razorpay_invoice_id}/cancel`,{method:"POST"});const data=await applyRazorpayInvoiceEntity(admin,invoice,rzp,"action");return NextResponse.json({ok:true,invoice:uiInvoice(data)});
+  }
+  if(action==="sync"){
+    const data=await syncRazorpayInvoice(admin,invoice);
+    return NextResponse.json({ok:true,invoice:uiInvoice(data)});
   }
   return apiFailure("Unsupported invoice action.");
  }catch(e){return apiFailure(e instanceof Error?e.message:"Invoice operation failed.",500)}
