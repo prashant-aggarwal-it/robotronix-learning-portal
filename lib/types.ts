@@ -232,6 +232,7 @@ export interface LearnerProgressRow {
 // ---------------- Experience Layer ----------------
 export interface ExperienceRecentClass {
   scheduleEventId:string; date:string; startTime:string; endTime:string; title:string; attendance:AttendanceStatus;
+  actualDurationMinutes?:number; sessionTopic?:string; projectWorkedOn?:string; skillsWorked?:string[];
 }
 
 export interface LearnerExperienceSnapshot {
