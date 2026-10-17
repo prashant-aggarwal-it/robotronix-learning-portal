@@ -5,6 +5,7 @@ import {RoleGuard} from "@/components/RoleGuard";
 import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
 import {adminApi} from "@/lib/admin-api-client";
 import {displayLabel} from "@/lib/display";
+import {exportWorkbook} from "@/lib/export-workbook";
 
 type Candidate={packageId:string;packageName:string;currency:string;amount:number;sessions:number;studentName:string;courseTitle:string;courseCode:string;customer:{name:string;email:string;phone:string;line1:string;line2:string;city:string;state:string;postal:string;country:string};addressComplete:boolean;international:boolean};
 type Invoice={
@@ -58,6 +59,14 @@ function Workspace(){
   return true;
  }),[invoiceRows,query,filter]);
  const selected=invoiceRows.find(i=>i.id===selectedId)||null;
+ async function exportInvoices(){await exportWorkbook(`Robotronix-Razorpay-Invoices-${filter}-${new Date().toISOString().slice(0,10)}.xlsx`,[{name:"Invoices",rows:filtered.map(i=>({
+  "Invoice Number":i.invoice_number,"Internal Reference":i.internal_reference,"Customer":i.customer_name,"Email":i.customer_email||"","Phone":i.customer_phone||"",
+  "Country":i.billing_country,"Service":i.service_name,"Currency":i.currency,"Invoice Amount":i.amount,"Amount Paid":i.amount_paid,"Amount Due":i.amount_due,
+  "FX Rate to INR":i.exchange_rate_to_inr,"Invoice Value INR":i.invoice_value_inr,"Issue Date":i.issue_date,"Due Date":i.due_date,"Status":displayLabel(i.status),
+  "Overdue":isOverdue(i)?"Yes":"No","Razorpay Invoice ID":i.razorpay_invoice_id||"","Razorpay Invoice Number":i.razorpay_invoice_number||"",
+  "Razorpay Payment ID":i.razorpay_payment_id||"","Payment Link":i.razorpay_short_url||"","Paid At":i.paid_at||"","Last Synced At":i.last_synced_at||"",
+  "Sync Error":i.sync_error||"","Last Notification At":i.last_notification_at||"","Notification Medium":i.last_notification_medium||""
+ }))}])}
 
  return <>
   <AdminPageHeader eyebrow="INTERNATIONAL RECEIVABLES" title="Razorpay Billing" description="Create, issue, reconcile and track international parent invoices from one Robotronix billing workspace."/>
@@ -72,7 +81,7 @@ function Workspace(){
   </section>
 
   <section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">BILLING CONTROL CENTRE</div><h2>International invoices</h2><p>Create invoices from the learner enrollment billing panel. Use this ledger to issue, send, sync and investigate payments.</p></div><button className="button secondary" disabled={busy} onClick={reload}>Refresh</button></div>
+   <div className="panelHeader"><div><div className="eyebrow">BILLING CONTROL CENTRE</div><h2>International invoices</h2><p>Create invoices from the learner enrollment billing panel. Use this ledger to issue, send, sync and investigate payments.</p></div><div className="row"><button className="button ghost" disabled={busy||!filtered.length} onClick={exportInvoices}>Export Excel</button><button className="button secondary" disabled={busy} onClick={reload}>Refresh</button></div></div>
    <div className="row" style={{gap:8,flexWrap:"wrap",marginBottom:12}}>
     <button className={filter==="all"?"button":"button secondary"} onClick={()=>setFilter("all")}>All · {invoiceRows.length}</button>
     <button className={filter==="draft"?"button":"button secondary"} onClick={()=>setFilter("draft")}>Draft · {counts.draft}</button>
