@@ -28,7 +28,7 @@ function Workspace(){
 
  async function load(){setError("");try{const x=await adminApi("/api/zoom/overview");setHosts(x.hosts||[]);setMeetings(x.meetings||[]);setStorage(x.storageByHost||[])}catch(e){setError(e instanceof Error?e.message:String(e))}}
  useEffect(()=>{load()},[]);
- useEffect(()=>{if(params.get("zoom"))setNotice("Zoom account connected successfully.");if(params.get("error"))setError(String(params.get("error")))},[params]);
+ useEffect(()=>{if(params.get("connected"))setNotice("Zoom account connected successfully"+(params.get("email")?" · "+params.get("email"):"")+".");if(params.get("zoom_error"))setError(String(params.get("zoom_error")))},[params]);
 
  const classes=useMemo(()=>meetings.filter(m=>m.purpose==="class"),[meetings]);
  const general=useMemo(()=>meetings.filter(m=>m.purpose==="general"),[meetings]);
