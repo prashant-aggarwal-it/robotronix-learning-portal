@@ -218,3 +218,53 @@ export function classJoinWindow(event:any,role:string){
  const closes=end.getTime()+60*60_000;
  return {allowed:now>=opens&&now<=closes,opensAt:new Date(opens).toISOString(),closesAt:new Date(closes).toISOString()};
 }
+
+
+export async function createGeneralZoomMeeting(db:SupabaseClient,input:{
+ title:string;startAt?:string;durationMinutes?:number;hostId?:string;recording?:boolean;notes?:string;createdBy:string;
+}){
+ const start=input.startAt?new Date(input.startAt):new Date(Date.now()+60_000);
+ if(Number.isNaN(start.getTime()))throw new Error("Meeting start time is invalid.");
+ const duration=Math.max(15,Math.min(720,Number(input.durationMinutes||60)));
+ const end=new Date(start.getTime()+duration*60_000);
+ const host=await chooseHost(db,start,end,input.hostId);
+ const recording=input.recording??host.recording_enabled;
+ const body={
+  topic:String(input.title||"Robotronix Meeting").trim().slice(0,160)||"Robotronix Meeting",
+  type:2,
+  start_time:start.toISOString(),
+  duration,
+  timezone:"UTC",
+  agenda:String(input.notes||"Robotronix meeting").slice(0,2000),
+  settings:{
+   host_video:true,participant_video:true,join_before_host:false,waiting_room:true,
+   mute_upon_entry:false,audio:"both",auto_recording:recording?"cloud":"none"
+  }
+ };
+ const created=await zoomApi(host.id,"/users/me/meetings",{method:"POST",body:JSON.stringify(body)});
+ const {data,error}=await db.from("zoom_meetings").insert({
+  host_account_id:host.id,schedule_event_id:null,purpose:"general",
+  zoom_meeting_id:String(created.id),zoom_meeting_uuid:created.uuid?String(created.uuid):null,
+  topic:String(created.topic||body.topic),passcode:String(created.password||created.encrypted_password||""),
+  join_url:created.join_url?String(created.join_url):null,status:"scheduled",
+  scheduled_start:start.toISOString(),duration_minutes:duration,created_by:input.createdBy,
+  recording_enabled:recording,recording_status:recording?"pending":"not_expected",
+  recording_retention_days:host.recording_retention_days,learner_recording_visible:false,
+  meeting_notes:String(input.notes||"").slice(0,2000)||null,external_invite_enabled:true
+ }).select("id,host_account_id,zoom_meeting_id,topic,join_url,passcode,status,scheduled_start,duration_minutes,recording_enabled").single();
+ if(error){
+  await deleteRemoteMeetingSafely(host.id,String(created.id));
+  throw new Error(error.message);
+ }
+ return {...data,hostLabel:host.label,hostEmail:(host as any).zoom_email||""};
+}
+
+export async function cancelGeneralZoomMeeting(db:SupabaseClient,meetingId:string){
+ const {data:meeting,error}=await db.from("zoom_meetings").select("*").eq("id",meetingId).eq("purpose","general").maybeSingle();
+ if(error)throw new Error(error.message);
+ if(!meeting)throw new Error("Meeting not found.");
+ if(!["cancelled","ended"].includes(meeting.status))await deleteRemoteMeetingSafely(meeting.host_account_id,meeting.zoom_meeting_id);
+ const {error:updateError}=await db.from("zoom_meetings").update({status:"cancelled",updated_at:new Date().toISOString()}).eq("id",meeting.id);
+ if(updateError)throw new Error(updateError.message);
+ return {id:meeting.id,status:"cancelled" as const};
+}
