@@ -31,6 +31,15 @@ export async function POST(request:NextRequest){
    if(meeting.purpose==="general"){
     if(auth.profile.role!=="admin")return NextResponse.json({ok:false,error:"Administrator access required for this meeting."},{status:403});
     if(mode!=="host")return NextResponse.json({ok:false,error:"External guests should use the shared invitation link."},{status:403});
+   }else if(meeting.purpose==="demo"){
+    if(mode!=="host")return NextResponse.json({ok:false,error:"Demo guests should use their private invitation page."},{status:403});
+    if(auth.profile.role==="trainer"){
+     const {data:trainer}=await auth.admin.from("trainers").select("id").eq("profile_id",auth.profile.id).maybeSingle();
+     const {data:demo}=await auth.admin.from("demo_sessions").select("trainer_id").eq("zoom_meeting_id",meeting.id).maybeSingle();
+     if(!trainer?.id||!demo||demo.trainer_id!==trainer.id)return NextResponse.json({ok:false,error:"This demo is not assigned to you."},{status:403});
+    }else if(auth.profile.role!=="admin"){
+     return NextResponse.json({ok:false,error:"Only the assigned Trainer or Admin can start this demo."},{status:403});
+    }
    }else if(meeting.purpose==="poc"){
     if(mode==="host"&&!["admin","trainer"].includes(auth.profile.role))return NextResponse.json({ok:false,error:"Only Admin or Trainer can start the POC classroom."},{status:403});
    }else{
@@ -60,7 +69,7 @@ export async function POST(request:NextRequest){
   return NextResponse.json({ok:true,session:{
    meetingNumber:String(meeting.zoom_meeting_id),password:String(meeting.passcode||""),
    signature:createMeetingSdkJwt(String(meeting.zoom_meeting_id),role),zak,userName,role,
-   leaveUrl:scheduleEventId?"/"+auth.profile.role:(meeting.purpose==="general"?"/admin/zoom":"/admin/zoom-test")
+   leaveUrl:scheduleEventId?"/"+auth.profile.role:(meeting.purpose==="general"?"/admin/zoom":meeting.purpose==="demo"?(auth.profile.role==="admin"?"/admin/demos":"/trainer/demos"):"/admin/zoom-test")
   }},{headers:{"Cache-Control":"no-store"}});
  }catch(error){
   return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:400});
