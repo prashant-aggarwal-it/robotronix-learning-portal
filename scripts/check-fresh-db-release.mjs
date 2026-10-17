@@ -11,6 +11,10 @@ const must=[
   'migration_type',
   'zoom_host_accounts',
   'zoom_meetings',
+  'demo_leads',
+  'demo_sessions',
+  'demo_session_participants',
+  'demo_guest_requests',
   'grant usage on schema public to authenticated',
 ];
 for(const marker of must){if(!schema.includes(marker))throw new Error(`Fresh schema missing consolidated marker: ${marker}`)}
