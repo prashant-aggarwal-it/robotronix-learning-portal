@@ -15,6 +15,10 @@ alter table public.zoom_host_accounts drop constraint if exists zoom_host_accoun
 alter table public.zoom_host_accounts add constraint zoom_host_accounts_recording_retention_days_check
   check (recording_retention_days between 1 and 3650);
 
+alter table public.zoom_meetings drop constraint if exists zoom_meetings_purpose_check;
+alter table public.zoom_meetings add constraint zoom_meetings_purpose_check
+  check (purpose in ('class','poc','general'));
+
 alter table public.zoom_meetings add column if not exists actual_started_at timestamptz;
 alter table public.zoom_meetings add column if not exists actual_ended_at timestamptz;
 alter table public.zoom_meetings add column if not exists recording_enabled boolean not null default false;
@@ -22,6 +26,8 @@ alter table public.zoom_meetings add column if not exists recording_status text 
 alter table public.zoom_meetings add column if not exists learner_recording_visible boolean not null default false;
 alter table public.zoom_meetings add column if not exists recording_retention_days integer not null default 60;
 alter table public.zoom_meetings add column if not exists last_error text;
+alter table public.zoom_meetings add column if not exists meeting_notes text;
+alter table public.zoom_meetings add column if not exists external_invite_enabled boolean not null default false;
 
 alter table public.zoom_meetings drop constraint if exists zoom_meetings_recording_status_check;
 alter table public.zoom_meetings add constraint zoom_meetings_recording_status_check
@@ -93,7 +99,8 @@ create table if not exists public.zoom_webhook_events (
   event_type text not null,
   received_at timestamptz not null default now(),
   processed_at timestamptz,
-  processing_error text
+  processing_error text,
+  attempt_count integer not null default 0
 );
 
 alter table public.zoom_join_intents enable row level security;
