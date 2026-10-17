@@ -8,7 +8,7 @@ import {adminApi} from "@/lib/admin-api-client";
 
 type Host={id:string;label:string;zoomEmail:string;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;lastSyncAt:string|null};
 type Recording={id:string;recording_type:string;file_type:string;file_size_bytes:number;recording_start:string|null;status:string;learner_visible:boolean;retain_until:string|null;protected_from_deletion:boolean};
-type Meeting={id:string;purpose:"class"|"general";topic:string;status:string;scheduled_start:string;duration_minutes:number;recording_status:string;recording_enabled:boolean;join_url?:string|null;passcode?:string|null;meeting_notes?:string|null;event:any;host?:{label:string;email:string}|null;presence:any;recordings:Recording[]};
+type Meeting={id:string;purpose:"class"|"general"|"demo";topic:string;status:string;scheduled_start:string;duration_minutes:number;recording_status:string;recording_enabled:boolean;join_url?:string|null;passcode?:string|null;meeting_notes?:string|null;event:any;host?:{label:string;email:string}|null;presence:any;recordings:Recording[]};
 
 export default function ZoomAdmin(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Workspace/></AppShell></RoleGuard>}
 
