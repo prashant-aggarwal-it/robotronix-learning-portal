@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useEffect,useState} from "react";
+import {Suspense,useEffect,useState} from "react";
 import {useSearchParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -13,7 +13,7 @@ import type {EnrollmentAdminRecord,StudentAdminRecord,CourseAdminRecord,ClassAtt
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const currencies=['INR','AED','SAR','QAR','OMR','KWD','BHD','USD','EUR','GBP','SGD','HKD','MYR','AUD','NZD','CAD'] as const;
-export default function Finance(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Workspace/></AppShell></RoleGuard>}
+export default function Finance(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Suspense fallback={<p>Loading finance…</p>}><Workspace/></Suspense></AppShell></RoleGuard>}
 function Workspace(){
  const searchParams=useSearchParams();const requestedEnrollment=searchParams.get("enrollment")||"";const openNewPackage=searchParams.get("newPackage")==="1";
  const [packages,setPackages]=useState<FeePackage[]>([]),[payments,setPayments]=useState<FeePayment[]>([]),[enrollments,setEnrollments]=useState<EnrollmentAdminRecord[]>([]),[students,setStudents]=useState<StudentAdminRecord[]>([]),[courses,setCourses]=useState<CourseAdminRecord[]>([]),[attendance,setAttendance]=useState<ClassAttendanceRecord[]>([]),[events,setEvents]=useState<ScheduleEvent[]>([]),[earnings,setEarnings]=useState<TrainerEarningRecord[]>([]),[payouts,setPayouts]=useState<TrainerPayoutRecord[]>([]);
