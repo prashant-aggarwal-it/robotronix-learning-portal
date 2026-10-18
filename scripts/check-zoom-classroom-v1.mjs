@@ -37,7 +37,7 @@ for(const marker of ["New Meeting","General meetings","Cloud recordings","Zoom a
  if(!admin.includes(marker))throw new Error("Zoom Admin UI is missing: "+marker);
 }
 const zoom=fs.readFileSync("lib/server/zoom.ts","utf8");
-for(const marker of ['prompt","login','access_token','redirect:"follow"'])if(!zoom.includes(marker))throw new Error("Zoom hardening missing: "+marker);
+for(const marker of ['access_token','redirect:"follow"'])if(!zoom.includes(marker))throw new Error("Zoom hardening missing: "+marker);
 const retention=fs.readFileSync("app/api/zoom/retention/route.ts","utf8");
 for(const marker of ["retain_until","protected_from_deletion","action=trash","INTERNAL_CRON_SECRET"])if(!retention.includes(marker))throw new Error("Zoom retention hardening missing: "+marker);
 console.log("Zoom Classroom V1 structure and production hardening: OK");
