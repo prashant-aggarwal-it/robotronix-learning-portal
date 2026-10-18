@@ -111,7 +111,7 @@ function Workspace(){
   </section>}
 
   {tab==="hosts"&&<section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">HOST POOL</div><h2>Zoom accounts</h2><p>Add independent Zoom accounts as capacity grows. Lower priority numbers are selected first.</p></div></div>
+   <div className="panelHeader"><div><div className="eyebrow">HOST POOL</div><h2>Zoom accounts</h2><p>Add independent Zoom accounts as capacity grows. Lower priority numbers are selected first.</p><div className="cellSub">When adding Host 2 or later, first make sure the browser is signed in to that specific Zoom account. While the Zoom app is in Beta Test, that account must also be allowed as a beta/test user in Zoom Marketplace.</div></div></div>
    <div className="row"><input className="input" style={{maxWidth:260}} placeholder={"e.g. Zoom Host "+(hosts.length+1)} value={label} onChange={e=>setLabel(e.target.value)}/><button className="button" disabled={busy} onClick={connect}>+ Add Zoom Account</button></div>
    <div className="tableWrap topGap"><table><thead><tr><th>Host</th><th>Account</th><th>Priority</th><th>Recording</th><th>Retention</th><th>Learner default</th><th>Storage tracked</th><th>Status</th></tr></thead><tbody>
     {hosts.map(h=><HostRow key={h.id} host={h} busy={busy} bytes={storage.find(s=>s.hostId===h.id)?.bytes||0} patch={patchHost}/>)}
