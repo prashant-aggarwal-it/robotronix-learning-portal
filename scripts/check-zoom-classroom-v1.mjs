@@ -18,11 +18,11 @@ const required=[
  "components/ZoomClassActions.tsx",
  "lib/server/zoom-classroom.ts",
  "lib/server/zoom-recording.ts",
- "database/04_upgrade/01_ZOOM_CLASSROOM_V1.sql"
+ "database/01_install/01_CREATE_SCHEMA.sql"
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing Zoom Classroom V1 file: "+file);
 
-const migration=fs.readFileSync("database/04_upgrade/01_ZOOM_CLASSROOM_V1.sql","utf8");
+const migration=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
 for(const token of ["'general'","zoom_participant_sessions","zoom_recordings","zoom_webhook_events","attempt_count","protected_from_deletion"]){
  if(!migration.includes(token))throw new Error("Zoom Classroom V1 migration is missing: "+token);
 }
@@ -55,7 +55,7 @@ if(!retention.includes('select("status,protected_from_deletion,retain_until")'))
 if(!retention.includes("failures.push("))throw new Error("Retention cleanup failure diagnostics are missing.");
 
 
-const allocationSql=fs.readFileSync("database/04_upgrade/06_ZOOM_HOST_ALLOCATION_GUARD.sql","utf8");
+const allocationSql=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
 for(const marker of ["btree_gist","zoom_host_active_meeting_no_overlap","exclude using gist","23P01"]){
  if(marker==="23P01")continue;
  if(!allocationSql.includes(marker))throw new Error("Zoom host overlap guard missing: "+marker);
