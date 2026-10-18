@@ -42,4 +42,16 @@ const recordingDetail=fs.readFileSync("app/api/zoom/recordings/[recordingId]/rou
 if(!recordingDetail.includes('recording.status!=="completed"'))throw new Error("Playback must reject inactive recordings.");
 const retention=fs.readFileSync("app/api/zoom/retention/route.ts","utf8");
 for(const marker of ["retain_until","protected_from_deletion","action=trash","INTERNAL_CRON_SECRET"])if(!retention.includes(marker))throw new Error("Zoom retention hardening missing: "+marker);
+
+const recordingReconcile=fs.readFileSync("lib/server/zoom-recording-reconcile.ts","utf8");
+for(const marker of ["ignoreDuplicates:true","recording_retention_days","retain_until"]){
+ if(!recordingReconcile.includes(marker))throw new Error("Recording lifecycle reconciliation safeguard missing: "+marker);
+}
+for(const file of ["app/api/zoom/reconcile/route.ts","app/api/zoom/webhook/route.ts"]){
+ const content=fs.readFileSync(file,"utf8");
+ if(!content.includes("reconcileZoomRecording("))throw new Error("Provider sync bypasses recording lifecycle safeguards: "+file);
+}
+if(!retention.includes('select("status,protected_from_deletion,retain_until")'))throw new Error("Retention job must recheck deletion eligibility immediately before cleanup.");
+if(!retention.includes("failures.push("))throw new Error("Retention cleanup failure diagnostics are missing.");
+
 console.log("Zoom Classroom V1 structure and production hardening: OK");
