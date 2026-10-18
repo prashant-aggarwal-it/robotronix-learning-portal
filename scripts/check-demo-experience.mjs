@@ -5,6 +5,7 @@ const required=[
  "app/api/admin/demos/route.ts",
  "app/api/demos/trainer/route.ts",
  "app/api/demo/[token]/route.ts",
+ "app/api/demo/[token]/onboarding-prefill/route.ts",
  "app/admin/demos/page.tsx",
  "app/trainer/demos/page.tsx",
  "app/trainer/demo-room/[meetingId]/page.tsx",
@@ -28,10 +29,14 @@ const page=fs.readFileSync("app/demo/[token]/page.tsx","utf8");
 for(const marker of ["Join Discovery Session","Google Calendar","Need another time?","Great first step","How did the demo feel?","ready to build something amazing?"])if(!page.includes(marker))throw new Error("Parent Demo Experience missing: "+marker);
 
 const admin=fs.readFileSync("app/admin/demos/page.tsx","utf8");
-for(const marker of ["Minimum details. Premium experience.","Add learner to group","The trainer will never receive WhatsApp or email details.","Mark resolved","Regenerate guest link"])if(!admin.includes(marker))throw new Error("Admin Demo Experience missing: "+marker);
+for(const marker of ["Minimum details. Premium experience.","Add learner to group","The trainer will never receive WhatsApp or email details.","Mark resolved","Regenerate guest link","Reschedule","Converted","Lost"])if(!admin.includes(marker))throw new Error("Admin Demo Experience missing: "+marker);
 
 const sdk=fs.readFileSync("app/api/zoom/sdk-session/route.ts","utf8");
 for(const marker of ['meeting.purpose==="demo"','This demo is not assigned to you.','Demo guests should use their private invitation page.'])if(!sdk.includes(marker))throw new Error("Demo Zoom authorization missing: "+marker);
 
 for(const marker of ["portal_notifications","demo_request","demo_feedback"])if(!guestApi.includes(marker))throw new Error("Demo live notification flow missing: "+marker);
+const prefill=fs.readFileSync("app/api/demo/[token]/onboarding-prefill/route.ts","utf8");
+for(const marker of ["parent_name","parent_whatsapp","child_name","Demo / Discovery Session"])if(!prefill.includes(marker))throw new Error("Demo onboarding prefill missing: "+marker);
+const adminApi=fs.readFileSync("app/api/admin/demos/route.ts","utf8");
+for(const marker of ['action==="reschedule"','action==="cancel_session"','action==="lead_status"'])if(!adminApi.includes(marker))throw new Error("Demo lifecycle action missing: "+marker);
 console.log("Demo Experience V1 structure, privacy and live-experience checks: OK");
