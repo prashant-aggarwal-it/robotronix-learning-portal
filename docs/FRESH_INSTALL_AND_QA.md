@@ -1,25 +1,51 @@
-# Robotronix database — active workflow
+# Database installation and Dev QA — active procedure
 
-**Current state:** Both Dev and Production have run `01_CREATE_SCHEMA.sql` and `02_INSERT_MASTER_REFERENCE_DATA.sql`. Production's real Admin profile is verified as active. Dev has four QA Auth identities but no profiles yet.
+[← Documentation Hub](README.md) | [Environment setup](ENVIRONMENTS.md) | [Testing](TESTING.md)
 
-## Files you may use
+## Current project state
 
-1. `database/01_install/01_CREATE_SCHEMA.sql` — fresh empty installation only. Includes Zoom, Razorpay, calendar, demo, live-data and Zoom host allocation changes. Do not rerun on the installed databases.
-2. `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` — reference data for a new installation. Already run.
-3. `database/01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` — only when a real Admin Auth user lacks a profile; Production is already done.
-4. `database/02_qa/01_QA_SEED.sql` — Dev only, after four QA Auth users exist; creates QA profiles and fixtures.
-5. `database/02_qa/02_QA_CLEANUP.sql` — Dev only, removes QA fixtures.
-6. `database/03_verify/01_VERIFY_RELEASE.sql` — read-only verification in Dev and Production.
-7. `database/99_dev_tools/00_DEV_ONLY_RESET_PUBLIC_SCHEMA.sql` — destructive **Dev only** full public-schema reset. Not safe for production or Supabase-managed dependencies without review.
+- Schema and reference data were previously installed in both Dev and Production Supabase.
+- Production's real Admin profile was verified active.
+- Development QA fixtures were used for successfully reported local authentication/role/workflow tests on 2026-10-19.
+- New repo commits and a passing local build **do not imply** any new Production SQL should be run.
 
-## Removed obsolete files
+## Current SQL files
 
-The six `database/04_upgrade/` scripts were already integrated into the fresh schema and are removed from the active branch. Git history retains them. Legacy production sanity seeds and old fixed-address permanent QA seeds are not active. Do not run any archived SQL.
+| File | Action |
+| --- | --- |
+| `database/01_install/01_CREATE_SCHEMA.sql` | Fresh **empty project only**. Includes previously separate Zoom, Razorpay, demo, calendar, live-data, host constraints. |
+| `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` | Initial configuration/catalog/reference data. |
+| `database/01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` | Edit intentionally for an Admin who is missing a profile; existing Production Admin needs no action. |
+| `database/02_qa/01_QA_SEED.sql` | Development only; creates synthetic QA profiles/fixtures for four precreated Auth users. |
+| `database/02_qa/02_QA_CLEANUP.sql` | Development only; removes synthetic QA fixtures. |
+| `database/03_verify/01_VERIFY_RELEASE.sql` | Verification; examine results in both environments as appropriate. |
+| `database/99_dev_tools/00_DEV_ONLY_RESET_PUBLIC_SCHEMA.sql` | Destructive; only on deliberately disposable Development databases after review. |
 
-## Next step
+The six former `database/04_upgrade` migrations are consolidated and removed. Files in `database/archive/legacy` are **historical** and must not be used to provision test users in Production.
 
-Run `database/02_qa/01_QA_SEED.sql` **in Dev only**, then check QA profiles and execute role/workflow tests. Do not insert QA fixtures in production yet.
+## New empty database procedure
 
-## Permanent production QA
+1. Create a new separate Supabase project and verify you are connected to the correct one.
+2. Run schema SQL, then reference-data SQL in the Supabase SQL editor.
+3. Configure Supabase Authentication Google provider and callbacks.
+4. Bootstrap first real Admin only if the intended Auth identity has no Admin profile.
+5. Run `03_verify/01_VERIFY_RELEASE.sql` and inspect results.
 
-Candidate tooling: `npm run qa:prod-permanent:create-users` and `npm run qa:prod-permanent:generate-sql`. Generated SQL is ignored by Git. Do not deploy these fixtures until tests demonstrate isolation from customer reporting, Zoom, Razorpay, and messaging. Real Admin remains a separate identity.
+## Development QA
+
+1. Use the four DEV users `qa-admin@robotronix.local`, `qa-trainer@robotronix.local`, `qa-parent@robotronix.local`, `qa-student@robotronix.local`.
+2. Create Auth identities using `npm run qa:create-users` if they are not already present. Store credentials privately.
+3. Run `database/02_qa/01_QA_SEED.sql` in **Dev only**, then verify all four profiles are active and correctly assigned.
+4. Run `npm run check:release`, `npm run build`, `npm run qa:auth-check`, `npm run qa:roles`, `npm run qa:workflow`.
+5. Do not delete the fixtures if ongoing QA depends on them; cleanup is optional and Dev only.
+
+## Optional Production QA accounts
+
+Permanent production QA accounts are **not required** for this release. The repository includes optional `.env.portal-qa.example` and `qa:prod-permanent:*` tools. They must not be used for live test data until finance, notifications, Zoom and external provider side effects have been safely isolated. Keep the existing real Admin separate.
+
+## Strong safety boundaries
+
+- **Never rerun the fresh installer** against the existing Production database.
+- **Never run Dev reset or QA seed in Production.**
+- Do not disable RLS/constraints to bypass a QA failure.
+- Do not follow dated or archived release runbooks for current database steps.
