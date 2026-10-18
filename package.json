@@ -48,7 +48,9 @@
     "check:deployment": "npm run check:release && npm run build",
     "check:demo-experience": "node scripts/check-demo-experience.mjs",
     "qa:demo-experience": "playwright test qa/demo-experience.spec.ts --project=desktop-chromium",
-    "check:live-data": "node scripts/check-live-data-hardening.mjs"
+    "check:live-data": "node scripts/check-live-data-hardening.mjs",
+    "qa:prod-permanent:create-users": "node scripts/create-permanent-portal-qa-users.mjs",
+    "qa:prod-permanent:generate-sql": "node scripts/generate-permanent-qa-seed.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
