@@ -5,6 +5,7 @@ import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
 import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
 import {adminApi} from "@/lib/admin-api-client";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type Host={id:string;label:string;zoomEmail:string;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;lastSyncAt:string|null};
 type Recording={id:string;recording_type:string;file_type:string;file_size_bytes:number;recording_start:string|null;status:string;learner_visible:boolean;retain_until:string|null;protected_from_deletion:boolean};
@@ -28,7 +29,8 @@ function Workspace(){
 
  async function load(){setError("");try{const x=await adminApi("/api/zoom/overview");setHosts(x.hosts||[]);setMeetings(x.meetings||[]);setStorage(x.storageByHost||[])}catch(e){setError(e instanceof Error?e.message:String(e))}}
  async function syncZoom(){setBusy(true);setError("");setNotice("");try{const x=await adminApi("/api/zoom/reconcile",{method:"POST"});setNotice(`Synced with Zoom · ${x.meetingsSynced||0} meetings · ${x.recordingsSynced||0} recording files${x.errors?` · ${x.errors} item(s) need review`:""}`);await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
- useEffect(()=>{load()},[]);
+ useEffect(()=>{void load()},[]);
+ useLiveRefresh(["zoom_meetings","zoom_recordings","zoom_host_accounts"],load,"admin-zoom");
  useEffect(()=>{if(params.get("connected"))setNotice("Zoom account connected successfully"+(params.get("email")?" · "+params.get("email"):"")+".");if(params.get("zoom_error"))setError(String(params.get("zoom_error")))},[params]);
 
  const classes=useMemo(()=>meetings.filter(m=>m.purpose==="class"),[meetings]);
