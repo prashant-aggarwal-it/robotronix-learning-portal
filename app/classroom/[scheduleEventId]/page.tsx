@@ -1,11 +1,11 @@
 "use client";
-import {useEffect,useRef,useState} from "react";
+import {Suspense,useEffect,useRef,useState} from "react";
 import {useParams,useSearchParams} from "next/navigation";
 import {RoleGuard} from "@/components/RoleGuard";
 import {portalApi} from "@/lib/portal-api-client";
 
 type SdkSession={meetingNumber:string;password:string;signature:string;zak:string;userName:string;role:0|1;leaveUrl:string};
-export default function ClassroomPage(){return <RoleGuard allow={["admin","trainer","parent","student"]}><Classroom/></RoleGuard>}
+export default function ClassroomPage(){return <RoleGuard allow={["admin","trainer","parent","student"]}><Suspense fallback={<p>Preparing classroom…</p>}><Classroom/></Suspense></RoleGuard>}
 function Classroom(){
  const {scheduleEventId}=useParams<{scheduleEventId:string}>();const params=useSearchParams();
  const mode=params.get("mode")==="host"?"host":"participant";const iframe=useRef<HTMLIFrameElement>(null);
