@@ -6,10 +6,13 @@ import {PageIntro} from "@/components/PageIntro";
 import {LearnerCalendar} from "@/components/calendar/LearnerCalendar";
 import {getParentLearnerExperiences,listScheduleEvents} from "@/lib/repository";
 import type {LearnerExperienceSnapshot,ScheduleEvent} from "@/lib/types";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 export default function ParentCalendarPage(){
  const[snapshots,setSnapshots]=useState<LearnerExperienceSnapshot[]>([]),[events,setEvents]=useState<ScheduleEvent[]>([]),[selected,setSelected]=useState(""),[loading,setLoading]=useState(true);
- useEffect(()=>{Promise.all([getParentLearnerExperiences(),listScheduleEvents()]).then(([s,e])=>{setSnapshots(s);setEvents(e);setSelected(s[0]?.learner.id||"");setLoading(false)})},[]);
+ async function reload(){const[s,e]=await Promise.all([getParentLearnerExperiences(),listScheduleEvents()]);setSnapshots(s);setEvents(e);setSelected(current=>current||s[0]?.learner.id||"");setLoading(false)}
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["schedule_events"],reload,"parent-calendar");
  const current=snapshots.find(s=>s.learner.id===selected)||snapshots[0];
  const scoped=useMemo(()=>current?events.filter(e=>e.eventType==="class"&&(e.studentId===current.learner.id||e.enrollmentId===current.enrollmentId||Boolean(current.cohortId&&e.cohortId===current.cohortId))):[],[current,events]);
  return <RoleGuard allow={["parent"]}><AppShell role="parent">
