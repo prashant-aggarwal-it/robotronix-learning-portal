@@ -4,7 +4,7 @@ import {useParams} from "next/navigation";
 import {DemoHeroVisual} from "@/components/demo/DemoHeroVisual";
 
 type DemoData={
- state:"upcoming"|"completed"|"cancelled";childName:string;grade:string;interest:string;experienceLevel:string;
+ state:"upcoming"|"completed"|"cancelled"|"no_show";childName:string;grade:string;interest:string;experienceLevel:string;
  sessionType:"one_to_one"|"group";focus:string;trainerName:string;date:string;startTime:string;endTime:string;timezone:string;
  joinEnabled:boolean;joinOpensAt:string;startAt:string;endAt:string;joinUrl?:string|null;attendance:string;
  engagement?:string;understanding?:string;problemSolving?:string;confidence?:string;explored?:string;strengths:string[];
@@ -25,6 +25,7 @@ export default function DemoGuestPage(){
  const first=useMemo(()=>data?.childName?.split(" ")[0]||"there",[data]);
  if(data===undefined)return <main className="demoGuestShell"><div className="demoGuestLoading">Preparing your Robotronix discovery experience…</div></main>;
  if(!data)return <main className="demoGuestShell"><section className="demoGuestError"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><h1>We could not open this demo link</h1><p>{error||"Please contact Robotronix for a fresh invitation."}</p></section></main>;
+ if(data.state==="no_show")return <main className="demoGuestShell"><section className="demoGuestError"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><h1>We missed you at the discovery session</h1><p>No worries, {first}. Ask Robotronix for another suitable time and we will help you reschedule.</p><button className="demoPrimary" onClick={()=>setShowRequest("reschedule")}>Request another time</button><button className="demoSecondary" onClick={()=>setShowRequest("help")}>Contact support</button></section><RequestPanel kind={showRequest} message={message} setMessage={setMessage} close={()=>setShowRequest(null)} submit={submitRequest}/></main>;
  if(data.state==="cancelled")return <main className="demoGuestShell"><section className="demoGuestError"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><h1>This demo has been cancelled</h1><p>We would be happy to find another suitable time for {first}.</p><button className="demoPrimary" onClick={()=>setShowRequest("reschedule")}>Request another time</button></section><RequestPanel kind={showRequest} message={message} setMessage={setMessage} close={()=>setShowRequest(null)} submit={submitRequest}/></main>;
 
  return <main className="demoGuestShell">
