@@ -12,6 +12,7 @@ import {displayLabel} from "@/lib/display";
 import {exportWorkbook} from "@/lib/export-workbook";
 import {IST_TIMEZONE,shortTimeZoneLabel,zonedRangeParts} from "@/lib/timezones";
 import type {CohortAdminRecord,CourseAdminRecord,ScheduleEvent,StudentAdminRecord,TrainerAdminRecord} from "@/lib/types";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type View="today"|"tomorrow"|"next7"|"needs_update"|"exceptions"|"history";
 type SortKey="date"|"class"|"trainer"|"course"|"attendance"|"status";
@@ -21,7 +22,9 @@ function addDays(date:string,n:number){const d=new Date(`${date}T12:00:00Z`);d.s
 export default function ClassesPage(){
  const[events,setEvents]=useState<ScheduleEvent[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[students,setStudents]=useState<StudentAdminRecord[]>([]);const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[attendance,setAttendance]=useState<any[]>([]);
  const[q,setQ]=useState("");const[trainer,setTrainer]=useState("all");const[course,setCourse]=useState("all");const[status,setStatus]=useState("all");const[delivery,setDelivery]=useState("all");const[occurrence,setOccurrence]=useState("all");const[view,setView]=useState<View>("today");const[sortKey,setSortKey]=useState<SortKey>("date");const[sortDir,setSortDir]=useState<"asc"|"desc">("asc");const[page,setPage]=useState(1);const[pageSize,setPageSize]=useState(25);
- useEffect(()=>{Promise.all([listScheduleEvents(),listAdminTrainers(),listAdminCourses(),listAdminStudents(),listAdminCohorts(),listClassAttendance()]).then(([e,t,c,s,h,a])=>{setEvents(e.filter(x=>x.eventType==="class"));setTrainers([...t].sort((a,b)=>a.fullName.localeCompare(b.fullName)));setCourses([...c].sort((a,b)=>(a.publicName||a.title).localeCompare(b.publicName||b.title)));setStudents(s);setCohorts(h);setAttendance(a)})},[]);
+ async function reload(){const[e,t,c,s,h,a]=await Promise.all([listScheduleEvents(),listAdminTrainers(),listAdminCourses(),listAdminStudents(),listAdminCohorts(),listClassAttendance()]);setEvents(e.filter(x=>x.eventType==="class"));setTrainers([...t].sort((a,b)=>a.fullName.localeCompare(b.fullName)));setCourses([...c].sort((a,b)=>(a.publicName||a.title).localeCompare(b.publicName||b.title)));setStudents(s);setCohorts(h);setAttendance(a)}
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["schedule_events","class_attendance"],reload,"admin-classes");
  const today=new Intl.DateTimeFormat("en-CA",{timeZone:IST_TIMEZONE,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());const tomorrow=addDays(today,1);const day2=addDays(today,2);const day7=addDays(today,7);const thirtyDaysAgo=addDays(today,-30);
  const istRange=(e:ScheduleEvent)=>zonedRangeParts(e.date,e.startTime,e.endTime,e.timezone||IST_TIMEZONE,IST_TIMEZONE);const istDate=(e:ScheduleEvent)=>istRange(e).startDate;const isPast=(e:ScheduleEvent)=>istRange(e).endInstant.getTime()<Date.now();
  const scheduled=(e:ScheduleEvent)=>["scheduled","tentative","makeup"].includes(e.status);
