@@ -1,3 +1,25 @@
+# CURRENT DATABASE WORKFLOW — READ FIRST
+
+**Both Dev and Production already received 01_CREATE_SCHEMA.sql and 02_INSERT_MASTER_REFERENCE_DATA.sql. Do not rerun them or run the historical upgrade scripts merely because they exist.**
+
+**Production:** Real Admin profile is verified with role=admin and active=true. Do not seed synthetic QA fixtures into production until isolation from reports, Zoom, Razorpay, and messaging has been validated.
+
+**Development:** Four existing Auth identities (qa-admin@robotronix.local, qa-trainer@robotronix.local, qa-parent@robotronix.local, qa-student@robotronix.local) have NULL profiles. After verifying the Auth identities belong to this Dev project, run `database/02_qa/01_QA_SEED.sql` in Dev only to assign roles and create fixtures; review its full contents before executing. Then run `database/03_verify/01_VERIFY_RELEASE.sql` and the role/workflow tests.
+
+**Active database files:**
+- `01_install/01_CREATE_SCHEMA.sql` — new empty application database only
+- `01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` — new installation master data
+- `01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` — only for a real Admin Auth identity, when missing a profile
+- `02_qa/01_QA_SEED.sql` — Dev QA fixtures only, after QA Auth identities exist
+- `02_qa/02_QA_CLEANUP.sql` — Dev QA cleanup only, never production
+- `03_verify/01_VERIFY_RELEASE.sql` — read-only checks, run in Dev and Production
+
+**Historical files:** `04_upgrade/` is migration history for older installations; do not rerun after fresh installation. Obsolete temporary production sanity seeds, the old fixed-email production QA seed, and the destructive Dev schema reset were moved out of active folders to `database/archive/legacy/` for auditability. They are not part of the current workflow.
+
+**Permanent production QA:** The supported candidate process uses `npm run qa:prod-permanent:create-users` and `npm run qa:prod-permanent:generate-sql`, which generate a local, ignored QA SQL seed from separately controlled addresses. Do not execute this in production until QA isolation and full release validation pass.
+
+---
+
 # Robotronix™ Learning Portal — Fresh installation and permanent QA
 
 **Status: candidate, not yet database-validated.** Do not reset production until a full clean-install rehearsal, QA tests, and a verified backup are complete.
