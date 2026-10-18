@@ -7,6 +7,7 @@ import {adminApi} from "@/lib/admin-api-client";
 import {listAdminTrainers} from "@/lib/repository";
 import type {TrainerAdminRecord} from "@/lib/types";
 import {subscribeNotifications} from "@/lib/communication-repository";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type Session={id:string;session_type:"one_to_one"|"group";focus:string;status:string;created_at:string;schedule_event:any;trainer:any;participants:any[]};
 type RequestRow={id:string;demo_session_participant_id:string;request_type:string;message:string;status:string;created_at:string;participant?:{id:string;lead?:{child_name?:string;parent_name?:string}|null;demo_session?:{id:string;focus?:string;schedule_event?:{date?:string;start_time?:string;timezone?:string}|null}|null}|null};
@@ -20,7 +21,8 @@ function Workspace(){
  const[editing,setEditing]=useState<Session|null>(null),[reschedule,setReschedule]=useState({trainerId:"",date:"",startTime:"",durationMinutes:45,timezone:"Asia/Kolkata"});
  const[form,setForm]=useState({sessionId:"",sessionType:"one_to_one",parentName:"",parentWhatsApp:"",parentEmail:"",childName:"",grade:"",interest:"Robotics",experienceLevel:"new",source:"manual",trainerId:"",date:today(),startTime:"17:00",durationMinutes:45,timezone:"Asia/Kolkata",focus:"Robotics Discovery"});
  async function load(){setError("");try{const[x,t]=await Promise.all([adminApi("/api/admin/demos"),listAdminTrainers()]);setSessions(x.sessions||[]);setRequests(x.requests||[]);const active=t.filter(x=>x.recordStatus==="active");setTrainers(active);setForm(v=>({...v,trainerId:v.trainerId||active[0]?.id||""}))}catch(e){setError(e instanceof Error?e.message:String(e))}}
- useEffect(()=>{void load();const unsubscribe=subscribeNotifications("admin",()=>void load());const resume=()=>{if(navigator.onLine!==false)void load()};window.addEventListener("focus",resume);window.addEventListener("online",resume);return()=>{unsubscribe();window.removeEventListener("focus",resume);window.removeEventListener("online",resume)}},[]);
+ useEffect(()=>{void load();const unsubscribe=subscribeNotifications("admin",()=>void load());return()=>unsubscribe()},[]);
+ useLiveRefresh(["demo_guest_requests","demo_sessions","demo_session_participants"],load,"admin-demos");
  const upcomingGroups=useMemo(()=>sessions.filter(s=>s.session_type==="group"&&s.status==="scheduled"),[sessions]);
  const counts=useMemo(()=>({upcoming:sessions.filter(s=>s.status==="scheduled").length,completed:sessions.filter(s=>s.status==="completed").length,participants:sessions.reduce((n,s)=>n+(s.participants?.length||0),0),requests:requests.length}),[sessions,requests]);
  const requestCounts=useMemo(()=>{const map=new Map<string,number>();for(const r of requests)map.set(r.demo_session_participant_id,(map.get(r.demo_session_participant_id)||0)+1);return map},[requests]);
