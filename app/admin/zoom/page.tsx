@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useMemo,useState} from "react";
+import {Suspense,useEffect,useMemo,useState} from "react";
 import {useSearchParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -11,7 +11,7 @@ type Host={id:string;label:string;zoomEmail:string;status:string;enabled:boolean
 type Recording={id:string;recording_type:string;file_type:string;file_size_bytes:number;recording_start:string|null;status:string;learner_visible:boolean;retain_until:string|null;protected_from_deletion:boolean};
 type Meeting={id:string;purpose:"class"|"general"|"demo";topic:string;status:string;scheduled_start:string;duration_minutes:number;recording_status:string;recording_enabled:boolean;join_url?:string|null;passcode?:string|null;meeting_notes?:string|null;event:any;host?:{label:string;email:string}|null;presence:any;recordings:Recording[]};
 
-export default function ZoomAdmin(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Workspace/></AppShell></RoleGuard>}
+export default function ZoomAdmin(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Suspense fallback={<p>Loading Zoom administration…</p>}><Workspace/></Suspense></AppShell></RoleGuard>}
 
 function gb(bytes:number){return (bytes/1024/1024/1024).toFixed(bytes>=1024*1024*1024?2:3)+" GB";}
 function mins(seconds:number){return Math.round(Number(seconds||0)/60)+" min";}
