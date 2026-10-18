@@ -69,7 +69,7 @@ async function main() {
       const { error } = await supabase.auth.admin.updateUserById(found.id, {
         password,
         email_confirm: true,
-        user_metadata: { ...(found.user_metadata || {}), full_name: fullName, qa_user: true, permanent_portal_qa_user: true },
+        user_metadata: { ...(found.user_metadata || {}), full_name: fullName, qa_user: true, permanent_portal_qa_user: true, portal_qa_role: role },
       });
       if (error) throw new Error(`Failed to update ${email}: ${error.message}`);
       console.log(`✓ ${role.padEnd(7)} ${email} (existing user updated)`);
@@ -78,7 +78,7 @@ async function main() {
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name: fullName, qa_user: true, permanent_portal_qa_user: true },
+        user_metadata: { full_name: fullName, qa_user: true, permanent_portal_qa_user: true, portal_qa_role: role },
       });
       if (error) throw new Error(`Failed to create ${email}: ${error.message}`);
       console.log(`✓ ${role.padEnd(7)} ${email} (${data.user.id})`);
@@ -86,7 +86,7 @@ async function main() {
   }
 
   console.log("\nPermanent production QA Auth users ready.");
-  console.log("Next: run database/02_sanity/01_PROD_PORTAL_QA_SEED.sql in the Supabase SQL Editor.");
+  console.log("Next: run database/02_qa/03_PERMANENT_PROD_QA_SEED.sql (generate personalized SQL first) in the Supabase SQL Editor.");
 }
 
 main().catch(err => {
