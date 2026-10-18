@@ -82,7 +82,7 @@ export async function POST(request:NextRequest){
    if(sErr)throw new Error(sErr.message);if(!session)throw new Error("Demo session not found.");
    if(session.zoom_meeting_id){
     const {data:m}=await auth.admin.from("zoom_meetings").select("id,host_account_id,zoom_meeting_id,status").eq("id",session.zoom_meeting_id).maybeSingle();
-    if(m&&!["cancelled","ended"].includes(m.status)){const {zoomApi}=await import("@/lib/server/zoom");try{await zoomApi(m.host_account_id,"/meetings/"+encodeURIComponent(m.zoom_meeting_id),{method:"DELETE"})}catch{}}
+    if(m&&!["cancelled","ended"].includes(m.status)){const {zoomApi}=await import("@/lib/server/zoom");try{await zoomApi(m.host_account_id,"/meetings/"+encodeURIComponent(m.zoom_meeting_id),{method:"DELETE"})}catch(deleteError){const reason=deleteError instanceof Error?deleteError.message:String(deleteError);if(!/not exist|does not exist|3001/i.test(reason))throw new Error("Zoom cancellation failed: "+reason)}}
     if(m)await auth.admin.from("zoom_meetings").update({status:"cancelled",updated_at:new Date().toISOString()}).eq("id",m.id);
    }
    await auth.admin.from("schedule_events").update({status:"cancelled",updated_at:new Date().toISOString()}).eq("id",session.schedule_event_id);
