@@ -13,6 +13,7 @@ import {listOnboardingSubmissions} from "@/lib/repository";
 import {shortTimeZoneLabel} from "@/lib/timezones";
 import type {OnboardingSubmission} from "@/lib/types";
 import {guardiansFromRecord,relationshipLabel} from "@/lib/guardians";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 const labels:Record<OnboardingSubmission["status"],string>={draft:"Draft",new:"New",setup_pending:"Setup pending",active:"Active"};
 const statusOrder:Record<OnboardingSubmission["status"],number>={new:0,draft:1,setup_pending:2,active:3};
@@ -25,7 +26,9 @@ export default function OnboardingAdmin(){
  const[q,setQ]=useState("");const[status,setStatus]=useState("all");const[source,setSource]=useState("all");
  const[sortKey,setSortKey]=useState<SortKey>("submitted");const[sortDir,setSortDir]=useState<"asc"|"desc">("desc");
  const[page,setPage]=useState(1);const[pageSize,setPageSize]=useState(25);
- useEffect(()=>{listOnboardingSubmissions().then(setRows)},[]);
+ async function reload(){setRows(await listOnboardingSubmissions())}
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["onboarding_submissions"],reload,"admin-onboarding");
  const sources=useMemo(()=>Array.from(new Set(rows.map(r=>r.source).filter(Boolean))).sort(),[rows]);
  function sort(column:string){const key=column as SortKey;if(sortKey===key)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortKey(key);setSortDir(key==="submitted"?"desc":"asc")}}
  const filtered=useMemo(()=>{
