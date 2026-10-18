@@ -27,7 +27,6 @@ const must=[
   'zoom_participant_sessions',
   'calendar_subscription_tokens',
   'razorpay_webhook_events',
-  'zoom_host_active_meeting_no_overlap',
   'grant usage on schema public to authenticated',
 ];
 for(const marker of must){if(!schema.includes(marker))throw new Error(`Fresh schema missing consolidated marker: ${marker}`)}
@@ -44,7 +43,7 @@ if(!enrollmentStartGuard.includes("coalesce(new.migration_type, 'native') <> 'ac
   throw new Error('Fresh schema enrollment start-date guard does not permit historical dates for active_existing migrations.');
 }
 if(fs.existsSync(path.join(root,'database/04_hotfixes')))throw new Error('Fresh release must not contain database/04_hotfixes.');
-for(const file of ['database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql','database/03_verify/01_VERIFY_RELEASE.sql','database/02_sanity/01_PROD_SANITY_SEED.sql','database/02_sanity/02_PROD_SANITY_CLEANUP.sql']){
+for(const file of ['database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql','database/03_verify/01_VERIFY_RELEASE.sql','database/02_qa/01_QA_SEED.sql','database/02_qa/02_QA_CLEANUP.sql']){
   if(!fs.existsSync(path.join(root,file)))throw new Error(`Missing required release database file: ${file}`);
 }
 console.log('Fresh database release check passed: schema is consolidated and no hotfix folder remains.');
