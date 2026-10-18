@@ -5,11 +5,13 @@ const required=[
  "app/api/zoom/classroom/[scheduleEventId]/route.ts",
  "app/api/zoom/webhook/route.ts",
  "app/api/zoom/overview/route.ts",
+ "app/api/zoom/reconcile/route.ts",
  "app/api/zoom/meetings/route.ts",
  "app/api/zoom/recordings/[recordingId]/route.ts",
  "app/api/zoom/recordings/[recordingId]/stream/route.ts",
  "app/admin/zoom/page.tsx",
  "app/admin/zoom/meeting/[meetingId]/page.tsx",
+ "app/admin/zoom/recording/[recordingId]/page.tsx",
  "app/classroom/[scheduleEventId]/page.tsx",
  "components/ZoomClassActions.tsx",
  "lib/server/zoom-classroom.ts",
@@ -29,7 +31,9 @@ for(const event of ["meeting.started","meeting.ended","meeting.participant_joine
  if(!webhook.includes(event))throw new Error("Zoom webhook handling is missing: "+event);
 }
 const admin=fs.readFileSync("app/admin/zoom/page.tsx","utf8");
-for(const marker of ["New Meeting","General meetings","Cloud recordings","Zoom accounts"]){
+for(const marker of ["New Meeting","General meetings","Cloud recordings","Zoom accounts","Sync with Zoom","No live action"]){
  if(!admin.includes(marker))throw new Error("Zoom Admin UI is missing: "+marker);
 }
-console.log("Zoom Classroom V1 structure: OK");
+const zoom=fs.readFileSync("lib/server/zoom.ts","utf8");
+for(const marker of ['prompt","login','access_token','redirect:"follow"'])if(!zoom.includes(marker))throw new Error("Zoom hardening missing: "+marker);
+console.log("Zoom Classroom V1 structure and production hardening: OK");
