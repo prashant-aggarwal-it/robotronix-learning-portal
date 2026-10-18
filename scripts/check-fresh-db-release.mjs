@@ -15,6 +15,13 @@ const must=[
   'demo_sessions',
   'demo_session_participants',
   'demo_guest_requests',
+  'zoom_host_active_meeting_no_overlap',
+  'zoom_join_intents',
+  'zoom_recordings',
+  'zoom_participant_sessions',
+  'calendar_subscription_tokens',
+  'razorpay_webhook_events',
+  'zoom_host_active_meeting_no_overlap',
   'grant usage on schema public to authenticated',
 ];
 for(const marker of must){if(!schema.includes(marker))throw new Error(`Fresh schema missing consolidated marker: ${marker}`)}
