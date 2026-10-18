@@ -3986,7 +3986,7 @@ begin
    add constraint zoom_host_active_meeting_no_overlap
    exclude using gist (
     host_account_id with =,
-    numrange(extract(epoch from scheduled_start), extract(epoch from scheduled_start) + duration_minutes * 60, '[)') with &&
+    numrange(extract(epoch from (scheduled_start AT TIME ZONE 'UTC')), extract(epoch from (scheduled_start AT TIME ZONE 'UTC')) + duration_minutes * 60, '[)') with &&
    )
    where (status in ('scheduled','started') and scheduled_start is not null and duration_minutes > 0);
  end if;
