@@ -3424,7 +3424,7 @@ grant all on table public.zoom_meetings to service_role;
 
 
 -- Selected operational tables publish live changes to authorized portal clients.
-do $
+do $$
 declare
   t text;
 begin
@@ -3456,7 +3456,7 @@ begin
       end if;
     end loop;
   end if;
-end $;
+end $$;
 
 notify pgrst, 'reload schema';
 
