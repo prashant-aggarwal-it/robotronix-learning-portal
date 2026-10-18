@@ -10,6 +10,7 @@ import {getTrainerDashboard,listAvailabilityOverrides,listScheduleEvents,listTra
 import type {ScheduleEvent,TrainerAvailability,TrainerAvailabilityOverride} from "@/lib/types";
 import {IST_TIMEZONE,formatInTimeZone,shortTimeZoneLabel,zonedRangeParts} from "@/lib/timezones";
 import {portalApi} from "@/lib/portal-api-client";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 const hours=Array.from({length:19},(_,i)=>i+5);
 const dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -20,7 +21,12 @@ const eventIst=(e:ScheduleEvent)=>zonedRangeParts(e.date,e.startTime,e.endTime,e
 
 export default function TrainerSchedule(){
  const[events,setEvents]=useState<ScheduleEvent[]>([]);const[availability,setAvailability]=useState<TrainerAvailability[]>([]);const[overrides,setOverrides]=useState<TrainerAvailabilityOverride[]>([]);const[name,setName]=useState("Trainer");const[trainerId,setTrainerId]=useState("");const[weekOffset,setWeekOffset]=useState(0);const[editingAvailability,setEditingAvailability]=useState(false);const[calendarActive,setCalendarActive]=useState(false);const[calendarUrl,setCalendarUrl]=useState("");const[calendarMsg,setCalendarMsg]=useState("");
- useEffect(()=>{getTrainerDashboard().then(async d=>{setName(d.trainer.name||"Trainer");setTrainerId(d.trainer.id||"");if(d.trainer.id){const[e,a,o]=await Promise.all([listScheduleEvents(d.trainer.id),listTrainerAvailability(d.trainer.id),listAvailabilityOverrides(d.trainer.id)]);setEvents(e);setAvailability(a);setOverrides(o)}});portalApi("/api/calendar/subscription").then(x=>setCalendarActive(Boolean(x.active))).catch(()=>{})},[]);
+ async function loadTrainerSchedule(){
+  const d=await getTrainerDashboard();setName(d.trainer.name||"Trainer");setTrainerId(d.trainer.id||"");
+  if(d.trainer.id){const[e,a,o]=await Promise.all([listScheduleEvents(d.trainer.id),listTrainerAvailability(d.trainer.id),listAvailabilityOverrides(d.trainer.id)]);setEvents(e);setAvailability(a);setOverrides(o)}
+ }
+ useEffect(()=>{void loadTrainerSchedule();portalApi("/api/calendar/subscription").then(x=>setCalendarActive(Boolean(x.active))).catch(()=>{})},[]);
+ useLiveRefresh(["schedule_events"],loadTrainerSchedule,"trainer-schedule");
  const weekStart=useMemo(()=>{const s=startOfWeek(new Date());s.setDate(s.getDate()+weekOffset*7);return s},[weekOffset]);
  const days=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return d});
  const dayKeys=days.map(dateKey);
