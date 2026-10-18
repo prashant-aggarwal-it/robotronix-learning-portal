@@ -4,9 +4,9 @@ import path from 'node:path';
 const root=process.cwd();
 const schema=fs.readFileSync(path.join(root,'database/01_install/01_CREATE_SCHEMA.sql'),'utf8');
 
-// Reject malformed single-dollar PL/pgSQL delimiters before any Supabase SQL execution.
-if (/\\bdo\\s+\\$(?!\\$)/i.test(schema) || /\\bend\\s+\\$;/i.test(schema)) {
-  throw new Error('Fresh schema has an invalid PL/pgSQL dollar-quote delimiter (expected $).');
+// Reject malformed single-dollar PL/pgSQL delimiters before execution.
+if (/\bdo\s+\$(?!\$)/i.test(schema) || /\bend\s+\$;/i.test(schema)) {
+  throw new Error('Fresh schema has an invalid PL/pgSQL dollar delimiter (expected double dollars).');
 }
 
 const must=[
