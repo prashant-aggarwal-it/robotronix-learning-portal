@@ -31,7 +31,7 @@ export async function GET(request:NextRequest){
   .order("created_at",{ascending:false}).limit(200);
  if(error)return NextResponse.json({ok:false,error:error.message},{status:500});
  const {data:requests,error:rErr}=await auth.admin.from("demo_guest_requests")
-  .select("id,demo_session_participant_id,request_type,message,status,created_at")
+  .select("id,demo_session_participant_id,request_type,message,status,created_at,participant:demo_session_participants(id,lead:demo_leads(child_name,parent_name),demo_session:demo_sessions(id,focus,schedule_event:schedule_events(date,start_time,timezone)))")
   .eq("status","open").order("created_at",{ascending:false}).limit(100);
  if(rErr)return NextResponse.json({ok:false,error:rErr.message},{status:500});
  return NextResponse.json({ok:true,sessions:data||[],requests:requests||[]},{headers:{"Cache-Control":"no-store"}});
@@ -41,6 +41,13 @@ export async function POST(request:NextRequest){
  const auth=await requireAdmin(request);if("error" in auth)return auth.error;
  const body=await request.json().catch(()=>({})) as any;
  try{
+  if(body.action==="resolve_request"){
+   const requestId=String(body.requestId||"");if(!requestId)throw new Error("Guest request is required.");
+   const {error}=await auth.admin.from("demo_guest_requests").update({status:"resolved",resolved_at:new Date().toISOString()}).eq("id",requestId);
+   if(error)throw new Error(error.message);
+   return NextResponse.json({ok:true},{headers:{"Cache-Control":"no-store"}});
+  }
+
   if(body.action==="regenerate_link"){
    const participantId=String(body.participantId||"");if(!participantId)throw new Error("Demo participant is required.");
    const raw=token(),expires=new Date(Date.now()+30*24*60*60_000).toISOString();
