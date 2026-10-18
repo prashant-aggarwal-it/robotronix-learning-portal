@@ -9,11 +9,14 @@ import {displayLabel} from "@/lib/display";
 import type {ScheduleEvent} from "@/lib/types";
 import {shortTimeZoneLabel,zonedLocalToUtc} from "@/lib/timezones";
 import {ZoomClassActions} from "@/components/ZoomClassActions";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type View="today"|"upcoming"|"needs_update"|"history";
 export default function TrainerClasses(){
  const[events,setEvents]=useState<ScheduleEvent[]>([]);const[attendance,setAttendance]=useState<any[]>([]);const[view,setView]=useState<View>("today");const[q,setQ]=useState("");
- useEffect(()=>{getTrainerDashboard().then(async d=>{const[e,a]=await Promise.all([listScheduleEvents(d.trainer.id),listClassAttendance()]);setEvents(e.filter(x=>x.eventType==="class"||x.eventType==="demo"));setAttendance(a)})},[]);
+ async function reload(){const d=await getTrainerDashboard();const[e,a]=await Promise.all([listScheduleEvents(d.trainer.id),listClassAttendance()]);setEvents(e.filter(x=>x.eventType==="class"||x.eventType==="demo"));setAttendance(a)}
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["schedule_events","class_attendance"],reload,"trainer-classes");
  const today=new Date().toISOString().slice(0,10);const now=Date.now();const isPast=(e:ScheduleEvent)=>zonedLocalToUtc(e.date,e.endTime,e.timezone).getTime()<now;
  const rows=useMemo(()=>events.filter(e=>{const viewOk=view==="today"?e.date===today&&!['cancelled','rescheduled'].includes(e.status):view==="upcoming"?!isPast(e)&&['scheduled','tentative','makeup'].includes(e.status):view==="needs_update"?isPast(e)&&['scheduled','tentative','makeup'].includes(e.status):isPast(e)&&['conducted','cancelled','rescheduled','missed'].includes(e.status);return viewOk&&e.title.toLowerCase().includes(q.toLowerCase())}).sort((a,b)=>`${b.date}${b.startTime}`.localeCompare(`${a.date}${a.startTime}`)),[events,view,q,now]);
  return <RoleGuard allow={["trainer"]}><AppShell role="trainer"><PageIntro eyebrow="MY DELIVERY" title="Classes" text="Focus on what needs attention now. Record attendance and concise learning outcomes after each class; history stays available without crowding the daily workflow."/>
