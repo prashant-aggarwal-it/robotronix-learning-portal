@@ -1,0 +1,32 @@
+name: Release candidate checks
+on:
+  push:
+    branches:
+      - feature/production-hardening-v1
+      - release/**
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck and structural regression checks
+        run: npm run check:release
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_ENV: demo
+  # Environment-based E2E tests require deliberately configured QA credentials,
+  # separate DEV Supabase and a reachable preview. Never run on production by default.

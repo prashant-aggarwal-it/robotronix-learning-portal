@@ -9,12 +9,15 @@ import {Pagination} from "@/components/admin/Pagination";
 import {SortableTh} from "@/components/admin/SortableTh";
 import {listAdminCourses,listAdminTrainers,listLearnerProgressRows} from "@/lib/repository";
 import type {CourseAdminRecord,LearnerProgressRow,TrainerAdminRecord} from "@/lib/types";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type SortKey="name"|"course"|"progress"|"remaining"|"attendance"|"last";
 function fmtDate(v?:string){return v?new Date(`${v}T12:00:00`).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"No attended class yet"}
 export default function ProgressOverview(){
  const[rows,setRows]=useState<LearnerProgressRow[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[q,setQ]=useState("");const[course,setCourse]=useState("all");const[trainer,setTrainer]=useState("all");const[status,setStatus]=useState("active");const[sortKey,setSortKey]=useState<SortKey>("remaining");const[sortDir,setSortDir]=useState<"asc"|"desc">("asc");const[page,setPage]=useState(1);const[pageSize,setPageSize]=useState(25);
- useEffect(()=>{Promise.all([listLearnerProgressRows(),listAdminCourses(),listAdminTrainers()]).then(([r,c,t])=>{setRows(r);setCourses(c);setTrainers(t)})},[]);
+ async function reload(){const[r,c,t]=await Promise.all([listLearnerProgressRows(),listAdminCourses(),listAdminTrainers()]);setRows(r);setCourses(c);setTrainers(t)}
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["class_attendance","learning_observations","session_records"],reload,"admin-progress");
  const filtered=useMemo(()=>{let r=rows.filter(x=>`${x.studentName} ${x.courseTitle} ${x.trainerName} ${x.grade}`.toLowerCase().includes(q.toLowerCase())&&(course==="all"||x.courseId===course)&&(trainer==="all"||x.trainerId===trainer)&&(status==="all"||x.enrollmentStatus===status));const sign=sortDir==="asc"?1:-1;return [...r].sort((a,b)=>{let v=0;if(sortKey==="name")v=a.studentName.localeCompare(b.studentName);if(sortKey==="course")v=a.courseTitle.localeCompare(b.courseTitle);if(sortKey==="progress")v=a.progressPercent-b.progressPercent;if(sortKey==="remaining")v=(a.hoursRemaining??0)-(b.hoursRemaining??0);if(sortKey==="attendance")v=a.attendanceRate-b.attendanceRate;if(sortKey==="last")v=(a.lastAttendedDate??"").localeCompare(b.lastAttendedDate??"");return v*sign||a.studentName.localeCompare(b.studentName)})},[rows,q,course,trainer,status,sortKey,sortDir]);
  function sort(column:string){const k=column as SortKey;if(sortKey===k)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortKey(k);setSortDir(k==="remaining"||k==="attendance"?"asc":"desc")}setPage(1)}
  const paged=filtered.slice((page-1)*pageSize,page*pageSize);const active=rows.filter(r=>r.enrollmentStatus==="active");const attendanceRows=active.filter(r=>r.attendanceRecorded>0);const avgAttendance=attendanceRows.length?Math.round(attendanceRows.reduce((s,r)=>s+r.attendanceRate,0)/attendanceRows.length):0;const nearCompletion=active.filter(r=>(r.hoursRemaining??999)<=Math.max(2,(r.plannedHours??0)*.2)).length;const needsFollowUp=active.filter(r=>r.activeHold||(r.attendanceRecorded>=2&&r.attendanceRate<75)).length;

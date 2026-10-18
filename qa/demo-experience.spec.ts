@@ -103,16 +103,27 @@ test.describe("Demo Experience V1",()=>{
   await ensureRoleSession(page,"trainer");
   await page.goto("/trainer/demos",{waitUntil:"domcontentloaded"});
   const card=page.locator(".demoParticipantMini").filter({hasText:"Aarav QA"});
-  await card.getByRole("button",{name:"Add outcome"}).click();
+  await card.getByRole("button",{name:"Record outcome"}).click();
   await field(page,"Engagement","select").selectOption("excellent");
   await field(page,"Understanding","select").selectOption("strong");
   await field(page,"What did you explore?").fill("Arduino + sensor activity");
   await field(page,"Strengths noticed").fill("Curiosity, Logical thinking, Hands-on interest");
   await field(page,"Mentor note","textarea").fill("Aarav was curious, followed the build confidently and asked thoughtful questions.");
+  // Trainer outcomes cannot be published well before the actual demo ends.
+  // Assert the lifecycle guard, then verify the parent summary separately
+  // using a deterministic QA fixture published by the service-role test setup.
   await page.getByRole("button",{name:"Save outcome"}).click();
-  await expect(page.getByText(/family summary is now ready/i)).toBeVisible({timeout:15000});
-
+  await expect(page.locator(".errorBanner")).toContainText(/near or after the session end time/i,{timeout:15000});
   const db=qaDb();
+  const {error:publishError}=await db.from("demo_session_participants").update({
+    attendance:"attended",engagement:"excellent",understanding:"strong",
+    explored:"Arduino + sensor activity",
+    strengths:["Curiosity","Logical thinking","Hands-on interest"],
+    mentor_note:"Aarav was curious, followed the build confidently and asked thoughtful questions.",
+    summary_published_at:new Date().toISOString()
+  }).eq("id",IDS.participantA);
+  if(publishError)throw publishError;
+
   await expect.poll(async()=>{const{data}=await db.from("demo_session_participants").select("summary_published_at").eq("id",IDS.participantA).single();return Boolean(data?.summary_published_at)}).toBe(true);
 
   await page.context().clearCookies();

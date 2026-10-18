@@ -6,6 +6,7 @@ import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
 import {adminApi} from "@/lib/admin-api-client";
 import {displayLabel} from "@/lib/display";
 import {exportWorkbook} from "@/lib/export-workbook";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type Candidate={packageId:string;packageName:string;currency:string;amount:number;sessions:number;studentName:string;courseTitle:string;courseCode:string;customer:{name:string;email:string;phone:string;line1:string;line2:string;city:string;state:string;postal:string;country:string};addressComplete:boolean;international:boolean};
 type Invoice={
@@ -30,7 +31,8 @@ function Workspace(){
  const[selectedId,setSelectedId]=useState<string|null>(null);
 
  async function reload(){setError("");try{setData(await adminApi("/api/admin/invoices"))}catch(e){setError(e instanceof Error?e.message:String(e))}}
- useEffect(()=>{reload()},[]);
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["student_invoices","student_fee_payments"],reload,"admin-invoices");
  async function act(body:any,success="Invoice action completed successfully."){
   setBusy(true);setError("");setNotice("");
   try{const r=await adminApi("/api/admin/invoices",{method:"POST",body:JSON.stringify(body)});setNotice(r.reused?"An invoice already existed for this fee package, so Robotronix reused it.":success);await reload()}
@@ -81,7 +83,7 @@ function Workspace(){
   </section>
 
   <section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">BILLING CONTROL CENTRE</div><h2>International invoices</h2><p>Create invoices from the learner enrollment billing panel. Use this ledger to issue, send, sync and investigate payments.</p></div><div className="row"><button className="button ghost" disabled={busy||!filtered.length} onClick={exportInvoices}>Export Excel</button><button className="button secondary" disabled={busy} onClick={reload}>Refresh</button></div></div>
+   <div className="panelHeader"><div><div className="eyebrow">BILLING CONTROL CENTRE</div><h2>International invoices</h2><p>Create invoices from the learner enrollment billing panel. Use this ledger to issue, send, sync and investigate payments.</p></div><div className="row"><button className="button ghost" disabled={busy||!filtered.length} onClick={exportInvoices}>Export Excel</button><button className="button secondary" disabled={busy} onClick={reload}>Refresh data</button></div></div>
    <div className="row" style={{gap:8,flexWrap:"wrap",marginBottom:12}}>
     <button className={filter==="all"?"button":"button secondary"} onClick={()=>setFilter("all")}>All · {invoiceRows.length}</button>
     <button className={filter==="draft"?"button":"button secondary"} onClick={()=>setFilter("draft")}>Draft · {counts.draft}</button>

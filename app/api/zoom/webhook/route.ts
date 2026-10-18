@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
-import {encryptZoomSecret,zoomServiceClient} from "@/lib/server/zoom";
+import {zoomServiceClient} from "@/lib/server/zoom";
+import {reconcileZoomRecording} from "@/lib/server/zoom-recording-reconcile";
 export const dynamic="force-dynamic";
 
 function secret(){
@@ -92,23 +93,7 @@ async function handleParticipantLeft(db:any,meeting:any,body:any){
 async function handleRecording(db:any,meeting:any,body:any){
  const object=body?.payload?.object||{};
  const files=Array.isArray(object.recording_files)?object.recording_files:[];
- const retainDays=Number(meeting.recording_retention_days||60);
- const retainUntil=new Date(Date.now()+retainDays*86400000).toISOString();
- const passcode=String(object.recording_play_passcode||"");
- for(const file of files){
-  const fileId=String(file.id||file.recording_id||"");if(!fileId)continue;
-  const row={
-   zoom_meeting_id:meeting.id,zoom_recording_file_id:fileId,
-   recording_type:String(file.recording_type||""),file_type:String(file.file_type||""),
-   file_extension:String(file.file_extension||""),file_size_bytes:Number(file.file_size||0),
-   recording_start:file.recording_start?asIso(file.recording_start):null,
-   recording_end:file.recording_end?asIso(file.recording_end):null,
-   play_url:String(file.play_url||object.share_url||""),download_url:String(file.download_url||""),
-   share_passcode_encrypted:passcode?encryptZoomSecret(passcode):null,status:"completed",
-   learner_visible:Boolean(meeting.learner_recording_visible),retain_until:retainUntil,updated_at:new Date().toISOString()
-  };
-  const {error}=await db.from("zoom_recordings").upsert(row,{onConflict:"zoom_recording_file_id"});if(error)throw new Error(error.message);
- }
+ for(const file of files)await reconcileZoomRecording(db,meeting,file,object);
  await db.from("zoom_meetings").update({recording_status:files.length?"ready":"failed",updated_at:new Date().toISOString()}).eq("id",meeting.id);
 }
 

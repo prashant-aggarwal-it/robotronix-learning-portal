@@ -34,11 +34,19 @@ export async function POST(request:NextRequest){
   const participantId=String(body.participantId||"");if(!participantId)throw new Error("Demo participant is required.");
   const trainerId=await trainerIdFor(auth);
   const {data:participant,error:pErr}=await auth.admin.from("demo_session_participants")
-   .select("id,demo_session_id,lead_id,demo_session:demo_sessions(id,trainer_id,status)")
+   .select("id,demo_session_id,lead_id,attendance,demo_session:demo_sessions(id,trainer_id,status,schedule_event:schedule_events(date,end_time,timezone))")
    .eq("id",participantId).maybeSingle();
   if(pErr)throw new Error(pErr.message);if(!participant)throw new Error("Demo participant not found.");
   const session:any=participant.demo_session;if(trainerId&&session?.trainer_id!==trainerId)return NextResponse.json({ok:false,error:"This demo is not assigned to you."},{status:403});
 
+  if(!session||!["scheduled","completed","no_show"].includes(session.status))throw new Error("Outcomes cannot be changed for a cancelled demo.");
+  if(session.status!=="scheduled"&&auth.profile.role!=="admin")throw new Error("This demo is already closed. Ask Admin to correct an outcome.");
+  const event:any=session.schedule_event;
+  if(auth.profile.role!=="admin"&&event?.date&&event?.end_time){
+   const {zonedLocalToUtc}=await import("@/lib/timezones");
+   const end=zonedLocalToUtc(event.date,String(event.end_time).slice(0,5),event.timezone||"Asia/Kolkata");
+   if(Date.now()<end.getTime()-15*60_000)throw new Error("Demo outcomes can be published near or after the session end time.");
+  }
   const attendance=["attended","no_show","cancelled"].includes(body.attendance)?body.attendance:"attended";
   const update:any={attendance,updated_at:new Date().toISOString()};
   if(attendance==="attended"){
@@ -57,16 +65,22 @@ export async function POST(request:NextRequest){
    update.summary_published_at=new Date().toISOString();
   }else{
    update.summary_published_at=null;
+   for(const field of ["engagement","understanding","problem_solving","confidence","explored","mentor_note","recommended_course_id","recommended_format","recommended_frequency","fit"])update[field]=null;
+   update.strengths=[];
   }
   const {error:uErr}=await auth.admin.from("demo_session_participants").update(update).eq("id",participantId);if(uErr)throw new Error(uErr.message);
-  await auth.admin.from("demo_leads").update({status:attendance==="attended"?"demo_completed":"follow_up",updated_at:new Date().toISOString()}).eq("id",participant.lead_id);
+  const {error:lErr}=await auth.admin.from("demo_leads").update({status:attendance==="attended"?"demo_completed":"follow_up",updated_at:new Date().toISOString()}).eq("id",participant.lead_id).not("status","in","(converted,lost)");
+  if(lErr)throw new Error(lErr.message);
 
   const {data:all,error:aErr}=await auth.admin.from("demo_session_participants").select("attendance").eq("demo_session_id",participant.demo_session_id);
   if(aErr)throw new Error(aErr.message);
   if((all||[]).length&&(all||[]).every((x:any)=>x.attendance!=="scheduled")){
-   await auth.admin.from("demo_sessions").update({status:"completed",completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",participant.demo_session_id);
+   const rows=all||[];const anyAttended=rows.some((x:any)=>x.attendance==="attended");const allNoShow=rows.every((x:any)=>x.attendance==="no_show");
+   const sessionStatus=anyAttended?"completed":allNoShow?"no_show":"cancelled";
+   const {error:finishError}=await auth.admin.from("demo_sessions").update({status:sessionStatus,completed_at:anyAttended?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq("id",participant.demo_session_id);
+   if(finishError)throw new Error(finishError.message);
    const {data:s}=await auth.admin.from("demo_sessions").select("schedule_event_id").eq("id",participant.demo_session_id).maybeSingle();
-   if(s?.schedule_event_id)await auth.admin.from("schedule_events").update({status:"conducted",updated_at:new Date().toISOString()}).eq("id",s.schedule_event_id);
+   if(s?.schedule_event_id){const {error:eventError}=await auth.admin.from("schedule_events").update({status:anyAttended?"conducted":"cancelled",updated_at:new Date().toISOString()}).eq("id",s.schedule_event_id);if(eventError)throw new Error(eventError.message);}
   }
   return NextResponse.json({ok:true},{headers:{"Cache-Control":"no-store"}});
  }catch(error){

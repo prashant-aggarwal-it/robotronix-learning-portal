@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useEffect,useState} from "react";
+import {Suspense,useEffect,useState} from "react";
 import {useSearchParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -9,7 +9,7 @@ import {adminApi} from "@/lib/admin-api-client";
 
 type Host={id:string;label:string;zoomEmail:string;status:string;connectedAt:string;lastSyncAt:string|null};
 type Meeting={id:string;topic:string;scheduledStart:string;zoomMeetingId:string};
-export default function ZoomTest(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Workspace/></AppShell></RoleGuard>}
+export default function ZoomTest(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Suspense fallback={<p>Loading Zoom test…</p>}><Workspace/></Suspense></AppShell></RoleGuard>}
 function Workspace(){
  const search=useSearchParams();const [hosts,setHosts]=useState<Host[]>([]),[selected,setSelected]=useState(""),[meeting,setMeeting]=useState<Meeting|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const load=async()=>{try{const data=await adminApi("/api/zoom/hosts");setHosts(data.hosts||[]);if(!selected&&data.hosts?.[0])setSelected(data.hosts[0].id)}catch(e){setError(e instanceof Error?e.message:String(e))}};

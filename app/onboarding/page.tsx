@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import {useEffect,useMemo,useState} from "react";
+import {useSearchParams} from "next/navigation";
+import {Suspense,useEffect,useMemo,useState} from "react";
 import {GradeSelect} from "@/components/GradeSelect";
 import {TimeZoneField} from "@/components/TimeZoneField";
 import {PhoneField} from "@/components/PhoneField";
@@ -16,7 +17,8 @@ import {guardianRelationshipOptions,legacyFieldsFromGuardians} from "@/lib/guard
 import type {GuardianRelationship} from "@/lib/types";
 
 const interests=["Coding for Beginners","Scratch & Game Creation","Python Programming","Robotics & Smart Automations","AI & Future Skills","Website Designing","Mobile App Development","3D Design & Modelling","Data Science","Not sure — need guidance"];
-const sources=["Existing parent","Referral","School","Facebook","Instagram","Google","Website","Offline centre","Other"];
+const sources=["Demo / Discovery Session","Existing parent","Referral","School","Facebook","Instagram","Google","Website","Offline centre","Other"];
+const demoInterestMap:Record<string,string>={Robotics:"Robotics & Smart Automations",Arduino:"Robotics & Smart Automations",Coding:"Coding for Beginners",Python:"Python Programming",Scratch:"Scratch & Game Creation","AI & Future Skills":"AI & Future Skills"};
 const classDays=classDayNames.slice(1).concat(classDayNames[0]);
 const dayIndex=new Map(classDays.map((day,index)=>[day,index]));
 type TimingSlot={day:string;start:string;end:string;endsNextDay?:boolean};
@@ -49,7 +51,8 @@ function indiaReference(slot:TimingSlot,timeZone:string){
   return `${startDay} ${formatClock(range.startTime)}–${endDay!==startDay?`${endDay} `:""}${formatClock(range.endTime)} IST${localNext}`;
 }
 
-export default function OnboardingPage(){
+function OnboardingPageContent(){
+ const params=useSearchParams();const demoToken=params.get("demo")||"";
  const[slots,setSlots]=useState<TimingSlot[]>([]);
  const[timingNote,setTimingNote]=useState("");
  const[dayPickerOpen,setDayPickerOpen]=useState(false);
@@ -66,8 +69,21 @@ export default function OnboardingPage(){
  const[signedIn,setSignedIn]=useState(appMode==="demo");
 
  useEffect(()=>{
-  if(appMode==="live")getCurrentAuthUser().then(async u=>{setSignedIn(Boolean(u));if(!u)return;const defaults=await getCurrentFamilyOnboardingDefaults();setForm(f=>({...f,...defaults,loginEmail:u.email??"",childName:"",childDob:"",grade:"",school:"",interests:[],goal:"Explore technology & discover interests",codingExperience:"None",roboticsExperience:"None",source:"",dataConsent:false,portfolioConsent:false}));});
- },[]);
+  if(appMode==="live")getCurrentAuthUser().then(async u=>{setSignedIn(Boolean(u));if(!u)return;const defaults=await getCurrentFamilyOnboardingDefaults();setForm(f=>({...f,...defaults,loginEmail:u.email??"",childName:demoToken?f.childName:"",childDob:"",grade:demoToken?f.grade:"",school:"",interests:demoToken&&f.interests.length?f.interests:[],goal:"Explore technology & discover interests",codingExperience:"None",roboticsExperience:"None",source:demoToken?(f.source||"Demo / Discovery Session"):"",dataConsent:false,portfolioConsent:false}));});
+ },[demoToken]);
+
+ useEffect(()=>{if(!demoToken)return;let cancelled=false;(async()=>{try{const r=await fetch("/api/demo/"+encodeURIComponent(demoToken)+"/onboarding-prefill",{cache:"no-store"});const j=await r.json();if(!r.ok||!j.ok||cancelled)return;const p=j.prefill||{};const mapped=demoInterestMap[String(p.interest||"")]||"Not sure — need guidance";setForm(f=>({...f,
+   primaryGuardianName:f.primaryGuardianName||p.parentName||"",
+   primaryGuardianMobile:f.primaryGuardianMobile||p.parentWhatsApp||"",
+   primaryWhatsApp:f.primaryWhatsApp||p.parentWhatsApp||"",
+   loginEmail:f.loginEmail||p.parentEmail||"",
+   childName:f.childName||p.childName||"",
+   grade:f.grade||p.grade||"",
+   interests:f.interests.length?f.interests:[mapped],
+   roboticsExperience:String(p.interest||"").match(/robot|arduino/i)?(p.experienceLevel==="new"?"None":"Some experience"):f.roboticsExperience,
+   codingExperience:String(p.interest||"").match(/coding|python|scratch|ai/i)?(p.experienceLevel==="new"?"None":"Some experience"):f.codingExperience,
+   source:"Demo / Discovery Session"
+  }));}catch{}})();return()=>{cancelled=true}},[demoToken]);
 
  const age=useMemo(()=>{
   if(!form.childDob)return null;
@@ -151,7 +167,7 @@ export default function OnboardingPage(){
  const err=(k:string)=>errors[k]?<div className="fieldError">{errors[k]}</div>:null;
 
  if(done)return <main className="onboardingShell"><div className="onboardingSuccess"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><span className="statusBadge status-active">Setup submitted</span><h1>Thank you. Your child’s learning profile has been received.</h1><p>Robotronix™ will review the details and confirm the course, trainer and recurring class schedule. You can add another child now without entering your family details again.</p><div className="row onboardingSuccessActions"><button className="button ghost" onClick={startAnotherChild}>+ Add another child</button><Link className="button" href={appMode==="demo"?"/admin/onboarding":"/parent"}>Go to Family Dashboard</Link></div></div></main>;
- if(!signedIn)return <main className="onboardingShell onboardingEntryShell"><div className="onboardingSignIn onboardingEntryCard"><img className="onboardingEntryLogo" src="/brand/robotronix-stacked.png" alt="Robotronix"/><div className="eyebrow">PARENT ONBOARDING</div><h1>Create your family portal</h1><p className="onboardingEntryLead">Continue with Google to securely create your family account and access the Robotronix Learning Portal.</p><button className="button googleButton onboardingGoogleButton" onClick={()=>signInWithGoogle()}><span className="googleG">G</span> Continue with Google</button><div className="onboardingSecurityLine">Secure sign-in • No access to Gmail, Drive or Contacts</div><Link href="/" className="textLink onboardingBackLink">Back to Learning Portal</Link></div></main>;
+ if(!signedIn)return <main className="onboardingShell onboardingEntryShell"><div className="onboardingSignIn onboardingEntryCard"><img className="onboardingEntryLogo" src="/brand/robotronix-stacked.png" alt="Robotronix"/><div className="eyebrow">PARENT ONBOARDING</div><h1>Create your family portal</h1><p className="onboardingEntryLead">Continue with Google to securely create your family account and access the Robotronix Learning Portal.</p><button className="button googleButton onboardingGoogleButton" onClick={()=>signInWithGoogle(typeof window!=="undefined"?window.location.pathname+window.location.search:"/onboarding")}><span className="googleG">G</span> Continue with Google</button><div className="onboardingSecurityLine">Secure sign-in • No access to Gmail, Drive or Contacts</div><Link href="/" className="textLink onboardingBackLink">Back to Learning Portal</Link></div></main>;
 
  return <main className="onboardingPage">
   <header className="onboardingTop"><Link href="/"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link><div><b>Family Onboarding</b><span>Usually takes about 2 minutes</span></div><Link href="/" className="button ghost smallButton">Exit</Link></header>
@@ -210,4 +226,9 @@ export default function OnboardingPage(){
 
 function Field({label,value,onChange,error,tel=false}:{label:string;value:string;onChange:(v:string)=>void;error?:string;tel?:boolean}){
  return <div className="formGroup"><label>{label}</label><input className={`input ${error?"invalid":""}`} type={tel?"tel":"text"} value={value} onChange={e=>onChange(e.target.value)}/>{error&&<div className="fieldError">{error}</div>}</div>;
+}
+
+// useSearchParams suspends during static prerendering in Next.js 16.
+export default function OnboardingPage(){
+ return <Suspense fallback={<main className="pageShell"><p>Loading onboarding…</p></main>}><OnboardingPageContent/></Suspense>;
 }

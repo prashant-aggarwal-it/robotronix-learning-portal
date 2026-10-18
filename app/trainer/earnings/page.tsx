@@ -9,6 +9,7 @@ import {formatClock} from "@/lib/timezones";
 import {displayLabel} from "@/lib/display";
 import {DEFAULT_COMP_PLAN} from "@/lib/trainer-payroll";
 import type {CohortAdminRecord,EnrollmentAdminRecord,ScheduleEvent,StudentAdminRecord,TrainerCompensationPlan,TrainerEarningRecord,TrainerPayoutRecord} from "@/lib/types";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 function currentPayrollMonth(timeZone="Asia/Kolkata"){
  const parts=new Intl.DateTimeFormat("en-US",{timeZone,year:"numeric",month:"2-digit"}).formatToParts(new Date());
@@ -23,7 +24,9 @@ export default function TrainerEarningsPage(){
  const monthDate=new Date(`${month}-01T12:00:00Z`);
  const monthLabel=monthDate.toLocaleDateString("en-IN",{month:"long",year:"numeric",timeZone:"UTC"});
  const monthEnd=new Date(Date.UTC(monthDate.getUTCFullYear(),monthDate.getUTCMonth()+1,0)).getUTCDate();
- useEffect(()=>{getTrainerDashboard().then(async d=>{setTrainerId(d.trainer.id);setTrainerName(d.trainer.name);if(!d.trainer.id)return;const[e,p,ev,r,en,co,st]=await Promise.all([listTrainerEarnings({trainerId:d.trainer.id}),listTrainerPayouts(d.trainer.id),listScheduleEvents(d.trainer.id),getTrainerCompensationPlan(d.trainer.id),listAdminEnrollments(),listAdminCohorts(),listAdminStudents()]);setEarnings(e);setPayouts(p);setEvents(ev);setPlan(r);setEnrollments(en);setCohorts(co);setStudents(st)})},[]);
+ async function reload(){const d=await getTrainerDashboard();setTrainerId(d.trainer.id);setTrainerName(d.trainer.name);if(!d.trainer.id)return;const[e,p,ev,r,en,co,st]=await Promise.all([listTrainerEarnings({trainerId:d.trainer.id}),listTrainerPayouts(d.trainer.id),listScheduleEvents(d.trainer.id),getTrainerCompensationPlan(d.trainer.id),listAdminEnrollments(),listAdminCohorts(),listAdminStudents()]);setEarnings(e);setPayouts(p);setEvents(ev);setPlan(r);setEnrollments(en);setCohorts(co);setStudents(st)}
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["trainer_earnings","schedule_events"],reload,"trainer-earnings");
  const monthRows=useMemo(()=>earnings.filter(e=>e.earningDate.startsWith(month)),[earnings,month]);const eventMap=useMemo(()=>new Map(events.map(e=>[e.id,e])),[events]);const generated=monthRows.filter(e=>e.status!=="void").reduce((s,e)=>s+e.totalAmount,0);const approved=monthRows.filter(e=>e.status==="approved").reduce((s,e)=>s+e.totalAmount,0);const paid=monthRows.filter(e=>e.status==="paid").reduce((s,e)=>s+e.totalAmount,0);const payout=payouts.find(p=>p.periodMonth===month);
  return <RoleGuard allow={["trainer"]}><AppShell role="trainer">
   <section className="trainerExperienceHero"><div><span className="experienceLabel">MY EARNINGS</span><h1>Earnings · {monthLabel}</h1><p>Completed classes update this ledger automatically. Payroll approval and payment remain controlled by Robotronix™ Admin.</p></div><div className="trainerToday"><span>Generated</span><b>{money(generated)}</b><small>{monthLabel}</small></div></section>

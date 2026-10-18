@@ -5,11 +5,15 @@ const required=[
  "app/api/zoom/classroom/[scheduleEventId]/route.ts",
  "app/api/zoom/webhook/route.ts",
  "app/api/zoom/overview/route.ts",
+ "app/api/zoom/reconcile/route.ts",
+ "app/api/zoom/retention/route.ts",
  "app/api/zoom/meetings/route.ts",
  "app/api/zoom/recordings/[recordingId]/route.ts",
  "app/api/zoom/recordings/[recordingId]/stream/route.ts",
  "app/admin/zoom/page.tsx",
  "app/admin/zoom/meeting/[meetingId]/page.tsx",
+ "app/admin/zoom/recording/[recordingId]/page.tsx",
+ "netlify/functions/zoom-retention.mts",
  "app/classroom/[scheduleEventId]/page.tsx",
  "components/ZoomClassActions.tsx",
  "lib/server/zoom-classroom.ts",
@@ -29,7 +33,36 @@ for(const event of ["meeting.started","meeting.ended","meeting.participant_joine
  if(!webhook.includes(event))throw new Error("Zoom webhook handling is missing: "+event);
 }
 const admin=fs.readFileSync("app/admin/zoom/page.tsx","utf8");
-for(const marker of ["New Meeting","General meetings","Cloud recordings","Zoom accounts"]){
+for(const marker of ["New Meeting","General meetings","Cloud recordings","Zoom accounts","Sync with Zoom","No live action"]){
  if(!admin.includes(marker))throw new Error("Zoom Admin UI is missing: "+marker);
 }
-console.log("Zoom Classroom V1 structure: OK");
+const zoom=fs.readFileSync("lib/server/zoom.ts","utf8");
+for(const marker of ['access_token','redirect:"follow"','target.protocol!=="https:"','hostname.endsWith(".zoom.us")'])if(!zoom.includes(marker))throw new Error("Zoom hardening missing: "+marker);
+const recordingDetail=fs.readFileSync("app/api/zoom/recordings/[recordingId]/route.ts","utf8");
+if(!recordingDetail.includes('recording.status!=="completed"'))throw new Error("Playback must reject inactive recordings.");
+const retention=fs.readFileSync("app/api/zoom/retention/route.ts","utf8");
+for(const marker of ["retain_until","protected_from_deletion","action=trash","INTERNAL_CRON_SECRET"])if(!retention.includes(marker))throw new Error("Zoom retention hardening missing: "+marker);
+
+const recordingReconcile=fs.readFileSync("lib/server/zoom-recording-reconcile.ts","utf8");
+for(const marker of ["ignoreDuplicates:true","recording_retention_days","retain_until"]){
+ if(!recordingReconcile.includes(marker))throw new Error("Recording lifecycle reconciliation safeguard missing: "+marker);
+}
+for(const file of ["app/api/zoom/reconcile/route.ts","app/api/zoom/webhook/route.ts"]){
+ const content=fs.readFileSync(file,"utf8");
+ if(!content.includes("reconcileZoomRecording("))throw new Error("Provider sync bypasses recording lifecycle safeguards: "+file);
+}
+if(!retention.includes('select("status,protected_from_deletion,retain_until")'))throw new Error("Retention job must recheck deletion eligibility immediately before cleanup.");
+if(!retention.includes("failures.push("))throw new Error("Retention cleanup failure diagnostics are missing.");
+
+
+const allocationSql=fs.readFileSync("database/04_upgrade/06_ZOOM_HOST_ALLOCATION_GUARD.sql","utf8");
+for(const marker of ["btree_gist","zoom_host_active_meeting_no_overlap","exclude using gist","23P01"]){
+ if(marker==="23P01")continue;
+ if(!allocationSql.includes(marker))throw new Error("Zoom host overlap guard missing: "+marker);
+}
+const classroom=fs.readFileSync("lib/server/zoom-classroom.ts","utf8");
+for(const marker of ['error.code==="23P01"','await deleteRemoteMeetingSafely(host.id,String(created.id))']){
+ if(!classroom.includes(marker))throw new Error("Concurrent-host reservation recovery missing: "+marker);
+}
+
+console.log("Zoom Classroom V1 structure and production hardening: OK");

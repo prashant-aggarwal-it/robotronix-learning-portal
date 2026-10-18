@@ -45,7 +45,7 @@ export async function GET(_request:NextRequest,{params}:{params:Promise<{token:s
   }
   const window=joinWindow(event);
   if(participant.summary_published_at&&!participant.summary_viewed_at)await admin.from("demo_session_participants").update({summary_viewed_at:new Date().toISOString()}).eq("id",participant.id);
-  const state=participant.summary_published_at?"completed":session.status==="cancelled"?"cancelled":"upcoming";
+  const state=session.status==="cancelled"||participant.attendance==="cancelled"?"cancelled":participant.attendance==="no_show"?"no_show":participant.summary_published_at?"completed":"upcoming";
   return NextResponse.json({ok:true,demo:{
    state,participantId:participant.id,childName:lead.child_name,grade:lead.grade,interest:lead.interest,experienceLevel:lead.experience_level,
    sessionType:session.session_type,focus:session.focus,trainerName:session.trainer?.full_name||"Robotronix Mentor",
@@ -72,6 +72,7 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{token:s
    const rating=["excellent","good","not_sure"].includes(body.rating)?body.rating:null;if(!rating)throw new Error("Choose a feedback rating.");
    const {error}=await admin.from("demo_session_participants").update({parent_rating:rating,parent_feedback:String(body.feedback||"").trim().slice(0,1000)||null,updated_at:new Date().toISOString()}).eq("id",participant.id);
    if(error)throw new Error(error.message);
+   await admin.from("portal_notifications").insert({recipient_role:"admin",type:"demo_feedback",priority:"important",title:"New demo feedback",message:`${participant.lead?.child_name||"A family"} rated the discovery session ${rating.replace("_"," ")}.`,href:"/admin/demos"});
    return NextResponse.json({ok:true});
   }
   if(body.action==="reschedule"||body.action==="help"){
@@ -79,6 +80,8 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{token:s
    if(body.action==="reschedule"&&!message)throw new Error("Please tell us your preferred alternative time.");
    const {error}=await admin.from("demo_guest_requests").insert({demo_session_participant_id:participant.id,request_type:body.action,message});
    if(error)throw new Error(error.message);
+   const child=participant.lead?.child_name||"Demo family";
+   await admin.from("portal_notifications").insert({recipient_role:"admin",type:"demo_request",priority:"action",title:body.action==="reschedule"?`${child} requested another demo time`:`${child} needs help with the demo`,message:message||"Please review the demo request.",href:"/admin/demos"});
    return NextResponse.json({ok:true});
   }
   throw new Error("Unsupported demo action.");

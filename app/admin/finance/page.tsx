@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useEffect,useState} from "react";
+import {Suspense,useEffect,useState} from "react";
 import {useSearchParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -10,9 +10,10 @@ import * as repo from "@/lib/repository";
 import {loadFeeLedger,addFeePackage,addFeePayment} from "@/lib/student-finance-repository";
 import {FeePackage,FeePayment,money,packageSummary,allocatedCost} from "@/lib/student-finance";
 import type {EnrollmentAdminRecord,StudentAdminRecord,CourseAdminRecord,ClassAttendanceRecord,ScheduleEvent,TrainerEarningRecord,TrainerPayoutRecord} from "@/lib/types";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const currencies=['INR','AED','SAR','QAR','OMR','KWD','BHD','USD','EUR','GBP','SGD','HKD','MYR','AUD','NZD','CAD'] as const;
-export default function Finance(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Workspace/></AppShell></RoleGuard>}
+export default function Finance(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Suspense fallback={<p>Loading finance…</p>}><Workspace/></Suspense></AppShell></RoleGuard>}
 function Workspace(){
  const searchParams=useSearchParams();const requestedEnrollment=searchParams.get("enrollment")||"";const openNewPackage=searchParams.get("newPackage")==="1";
  const [packages,setPackages]=useState<FeePackage[]>([]),[payments,setPayments]=useState<FeePayment[]>([]),[enrollments,setEnrollments]=useState<EnrollmentAdminRecord[]>([]),[students,setStudents]=useState<StudentAdminRecord[]>([]),[courses,setCourses]=useState<CourseAdminRecord[]>([]),[attendance,setAttendance]=useState<ClassAttendanceRecord[]>([]),[events,setEvents]=useState<ScheduleEvent[]>([]),[earnings,setEarnings]=useState<TrainerEarningRecord[]>([]),[payouts,setPayouts]=useState<TrainerPayoutRecord[]>([]);
@@ -20,6 +21,7 @@ function Workspace(){
  const [inst,setInst]=useState([{due:today(),amount:0}]);
  async function reload(){const [l,e,s,c,a,v,t,p]=await Promise.all([loadFeeLedger(),repo.listAdminEnrollments(),repo.listAdminStudents(),repo.listAdminCourses(),repo.listClassAttendance(),repo.listScheduleEvents(),repo.listTrainerEarnings(),repo.listTrainerPayouts()]);setPackages(l.packages);setPayments(l.payments);setEnrollments(e);setStudents(s);setCourses(c);setAttendance(a);setEvents(v);setEarnings(t);setPayouts(p);setLoaded(true)}
  useEffect(()=>{reload().catch(e=>setError(e.message))},[]);
+ useLiveRefresh(["student_fee_payments","class_attendance","trainer_earnings"],reload,"admin-finance");
  useEffect(()=>{if(loaded&&openNewPackage){setTab("package");setInst([{due:today(),amount:0}])}},[loaded,openNewPackage]);
  const label=(id:string)=>{const e=enrollments.find(x=>x.id===id);return `${students.find(s=>s.id===e?.studentId)?.fullName||id} · ${courses.find(c=>c.id===e?.courseId)?.title||''}`};
  const asOf=today();const scoped=packages.filter(p=>p.currency===currency);const openingSessionsFor=(p:FeePackage)=>p.source==="migration"?(enrollments.find(e=>e.id===p.enrollment_id)?.openingCompletedSessions??0):0;const sums=scoped.map(p=>({p,...packageSummary(p,payments,attendance,events,asOf,month,openingSessionsFor(p))}));

@@ -8,10 +8,13 @@ import {FeedbackCard,NextClassCard,ParentActionCard,ProjectSpotlight,learningSta
 import {ParentDelightHub} from "@/components/experience/ParentDelightHub";
 import {getParentLearnerExperiences,getCurrentParentSetupState} from "@/lib/repository";
 import type {LearnerExperienceSnapshot} from "@/lib/types";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 export default function ParentPage(){
  const[children,setChildren]=useState<LearnerExperienceSnapshot[]|undefined>(undefined);const[selectedId,setSelectedId]=useState<string>("");const[setup,setSetup]=useState<{pending:number;submitted:number}|null>(null);
- useEffect(()=>{Promise.all([getParentLearnerExperiences(),getCurrentParentSetupState()]).then(([rows,state])=>{setChildren(rows);setSetup(state);setSelectedId(current=>current||rows[0]?.learner.id||"")})},[]);
+ async function reload(){const[rows,state]=await Promise.all([getParentLearnerExperiences(),getCurrentParentSetupState()]);setChildren(rows);setSetup(state);setSelectedId(current=>current||rows[0]?.learner.id||"")}
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["schedule_events","class_attendance","learning_observations","session_records"],reload,"parent-dashboard");
  const selected=useMemo(()=>children?.find(x=>x.learner.id===selectedId)??children?.[0],[children,selectedId]);
  return <RoleGuard allow={["parent"]}><AppShell role="parent">
   {children===undefined?<div className="experienceLoading">Loading your family learning space…</div>:!children.length?<div className="experienceEmpty premiumEmpty"><div className="experienceEmptyIcon">◎</div>{(setup?.submitted||0)>0?<><h2>Your family setup has been submitted</h2><p>We’re reviewing your learner details. Once an enrollment is activated, classes, progress, projects and mentor updates will appear here automatically.</p><div className="row"><span className="statusBadge status-planned">Pending activation</span><Link className="button ghost" href="/onboarding">+ Add another child</Link></div></>:<><h2>Set up your child’s learning profile</h2><p>Add your child’s details, learning interests and preferred class timings. You can add more than one child to the same family account.</p><Link className="button" href="/onboarding">Start Family Setup</Link></>}</div>:selected&&(()=>{

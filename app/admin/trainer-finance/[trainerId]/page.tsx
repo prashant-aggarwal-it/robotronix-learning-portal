@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useEffect,useMemo,useState} from "react";
+import {Suspense,useEffect,useMemo,useState} from "react";
 import {useParams,useSearchParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -17,7 +17,7 @@ import type {CohortAdminRecord,CourseAdminRecord,EnrollmentAdminRecord,ScheduleE
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 function money(v:number){return new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(v)}
 function currentMonth(){return new Date().toISOString().slice(0,7)}
-export default function TrainerPayrollDetail(){
+function TrainerPayrollDetailContent(){
  const{trainerId}=useParams<{trainerId:string}>();const search=useSearchParams();const[trainer,setTrainer]=useState<TrainerAdminRecord|null>(null);const[finance,setFinance]=useState<TrainerFinanceRecord|null>(null);const[plan,setPlan]=useState<TrainerCompensationPlan|null>(null);const[planBaseline,setPlanBaseline]=useState("");const[planSaving,setPlanSaving]=useState(false);const[planSavedAt,setPlanSavedAt]=useState("");const[earnings,setEarnings]=useState<TrainerEarningRecord[]>([]);const[payouts,setPayouts]=useState<TrainerPayoutRecord[]>([]);const[events,setEvents]=useState<ScheduleEvent[]>([]);const[enrollments,setEnrollments]=useState<EnrollmentAdminRecord[]>([]);const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[students,setStudents]=useState<StudentAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[month,setMonth]=useState(search.get("month")||currentMonth());const[msg,setMsg]=useState("");const[paymentRef,setPaymentRef]=useState("");const[adjusting,setAdjusting]=useState<TrainerEarningRecord|null>(null);const[adjustmentType,setAdjustmentType]=useState("correction");const[adjustmentAmount,setAdjustmentAmount]=useState(0);const[adjustmentReason,setAdjustmentReason]=useState("");const[adjustmentNote,setAdjustmentNote]=useState("");
  async function refresh(){const[t,f,p,e,po,ev,en,co,st,cr]=await Promise.all([getAdminTrainer(trainerId),getTrainerFinance(trainerId),getTrainerCompensationPlan(trainerId),listTrainerEarnings({trainerId}),listTrainerPayouts(trainerId),listScheduleEvents(trainerId),listAdminEnrollments(),listAdminCohorts(),listAdminStudents(),listAdminCourses()]);setTrainer(t);setFinance(f);const nextPlan=p??{id:`draft-${trainerId}`,trainerId,updatedAt:new Date().toISOString(),...DEFAULT_COMP_PLAN};setPlan(nextPlan);setPlanBaseline(JSON.stringify(nextPlan));setEarnings(e);setPayouts(po);setEvents(ev);setEnrollments(en);setCohorts(co);setStudents(st);setCourses(cr)}
  useEffect(()=>{refresh()},[trainerId]);
@@ -47,3 +47,5 @@ export default function TrainerPayrollDetail(){
   <section className="panel"><div className="panelHeader"><div><div className="eyebrow">PAYOUT DESTINATION</div><h2>{finance?.preferredPayoutMethod?displayLabel(finance.preferredPayoutMethod):"Not configured"}</h2><p>Bank/PAN details remain restricted in the Trainer Profile Finance & Compliance section.</p></div><Link className="button ghost" href={`/admin/trainers/${trainerId}`}>Open restricted details</Link></div></section>
  </AppShell></RoleGuard>
 }
+
+export default function TrainerPayrollDetail(){return <Suspense fallback={<p>Loading trainer payroll…</p>}><TrainerPayrollDetailContent/></Suspense>}
