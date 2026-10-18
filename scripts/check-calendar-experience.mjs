@@ -7,7 +7,7 @@ const required=[
  "app/student/calendar/page.tsx",
  "app/api/calendar/subscription/route.ts",
  "app/api/calendar/trainer/[trainerId]/feed/route.ts",
- "database/04_upgrade/03_CALENDAR_V1.sql"
+ "database/01_install/01_CREATE_SCHEMA.sql"
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing calendar file: "+file);
 const actions=fs.readFileSync("components/calendar/CalendarActions.tsx","utf8");
