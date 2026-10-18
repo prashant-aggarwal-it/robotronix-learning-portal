@@ -1,11 +1,11 @@
 "use client";
-import {useEffect,useRef,useState} from "react";
+import {Suspense,useEffect,useRef,useState} from "react";
 import {useSearchParams} from "next/navigation";
 import {RoleGuard} from "@/components/RoleGuard";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 
 type SdkSession={meetingNumber:string;password:string;signature:string;zak:string;userName:string;role:0|1};
-export default function ZoomPocClassroom(){return <RoleGuard allow={["admin","trainer","parent","student"]}><Classroom/></RoleGuard>}
+export default function ZoomPocClassroom(){return <RoleGuard allow={["admin","trainer","parent","student"]}><Suspense fallback={<p>Preparing classroom…</p>}><Classroom/></Suspense></RoleGuard>}
 function Classroom(){
  const params=useSearchParams();const meetingId=params.get("meeting")||"";const mode=params.get("mode")==="host"?"host":"participant";const iframe=useRef<HTMLIFrameElement>(null);const [status,setStatus]=useState("Preparing secure Zoom session…"),[error,setError]=useState("");
  useEffect(()=>{let cancelled=false;async function run(){try{const db=getSupabaseBrowserClient();if(!db)throw new Error("Robotronix session is unavailable.");const {data:{session}}=await db.auth.getSession();if(!session?.access_token)throw new Error("Sign in to Robotronix first.");const response=await fetch("/api/zoom/sdk-session",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({meetingId,mode})});const json=await response.json();if(!response.ok||json.ok===false)throw new Error(json.error||"Unable to prepare Zoom classroom.");if(cancelled)return;const details=json.session as SdkSession;const send=()=>iframe.current?.contentWindow?.postMessage({type:"ROBOTRONIX_ZOOM_JOIN",payload:details},window.location.origin);if(iframe.current?.contentDocument?.readyState==="complete")send();else iframe.current?.addEventListener("load",send,{once:true});setStatus(mode==="host"?"Starting classroom as host…":"Joining classroom…");}catch(e){if(!cancelled)setError(e instanceof Error?e.message:String(e))}}run();return()=>{cancelled=true}},[meetingId,mode]);
