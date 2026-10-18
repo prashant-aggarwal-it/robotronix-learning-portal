@@ -330,7 +330,7 @@ values (
   'one_to_one',
   null,
   'active',
-  current_date,
+  (now() AT TIME ZONE 'Asia/Kolkata')::date,
   'Asia/Kolkata',
   '[
     {"dayOfWeek": 1, "startTime": "16:00", "endTime": "17:00"},
