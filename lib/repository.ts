@@ -31,9 +31,10 @@ export async function signIn(email: string, password: string) {
   return { ok: !error, error: error?.message };
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(nextPath?: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return { ok:false, error:"Google sign-in needs Supabase live mode. Demo onboarding is available without it." };
+  if (typeof window !== "undefined" && nextPath?.startsWith("/")) sessionStorage.setItem("robotronix:post-auth-next", nextPath);
   const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined;
   const { error } = await supabase.auth.signInWithOAuth({ provider:"google", options:{ redirectTo, queryParams:{prompt:"select_account"} } });
   return { ok:!error, error:error?.message };
