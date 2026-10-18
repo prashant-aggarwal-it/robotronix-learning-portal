@@ -39,4 +39,17 @@ const prefill=fs.readFileSync("app/api/demo/[token]/onboarding-prefill/route.ts"
 for(const marker of ["parent_name","parent_whatsapp","child_name","Demo / Discovery Session"])if(!prefill.includes(marker))throw new Error("Demo onboarding prefill missing: "+marker);
 const adminApi=fs.readFileSync("app/api/admin/demos/route.ts","utf8");
 for(const marker of ['action==="reschedule"','action==="cancel_session"','action==="lead_status"'])if(!adminApi.includes(marker))throw new Error("Demo lifecycle action missing: "+marker);
+
+const trainerLifecycle=fs.readFileSync("app/api/demos/trainer/route.ts","utf8");
+for(const marker of ['session.status!=="scheduled"','attendance==="no_show"','every((x:any)=>x.attendance!=="scheduled")','update.summary_published_at=null']){
+ if(!trainerLifecycle.includes(marker))throw new Error("Demo Trainer lifecycle safeguard missing: "+marker);
+}
+const adminLifecycle=fs.readFileSync("app/api/admin/demos/route.ts","utf8");
+for(const marker of ["Only scheduled demos can be rescheduled.","Only scheduled demos can be cancelled.","Record attended demo outcome before marking a lead converted."]){
+ if(!adminLifecycle.includes(marker))throw new Error("Demo Admin lifecycle safeguard missing: "+marker);
+}
+const noShowApi=fs.readFileSync("app/api/demo/[token]/route.ts","utf8");
+const noShowPage=fs.readFileSync("app/demo/[token]/page.tsx","utf8");
+if(!noShowApi.includes('participant.attendance==="no_show"?"no_show"')||!noShowPage.includes('data.state==="no_show"'))throw new Error("No-show family recovery experience is missing.");
+
 console.log("Demo Experience V1 structure, privacy and live-experience checks: OK");
