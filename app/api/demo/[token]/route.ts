@@ -45,7 +45,7 @@ export async function GET(_request:NextRequest,{params}:{params:Promise<{token:s
   }
   const window=joinWindow(event);
   if(participant.summary_published_at&&!participant.summary_viewed_at)await admin.from("demo_session_participants").update({summary_viewed_at:new Date().toISOString()}).eq("id",participant.id);
-  const state=participant.summary_published_at?"completed":session.status==="cancelled"?"cancelled":"upcoming";
+  const state=session.status==="cancelled"||participant.attendance==="cancelled"?"cancelled":participant.attendance==="no_show"?"no_show":participant.summary_published_at?"completed":"upcoming";
   return NextResponse.json({ok:true,demo:{
    state,participantId:participant.id,childName:lead.child_name,grade:lead.grade,interest:lead.interest,experienceLevel:lead.experience_level,
    sessionType:session.session_type,focus:session.focus,trainerName:session.trainer?.full_name||"Robotronix Mentor",
