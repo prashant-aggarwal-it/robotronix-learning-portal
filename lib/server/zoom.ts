@@ -59,7 +59,7 @@ export function zoomServiceClient(){
 
 export function zoomAuthorizationUrl(actorId:string,label:string){
  const u=new URL("https://zoom.us/oauth/authorize");
- u.searchParams.set("response_type","code");u.searchParams.set("client_id",zoomClientId());u.searchParams.set("redirect_uri",zoomRedirectUri());u.searchParams.set("state",createZoomState(actorId,label));u.searchParams.set("prompt","login");
+ u.searchParams.set("response_type","code");u.searchParams.set("client_id",zoomClientId());u.searchParams.set("redirect_uri",zoomRedirectUri());u.searchParams.set("state",createZoomState(actorId,label));
  return u.toString();
 }
 
