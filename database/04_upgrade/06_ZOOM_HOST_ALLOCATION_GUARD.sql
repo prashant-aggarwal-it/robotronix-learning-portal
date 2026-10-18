@@ -8,8 +8,8 @@ begin
   select 1 from public.zoom_meetings a
   join public.zoom_meetings b on a.id < b.id
    and a.host_account_id=b.host_account_id
-   and tstzrange(a.scheduled_start,a.scheduled_start+a.duration_minutes*interval '1 minute','[)')
-    && tstzrange(b.scheduled_start,b.scheduled_start+b.duration_minutes*interval '1 minute','[)')
+   and numrange(extract(epoch from a.scheduled_start),extract(epoch from a.scheduled_start)+a.duration_minutes*60,'[)')
+    && numrange(extract(epoch from b.scheduled_start),extract(epoch from b.scheduled_start)+b.duration_minutes*60,'[)')
   where a.status in ('scheduled','started') and b.status in ('scheduled','started')
     and a.scheduled_start is not null and b.scheduled_start is not null
     and a.duration_minutes>0 and b.duration_minutes>0
@@ -24,7 +24,7 @@ begin
    add constraint zoom_host_active_meeting_no_overlap
    exclude using gist (
     host_account_id with =,
-    tstzrange(scheduled_start, scheduled_start + duration_minutes * interval '1 minute', '[)') with &&
+    numrange(extract(epoch from scheduled_start), extract(epoch from scheduled_start) + duration_minutes * 60, '[)') with &&
    )
    where (status in ('scheduled','started') and scheduled_start is not null and duration_minutes > 0);
  end if;
