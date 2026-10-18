@@ -1,3 +1,5 @@
+-- DANGEROUS: DEVELOPMENT ONLY. Drops public schema and all its dependent objects.
+-- NEVER run in production. Requires explicit backup and project verification.
 -- Robotronix™ Learning Portal — Production v1.0.0
 -- DEVELOPMENT/QA ONLY. DESTRUCTIVE. DO NOT RUN ON PRODUCTION.
 -- This removes only the public schema. Supabase auth/storage schemas are not dropped.

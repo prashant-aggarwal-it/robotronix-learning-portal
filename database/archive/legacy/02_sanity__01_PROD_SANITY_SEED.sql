@@ -1,3 +1,4 @@
+-- ARCHIVED LEGACY SCRIPT. DO NOT EXECUTE AS PART OF CURRENT INSTALLATION.
 -- ============================================================================
 -- Robotronix™ Learning Portal — PRODUCTION SANITY SEED
 -- Temporary deterministic fixtures for post-deployment validation only.

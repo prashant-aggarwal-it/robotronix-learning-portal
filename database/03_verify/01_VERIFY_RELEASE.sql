@@ -698,3 +698,46 @@ BEGIN
     WHERE schemaname='public' AND indexname='zoom_meetings_demo_schedule_event_unique'
   ) THEN RAISE EXCEPTION 'Missing demo Zoom schedule uniqueness index'; END IF;
 END $$;
+
+
+-- L. Consolidated fresh-install guarantees (FAIL FAST; read-only).
+DO $$
+DECLARE
+  missing text;
+BEGIN
+  SELECT string_agg(expected.table_name, ', ' ORDER BY expected.table_name)
+  INTO missing
+  FROM (VALUES
+    ('zoom_join_intents'),('zoom_participant_sessions'),('zoom_recordings'),
+    ('zoom_webhook_events'),('razorpay_webhook_events'),
+    ('calendar_subscription_tokens'),('demo_leads'),('demo_sessions'),
+    ('demo_session_participants'),('demo_guest_requests')
+  ) AS expected(table_name)
+  WHERE to_regclass('public.' || expected.table_name) IS NULL;
+  IF missing IS NOT NULL THEN
+    RAISE EXCEPTION 'Missing consolidated tables: %', missing;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname='zoom_host_active_meeting_no_overlap'
+      AND conrelid=to_regclass('public.zoom_meetings')
+      AND contype='x'
+  ) THEN RAISE EXCEPTION 'Missing Zoom host overlapping-meeting exclusion constraint'; END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname='onboarding_submission_admin_notification_trg'
+      AND tgrelid=to_regclass('public.onboarding_submissions')
+      AND NOT tgisinternal AND tgenabled <> 'D'
+  ) THEN RAISE EXCEPTION 'Missing/disabled Admin onboarding notification trigger'; END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid=to_regclass('public.zoom_meetings')
+      AND conname='zoom_meetings_purpose_check'
+      AND pg_get_constraintdef(oid) ILIKE '%demo%'
+  ) THEN RAISE EXCEPTION 'Zoom meeting purpose check does not include demo'; END IF;
+END $$;
+
+SELECT
+  'L_CONSOLIDATED_FEATURES' AS section,
+  'Core consolidated objects/constraints' AS check_name,
+  'PASS' AS result;

@@ -1,3 +1,4 @@
+-- ARCHIVED LEGACY SCRIPT. DO NOT EXECUTE AS PART OF CURRENT INSTALLATION.
 -- ============================================================================
 -- Robotronix™ Learning Portal — PRODUCTION SANITY CLEANUP
 -- Removes the deterministic synthetic records created by 01_PROD_SANITY_SEED.sql.
