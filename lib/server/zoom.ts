@@ -59,7 +59,7 @@ export function zoomServiceClient(){
 
 export function zoomAuthorizationUrl(actorId:string,label:string){
  const u=new URL("https://zoom.us/oauth/authorize");
- u.searchParams.set("response_type","code");u.searchParams.set("client_id",zoomClientId());u.searchParams.set("redirect_uri",zoomRedirectUri());u.searchParams.set("state",createZoomState(actorId,label));
+ u.searchParams.set("response_type","code");u.searchParams.set("client_id",zoomClientId());u.searchParams.set("redirect_uri",zoomRedirectUri());u.searchParams.set("state",createZoomState(actorId,label));u.searchParams.set("prompt","login");
  return u.toString();
 }
 
@@ -111,7 +111,14 @@ export function createMeetingSdkJwt(meetingNumber:string,role:0|1){
 
 export async function zoomAuthorizedFetchUrl(hostId:string,url:string,init:RequestInit={}){
  const db=zoomServiceClient();let row=await activeHost(db,hostId);
- const request=async(token:string)=>fetch(url,{...init,cache:"no-store",headers:{Authorization:`Bearer ${token}`,...(init.headers||{})}});
+ const request=async(token:string)=>{
+  const target=new URL(url);
+  // Zoom cloud-recording download URLs accept the OAuth token as a query value.
+  // Keeping the bearer header as well covers direct API responses, while the
+  // query token survives Zoom's redirect to the signed media URL.
+  if(!target.searchParams.has("access_token"))target.searchParams.set("access_token",token);
+  return fetch(target.toString(),{...init,cache:"no-store",redirect:"follow",headers:{Authorization:`Bearer ${token}`,...(init.headers||{})}});
+ };
  let response=await request(decryptZoomSecret(row.access_token_encrypted));
  if(response.status===401){row=await refreshHostToken(db,row);response=await request(decryptZoomSecret(row.access_token_encrypted));}
  await db.from("zoom_host_accounts").update({last_sync_at:new Date().toISOString()}).eq("id",hostId);
