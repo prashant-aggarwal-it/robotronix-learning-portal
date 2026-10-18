@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin} from "@/lib/server/admin-api";
-import {encryptZoomSecret,zoomApi} from "@/lib/server/zoom";
+import {zoomApi} from "@/lib/server/zoom";
+import {reconcileZoomRecording} from "@/lib/server/zoom-recording-reconcile";
 export const dynamic="force-dynamic";
 
 function iso(value:any){if(!value)return null;const d=new Date(value);return Number.isNaN(d.getTime())?null:d.toISOString()}
@@ -33,14 +34,8 @@ export async function POST(request:NextRequest){
       const rec:any=await zoomApi(meeting.host_account_id,"/meetings/"+encodeURIComponent(meeting.zoom_meeting_id)+"/recordings");
       const files=Array.isArray(rec?.recording_files)?rec.recording_files:[];
       if(files.length){
-       const retainDays=Number(meeting.recording_retention_days||60);
-       const retainUntil=new Date(Date.now()+retainDays*86400000).toISOString();
-       const passcode=String(rec?.password||rec?.recording_play_passcode||"");
        for(const file of files){
-        const fileId=String(file.id||file.recording_id||"");if(!fileId)continue;
-        const row={zoom_meeting_id:meeting.id,zoom_recording_file_id:fileId,recording_type:String(file.recording_type||""),file_type:String(file.file_type||""),file_extension:String(file.file_extension||""),file_size_bytes:Number(file.file_size||0),recording_start:iso(file.recording_start),recording_end:iso(file.recording_end),play_url:String(file.play_url||rec.share_url||""),download_url:String(file.download_url||""),share_passcode_encrypted:passcode?encryptZoomSecret(passcode):null,status:"completed",learner_visible:Boolean(meeting.learner_recording_visible),retain_until:retainUntil,updated_at:new Date().toISOString()};
-        const {error:rErr}=await auth.admin.from("zoom_recordings").upsert(row,{onConflict:"zoom_recording_file_id"});if(rErr)throw new Error(rErr.message);
-        recordingsSynced++;
+        if(await reconcileZoomRecording(auth.admin,meeting,file,rec))recordingsSynced++;
        }
        updates.recording_status="ready";
        if(meeting.status==="scheduled"||meeting.status==="started"){
@@ -48,7 +43,7 @@ export async function POST(request:NextRequest){
         if(Date.now()>expectedEnd)updates.status="ended";
        }
       }
-     }catch{}
+     }catch(recordingError){errors++;console.error("Zoom recording reconciliation failed",meeting.id,recordingError);}
     }
     const {error:uErr}=await auth.admin.from("zoom_meetings").update(updates).eq("id",meeting.id);if(uErr)throw new Error(uErr.message);
     meetingsSynced++;
