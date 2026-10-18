@@ -19,7 +19,6 @@ function loadEnvFile(filename) {
   }
 }
 
-loadEnvFile(".env.local");
 loadEnvFile(".env.portal-qa.local");
 
 const url = process.env.PORTAL_QA_SUPABASE_URL;
@@ -28,15 +27,18 @@ if (!url) throw new Error("Missing PORTAL_QA_SUPABASE_URL in .env.portal-qa.loca
 if (!serviceRoleKey) throw new Error("Missing PORTAL_QA_SUPABASE_SERVICE_ROLE_KEY in .env.portal-qa.local.");
 
 const permanentQaUsers = [
-  ["admin",   process.env.PORTAL_QA_ADMIN_EMAIL   || "portal-qa-admin@robotronix.local",   process.env.PORTAL_QA_ADMIN_PASSWORD,   "QA Admin"],
+  ["admin",   process.env.PORTAL_QA_ADMIN_EMAIL,   process.env.PORTAL_QA_ADMIN_PASSWORD,   "QA Admin"],
   ["trainer", process.env.PORTAL_QA_TRAINER_EMAIL || "portal-qa-trainer@robotronix.local", process.env.PORTAL_QA_TRAINER_PASSWORD, "QA Trainer"],
   ["parent",  process.env.PORTAL_QA_PARENT_EMAIL  || "portal-qa-parent@robotronix.local",  process.env.PORTAL_QA_PARENT_PASSWORD,  "QA Parent"],
   ["student", process.env.PORTAL_QA_STUDENT_EMAIL || "portal-qa-student@robotronix.local", process.env.PORTAL_QA_STUDENT_PASSWORD, "QA Student"],
 ];
 
+const distinctEmails = new Set(permanentQaUsers.map(([,email]) => email?.trim().toLowerCase()));
+if (distinctEmails.size !== 4 || distinctEmails.has(undefined)) throw new Error("Configure four distinct controlled QA email addresses in .env.portal-qa.local.");
 for (const [role, email, password] of permanentQaUsers) {
+  if (!/^[^\\s@']+@[^\\s@']+\\.[^\\s@']+$/.test(email)) throw new Error(`Invalid QA email for ${role}`);
   if (!password) throw new Error(`Missing PORTAL_QA_${role.toUpperCase()}_PASSWORD in .env.portal-qa.local.`);
-  if (password.length < 8) throw new Error(`Permanent production QA ${role} password must be at least 8 characters.`);
+  if (password.length < 16) throw new Error(`Permanent production QA ${role} password must be at least 16 characters.`);
 }
 
 const supabase = createClient(url, serviceRoleKey, {
