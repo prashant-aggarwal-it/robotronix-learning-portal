@@ -49,7 +49,7 @@ export async function POST(request:NextRequest){
    const {data:session,error:sErr}=await auth.admin.from("demo_sessions")
     .select("id,focus,status,schedule_event_id,zoom_meeting_id,trainer_id,schedule_event:schedule_events(id,date,start_time,end_time,timezone),participants:demo_session_participants(id,lead_id)")
     .eq("id",sessionId).maybeSingle();
-   if(sErr)throw new Error(sErr.message);if(!session)throw new Error("Demo session not found.");
+   if(sErr)throw new Error(sErr.message);if(!session)throw new Error("Demo session not found.");if(session.status!=="scheduled")throw new Error("Only scheduled demos can be cancelled.");if(session.status!=="scheduled")throw new Error("Only scheduled demos can be rescheduled.");
    const endTime=addMinutes(startTime,duration);if(endTime<=startTime)throw new Error("Demo must finish on the same day.");
    await assertNoTrainerConflict(auth.admin,trainerId,date,startTime,endTime,timezone,session.schedule_event_id);
    const startAt=zonedLocalToUtc(date,startTime,timezone).toISOString();
@@ -99,6 +99,15 @@ export async function POST(request:NextRequest){
    if(!participantId||!["follow_up","converted","lost"].includes(status))throw new Error("Choose a valid demo learner and pipeline status.");
    const {data:p,error:pErr}=await auth.admin.from("demo_session_participants").select("id,lead_id").eq("id",participantId).maybeSingle();
    if(pErr)throw new Error(pErr.message);if(!p)throw new Error("Demo learner not found.");
+   const {data:currentLead,error:leadReadError}=await auth.admin.from("demo_leads").select("status").eq("id",p.lead_id).maybeSingle();
+   if(leadReadError)throw new Error(leadReadError.message);
+   if(!currentLead)throw new Error("Demo lead not found.");
+   if(currentLead.status==="converted"&&status!=="converted")throw new Error("Converted leads require an explicit Admin correction workflow.");
+   if(status==="converted"){
+    const {data:attendee,error:attendeeError}=await auth.admin.from("demo_session_participants").select("attendance").eq("id",participantId).single();
+    if(attendeeError)throw new Error(attendeeError.message);
+    if(attendee.attendance!=="attended")throw new Error("Record attended demo outcome before marking a lead converted.");
+   }
    const {error}=await auth.admin.from("demo_leads").update({status,updated_at:new Date().toISOString()}).eq("id",p.lead_id);
    if(error)throw new Error(error.message);
    return NextResponse.json({ok:true,status},{headers:{"Cache-Control":"no-store"}});
