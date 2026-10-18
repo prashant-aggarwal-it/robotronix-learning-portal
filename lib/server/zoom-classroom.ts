@@ -151,7 +151,8 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
 
  const created=await zoomApi(host.id,"/users/me/meetings",{method:"POST",body:JSON.stringify(body)});
  if(existing){
-  await deleteRemoteMeetingSafely(existing.host_account_id,existing.zoom_meeting_id);
+  // Reserve the new host in the database before removing the original Zoom room.
+  // The GiST exclusion constraint rejects overlapping concurrent reservations.
   const {error}=await db.from("zoom_meetings").update({
    host_account_id:host.id,zoom_meeting_id:String(created.id),zoom_meeting_uuid:created.uuid?String(created.uuid):null,
    topic:String(created.topic||body.topic),passcode:String(created.password||created.encrypted_password||""),
@@ -160,7 +161,12 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
    recording_retention_days:host.recording_retention_days,learner_recording_visible:host.learner_recording_default,
    last_error:null,updated_at:new Date().toISOString()
   }).eq("id",existing.id);
-  if(error)throw new Error(error.message);
+  if(error){
+   await deleteRemoteMeetingSafely(host.id,String(created.id));
+   throw new Error(error.code==="23P01"?"The Zoom host became busy while scheduling. Please retry.":error.message);
+  }
+  try{await deleteRemoteMeetingSafely(existing.host_account_id,existing.zoom_meeting_id)}
+  catch(cleanupError){console.error("Old Zoom meeting needs reconciliation after successful host reallocation",existing.id,cleanupError)}
   return {action:"reallocated" as const,meetingId:existing.id,hostId:host.id};
  }
 
@@ -174,7 +180,7 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
  }).select("id").single();
  if(insertError){
   await deleteRemoteMeetingSafely(host.id,String(created.id));
-  throw new Error(insertError.message);
+  throw new Error(insertError.code==="23P01"?"The Zoom host became busy while scheduling. Please retry.":insertError.message);
  }
  return {action:"created" as const,meetingId:inserted.id,hostId:host.id};
 }
