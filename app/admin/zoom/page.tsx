@@ -41,7 +41,7 @@ function Workspace(){
  async function createMeeting(){setBusy(true);setError("");try{const body:any={title:newMeeting.title.trim(),durationMinutes:newMeeting.durationMinutes,recording:newMeeting.recording,notes:newMeeting.notes.trim()};if(newMeeting.startAt)body.startAt=new Date(newMeeting.startAt).toISOString();await adminApi("/api/zoom/meetings",{method:"POST",body:JSON.stringify(body)});setNewMeeting({title:"",startAt:"",durationMinutes:60,recording:true,notes:""});setShowCreate(false);setNotice("Meeting created successfully.");await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
  async function cancelMeeting(id:string){if(!window.confirm("Cancel this Zoom meeting?"))return;setBusy(true);try{await adminApi("/api/zoom/meetings",{method:"PATCH",body:JSON.stringify({id,action:"cancel"})});await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
  async function recordingAction(id:string,action:string,days?:number){if(action==="delete"&&!window.confirm("Move this recording to Zoom trash?"))return;setBusy(true);try{await adminApi("/api/zoom/recordings/"+id,{method:"PATCH",body:JSON.stringify({action,days})});await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
- async function watchRecording(id:string){const win=window.open("","_blank");try{const x=await adminApi("/api/zoom/recordings/"+id);if(win){win.opener=null;win.location.href=x.recording.streamUrl}else window.location.href=x.recording.streamUrl}catch(e){if(win)win.close();setError(e instanceof Error?e.message:String(e))}}
+ async function watchRecording(id:string){window.open("/admin/zoom/recording/"+encodeURIComponent(id),"_blank","noopener,noreferrer")}
  async function copy(value?:string|null){if(!value)return;await navigator.clipboard.writeText(value);setNotice("Guest Zoom link copied.");window.setTimeout(()=>setNotice(""),2000)}
 
  const tabButton=(id:typeof tab,title:string,count:number)=><button className={tab===id?"button":"button secondary"} onClick={()=>setTab(id)}>{title+" · "+count}</button>;
@@ -59,7 +59,7 @@ function Workspace(){
   </section>
 
   <section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row"><button className="button" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New Meeting</button><button className="button secondary" onClick={load}>Refresh</button></div></div>
+   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row"><button className="button" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New Meeting</button><button className="button secondary" onClick={load}>Refresh data</button></div></div>
    <div className="row" style={{gap:8,flexWrap:"wrap"}}>{tabButton("overview","Classes",classes.length)}{tabButton("meetings","Meetings",general.length)}{tabButton("recordings","Recordings",recordings.length)}{tabButton("hosts","Hosts",hosts.length)}</div>
   </section>
 
@@ -69,7 +69,7 @@ function Workspace(){
     {classes.slice(0,60).map(m=><tr key={m.id}><td><b>{m.event?.title||m.topic}</b>{m.presence?.earlyEnd&&<div className="cellSub">Ended earlier than scheduled</div>}</td><td>{when(m.scheduled_start)}</td><td>{m.host?.label||"—"}</td><td><span className={"statusBadge status-"+m.status}>{m.status}</span></td>
      <td><span className={"statusBadge "+signalClass(m.presence?.trainerSignal)}>{signalLabel(m.presence?.trainerSignal)}</span><div className="cellSub">{(m.presence?.trainerConnections||0)+" connection(s) · "+mins(m.presence?.trainerSeconds)}</div></td>
      <td><span className={"statusBadge "+signalClass(m.presence?.learnerSignal)}>{signalLabel(m.presence?.learnerSignal)}</span><div className="cellSub">{(m.presence?.learnerConnections||0)+" connection(s) · "+mins(m.presence?.learnerSeconds)}</div></td>
-     <td>{m.recording_enabled?<span className="softBadge">{m.recording_status}</span>:"Off"}</td><td><a className="button small" href={"/classroom/"+m.event?.id+"?mode=host"}>Start / Join</a></td></tr>)}
+     <td>{m.recording_enabled?<span className="softBadge">{m.recording_status}</span>:"Off"}</td><td>{["scheduled","started"].includes(m.status)?<a className="button small" href={"/classroom/"+m.event?.id+"?mode=host"} target="_blank" rel="noopener noreferrer">{m.status==="started"?"Join live":"Start class"}</a>:<span className="cellSub">No live action</span>}</td></tr>)}
     {!classes.length&&<tr><td colSpan={8}><div className="emptyState compact">No Zoom classes provisioned yet.</div></td></tr>}
    </tbody></table></div>
   </section>}
@@ -91,7 +91,7 @@ function Workspace(){
     <div className="tableWrap"><table><thead><tr><th>Meeting</th><th>Scheduled</th><th>Host</th><th>Status</th><th>Recording</th><th>Guest invite</th><th>Actions</th></tr></thead><tbody>
      {general.map(m=><tr key={m.id}><td><b>{m.topic}</b>{m.meeting_notes&&<div className="cellSub">{m.meeting_notes}</div>}</td><td>{when(m.scheduled_start)}</td><td>{m.host?.label||"—"}</td><td><span className={"statusBadge status-"+m.status}>{m.status}</span></td><td>{m.recording_enabled?<span className="softBadge">{m.recording_status}</span>:"Off"}</td>
       <td><button className="button secondary small" disabled={!m.join_url} onClick={()=>copy(m.join_url)}>Copy Link</button>{m.passcode&&<div className="cellSub">Passcode: {m.passcode}</div>}</td>
-      <td><div className="row"><a className="button small" href={"/admin/zoom/meeting/"+m.id}>Start</a>{!["ended","cancelled"].includes(m.status)&&<button className="button secondary small" disabled={busy} onClick={()=>cancelMeeting(m.id)}>Cancel</button>}</div></td></tr>)}
+      <td><div className="row">{["scheduled","started"].includes(m.status)&&<a className="button small" href={"/admin/zoom/meeting/"+m.id} target="_blank" rel="noopener noreferrer">{m.status==="started"?"Join live":"Start"}</a>}{m.status==="scheduled"&&<button className="button secondary small" disabled={busy} onClick={()=>cancelMeeting(m.id)}>Cancel</button>}{!["scheduled","started"].includes(m.status)&&<span className="cellSub">No live action</span>}</div></td></tr>)}
      {!general.length&&<tr><td colSpan={7}><div className="emptyState compact">No general meetings yet.</div></td></tr>}
     </tbody></table></div>
    </section>
