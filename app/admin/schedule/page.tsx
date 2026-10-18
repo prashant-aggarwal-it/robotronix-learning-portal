@@ -15,6 +15,7 @@ import {SearchableSelect} from "@/components/admin/SearchableSelect";
 import {compareText} from "@/lib/display";
 import {isRunningCohort,isUpcomingCohort} from "@/lib/cohort-status";
 import {STANDARD_CLASS_DURATIONS_MINUTES,formatDuration} from "@/lib/course-hours";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type View="day"|"all_week"|"trainer_week"|"utilisation"|"availability";
 const dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -46,7 +47,8 @@ function ScheduleWorkspace(){
  const[overrideForm,setOverrideForm]=useState({date:today(),endDate:today(),kind:"all_day" as "all_day"|"unavailable"|"available",startTime:"09:00",endTime:"18:00",reason:""});
  useEffect(()=>{if(!showForm)return;const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape"&&!savingEvent)setShowForm(false)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[showForm,savingEvent]);
  async function refresh(){setLoading(true);setLoadError("");try{const[t,c,s,e,h,ev,a,o]=await Promise.all([listAdminTrainers(),listAdminCourses(),listAdminStudents(),listAdminEnrollments(),listAdminCohorts(),listScheduleEvents(undefined,true),listTrainerAvailability(undefined,true),listAvailabilityOverrides(undefined,true)]);const active=t.filter(x=>x.recordStatus==="active").sort((a,b)=>compareText(a.fullName,b.fullName));const activeCourses=c.filter(x=>x.status==="active").sort((a,b)=>compareText(a.publicName||a.title,b.publicName||b.title));const activeStudents=s.filter(x=>x.recordStatus!=="archived").sort((a,b)=>compareText(a.fullName,b.fullName));const sortedCohorts=h.slice().sort((a,b)=>compareText(a.name,b.name));setTrainers(active);setCourses(activeCourses);setStudents(activeStudents);setEnrollments(e);setCohorts(sortedCohorts);setEvents(ev);setAvailability(a);setOverrides(o);if(!trainerId&&active[0])setTrainerId(active[0].id)}catch(error){setLoadError(error instanceof Error?error.message:"Unable to load schedule. Please retry.")}finally{setLoading(false)}}
- useEffect(()=>{refresh()},[]);
+ useEffect(()=>{void refresh()},[]);
+ useLiveRefresh(["schedule_events","class_attendance"],refresh,"admin-schedule");
  useEffect(()=>{if(!trainerId)return;const rows=availability.filter(a=>a.trainerId===trainerId&&a.enabled);const d:Record<number,Array<{startTime:string;endTime:string}>>={};for(let day=0;day<7;day++)d[day]=rows.filter(x=>x.dayOfWeek===day).sort((a,b)=>a.startTime.localeCompare(b.startTime)).map(x=>({startTime:x.startTime,endTime:x.endTime}));setAvailDraft(d);setAvailabilityBaseline(JSON.stringify(d))},[trainerId,availability]);
  const availabilityDirty=Boolean(availabilityBaseline&&JSON.stringify(availDraft)!==availabilityBaseline);
  const weekDates=useMemo(()=>Array.from({length:7},(_,i)=>addDays(date,i)),[date]);
