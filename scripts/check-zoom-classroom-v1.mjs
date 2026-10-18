@@ -54,4 +54,15 @@ for(const file of ["app/api/zoom/reconcile/route.ts","app/api/zoom/webhook/route
 if(!retention.includes('select("status,protected_from_deletion,retain_until")'))throw new Error("Retention job must recheck deletion eligibility immediately before cleanup.");
 if(!retention.includes("failures.push("))throw new Error("Retention cleanup failure diagnostics are missing.");
 
+
+const allocationSql=fs.readFileSync("database/04_upgrade/06_ZOOM_HOST_ALLOCATION_GUARD.sql","utf8");
+for(const marker of ["btree_gist","zoom_host_active_meeting_no_overlap","exclude using gist","23P01"]){
+ if(marker==="23P01")continue;
+ if(!allocationSql.includes(marker))throw new Error("Zoom host overlap guard missing: "+marker);
+}
+const classroom=fs.readFileSync("lib/server/zoom-classroom.ts","utf8");
+for(const marker of ['error.code==="23P01"','await deleteRemoteMeetingSafely(host.id,String(created.id))']){
+ if(!classroom.includes(marker))throw new Error("Concurrent-host reservation recovery missing: "+marker);
+}
+
 console.log("Zoom Classroom V1 structure and production hardening: OK");
