@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {useSearchParams} from "next/navigation";
-import {useEffect,useMemo,useState} from "react";
+import {Suspense,useEffect,useMemo,useState} from "react";
 import {GradeSelect} from "@/components/GradeSelect";
 import {TimeZoneField} from "@/components/TimeZoneField";
 import {PhoneField} from "@/components/PhoneField";
@@ -51,7 +51,7 @@ function indiaReference(slot:TimingSlot,timeZone:string){
   return `${startDay} ${formatClock(range.startTime)}–${endDay!==startDay?`${endDay} `:""}${formatClock(range.endTime)} IST${localNext}`;
 }
 
-export default function OnboardingPage(){
+function OnboardingPageContent(){
  const params=useSearchParams();const demoToken=params.get("demo")||"";
  const[slots,setSlots]=useState<TimingSlot[]>([]);
  const[timingNote,setTimingNote]=useState("");
@@ -226,4 +226,9 @@ export default function OnboardingPage(){
 
 function Field({label,value,onChange,error,tel=false}:{label:string;value:string;onChange:(v:string)=>void;error?:string;tel?:boolean}){
  return <div className="formGroup"><label>{label}</label><input className={`input ${error?"invalid":""}`} type={tel?"tel":"text"} value={value} onChange={e=>onChange(e.target.value)}/>{error&&<div className="fieldError">{error}</div>}</div>;
+}
+
+// useSearchParams suspends during static prerendering in Next.js 16.
+export default function OnboardingPage(){
+ return <Suspense fallback={<main className="pageShell"><p>Loading onboarding…</p></main>}><OnboardingPageContent/></Suspense>;
 }
