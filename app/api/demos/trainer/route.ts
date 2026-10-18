@@ -64,9 +64,11 @@ export async function POST(request:NextRequest){
   const {data:all,error:aErr}=await auth.admin.from("demo_session_participants").select("attendance").eq("demo_session_id",participant.demo_session_id);
   if(aErr)throw new Error(aErr.message);
   if((all||[]).length&&(all||[]).every((x:any)=>x.attendance!=="scheduled")){
-   await auth.admin.from("demo_sessions").update({status:"completed",completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",participant.demo_session_id);
+   const rows=all||[];const anyAttended=rows.some((x:any)=>x.attendance==="attended");const allNoShow=rows.every((x:any)=>x.attendance==="no_show");
+   const sessionStatus=anyAttended?"completed":allNoShow?"no_show":"cancelled";
+   await auth.admin.from("demo_sessions").update({status:sessionStatus,completed_at:anyAttended?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq("id",participant.demo_session_id);
    const {data:s}=await auth.admin.from("demo_sessions").select("schedule_event_id").eq("id",participant.demo_session_id).maybeSingle();
-   if(s?.schedule_event_id)await auth.admin.from("schedule_events").update({status:"conducted",updated_at:new Date().toISOString()}).eq("id",s.schedule_event_id);
+   if(s?.schedule_event_id)await auth.admin.from("schedule_events").update({status:anyAttended?"conducted":"cancelled",updated_at:new Date().toISOString()}).eq("id",s.schedule_event_id);
   }
   return NextResponse.json({ok:true},{headers:{"Cache-Control":"no-store"}});
  }catch(error){
