@@ -7,8 +7,12 @@ import {RoleGuard} from "@/components/RoleGuard";
 import {FeedbackCard,NextClassCard,ProjectSpotlight,learningStatusCopy} from "@/components/experience/ExperienceCards";
 import {getStudentExperience} from "@/lib/repository";
 import type {LearnerExperienceSnapshot} from "@/lib/types";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 export default function StudentPage(){
- const[data,setData]=useState<LearnerExperienceSnapshot|null|undefined>();useEffect(()=>{getStudentExperience().then(setData)},[]);
+ const[data,setData]=useState<LearnerExperienceSnapshot|null|undefined>();
+ async function reload(){setData(await getStudentExperience())}
+ useEffect(()=>{void reload()},[]);
+ useLiveRefresh(["schedule_events","class_attendance","learning_observations","session_records"],reload,"student-dashboard");
  const flexible=Boolean(data&&Number(data.learner.plannedHours)<=0);
  return <RoleGuard allow={["student"]}><AppShell role="student">{data===undefined?<div className="experienceLoading">Loading your learning space…</div>:!data?<div className="experienceEmpty"><div className="experienceEmptyIcon">◎</div><h2>Your learner profile is not active yet</h2><p>Independent learner login is optional. Your learning area is already available through the Family Account once Admin activates the enrollment; this separate login only works when Admin explicitly links it for an older learner.</p></div>:<>
   <section className="studentHero"><div><span className="experienceLabel">MY LEARNING DASHBOARD</span><h1>Hi {data.learner.name.split(" ")[0]}, what will you build next?</h1><p>Your dashboard keeps the next step clear—attend, build, improve and keep moving forward.</p><div className="studentHeroTags"><span>{data.courseTitle}</span><span>{data.enrollmentType==="one_to_one"?"1-to-1":"Cohort"}</span><span>Mentor {data.trainerName}</span></div></div><div className="studentProgressOrb"><div><b>{flexible?data.learner.sessionsCompleted:`${data.learner.progress}%`}</b><span>{flexible?"sessions attended":"course progress"}</span></div><small>{flexible?"8-session milestones · flexible journey":`${data.learner.hoursCompleted??0} of ${data.learner.plannedHours??0} instructional hours`}</small></div></section>
