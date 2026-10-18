@@ -1,0 +1,40 @@
+# Robotronix™ Learning Portal — Documentation Hub
+
+**Audience:** founders/operations, developers, testers, trainers, support personnel, and deployment administrators.
+
+**Source of truth:** this index and the guides below describe the current `chore/consolidated-fresh-install-20261018` release candidate. Verify details against the code when updating behavior. **`docs/archive/` is historical only; archived runbooks are not executable setup instructions.**
+
+## Read in order
+
+| Need | Guide |
+| --- | --- |
+| Understand the product and its users | [Application handbook](APPLICATION_HANDBOOK.md) |
+| Follow an entire learner/customer journey | [End-to-end workflows](WORKFLOWS.md) |
+| Install locally or bootstrap a new environment | [Environment setup — Dev and Prod](ENVIRONMENTS.md) |
+| Install/verify the database and test users | [Database and QA](FRESH_INSTALL_AND_QA.md) |
+| Connect and operate Zoom | [Zoom integration](integrations/ZOOM.md) |
+| Configure billing and Razorpay | [Razorpay integration](integrations/RAZORPAY.md) |
+| Manage Google sign-in and access | [Authentication and roles](integrations/AUTHENTICATION.md) |
+| Release, monitor, troubleshoot or recover | [Operations runbook](OPERATIONS.md) |
+| Run automated and manual tests | [Testing and release checklist](TESTING.md) |
+
+## Reference map
+
+- **Application:** Next.js App Router, TypeScript, React.
+- **Identity/data:** Supabase Auth, Postgres, RLS.
+- **Deployment:** GitHub `main` → Netlify, configured with production environment.
+- **Classrooms:** Zoom OAuth, meeting APIs, webhooks and recordings.
+- **Billing:** Razorpay invoice/payment synchronization.
+- **Operational users:** Admin, Trainer, Parent; optional separately linked Student.
+- **Database SQL:** `database/01_install`, `database/02_qa`, `database/03_verify`; destructive tools in `database/99_dev_tools`.
+
+## Documentation maintenance rules
+
+1. Every new feature/change must update the relevant *user workflow*, *integration/setup* and *test* documentation in the same PR.
+2. Keep examples free of passwords, tokens, personal information and real customer details.
+3. Record commands that actually exist in `package.json`; do not resurrect deleted migration or sanity SQL.
+4. Put outdated documents in `docs/archive/` and label their date/status. Archive files are for research, **not** current procedures.
+5. Do not state external integration behavior is proven until verified in the target environment.
+6. Use relative Markdown links so documentation works directly in GitHub.
+
+**Current release state:** local release/build/auth/roles/workflow checks were reported successful; GitHub PR checks and deploy preview passed. This does *not* equal production acceptance. See [Testing](TESTING.md).
