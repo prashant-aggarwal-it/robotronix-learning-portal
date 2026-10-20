@@ -53,3 +53,6 @@
 - Remaining backlog items are **not completed** merely because the release branch exists. Each requires source implementation, security review and documented tests.
 
 - 2026-10-20: Began LOG-01: Admin-only System Logs page and read API, RLS-enabled server-only `portal_system_logs` database table, safe logging helper, and portal access error-path integration. Canonical fresh-install and existing-install migrations prepared. **Partial implementation only**; coverage across remaining Zoom/Razorpay/scheduling endpoints, retention jobs, DEV QA and security testing remain pending. No live migration has run.
+
+- 2026-10-20: FIN-PAY-02 source migration drafted: `07_TRAINER_PAYROLL_CUTOFF.sql` adds a configurable 25th-day IST cutoff, effective-dated payout instructions, and immutable snapshots at payroll approval/payment; direct Admin edits are also versioned. Trainer UI shows latest effective month. **Database has not been migrated or QA-tested; not ready for salary processing.**
+- 2026-10-20: ZOOM-03 grouped-recordings UI committed in `app/admin/zoom/page.tsx` (one expandable meeting with separate video/audio/file actions, MB units). Playback and delete/sync fixes still require provider investigation/verification.
