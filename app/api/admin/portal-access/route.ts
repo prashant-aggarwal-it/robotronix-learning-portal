@@ -64,8 +64,8 @@ async function lookupStatus(admin:any,type:Target,id:string){
  const profile=target.profileId?(await admin.from("profiles").select("active").eq("id",target.profileId).maybeSingle()).data:null;
  const auth=target.profileId?(await admin.auth.admin.getUserById(target.profileId)).data.user:null;
  const linked=Boolean(target.profileId&&profile?.active!==false);
- const status=profile?.active===false||request?.status==="disabled"?"disabled":linked&&(!request||request.status!=="invited"||auth?.last_sign_in_at)?"portal_ready":request?.status==="invited"?"invite_sent":"not_linked";
- if(status==="portal_ready"&&request?.status==="invited")await admin.from("portal_access_requests").update({status:"linked",updated_at:new Date().toISOString()}).eq("target_type",type).eq("target_id",id);
+ const status=profile?.active===false||request?.status==="disabled"?"disabled":linked&&Boolean(auth?.last_sign_in_at)?"portal_ready":request?.status==="provisioned"?"awaiting_first_login":request?.status==="invited"?"invite_sent":linked?"awaiting_first_login":"not_linked";
+ if(status==="portal_ready"&&["invited","provisioned"].includes(request?.status||""))await admin.from("portal_access_requests").update({status:"linked",updated_at:new Date().toISOString()}).eq("target_type",type).eq("target_id",id);
  return{status,email:target.email||request?.login_email||"",lastLoginAt:auth?.last_sign_in_at||null,invitedAt:request?.invited_at||null,linked,archived:target.archived};
 }
 async function saveRequest(admin:any,type:Target,id:string,email:string,status:string,actorId:string){
@@ -173,7 +173,7 @@ export async function POST(request:NextRequest){
    if(error)throw new Error(error.message);
   }
   // An invited but not yet signed-in account remains 'Invite sent', not 'Portal-ready'.
-  await saveRequest(admin,type,id,email,action==="invite"?"invited":"linked",actorId);
+  await saveRequest(admin,type,id,email,action==="invite"?"invited":action==="provision"?"provisioned":"linked",actorId);
   await audit(admin,actorId,type,id,action,email);
   return NextResponse.json({ok:true,...await lookupStatus(admin,type,id)});
  }catch(e){const referenceId=await logSystemEvent({source:"portal-access",action:action||"unknown",code:"PORTAL_ACCESS_FAILURE",message:"Admin portal-access operation failed"});return failure("Could not update portal access. Reference: "+referenceId,500)}
