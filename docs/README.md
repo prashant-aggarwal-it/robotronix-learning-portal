@@ -38,3 +38,7 @@
 6. Use relative Markdown links so documentation works directly in GitHub.
 
 **Current release state:** local release/build/auth/roles/workflow checks were reported successful; GitHub PR checks and deploy preview passed. This does *not* equal production acceptance. See [Testing](TESTING.md).
+
+## In-progress release branch: Priority 1 action notifications
+
+For this unmerged, untested implementation see [Action-required notification design, upgrade notes and DEV acceptance tests](PRIORITY1_ACTION_NOTIFICATIONS.md). These changes are **not deployed or Production-verified**; the stable release guidance above remains authoritative until merge and successful deployment.
