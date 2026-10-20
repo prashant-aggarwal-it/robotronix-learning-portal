@@ -2,8 +2,8 @@
 import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 
-type Status="not_linked"|"invite_sent"|"portal_ready"|"disabled";
-const labels:Record<Status,string>={not_linked:"Needs account setup",invite_sent:"Invite sent",portal_ready:"Portal-ready",disabled:"Disabled"};
+type Status="not_linked"|"invite_sent"|"awaiting_first_login"|"portal_ready"|"disabled";
+const labels:Record<Status,string>={not_linked:"Needs account setup",invite_sent:"Invite sent",awaiting_first_login:"Access granted — first sign-in pending",portal_ready:"Portal-ready",disabled:"Disabled"};
 export function PortalAccessPanel({type,id,defaultEmail}:{type:"trainer"|"student";id:string;defaultEmail:string}){
  const[email,setEmail]=useState(defaultEmail);const[status,setStatus]=useState<Status>("not_linked");
  const[lastLogin,setLastLogin]=useState<string|null>(null);const[message,setMessage]=useState("");const[busy,setBusy]=useState(false);const[ready,setReady]=useState(false);
@@ -27,7 +27,7 @@ export function PortalAccessPanel({type,id,defaultEmail}:{type:"trainer"|"studen
  <div className="formActions portalAccessActions">
   {status==="not_linked"&&<><button type="button" className="button" disabled={busy||!ready} onClick={()=>act("provision")}>Grant portal access</button><button type="button" className="button secondary" disabled={busy||!ready} onClick={()=>act("link")}>Link existing account</button></>}
   {status==="invite_sent"&&<><button type="button" className="button secondary" disabled={busy} onClick={()=>act("resend")}>Resend invite</button><button type="button" className="button ghost" disabled={busy} onClick={()=>act("link")}>Link existing account</button></>}
-  {(status==="portal_ready"||status==="invite_sent")&&<button type="button" className="button ghost" disabled={busy} onClick={()=>act("disable")}>Disable access</button>}
+  {(status==="portal_ready"||status==="invite_sent"||status==="awaiting_first_login")&&<button type="button" className="button ghost" disabled={busy} onClick={()=>act("disable")}>Disable access</button>}
   {status==="disabled"&&<button type="button" className="button" disabled={busy} onClick={()=>act("enable")}>Enable access</button>}
  </div>{message&&<p className={message.includes("failed")||message.includes("require")||message.includes("Could")?"errorBanner":"fieldHint"} role="status">{message}</p>}
  </section>
