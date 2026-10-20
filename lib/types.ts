@@ -98,7 +98,7 @@ export interface FamilyIntroductionRecord {
 
 export interface TrainerFinanceChangeRequest {
   id:string; trainerId:string; accountHolderName:string; bankName:string; accountNumber:string; ifsc:string; upiId:string; pan:string; preferredPayoutMethod:"bank"|"upi"|"other";
-  status:"pending"|"approved"|"rejected"|"correction_requested"; trainerNote:string; adminNote:string; submittedAt:string; reviewedAt?:string; reviewedBy?:string;
+  status:"pending"|"approved"|"rejected"|"correction_requested"; trainerNote:string; adminNote:string; submittedAt:string; reviewedAt?:string; reviewedBy?:string; effectivePayrollMonth?:string;
 }
 
 export interface TrainerFinanceRecord {
