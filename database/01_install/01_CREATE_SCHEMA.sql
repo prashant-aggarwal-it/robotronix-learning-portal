@@ -4430,3 +4430,14 @@ after insert or update of account_holder_name,bank_name,account_number,ifsc,upi_
 on public.trainer_finance for each row execute function public.version_direct_admin_payout_change();
 
 commit;
+
+-- Passwordless access state (existing-install upgrade: 08_PASSWORDLESS_PORTAL_ACCESS.sql)
+-- Expand portal-access state for passwordless Admin-granted accounts.
+-- This is an additive DEV migration, not a full schema install.
+begin;
+alter table public.portal_access_requests
+ drop constraint if exists portal_access_requests_status_check;
+alter table public.portal_access_requests
+ add constraint portal_access_requests_status_check
+ check(status in ('invited','provisioned','linked','disabled'));
+commit;
