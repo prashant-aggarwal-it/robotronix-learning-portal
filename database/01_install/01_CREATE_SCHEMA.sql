@@ -4354,6 +4354,9 @@ begin
   if new is distinct from old then raise exception 'Paid trainer payroll is locked. Use an audited adjustment'; end if;
   return new;
  end if;
+ if tg_op='UPDATE' and old.status='approved' and old.payout_instruction_version_id is null then
+  raise exception 'Legacy approved payroll needs explicit payout instruction reconciliation before payment';
+ end if;
  if tg_op='UPDATE' and old.status='approved' then
   if new.status not in ('approved','paid') then raise exception 'Approved payroll cannot be returned to draft'; end if;
   if new.gross_amount is distinct from old.gross_amount or new.adjustment_amount is distinct from old.adjustment_amount
