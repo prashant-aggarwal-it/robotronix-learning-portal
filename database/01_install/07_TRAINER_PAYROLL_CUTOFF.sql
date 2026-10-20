@@ -93,6 +93,7 @@ begin
   values(r.trainer_id,r.id,v_month,r.account_holder_name,r.bank_name,r.account_number,r.ifsc,r.upi_id,r.pan,r.preferred_payout_method,auth.uid());
   -- Trainer Profile shows the latest approved bank details. Actual salary instructions
   -- are separately snapshotted from the version applicable to each payroll month.
+  perform set_config('robotronix.payout_review','1',true);
   insert into public.trainer_finance(
    trainer_id,account_holder_name,bank_name,account_number,ifsc,upi_id,preferred_payout_method,pan,compliance_status,updated_at)
   values(r.trainer_id,r.account_holder_name,r.bank_name,r.account_number,r.ifsc,r.upi_id,r.preferred_payout_method,r.pan,'pending',now())
@@ -155,4 +156,42 @@ drop trigger if exists trainer_payout_instruction_lock_trg on public.trainer_pay
 create trigger trainer_payout_instruction_lock_trg
 before insert or update on public.trainer_payouts
 for each row execute function public.lock_trainer_payout_instructions();
+
+-- Admin's direct edits to sensitive trainer finance fields must also preserve
+-- an effective-dated version, otherwise those edits could evade payroll cutoff.
+create or replace function public.version_direct_admin_payout_change()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare v_cutoff int; v_month text; v_date timestamp; v_locked boolean;
+begin
+ if current_setting('robotronix.payout_review',true)='1' then return new; end if;
+ if tg_op='UPDATE' and row(
+   new.account_holder_name,new.bank_name,new.account_number,new.ifsc,new.upi_id,new.pan,new.preferred_payout_method)
+   is not distinct from row(
+   old.account_holder_name,old.bank_name,old.account_number,old.ifsc,old.upi_id,old.pan,old.preferred_payout_method)
+ then return new; end if;
+ if not public.is_admin() then
+  -- Review RPC runs with a controlled skip marker above. Never allow trainer writes.
+  raise exception 'Admin verification is required before payout details change';
+ end if;
+ select least(28,greatest(1,coalesce(nullif(value_text,'')::int,25)))
+  into v_cutoff from public.system_settings where key='trainer_payout_change_cutoff_day';
+ v_cutoff:=coalesce(v_cutoff,25);
+ v_date:=timezone('Asia/Kolkata',now());v_month:=to_char(v_date,'YYYY-MM');
+ select exists(select 1 from public.trainer_payouts where trainer_id=new.trainer_id
+  and period_month=v_month and status in ('approved','paid')) into v_locked;
+ if extract(day from v_date)::int>v_cutoff or v_locked then
+  v_month:=to_char(date_trunc('month',v_date)+interval '1 month','YYYY-MM');
+ end if;
+ insert into public.trainer_payout_instruction_versions(
+ trainer_id,effective_payroll_month,account_holder_name,bank_name,account_number,ifsc,
+ upi_id,pan,preferred_payout_method,approved_by)
+ values(new.trainer_id,v_month,new.account_holder_name,new.bank_name,new.account_number,
+ new.ifsc,new.upi_id,new.pan,new.preferred_payout_method,auth.uid());
+ return new;
+end $$;
+drop trigger if exists trainer_finance_direct_change_version_trg on public.trainer_finance;
+create trigger trainer_finance_direct_change_version_trg
+after insert or update of account_holder_name,bank_name,account_number,ifsc,upi_id,pan,preferred_payout_method
+on public.trainer_finance for each row execute function public.version_direct_admin_payout_change();
+
 commit;
