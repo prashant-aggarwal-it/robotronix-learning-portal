@@ -29,6 +29,7 @@ const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}
     {label:"Zoom Classroom",href:"/admin/zoom",group:"Operations"},
     {label:"Operational Alerts",href:"/admin/alerts",group:"Operations"},
     {label:"Corrections & Audit",href:"/admin/audit",group:"Operations"},
+    {label:"System Logs",href:"/admin/system-logs",group:"Operations"},
     {label:"Fees & Earnings",href:"/admin/finance",group:"Finance"},
     {label:"International Invoices",href:"/admin/invoices",group:"Finance"},
     {label:"Trainer Payroll",href:"/admin/trainer-finance",group:"Finance"},
