@@ -36,12 +36,18 @@ export function NotificationCenter({ role }: { role: UserRole }) {
     void refresh();
     const unsubscribe = subscribeNotifications(role, () => void refresh());
     const resume = () => { if (navigator.onLine !== false) void refresh(); };
+    const visibility = () => { if (document.visibilityState === "visible") resume(); };
+    // Recover unread state after missed Realtime events or browser sleep.
+    const recovery = window.setInterval(resume, 60000);
     window.addEventListener("focus", resume);
     window.addEventListener("online", resume);
+    document.addEventListener("visibilitychange", visibility);
     return () => {
       unsubscribe();
+      window.clearInterval(recovery);
       window.removeEventListener("focus", resume);
       window.removeEventListener("online", resume);
+      document.removeEventListener("visibilitychange", visibility);
     };
   }, [role]);
 
