@@ -46,3 +46,11 @@ For this unmerged, untested implementation see [Action-required notification des
 ## Work in progress: P2/P3 cross-role data synchronization and Realtime recovery
 
 [Read the P2/P3 implementation, SQL upgrade and DEV test matrix](P2_P3_REALTIME_RELIABILITY.md). This is an **unmerged, unverified implementation** on a separate branch stacked on the P1 notifications branch. It is not proof of deployment or Production acceptance.
+
+## Consolidated release candidate (work in progress)
+
+- [Consolidated stabilization backlog](CONSOLIDATED_STABILIZATION_BACKLOG.md) — approved requirements, implemented/pending distinctions and release acceptance.
+- [System Logs guide](SYSTEM_LOGS.md) — safe diagnostic events, Admin access, installation and testing.
+- [P1 action notifications](PRIORITY1_ACTION_NOTIFICATIONS.md) and [P2/P3 Realtime reliability](P2_P3_REALTIME_RELIABILITY.md) — existing candidate changes carried forward.
+
+**Important:** The consolidated branch contains incomplete/unverified features and must not be treated as Production-ready or run against Production SQL until the full DEV release gate has passed.
