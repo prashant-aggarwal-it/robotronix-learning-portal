@@ -74,3 +74,12 @@
 - Real payroll cutoff boundary tests, concurrent pay changes, bank-owner verification and proper monthly instruction display.
 - Final Demo UX responsive testing and updated instructions tied to screenshots/verified provider settings.
 - Final release ZIP and merge/deployment are **not completed**; no Production change approved.
+
+## Final checkpoint for current implementation pass
+- FIN-PAY-01: Admin payroll now must be approved before a netbanking transfer is marked paid; UTR and confirmation are required. Monthly payout instruction snapshots are recorded at approval by migration 07. DEV/Production tests remain pending.
+- AUTH-01: New `provision` portal access action and state, Admin panel labels, email OTP/Google sign-in and migration 08 committed. Verify Supabase magic-link template delivers OTP and Google identity linking in DEV.
+- DEMO-01 / CRM-01: Nonessential conversion/follow-up/lost buttons hidden; demo and Zoom recording layout given mobile overflow/wrapping improvements; mobile QA unexecuted.
+- ZOOM-01: Recording stream now retries a 401/403 once using a refreshed recording file URL from Zoom's recordings API. This addresses a plausible stale-download-URL failure; **actual playback still requires provider-backed verification**.
+- LOG-01: System Logs UI, server helper, portal-access and Zoom/Razorpay error correlation committed; 90-day retention cleanup via service-only SQL function migration 09. Supabase Cron schedule is operator-managed and not enabled automatically.
+- QA: Added stabilization smoke suite, expanded source release gate and database-object verification; **no real build, CI, database or Playwright pass observed**.
+- Release remains **Draft**, not deployable; full provider/role tests and production migration approval are outstanding.
