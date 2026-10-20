@@ -31,3 +31,7 @@
 - Future changes to an already installed database need independently reviewed migration SQL, backup awareness, and an explicit deployment plan.
 
 See the docs hub for Zoom, Razorpay, Netlify and the application lifecycle.
+
+## P1 action notifications change set (2026-10-20)
+
+The canonical fresh-install `01_install/01_CREATE_SCHEMA.sql` **already includes** the action-required notification triggers. Existing installed DEV databases can instead apply `01_install/04_PRIORITY1_ACTION_NOTIFICATIONS.sql` **once after checking the existing baseline**. Do **not** run that additive file after a fresh schema installation; it is provided as the explicit upgrade path, not a new baseline step. Production application requires review, backup and approval. See [P1 event matrix and manual QA](../docs/PRIORITY1_ACTION_NOTIFICATIONS.md).
