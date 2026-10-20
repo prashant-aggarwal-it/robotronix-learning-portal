@@ -13,7 +13,7 @@
 
 | ID | Priority | Requirement | Status | Release acceptance |
 |---|---|---|---|---|
-| FIN-UX-01 | P1 | Admin payout-review screen must compare **currently approved vs new proposed** account-holder name, bank name, bank account (masked default; restricted full review if appropriate), IFSC, UPI, PAN and payout method. Explain changed fields and approval purpose. | Pending | Admin can meaningfully review without approving on last four digits alone |
+| FIN-UX-01 | P1 | Admin payout-review screen must compare **currently approved vs new proposed** account-holder name, bank name, bank account (masked default; restricted full review if appropriate), IFSC, UPI, PAN and payout method. Explain changed fields and approval purpose. | Source UI implemented on consolidated branch; QA pending | Admin can meaningfully review without approving on last four digits alone |
 | FIN-UX-02 | P1 | Clear Trainer Profile separate **approved** and **pending** payout details; correct missing spacing, statuses; show corrections and review results, avoid implying that 'approved' means bank ownership was independently verified. | Pending | Both roles see unambiguous pending/approved statuses and changes |
 | FIN-UX-03 | P1 | On correction request require Admin reason and make resubmission clear; preserve previous approved details until decision; maintain audit history without exposing secrets in notifications. | Pending | Rejection/correction/approval paths and audit tested |
 | FIN-PAY-01 | P1 | Manual netbanking only. Admin records salary paid/date/amount/UTR; Trainer sees payroll/payment history; no Razorpay payout automation. | Pending | No simulated automatic bank transfer; paid status Admin-controlled |
@@ -46,3 +46,8 @@
 3. Sensitive payout details restricted at storage, RLS, API, logs and notifications, with masking by default.
 4. Each implemented item updates this tracker, relevant integration/workflow document, test case and release notes.
 5. Reconcile all earlier fixes including onboarding Admin notification trigger, timing stability, QA scripts, payroll guards, and portal-access changes.
+
+## Consolidated release candidate implementation log
+
+- 2026-10-20: Created `release/consolidated-stabilization-20261020` from P2/P3, retaining P1–P3 changes. Implemented `components/finance/PayoutReview.tsx` and integrated it into Admin Trainer Details as a restricted before/after review, with masked defaults, deliberate confirmation and mandatory correction/rejection reason. **Not tested or deployed.**
+- Remaining backlog items are **not completed** merely because the release branch exists. Each requires source implementation, security review and documented tests.
