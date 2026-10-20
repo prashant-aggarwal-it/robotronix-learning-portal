@@ -1,3 +1,4 @@
+import {logSystemEvent} from "@/lib/server/system-log";
 import {NextRequest,NextResponse} from "next/server";
 import {zoomAuthorizedFetchUrl,zoomServiceClient} from "@/lib/server/zoom";
 import {classAccessForProfile} from "@/lib/server/zoom-classroom";
@@ -24,11 +25,11 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
   if(!allowed)return new NextResponse("You do not have access to this recording.",{status:403});
   const range=request.headers.get("range");
   const upstream=await zoomAuthorizedFetchUrl(meeting.host_account_id,recording.download_url,{headers:range?{Range:range}:{}});  
-  if(!upstream.ok&&upstream.status!==206)return new NextResponse("Unable to stream this Zoom recording.",{status:upstream.status||502});
+  if(!upstream.ok&&upstream.status!==206){const referenceId=await logSystemEvent({source:"zoom-recording",action:"stream",code:"ZOOM_STREAM_"+String(upstream.status),message:"Recording upstream delivery failed"});return new NextResponse("Unable to stream this Zoom recording. Reference: "+referenceId,{status:502,headers:{"Cache-Control":"no-store"}});}
   const headers=new Headers();
   for(const key of ["content-type","content-length","content-range","accept-ranges","etag","last-modified"]){const value=upstream.headers.get(key);if(value)headers.set(key,value);}
   headers.set("Cache-Control","private, no-store");
   headers.set("Content-Disposition","inline");
   return new NextResponse(upstream.body,{status:upstream.status,headers});
- }catch(error){return new NextResponse(error instanceof Error?error.message:String(error),{status:403,headers:{"Cache-Control":"no-store"}});}
+ }catch(error){const referenceId=await logSystemEvent({source:"zoom-recording",action:"stream",code:"ZOOM_STREAM_FAILURE",message:"Recording playback could not be established"});return new NextResponse("Recording stream unavailable. Reference: "+referenceId,{status:403,headers:{"Cache-Control":"no-store"}});}
 }
