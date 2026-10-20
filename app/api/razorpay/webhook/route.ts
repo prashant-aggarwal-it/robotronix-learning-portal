@@ -1,3 +1,4 @@
+import {logSystemEvent} from "@/lib/server/system-log";
 import crypto from "node:crypto";
 import {NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
@@ -67,6 +68,7 @@ export async function POST(request:Request){
  }catch(error){
   const message=error instanceof Error?error.message:String(error);
   await db.from("razorpay_webhook_events").update({processed_at:null,processing_error:message}).eq("event_key",key);
-  return NextResponse.json({ok:false,error:message},{status:500});
+  const referenceId=await logSystemEvent({source:"razorpay-webhook",action:"invoice-reconciliation",code:"RAZORPAY_EVENT_PROCESSING_FAILURE",message:"Invoice webhook processing failed"});
+  return NextResponse.json({ok:false,error:"Webhook processing failed",referenceId},{status:500});
  }
 }
