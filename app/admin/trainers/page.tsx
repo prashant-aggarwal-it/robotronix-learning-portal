@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 import {useEffect,useMemo,useState} from "react";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -19,6 +20,7 @@ export default function TrainersPage(){
  const[notice,setNotice]=useState("");
  const[rows,setRows]=useState<TrainerAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[enrollments,setEnrollments]=useState<EnrollmentAdminRecord[]>([]);const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[q,setQ]=useState("");const[status,setStatus]=useState("active");const[course,setCourse]=useState("all");const[sortKey,setSortKey]=useState<SortKey>("name");const[sortDir,setSortDir]=useState<"asc"|"desc">("asc");const[page,setPage]=useState(1);const[pageSize,setPageSize]=useState(25);
  useEffect(()=>{Promise.all([listAdminTrainers(),listAdminCourses(),listAdminEnrollments(),listAdminCohorts()]).then(([t,c,e,h])=>{setRows(t);setCourses(c);setEnrollments(e);setCohorts(h)})},[]);
+ const reload=async()=>{const[t,c,e,h]=await Promise.all([listAdminTrainers(),listAdminCourses(),listAdminEnrollments(),listAdminCohorts()]);setRows(t);setCourses(c);setEnrollments(e);setCohorts(h)}; useLiveRefresh(["trainers","trainer_finance_change_requests","courses","enrollments","cohorts"],reload,"admin-trainers");
  const currentRows=(id:string)=>enrollments.filter(e=>e.trainerId===id&&e.status==="active");
  const activeCount=(id:string)=>new Set(currentRows(id).map(e=>e.studentId)).size;
  const oneCount=(id:string)=>new Set(currentRows(id).filter(e=>e.enrollmentType==="one_to_one").map(e=>e.studentId)).size;
