@@ -54,3 +54,12 @@ For this unmerged, untested implementation see [Action-required notification des
 - [P1 action notifications](PRIORITY1_ACTION_NOTIFICATIONS.md) and [P2/P3 Realtime reliability](P2_P3_REALTIME_RELIABILITY.md) — existing candidate changes carried forward.
 
 **Important:** The consolidated branch contains incomplete/unverified features and must not be treated as Production-ready or run against Production SQL until the full DEV release gate has passed.
+
+## Consolidated release implementation and handover (draft)
+
+- [All-round release QA and configuration handover](CONSOLIDATED_RELEASE_QA_HANDOVER.md)
+- [Unified passwordless login and Admin grants](PASSWORDLESS_PORTAL_ACCESS.md)
+- [Netbanking payout rules and bank-detail cutoff tests](TRAINER_FINANCE_NETBANKING.md)
+- [System logging and cleanup](SYSTEM_LOGS.md)
+
+These are current branch implementation guides, **not verified Production configuration**. Run migrations 04–09 only on a reviewed existing DEV database; fresh DEV uses canonical schema. All changes remain unmerged and untested.
