@@ -1,3 +1,4 @@
+import {logSystemEvent} from "@/lib/server/system-log";
 import crypto from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
 import {zoomServiceClient} from "@/lib/server/zoom";
@@ -149,6 +150,7 @@ export async function POST(request:NextRequest){
   }
   return NextResponse.json({ok:true});
  }catch(error){
-  return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:400});
+  const referenceId=await logSystemEvent({source:"zoom-webhook",action:"webhook-processing",code:"ZOOM_WEBHOOK_PROCESSING_FAILURE",message:"Zoom webhook processing failed"});
+  return NextResponse.json({ok:false,error:"Webhook processing failed",referenceId},{status:400});
  }
 }
