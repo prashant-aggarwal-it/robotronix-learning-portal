@@ -85,7 +85,7 @@ begin
   select exists(select 1 from public.trainer_payouts where trainer_id=r.trainer_id
    and period_month=v_month and status in ('approved','paid')) into v_lock;
   if extract(day from v_ist)::int>v_cutoff or v_lock then
-   v_month:=to_char(v_ist+interval '1 month','YYYY-MM');
+   v_month:=to_char(date_trunc('month',v_ist)+interval '1 month','YYYY-MM');
   end if;
   insert into public.trainer_payout_instruction_versions(
    trainer_id,source_request_id,effective_payroll_month,
