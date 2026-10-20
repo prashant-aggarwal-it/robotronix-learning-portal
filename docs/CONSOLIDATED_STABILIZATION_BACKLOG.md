@@ -56,3 +56,21 @@
 
 - 2026-10-20: FIN-PAY-02 source migration drafted: `07_TRAINER_PAYROLL_CUTOFF.sql` adds a configurable 25th-day IST cutoff, effective-dated payout instructions, and immutable snapshots at payroll approval/payment; direct Admin edits are also versioned. Trainer UI shows latest effective month. **Database has not been migrated or QA-tested; not ready for salary processing.**
 - 2026-10-20: ZOOM-03 grouped-recordings UI committed in `app/admin/zoom/page.tsx` (one expandable meeting with separate video/audio/file actions, MB units). Playback and delete/sync fixes still require provider investigation/verification.
+
+## Implementation continuation — 2026-10-20
+
+- AUTH-01: Added Admin `provision`/Grant Portal Access action using a pre-provisioned Supabase Auth user, no invitation email; retained existing link/disable/invite compatibility. Added separate `provisioned` DB state in migration `08_PASSWORDLESS_PORTAL_ACCESS.sql` and first-login pending status. Existing Google and email OTP sign-in helpers remain, but **provider testing and Google identity-linking behavior remain unverified**.
+- CRM-01: Removed visible follow-up/converted/lost controls from Admin Demo Experience. Database records and backend historical actions were preserved; mobile regression check pending.
+- QA: Added `qa/consolidated-stabilization.spec.ts` and `npm run qa:stabilization` for protected Admin logs and role screen smoke checks; **not executed**. Added consolidated handover and integration configuration matrix in `docs/CONSOLIDATED_RELEASE_QA_HANDOVER.md`.
+- All prior migrations 04–07 remain in consolidated canonical install SQL, and migration 08 is appended for passwordless provisioning state. Existing DEV must run all applicable incremental migrations after review.
+
+## Unresolved release gates — DO NOT DEPLOY
+
+- Verified Next.js/TypeScript build and full static release gate on exact commit.
+- DEV Supabase incremental migration 04–08 and fresh-install validation, RLS/privacy review.
+- Full multi-role authenticated Playwright run and linked evidence for all financial, scheduling, notifications, onboarding, and payment workflows.
+- Zoom provider-backed playback 401 and delete/re-sync testing; Host 2 external-sharing provider approval and actual second-host OAuth.
+- Complete System Logs coverage, retention and provider error instrumentation; validated access/PII sanitization.
+- Real payroll cutoff boundary tests, concurrent pay changes, bank-owner verification and proper monthly instruction display.
+- Final Demo UX responsive testing and updated instructions tied to screenshots/verified provider settings.
+- Final release ZIP and merge/deployment are **not completed**; no Production change approved.
