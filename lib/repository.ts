@@ -718,14 +718,23 @@ export async function getTrainerFinanceRequest(trainerId?:string):Promise<Traine
  const supabase=getSupabaseBrowserClient();if(!supabase)return null;
  let tid=trainerId;if(!tid){const t=await getCurrentTrainerRecord();tid=t?.id}if(!tid)return null;
  const{data}=await supabase.from("trainer_finance_change_requests").select("*").eq("trainer_id",tid).in("status",["pending","correction_requested"]).order("submitted_at",{ascending:false}).limit(1).maybeSingle();if(!data)return null;
- return{id:data.id,trainerId:data.trainer_id,accountHolderName:data.account_holder_name??"",bankName:data.bank_name??"",accountNumber:data.account_number??"",ifsc:data.ifsc??"",upiId:data.upi_id??"",pan:data.pan??"",preferredPayoutMethod:data.preferred_payout_method??"bank",status:data.status,trainerNote:data.trainer_note??"",adminNote:data.admin_note??"",submittedAt:data.submitted_at,reviewedAt:data.reviewed_at??undefined,reviewedBy:data.reviewed_by??undefined};
+ return{id:data.id,trainerId:data.trainer_id,accountHolderName:data.account_holder_name??"",bankName:data.bank_name??"",accountNumber:data.account_number??"",ifsc:data.ifsc??"",upiId:data.upi_id??"",pan:data.pan??"",preferredPayoutMethod:data.preferred_payout_method??"bank",status:data.status,trainerNote:data.trainer_note??"",adminNote:data.admin_note??"",submittedAt:data.submitted_at,reviewedAt:data.reviewed_at??undefined,reviewedBy:data.reviewed_by??undefined,effectivePayrollMonth:data.effective_payroll_month??undefined};
+}
+export async function getLatestApprovedTrainerPayoutCycle(trainerId?:string):Promise<{effectiveMonth:string;approvedAt:string}|null>{
+ const supabase=getSupabaseBrowserClient();if(!supabase)return null;
+ let id=trainerId;if(!id){const trainer=await getCurrentTrainerRecord();id=trainer?.id;}if(!id)return null;
+ const {data,error}=await supabase.from("trainer_finance_change_requests")
+  .select("effective_payroll_month,reviewed_at").eq("trainer_id",id)
+  .eq("status","approved").order("reviewed_at",{ascending:false}).limit(1).maybeSingle();
+ if(error||!data)return null;
+ return{effectiveMonth:data.effective_payroll_month||"",approvedAt:data.reviewed_at||""};
 }
 export async function submitTrainerFinanceRequest(input:{accountHolderName:string;bankName:string;accountNumber:string;ifsc:string;upiId:string;pan:string;preferredPayoutMethod:"bank"|"upi"|"other";trainerNote:string}){
  const supabase=getSupabaseBrowserClient();if(!supabase)return{ok:true};const t=await getCurrentTrainerRecord();if(!t)return{ok:false,error:"Trainer profile not linked."};
  const{data,error}=await supabase.from("trainer_finance_change_requests").insert({trainer_id:t.id,account_holder_name:input.accountHolderName,bank_name:input.bankName,account_number:input.accountNumber,ifsc:input.ifsc,upi_id:input.upiId,pan:input.pan,preferred_payout_method:input.preferredPayoutMethod,trainer_note:input.trainerNote,status:"pending"}).select("id").single();return error?{ok:false,error:error.message}:{ok:true,id:data.id};
 }
 export async function listTrainerFinanceRequests(trainerId:string):Promise<TrainerFinanceChangeRequest[]>{
- const supabase=getSupabaseBrowserClient();if(!supabase)return[];const{data}=await supabase.from("trainer_finance_change_requests").select("*").eq("trainer_id",trainerId).order("submitted_at",{ascending:false});return(data??[]).map((x:any)=>({id:x.id,trainerId:x.trainer_id,accountHolderName:x.account_holder_name??"",bankName:x.bank_name??"",accountNumber:x.account_number??"",ifsc:x.ifsc??"",upiId:x.upi_id??"",pan:x.pan??"",preferredPayoutMethod:x.preferred_payout_method??"bank",status:x.status,trainerNote:x.trainer_note??"",adminNote:x.admin_note??"",submittedAt:x.submitted_at,reviewedAt:x.reviewed_at??undefined,reviewedBy:x.reviewed_by??undefined}));
+ const supabase=getSupabaseBrowserClient();if(!supabase)return[];const{data}=await supabase.from("trainer_finance_change_requests").select("*").eq("trainer_id",trainerId).order("submitted_at",{ascending:false});return(data??[]).map((x:any)=>({id:x.id,trainerId:x.trainer_id,accountHolderName:x.account_holder_name??"",bankName:x.bank_name??"",accountNumber:x.account_number??"",ifsc:x.ifsc??"",upiId:x.upi_id??"",pan:x.pan??"",preferredPayoutMethod:x.preferred_payout_method??"bank",status:x.status,trainerNote:x.trainer_note??"",adminNote:x.admin_note??"",submittedAt:x.submitted_at,reviewedAt:x.reviewed_at??undefined,reviewedBy:x.reviewed_by??undefined,effectivePayrollMonth:x.effective_payroll_month??undefined}));
 }
 export async function reviewTrainerFinanceRequest(id:string,action:"approve"|"reject"|"request_correction",adminNote:string){
  const supabase=getSupabaseBrowserClient();if(!supabase)return{ok:true};const{data,error}=await supabase.rpc("review_trainer_finance_request",{p_request_id:id,p_action:action,p_admin_note:adminNote});return error?{ok:false,error:error.message}:{ok:true,data};
