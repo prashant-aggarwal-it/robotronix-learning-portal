@@ -42,3 +42,7 @@
 ## In-progress release branch: Priority 1 action notifications
 
 For this unmerged, untested implementation see [Action-required notification design, upgrade notes and DEV acceptance tests](PRIORITY1_ACTION_NOTIFICATIONS.md). These changes are **not deployed or Production-verified**; the stable release guidance above remains authoritative until merge and successful deployment.
+
+## Work in progress: P2/P3 cross-role data synchronization and Realtime recovery
+
+[Read the P2/P3 implementation, SQL upgrade and DEV test matrix](P2_P3_REALTIME_RELIABILITY.md). This is an **unmerged, unverified implementation** on a separate branch stacked on the P1 notifications branch. It is not proof of deployment or Production acceptance.
