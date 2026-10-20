@@ -101,13 +101,26 @@ function Workspace(){
   </>}
 
   {tab==="recordings"&&<section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">SECURE RECORDING LIBRARY</div><h2>Cloud recordings</h2><p>Playback is authorized by Robotronix. Protect important recordings, extend retention or allow learner access when appropriate.</p></div></div>
-   <div className="tableWrap"><table><thead><tr><th>Meeting</th><th>Recorded</th><th>Type</th><th>Size</th><th>Retention</th><th>Learner access</th><th>Actions</th></tr></thead><tbody>
-    {recordings.map((r:any)=><tr key={r.id}><td><b>{r.meeting?.event?.title||r.meeting?.topic}</b><div className="cellSub">{r.meeting?.purpose==="class"?"Class":"General meeting"}</div></td><td>{when(r.recording_start)}</td><td>{r.recording_type||r.file_type||"Recording"}</td><td>{gb(Number(r.file_size_bytes||0))}</td><td>{r.protected_from_deletion?<span className="softBadge softGreen">Protected</span>:when(r.retain_until)}</td>
-     <td>{r.meeting?.purpose==="class"?<button className="softBadge" disabled={busy} onClick={()=>recordingAction(r.id,"toggle-learner")}>{r.learner_visible?"Allowed":"Admin only"}</button>:"Admin only"}</td>
-     <td><div className="row" style={{flexWrap:"wrap"}}><button className="button small" onClick={()=>watchRecording(r.id)}>Watch</button><button className="button secondary small" disabled={busy} onClick={()=>recordingAction(r.id,"toggle-protect")}>{r.protected_from_deletion?"Unprotect":"Protect"}</button><button className="button secondary small" disabled={busy} onClick={()=>recordingAction(r.id,"extend",60)}>+60 days</button><button className="button secondary small" disabled={busy||r.protected_from_deletion} onClick={()=>recordingAction(r.id,"delete")}>Delete</button></div></td></tr>)}
-    {!recordings.length&&<tr><td colSpan={7}><div className="emptyState compact">No completed recordings yet.</div></td></tr>}
-   </tbody></table></div>
+   <div className="panelHeader"><div><div className="eyebrow">SECURE RECORDING LIBRARY</div><h2>Cloud recordings by meeting</h2><p>Expand a meeting to see video, audio and other files. Playback and actions remain restricted to authorized Admin users.</p></div></div>
+   {meetings.filter(m=>m.recordings.some(r=>r.status!=="deleted")).map(m=><details key={m.id} className="panel historyPanel">
+    <summary style={{cursor:"pointer",display:"flex",gap:16,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap"}}>
+     <span><b>{m.event?.title||m.topic}</b><span className="cellSub">{when(m.scheduled_start)} · {m.purpose==="class"?"Class":m.purpose==="demo"?"Demo":"Meeting"} · {m.host?.label||"Zoom host"}</span></span>
+     <span className="softBadge">{m.recordings.filter(r=>r.status!=="deleted").length} files</span>
+    </summary>
+    <div className="tableWrap topGap"><table><thead><tr><th>File type</th><th>Recorded</th><th>Size</th><th>Retention</th><th>Learner access</th><th>Actions</th></tr></thead><tbody>
+    {m.recordings.filter(r=>r.status!=="deleted").map(r=><tr key={r.id}>
+     <td>{r.recording_type||r.file_type||"Recording"}</td><td>{when(r.recording_start)}</td><td>{Number(r.file_size_bytes||0)>=1024*1024*1024?gb(Number(r.file_size_bytes||0)):(Number(r.file_size_bytes||0)/1024/1024).toFixed(1)+" MB"}</td>
+     <td>{r.protected_from_deletion?<span className="softBadge softGreen">Protected</span>:when(r.retain_until)}</td>
+     <td>{m.purpose==="class"?<button className="softBadge" disabled={busy} onClick={()=>recordingAction(r.id,"toggle-learner")}>{r.learner_visible?"Allowed":"Admin only"}</button>:"Admin only"}</td>
+     <td><div className="row" style={{flexWrap:"wrap"}}>
+      <button className="button small" onClick={()=>watchRecording(r.id)}>Watch</button>
+      <button className="button secondary small" disabled={busy} onClick={()=>recordingAction(r.id,"toggle-protect")}>{r.protected_from_deletion?"Unprotect":"Protect"}</button>
+      <button className="button secondary small" disabled={busy} onClick={()=>recordingAction(r.id,"extend",60)}>+60 days</button>
+      <button className="button secondary small" disabled={busy||r.protected_from_deletion} onClick={()=>recordingAction(r.id,"delete")}>Delete</button>
+     </div></td>
+    </tr>)}</tbody></table></div>
+   </details>)}
+   {!recordings.length&&<div className="emptyState compact">No completed recordings yet.</div>}
   </section>}
 
   {tab==="hosts"&&<section className="dataSection">
