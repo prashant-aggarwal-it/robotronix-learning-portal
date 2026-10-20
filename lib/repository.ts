@@ -35,7 +35,7 @@ export async function signIn(email: string, password: string) {
 export async function requestEmailSignInCode(email:string){
  const client=getSupabaseBrowserClient();
  if(!client)return{ok:false,error:"Authentication is unavailable."};
- if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.trim()))return{ok:false,error:"Enter a valid email address."};
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))return{ok:false,error:"Enter a valid email address."};
  const redirectTo=typeof window!=="undefined"?window.location.origin+"/auth/callback":undefined;
  const {error}=await client.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:redirectTo}});
  return error?{ok:false,error:"Unable to send sign-in code. Verify your portal access with Admin."}:{ok:true};
@@ -43,7 +43,7 @@ export async function requestEmailSignInCode(email:string){
 export async function verifyEmailSignInCode(email:string,code:string){
  const client=getSupabaseBrowserClient();
  if(!client)return{ok:false,error:"Authentication is unavailable."};
- if(!/^\\d{6,8}$/.test(code.trim()))return{ok:false,error:"Enter the code from the email."};
+ if(!/^\d{6,8}$/.test(code.trim()))return{ok:false,error:"Enter the code from the email."};
  const {error}=await client.auth.verifyOtp({email:email.trim(),token:code.trim(),type:"email"});
  return error?{ok:false,error:"Code expired or invalid. Request a new code."}:{ok:true};
 }
