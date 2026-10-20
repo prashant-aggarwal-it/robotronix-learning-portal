@@ -51,3 +51,5 @@
 
 - 2026-10-20: Created `release/consolidated-stabilization-20261020` from P2/P3, retaining P1–P3 changes. Implemented `components/finance/PayoutReview.tsx` and integrated it into Admin Trainer Details as a restricted before/after review, with masked defaults, deliberate confirmation and mandatory correction/rejection reason. **Not tested or deployed.**
 - Remaining backlog items are **not completed** merely because the release branch exists. Each requires source implementation, security review and documented tests.
+
+- 2026-10-20: Began LOG-01: Admin-only System Logs page and read API, RLS-enabled server-only `portal_system_logs` database table, safe logging helper, and portal access error-path integration. Canonical fresh-install and existing-install migrations prepared. **Partial implementation only**; coverage across remaining Zoom/Razorpay/scheduling endpoints, retention jobs, DEV QA and security testing remain pending. No live migration has run.
