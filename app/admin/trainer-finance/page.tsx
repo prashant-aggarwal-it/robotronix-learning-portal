@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 import {useEffect,useMemo,useState} from "react";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -15,6 +16,7 @@ function currentMonth(){return new Date().toISOString().slice(0,7)}
 export default function TrainerFinancePage(){
  const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[earnings,setEarnings]=useState<TrainerEarningRecord[]>([]);const[payouts,setPayouts]=useState<TrainerPayoutRecord[]>([]);const[month,setMonth]=useState(currentMonth());
  useEffect(()=>{Promise.all([listAdminTrainers(),listTrainerEarnings(),listTrainerPayouts()]).then(([t,e,p])=>{setTrainers(t);setEarnings(e);setPayouts(p)})},[]);
+ const reload=async()=>{const[t,e,p]=await Promise.all([listAdminTrainers(),listTrainerEarnings(),listTrainerPayouts()]);setTrainers(t);setEarnings(e);setPayouts(p)}; useLiveRefresh(["trainers","trainer_earnings","trainer_payouts"],reload,"admin-trainer-finance");
  const monthRows=useMemo(()=>earnings.filter(e=>e.earningDate.startsWith(month)),[earnings,month]);
  const gross=monthRows.filter(e=>e.status!=="void").reduce((s,e)=>s+e.totalAmount,0);const pending=monthRows.filter(e=>e.status==="pending").reduce((s,e)=>s+e.totalAmount,0);const approved=monthRows.filter(e=>e.status==="approved").reduce((s,e)=>s+e.totalAmount,0);const paid=monthRows.filter(e=>e.status==="paid").reduce((s,e)=>s+e.totalAmount,0);
  const rows=useMemo(()=>trainers.filter(t=>t.recordStatus!=="archived").map(t=>{const x=monthRows.filter(e=>e.trainerId===t.id);const payout=payouts.find(p=>p.trainerId===t.id&&p.periodMonth===month);return{trainer:t,earnings:x,gross:x.filter(e=>e.status!=="void").reduce((s,e)=>s+e.totalAmount,0),payout};}).sort((a,b)=>b.gross-a.gross||a.trainer.fullName.localeCompare(b.trainer.fullName)),[trainers,monthRows,payouts,month]);

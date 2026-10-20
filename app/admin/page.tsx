@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 import {useEffect,useMemo,useState} from "react";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -16,6 +17,7 @@ import {IST_TIMEZONE,zonedRangeParts} from "@/lib/timezones";
 export default function AdminPage(){
  const[students,setStudents]=useState<StudentAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[onboarding,setOnboarding]=useState<OnboardingSubmission[]>([]);const[enrollments,setEnrollments]=useState<EnrollmentAdminRecord[]>([]);const[events,setEvents]=useState<ScheduleEvent[]>([]);const[progress,setProgress]=useState<LearnerProgressRow[]>([]);
  useEffect(()=>{Promise.all([listAdminStudents(),listAdminTrainers(),listAdminCourses(),listOnboardingSubmissions(),listAdminEnrollments(),listScheduleEvents(),listLearnerProgressRows()]).then(([s,t,c,o,e,ev,p])=>{setStudents(s);setTrainers(t);setCourses(c);setOnboarding(o);setEnrollments(e);setEvents(ev);setProgress(p)})},[]);
+ const reload=async()=>{const[s,t,c,o,e,ev,p]=await Promise.all([listAdminStudents(),listAdminTrainers(),listAdminCourses(),listOnboardingSubmissions(),listAdminEnrollments(),listScheduleEvents(),listLearnerProgressRows()]);setStudents(s);setTrainers(t);setCourses(c);setOnboarding(o);setEnrollments(e);setEvents(ev);setProgress(p)}; useLiveRefresh(["students","trainers","courses","onboarding_submissions","enrollments","schedule_events","learning_observations"],reload,"admin-overview");
  const today=new Intl.DateTimeFormat("en-CA",{timeZone:IST_TIMEZONE,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
  const eventIstDate=(e:ScheduleEvent)=>zonedRangeParts(e.date,e.startTime,e.endTime,e.timezone||IST_TIMEZONE,IST_TIMEZONE).startDate;
  const activeEnrollmentRows=enrollments.filter(e=>e.status==="active");const activeLearners=currentLearnerCount(enrollments);const activeTrainers=trainers.filter(x=>x.recordStatus==="active").length;const pending=onboarding.filter(x=>x.status==="new"||x.status==="setup_pending").length;const todayClasses=events.filter(x=>{if(x.eventType!=="class"||["cancelled","rescheduled"].includes(x.status))return false;const r=zonedRangeParts(x.date,x.startTime,x.endTime,x.timezone||IST_TIMEZONE,IST_TIMEZONE);return r.startDate===today}).length;
