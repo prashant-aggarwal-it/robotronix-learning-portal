@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {useParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
@@ -25,6 +26,8 @@ export default function EnrollmentDetail(){
   if(!force&&editingRef.current)return;
   setRecord(e);setBaseline(e?JSON.stringify(e):"");editingRef.current=false;
 }
+
+useLiveRefresh(["enrollments","cohorts","students","trainers","courses"],()=>{if(!editingRef.current&&!saving)return refresh()},`admin-enrollment-${id}`);
 useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
  const eligibleTrainers=useMemo(()=>trainers.filter(t=>t.recordStatus==="active"&&(!record?.courseId||t.courseIds.includes(record.courseId))),[trainers,record?.courseId]);const eligibleCohorts=useMemo(()=>cohorts.filter(c=>c.status==="active"&&c.courseId===record?.courseId&&c.trainerId===record?.trainerId&&(c.id===record?.cohortId||c.studentIds.length<c.capacity)),[cohorts,record?.courseId,record?.trainerId,record?.cohortId]);
  if(record===undefined)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="panel">Loading enrollment…</div></AppShell></RoleGuard>;if(!record)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="emptyState">Enrollment not found.</div></AppShell></RoleGuard>;
