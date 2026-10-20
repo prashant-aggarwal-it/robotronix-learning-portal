@@ -27,8 +27,30 @@ function TrainerPayrollDetailContent(){
  const courseName=(id?:string)=>courses.find(c=>c.id===id)?.publicName||courses.find(c=>c.id===id)?.title||"Course";const classLabel=(ev?:ScheduleEvent)=>{if(!ev)return "Class";if(ev.cohortId){const c=cohorts.find(x=>x.id===ev.cohortId);return `${courseName(ev.courseId)} · ${c?.name||"Cohort"}`;}const en=enrollments.find(x=>x.id===ev.enrollmentId);const st=students.find(x=>x.id===(ev.studentId||en?.studentId));return `${courseName(ev.courseId)} · ${st?.fullName||"Learner"}`;};
  const gross=monthRows.filter(e=>e.status!=="void").reduce((s,e)=>s+e.totalAmount,0);const needsReview=(e:TrainerEarningRecord)=>e.status==="pending"&&(e.classOutcome!=="completed"||e.adjustment!==0||e.conversionApplied);const reviewRows=monthRows.filter(needsReview);const autoVerifiedRows=monthRows.filter(e=>e.status==="pending"&&!needsReview(e));const readyAmount=[...autoVerifiedRows,...monthRows.filter(e=>e.status==="approved")].reduce((s,e)=>s+e.totalAmount,0);const paid=monthRows.filter(e=>e.status==="paid").reduce((s,e)=>s+e.totalAmount,0);const payout=payouts.find(p=>p.periodMonth===month);
  async function savePlan(){if(!plan)return;if(JSON.stringify(plan)===planBaseline){setMsg("No new rate-card changes to save.");return;}setPlanSaving(true);const{id,trainerId:_,updatedAt,...input}=plan;const r=await saveTrainerCompensationPlan(trainerId,input);setPlanSaving(false);setMsg(r.ok?"Rate card saved. Future completed classes will use this configuration.":r.error??"Unable to save rate card.");if(r.ok){setPlanBaseline(JSON.stringify(plan));setPlanSavedAt(new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}));refresh()}}
- async function approveMonth(){if(reviewRows.length){setMsg(`Resolve ${reviewRows.length} exception${reviewRows.length===1?"":"s"} before approving the month.`);return}for(const r of autoVerifiedRows)await updateTrainerEarning(r.id,{status:"approved"});setMsg("Monthly payroll approved. Auto-verified class earnings are ready to pay.");await refresh()}
- async function markPaid(){if(reviewRows.length){setMsg(`Resolve ${reviewRows.length} exception${reviewRows.length===1?"":"s"} before marking payroll paid.`);return}const now=new Date().toISOString();for(const r of autoVerifiedRows)await updateTrainerEarning(r.id,{status:"approved"});const all=(await listTrainerEarnings({trainerId,month})).filter(x=>x.status!=="void");const total=all.reduce((s,e)=>s+e.totalAmount,0);const r=await saveTrainerPayout({trainerId,periodMonth:month,grossAmount:total,adjustmentAmount:0,payableAmount:total,status:"paid",approvedAt:now,paidAt:now,paymentReference:paymentRef||undefined,notes:"Monthly payroll marked paid from Robotronix™ portal."});setMsg(r.ok?"Monthly payout marked Paid and class earnings locked.":r.error??"Unable to record payout.");if(r.ok){setPaymentRef("");refresh()}}
+ async function approveMonth(){
+ if(reviewRows.length){setMsg(`Resolve ${reviewRows.length} exception(s) before approving the month.`);return;}
+ if(!monthRows.some(e=>e.status!=="void")){setMsg("No payable earnings for this month.");return;}
+ const existing=payouts.find(p=>p.periodMonth===month);
+ if(existing?.status==="paid"){setMsg("This month's payroll is already paid and locked.");return;}
+ if(existing?.status==="approved"){setMsg("This month's payroll is already approved and locked.");return;}
+ for(const row of autoVerifiedRows)await updateTrainerEarning(row.id,{status:"approved"});
+ const all=(await listTrainerEarnings({trainerId,month})).filter(e=>e.status!=="void");
+ const total=all.reduce((sum,row)=>sum+row.totalAmount,0);
+ const r=await saveTrainerPayout({trainerId,periodMonth:month,grossAmount:total,adjustmentAmount:0,payableAmount:total,status:"approved",approvedAt:new Date().toISOString(),notes:"Monthly netbanking payroll approved and bank instructions snapshotted."});
+ setMsg(r.ok?"Monthly payroll approved and payout instructions locked for this cycle.":r.error??"Unable to approve monthly payroll.");
+ if(r.ok)await refresh();
+}
+ async function markPaid(){
+ if(reviewRows.length){setMsg(`Resolve ${reviewRows.length} exception(s) before marking payroll paid.`);return;}
+ const payout=payouts.find(p=>p.periodMonth===month);
+ if(!payout||payout.status!=="approved"){setMsg("Approve and lock the monthly payroll before recording a bank transfer.");return;}
+ if(!paymentRef.trim()){setMsg("Enter the netbanking transaction reference / UTR.");return;}
+ if(!window.confirm("Confirm that the netbanking transfer has already been completed? This locks the payment record."))return;
+ const now=new Date().toISOString();
+ const r=await saveTrainerPayout({...payout,trainerId,periodMonth:month,status:"paid",paidAt:now,paymentReference:paymentRef.trim()});
+ setMsg(r.ok?"Netbanking payment recorded with transaction reference; payroll is locked.":r.error??"Unable to record payout.");
+ if(r.ok){setPaymentRef("");await refresh();}
+}
  async function toggleConversion(row:TrainerEarningRecord){const r=await updateTrainerEarning(row.id,{conversionApplied:!row.conversionApplied});setMsg(r.ok?"Demo conversion bonus updated.":r.error??"Unable to update conversion bonus.");if(r.ok)refresh()}
  function adjust(row:TrainerEarningRecord){setAdjusting(row);setAdjustmentAmount(row.adjustment||0);setAdjustmentType(row.adjustment>=0?"correction":"deduction");setAdjustmentReason(row.adjustmentReason?.replace(/^\[[^\]]+\]\s*/,"")||"");setAdjustmentNote(row.notes||"")}
  async function saveAdjustment(){if(!adjusting)return;if(!adjustmentReason.trim()){setMsg("Add a reason for the adjustment.");return}const signed=adjustmentType==="deduction"?-Math.abs(adjustmentAmount):Math.abs(adjustmentAmount);const reason=`[${displayLabel(adjustmentType)}] ${adjustmentReason.trim()}`;const r=await updateTrainerEarning(adjusting.id,{adjustment:signed,adjustmentReason:reason,notes:adjustmentNote,status:"approved"});setMsg(r.ok?"Adjustment saved and exception reviewed.":r.error??"Unable to adjust earning.");if(r.ok){setAdjusting(null);await refresh()}}
