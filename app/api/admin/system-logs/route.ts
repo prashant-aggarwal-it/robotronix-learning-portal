@@ -4,7 +4,7 @@ import {createClient} from "@supabase/supabase-js";
 export async function GET(req:NextRequest){
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
  const secret=process.env.SUPABASE_SERVICE_ROLE_KEY;
- const bearer=req.headers.get("authorization")?.match(/^Bearer\\s+(.+)$/i)?.[1];
+ const bearer=req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
  if(!url||!secret)return NextResponse.json({error:"System logs unavailable"},{status:503});
  if(!bearer)return NextResponse.json({error:"Unauthorized"},{status:401});
  const admin=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
