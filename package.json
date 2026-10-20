@@ -15,6 +15,7 @@
     "qa:auth-check": "playwright test qa/auth.setup.ts --project=auth-setup",
     "qa:roles": "playwright test qa/admin.spec.ts qa/roles.spec.ts qa/permissions.spec.ts --project=desktop-chromium",
     "qa:workflow": "playwright test qa/workflows.spec.ts --project=desktop-chromium",
+    "qa:stabilization": "playwright test qa/consolidated-stabilization.spec.ts --project=desktop-chromium",
     "qa:release": "playwright test --project=desktop-chromium",
     "qa:report": "playwright show-report",
     "qa:create-users": "node scripts/create-qa-auth-users.mjs",
