@@ -2,7 +2,7 @@
 import {useState} from "react";
 
 type Payout = {accountHolderName?:string;bankName?:string;accountNumber?:string;ifsc?:string;upiId?:string;pan?:string;preferredPayoutMethod?:string};
-type Request = Payout & {id:string;status:string;submittedAt:string;trainerNote?:string;adminNote?:string};
+type Request = Payout & {id:string;status:string;submittedAt:string;trainerNote?:string;adminNote?:string;effectivePayrollMonth?:string};
 type Props={request:Request;approved:Payout|null;onDecision:(id:string,action:"approve"|"request_correction"|"reject",note:string)=>Promise<{ok:boolean;error?:string}>};
 const fields:Array<{key:keyof Payout;label:string;sensitive?:boolean}>=[
  {key:"preferredPayoutMethod",label:"Payment method"},{key:"accountHolderName",label:"Account holder"},
@@ -54,6 +54,7 @@ export function PayoutReview({request,approved,onDecision}:Props){
    </table>
   </div>
   {request.trainerNote&&<p className="cellSub">Trainer's note: {request.trainerNote}</p>}
+  {request.status==="approved"&&request.effectivePayrollMonth&&<p className="cellSub">Effective payroll cycle: {request.effectivePayrollMonth}</p>}
   {request.adminNote&&<p className="cellSub">Previous Admin note: {request.adminNote}</p>}
   {pending&&<div className="formStack">
     <p className="cellSub">Approval authorizes use of these details only under the configured payroll cutoff policy. It is not independent bank-account verification.</p>
