@@ -1,5 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
+import {logSystemEvent} from "@/lib/server/system-log";
 
 // Admin-only server endpoint. The service-role key must never enter client components.
 type Target = "trainer"|"student";
@@ -168,5 +169,5 @@ export async function POST(request:NextRequest){
   await saveRequest(admin,type,id,email,action==="invite"?"invited":"linked",actorId);
   await audit(admin,actorId,type,id,action,email);
   return NextResponse.json({ok:true,...await lookupStatus(admin,type,id)});
- }catch(e){return failure(e instanceof Error?e.message:"Could not update access.",500)}
+ }catch(e){const referenceId=await logSystemEvent({source:"portal-access",action:action||"unknown",code:"PORTAL_ACCESS_FAILURE",message:"Admin portal-access operation failed"});return failure("Could not update portal access. Reference: "+referenceId,500)}
 }
