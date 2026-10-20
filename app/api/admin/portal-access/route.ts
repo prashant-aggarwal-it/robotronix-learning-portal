@@ -4,7 +4,7 @@ import {logSystemEvent} from "@/lib/server/system-log";
 
 // Admin-only server endpoint. The service-role key must never enter client components.
 type Target = "trainer"|"student";
-type Action = "invite"|"resend"|"link"|"disable"|"enable";
+type Action = "invite"|"resend"|"link"|"provision"|"disable"|"enable";
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function failure(message:string,status=400){return NextResponse.json({ok:false,error:message},{status,headers:{"Cache-Control":"no-store"}})}
 
@@ -87,11 +87,11 @@ export async function POST(request:NextRequest){
  let body:{type?:Target;id?:string;action?:Action;email?:string};
  try{body=await request.json()}catch{return failure("Invalid request.")}
  const type=body.type,id=body.id,action=body.action;
- if(!type||!["trainer","student"].includes(type)||!id||!/^[\w-]{6,50}$/.test(id)||!action||!["invite","resend","link","disable","enable"].includes(action))return failure("Invalid target or action.");
+ if(!type||!["trainer","student"].includes(type)||!id||!/^[\w-]{6,50}$/.test(id)||!action||!["invite","resend","link","provision","disable","enable"].includes(action))return failure("Invalid target or action.");
  const admin=ctx.admin!,actorId=ctx.actorId!;
  try{
   const target=await resolveTarget(admin,type,id);if(!target)return failure("Record not found.",404);
-  if(target.archived&&["invite","resend","link"].includes(action))return failure("Archived trainers cannot receive new portal access.");
+  if(target.archived&&["invite","resend","link","provision"].includes(action))return failure("Archived trainers cannot receive new portal access.");
   const email=(body.email||target.email||"").trim().toLowerCase();
   if(!emailPattern.test(email))return failure("A valid login email is required.");
   if(type==="student"&&target.email&&target.email.trim().toLowerCase()!==email)return failure("Update the primary guardian's login email on the student profile first. This prevents linking the wrong family.");
@@ -138,6 +138,13 @@ export async function POST(request:NextRequest){
    target_type:type,
   };
   let user=found;
+  if(!user&&action==="provision"){
+   // Admin explicitly authorizes an existing email. No invitation token or password.
+   // Google/OTP verification is still required before the account can sign in.
+   const created=await admin.auth.admin.createUser({email,email_confirm:true,user_metadata:invitationData});
+   if(created.error)throw new Error(created.error.message);
+   user=created.data.user;
+  }
   if(!user){
    const inviteResult=await admin.auth.admin.inviteUserByEmail(email,{
     redirectTo:process.env.NEXT_PUBLIC_SITE_URL?`${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/,"")}/`:request.nextUrl.origin,
