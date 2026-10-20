@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 import {useEffect,useMemo,useState} from "react";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -11,6 +12,7 @@ type Data={trainer:TrainerSummary;learners:LearnerSummary[];batches:BatchSummary
 export default function TrainerPage(){
  const[data,setData]=useState<Data|undefined>();const[events,setEvents]=useState<ScheduleEvent[]>([]);const[earnings,setEarnings]=useState<TrainerEarningRecord[]>([]);const[progress,setProgress]=useState<LearnerProgressRow[]>([]);const[alerts,setAlerts]=useState<ProgressAlertRecord[]>([]);const[projects,setProjects]=useState<LearnerProjectRecord[]>([]);const[q,setQ]=useState("");
  useEffect(()=>{getTrainerDashboard().then(async d=>{setData(d);if(!d.trainer.id)return;const[e,p,a,pr,er]=await Promise.all([listScheduleEvents(d.trainer.id),listLearnerProgressRows(d.trainer.id),listProgressAlerts(d.trainer.id),listLearnerProjects({trainerId:d.trainer.id}),listTrainerEarnings({trainerId:d.trainer.id})]);setEvents(e);setProgress(p);setAlerts(a.filter(x=>x.status==="open"||x.status==="reviewed"));setProjects(pr);setEarnings(er)})},[]);
+ const reload=async()=>{const d=await getTrainerDashboard();setData(d);if(!d.trainer.id)return;const[e,p,a,pr,er]=await Promise.all([listScheduleEvents(d.trainer.id),listLearnerProgressRows(d.trainer.id),listProgressAlerts(d.trainer.id),listLearnerProjects({trainerId:d.trainer.id}),listTrainerEarnings({trainerId:d.trainer.id})]);setEvents(e);setProgress(p);setAlerts(a.filter(x=>x.status==="open"||x.status==="reviewed"));setProjects(pr);setEarnings(er)};useLiveRefresh(["enrollments","cohorts","schedule_events","class_attendance","learning_observations","learner_projects","trainer_earnings"],reload,"trainer-overview");
  const today=new Date().toISOString().slice(0,10);const todayEvents=events.filter(e=>e.date===today&&!["cancelled","rescheduled"].includes(e.status)).sort((a,b)=>a.startTime.localeCompare(b.startTime));const nextEvent=events.filter(e=>e.date>=today&&e.status==="scheduled").sort((a,b)=>`${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0];
  const month=new Date().toISOString().slice(0,7);const monthEarnings=earnings.filter(e=>e.earningDate.startsWith(month)&&e.status!=="void");const monthTotal=monthEarnings.reduce((sum,e)=>sum+e.totalAmount,0);
  const attention=progress.filter(r=>r.currentSignal!=="on_track"||r.openAlertCount>0);const pendingProjects=projects.filter(p=>p.status==="submitted");const filtered=useMemo(()=>progress.filter(r=>`${r.studentName} ${r.courseTitle} ${r.grade}`.toLowerCase().includes(q.toLowerCase())).slice(0,8),[progress,q]);
