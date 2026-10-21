@@ -6,6 +6,7 @@ import {RoleGuard} from "@/components/RoleGuard";
 import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
 import {generateEnrollmentScheduleV2,reassignEnrollmentTrainerV2,listAdminCourses,listAdminEnrollments,listAdminStudents,listAdminTrainers,listScheduleEvents} from "@/lib/repository";
 import {previewCourseSchedule,type SchedulingHorizon} from "@/lib/scheduling-v2-preview";
+import {EnrollmentPauseControls} from "@/components/operations/EnrollmentPauseControls";
 import type {CourseAdminRecord,EnrollmentAdminRecord,ScheduleEvent,StudentAdminRecord,TrainerAdminRecord} from "@/lib/types";
 
 export default function SchedulingV2Admin(){
@@ -74,6 +75,7 @@ export default function SchedulingV2Admin(){
    <div className="tableWrap" style={{maxHeight:360,overflow:"auto"}}><table><thead><tr><th>Date</th><th>Local time</th><th>Conflict</th></tr></thead><tbody>{preview.rows.map((slot,i)=><tr key={i}><td>{slot.date}</td><td>{slot.startTime}–{slot.endTime}</td><td>{slot.conflicts.join(", ")||"—"}</td></tr>)}</tbody></table></div></>}
    <div className="formActions"><button className="button" disabled={busy||!enrollment||!!preview.error||horizon==="manual"} onClick={book}>{busy?"Booking…":"Generate class bookings"}</button></div>
   </section>
+  {enrollment&&<EnrollmentPauseControls key={enrollment.id} enrollmentId={enrollment.id} status={enrollment.status} role="admin" onChanged={refresh}/>}
   {enrollment&&<section className="panel" style={{marginTop:16}}>
    <div className="panelHeader"><div><h2>Replace trainer</h2><p>Moves only eligible future 1-to-1 classes. Completed classes and approved/paid earnings remain with the original trainer.</p></div></div>
    <div className="formGrid">
