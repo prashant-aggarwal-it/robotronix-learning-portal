@@ -29,3 +29,21 @@ test.describe("Security invariants (offline, no production network)",()=>{
   }
  });
 });
+
+test.describe("Bounded webhook request reader",()=>{
+ test("returns the precise signed UTF-8 payload under the limit",async()=>{
+  const {readTextBodyLimited}=await import("../lib/server/read-limited-body");
+  const body='{"note":"安全"}';
+  expect(await readTextBodyLimited(new Request("https://example.test/webhook",{method:"POST",body}),64)).toBe(body);
+ });
+ test("refuses Content-Length above limit before processing",async()=>{
+  const {readTextBodyLimited,RequestBodyTooLarge}=await import("../lib/server/read-limited-body");
+  const req=new Request("https://example.test/webhook",{method:"POST",body:"x",headers:{"content-length":"4000"}});
+  await expect(readTextBodyLimited(req,32)).rejects.toBeInstanceOf(RequestBodyTooLarge);
+ });
+ test("rejects oversize streaming body when Content-Length is absent",async()=>{
+  const {readTextBodyLimited,RequestBodyTooLarge}=await import("../lib/server/read-limited-body");
+  const req=new Request("https://example.test/webhook",{method:"POST",body:"x".repeat(33)});
+  await expect(readTextBodyLimited(req,32)).rejects.toBeInstanceOf(RequestBodyTooLarge);
+ });
+});
