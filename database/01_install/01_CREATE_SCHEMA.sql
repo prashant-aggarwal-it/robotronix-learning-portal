@@ -4910,6 +4910,7 @@ declare e public.schedule_events%rowtype;
 begin
  select * into e from public.schedule_events where id=p_event_id for update;
  if not found or e.event_type<>'class' then raise exception 'Class not found'; end if;
+ if e.cohort_id is not null and not public.is_admin() then raise exception 'Shared cohort changes require Admin'; end if;
  if not (public.is_admin() or (auth.uid() is not null and public.current_trainer_id()=e.trainer_id))
  then raise exception 'Not authorized to cancel this class'; end if;
  if e.status not in ('scheduled','tentative','makeup') then raise exception 'Only upcoming classes may be cancelled'; end if;
@@ -4936,8 +4937,14 @@ begin
   values('parent',e.student_id,e.trainer_id,'class_cancelled','important','Class cancelled','A class was cancelled. The schedule has been updated.','/parent'),
   ('student',e.student_id,e.trainer_id,'class_cancelled','info','Class cancelled','A class was cancelled.','/student');
  end if;
+ if e.cohort_id is not null then
+  insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+  select 'parent',en.student_id,e.trainer_id,'class_cancelled','important',
+  'Batch class cancelled','A shared batch class has been cancelled. Please check your timetable.','/parent'
+  from public.enrollments en where en.cohort_id=e.cohort_id and en.status in ('active','on_hold');
+ end if;
  return true;
-end $$;
+end $;
 revoke all on function public.cancel_class_v2(uuid,text,text) from public,anon;
 grant execute on function public.cancel_class_v2(uuid,text,text) to authenticated;
 
@@ -4949,6 +4956,7 @@ declare e public.schedule_events%rowtype; new_id uuid; v_start timestamptz; v_en
 begin
  select * into e from public.schedule_events where id=p_event_id for update;
  if not found or e.event_type<>'class' then raise exception 'Class not found'; end if;
+ if e.cohort_id is not null and not public.is_admin() then raise exception 'Shared cohort changes require Admin'; end if;
  if not (public.is_admin() or (auth.uid() is not null and public.current_trainer_id()=e.trainer_id))
  then raise exception 'Not authorized to reschedule this class'; end if;
  if e.status not in ('scheduled','tentative','makeup') then raise exception 'Class has already been changed or delivered'; end if;
