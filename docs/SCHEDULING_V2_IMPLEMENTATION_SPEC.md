@@ -1,5 +1,5 @@
 # Robotronix Learning Portal — Scheduling V2 Implementation Specification
-Status: APPROVED BUSINESS POLICIES / IMPLEMENTATION NOT STARTED
+Status: FEATURE CODE COMMITTED ON WORKING BRANCH / DEV DATABASE EXECUTION AND FULL ROLE E2E PENDING
 Target branch: `release/consolidated-stabilization-20261020`
 Scope: Admin, Trainer, Parent, Student, scheduling, notifications, finance and canonical SQL.
 Do not modify `main`, production Netlify, or live Supabase during implementation.
@@ -103,3 +103,13 @@ Do not modify `main`, production Netlify, or live Supabase during implementation
 - Time conflict policy: hard-block double bookings unless Admin has an auditable permitted override.
 - Zoom waiting-room/passcode/access controls to be configured on Zoom account; portal does not promise host privileges merely by opening join URL.
 - Scheduling generation for course changes must be transactional, conflict-aware and preserve one-off exceptions.
+
+
+## Implementation handoff (October 2026)
+The working branch now includes class horizon previews, atomic database generation for new one-to-one enrollments and cohort calendars, idempotent occurrence keys, conflict/availability checks, linked one-off reschedule and makeups, trainer/Admin 14-day individual pauses, cohort learner leave, forward-only trainer/batch reassignment, trainer reusable Zoom links, join links, notifications, and Admin cancellation review.
+
+Admin entry points: `/admin/scheduling-v2`, `/admin/cohort-scheduling`, `/admin/cancellation-reviews`. Trainer class breaks: `/trainer/holds`. Existing Classes and Enrollments pages link to new actions. Parent/Student Next Class cards use shared ZoomClassActions.
+
+Current GitHub release workflow runs typecheck, structural checks, Scheduling V2 pure preview tests and Next.js build. The canonical SQL installation and `database/03_verify/01_VERIFY_RELEASE.sql` include Scheduling V2 objects/gates; they have **not** been executed on a separate Supabase DEV database from this GitHub-only environment. Complete the full role-based QA there before release.
+
+Exceptional cases remain intentionally guarded rather than silently altered: sessions with individual Zoom meetings cannot be automatically reassigned/rescheduled by the reusable-link workflow; use supervised Admin Zoom reconciliation. Existing started/migrated courses are not backfilled with fabricated historical classes. One-off cohort learner makeup is a separate Admin-approved exception, not an automatic additional entitlement. The new DB operations must not be enabled on production before the DEV install/verification and role QA pass.
