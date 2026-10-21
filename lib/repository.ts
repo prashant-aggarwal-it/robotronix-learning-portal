@@ -531,6 +531,11 @@ export async function reassignEnrollmentTrainerV2(enrollmentId:string,trainerId:
  return error?{ok:false,error:error.message}:{ok:true,updated:Number(data?.updated??0)};
 }
 
+export async function reassignCohortTrainerV2(cohortId:string,trainerId:string,reason:string):Promise<{ok:true;updated:number}|{ok:false;error:string}>{
+ const db=getSupabaseBrowserClient();if(!db)return{ok:false,error:"Cohort reassignment requires database access."};
+ const {data,error}=await db.rpc("reassign_cohort_trainer_v2",{p_cohort_id:cohortId,p_new_trainer_id:trainerId,p_reason:reason});
+ return error?{ok:false,error:error.message}:{ok:true,updated:Number(data?.updated??0)};
+}
 export async function generateCohortScheduleV2(cohortId:string,horizon:"full"|"weeks"|"manual"="full",weeks?:number):Promise<{ok:true;created:number;total:number}|{ok:false;error:string}>{
  const db=getSupabaseBrowserClient();if(!db)return{ok:false,error:"Cohort schedule generation requires database access."};
  const {data,error}=await db.rpc("generate_cohort_schedule_v2",{p_cohort_id:cohortId,p_horizon:horizon,p_weeks:horizon==="weeks"?weeks:null});
