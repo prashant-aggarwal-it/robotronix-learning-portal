@@ -29,6 +29,5 @@ Run `npm ci`, `npm run check:release`, `npm run build`, and configured Playwrigh
 - `03_verify/01_VERIFY_RELEASE.sql`: read-only schema verification.
 - `02_qa/*`: developer fixtures only; never for Production.
 - `99_dev_tools/*`: destructive DEV tools only; never for Production.
-- `03_verify/02_PREFLIGHT_EXISTING_DATABASE.sql`: old-project inspection only, not part of fresh install.
 
 **Historical incremental scripts 04–09 were deleted from this release branch after verifying their exact content is already included exactly once inside 01_CREATE_SCHEMA.sql.** The Git history retains them if they are ever needed to inspect an older installation; they should not be executed as part of this fresh install.
