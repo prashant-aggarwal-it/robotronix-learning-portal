@@ -1161,6 +1161,26 @@ select t.id,current_date from public.trainers t
 where not exists(select 1 from public.trainer_compensation_plans p where p.trainer_id=t.id)
 on conflict do nothing;
 
+-- Scheduling V2: review-first financial policy for class cancellations.
+alter table public.schedule_events add column if not exists finance_exception_status text not null default 'none';
+alter table public.schedule_events add column if not exists finance_exception_note text;
+alter table public.schedule_events drop constraint if exists schedule_events_finance_exception_status_check;
+alter table public.schedule_events add constraint schedule_events_finance_exception_status_check
+ check(finance_exception_status in ('none','review','approved','rejected'));
+
+create or replace function public.mark_class_cancellation_for_review_v2()
+returns trigger language plpgsql set search_path=public as $
+begin
+ if new.event_type='class' and new.status='cancelled'
+    and (tg_op='INSERT' or old.status is distinct from new.status) then
+   new.finance_exception_status:=case when new.requested_by='parent' then 'review' else 'none' end;
+ end if;
+ return new;
+end $;
+drop trigger if exists mark_class_cancellation_for_review_v2 on public.schedule_events;
+create trigger mark_class_cancellation_for_review_v2 before insert or update of status on public.schedule_events
+ for each row execute function public.mark_class_cancellation_for_review_v2();
+
 create or replace function public.sync_trainer_earning(p_event_id uuid,p_force boolean default false)
 returns uuid language plpgsql security definer set search_path=public as $$
 declare
@@ -1179,6 +1199,12 @@ begin
  end if;
  select * into olde from public.trainer_earnings where schedule_event_id=e.id;
  if found and olde.status in ('approved','paid') and not p_force then return olde.id; end if;
+ if e.status='cancelled' and coalesce(e.finance_exception_status,'none')<>'approved' then
+   if olde.id is not null and olde.status not in ('approved','paid') then
+     update public.trainer_earnings set status='void',total_amount=0,updated_at=now() where id=olde.id;
+   end if;
+   return olde.id;
+ end if;
  if e.status not in ('conducted','cancelled') then return coalesce(olde.id,null); end if;
  class_at := (e.date + e.start_time) at time zone e.timezone;
  end_at := (e.date + e.end_time) at time zone e.timezone;
