@@ -31,22 +31,35 @@ export function PreferredAvailabilityEditor({value,timeZone,onChange,mode="famil
   const[copyFrom,setCopyFrom]=useState<string|null>(null);
   const[copyTargets,setCopyTargets]=useState<string[]>([]);
   const[copyMode,setCopyMode]=useState<"merge"|"replace">("replace");
+  const[copyNotice,setCopyNotice]=useState("");
   const groupedDays=displayDays.filter(day=>windows.some(w=>w.day===day));
 
-  function commit(next:PreferredTimeWindow[],nextNote=note){onChange(serializePreferredTimeWindows(next,nextNote))}
+  function commit(next:PreferredTimeWindow[],nextNote=note){setCopyNotice("");onChange(serializePreferredTimeWindows(next,nextNote))}
   function addDay(day:string){if(windows.some(w=>w.day===day))return;commit([...windows,{day,dayOfWeek:classDayNames.indexOf(day),start:"17:00",end:"19:00"}])}
   function addTime(day:string){commit([...windows,{day,dayOfWeek:classDayNames.indexOf(day),start:"17:00",end:"19:00"}])}
   function update(index:number,patch:Partial<PreferredTimeWindow>){commit(windows.map((w,i)=>{if(i!==index)return w;const next={...w,...patch};if(patch.start!==undefined||patch.end!==undefined)next.endsNextDay=next.end<next.start;return next}))}
   function remove(index:number){commit(windows.filter((_,i)=>i!==index))}
   function openCopy(day:string){setCopyFrom(day);setCopyTargets([]);setCopyMode("replace")}
   function applyCopy(){
-    if(!copyFrom||!copyTargets.length){setCopyFrom(null);return}
-    const source=windows.filter(w=>w.day===copyFrom);let next=[...windows];
-    for(const target of copyTargets.filter(t=>t!==copyFrom)){
+    if(!copyFrom||!copyTargets.length)return;
+    const targets=copyTargets.filter(day=>day!==copyFrom);
+    const source=windows.filter(w=>w.day===copyFrom);
+    let next=[...windows];
+    let copied=0,skipped=0;
+    for(const target of targets){
       if(copyMode==="replace")next=next.filter(w=>w.day!==target);
-      for(const src of source){const candidate={...src,day:target,dayOfWeek:classDayNames.indexOf(target)};if(!next.some(w=>preferredWindowsOverlap(candidate,w)))next.push(candidate)}
+      for(const src of source){
+        const candidate={...src,day:target,dayOfWeek:classDayNames.indexOf(target)};
+        if(next.some(w=>preferredWindowsOverlap(candidate,w))){skipped++;continue;}
+        next.push(candidate);copied++;
+      }
     }
-    commit(next);setCopyFrom(null);setCopyTargets([])
+    onChange(serializePreferredTimeWindows(next,note));
+    const dayCount=targets.length;
+    setCopyNotice(copied
+      ?`${source.length} time slot${source.length===1?"":"s"} copied from ${copyFrom} to ${dayCount} day${dayCount===1?"":"s"}.${skipped?` ${skipped} overlapping slot${skipped===1?" was":"s were"} skipped.`:""} ${mode==="trainer"?"Click Save availability to apply.":"Review your updated timings before continuing."}`
+      :`No timings were copied. ${skipped} overlapping slot${skipped===1?" was":"s were"} skipped. Choose Replace selected days to overwrite existing times.`);
+    setCopyFrom(null);setCopyTargets([]);
   }
   const invalidPairs=new Set<number>();windows.forEach((w,i)=>{if(timeRangeError(w.start,w.end,w.endsNextDay,12*60))invalidPairs.add(i)});
   const overlapPairs=new Set<number>();
@@ -56,6 +69,7 @@ export function PreferredAvailabilityEditor({value,timeZone,onChange,mode="famil
   const isIst=shortTimeZoneLabel(timeZone)==="IST"||timeZone===IST_TIMEZONE;
   return <div className={`structuredAvailabilityEditor ${isTrainer?"trainerWindowMode":""}`}>
     <div className="structuredAvailabilityMeta"><b>{isTrainer?`Trainer working time: ${shortTimeZoneLabel(timeZone)}`:`Family local time: ${shortTimeZoneLabel(timeZone)}`}</b><span>{isTrainer?(isIst?"Add recurring weekly working windows. Multiple slots per day are supported.":"India time is shown beside each trainer window for Admin scheduling."):"India time is shown beside each window. Overnight windows are supported."}</span></div>
+    {copyNotice&&<div role="status" aria-live="polite" className="successBanner">{copyNotice}</div>}
     <div className="timingDayList">
       {groupedDays.map(day=><div className="timingDayCard" key={day}>
         <div className="timingDayHead"><div><span>{day}</span>{!isTrainer&&<small>{`${shortTimeZoneLabel(timeZone)} local time`}</small>}</div><div className="timingDayActions"><button type="button" className="textButton" onClick={()=>addTime(day)}>+ Add another time</button><button type="button" className="textButton" onClick={()=>openCopy(day)}>Copy to…</button></div></div>
