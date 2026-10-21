@@ -4692,6 +4692,8 @@ begin
   if v_event.status not in ('scheduled','tentative','makeup') then
    raise exception 'Future session % needs manual review before reassignment',v_event.id;
   end if;
+  if exists(select 1 from public.zoom_meetings zm where zm.schedule_event_id=v_event.id and zm.status in ('scheduled','started'))
+  then raise exception 'Future class has a provisioned Zoom meeting; reconcile it before reassignment'; end if;
   if exists(select 1 from public.trainer_earnings t where t.schedule_event_id=v_event.id and t.status in ('approved','paid')) then
     raise exception 'A future class has locked payroll'; end if;
   if exists(select 1 from public.schedule_events e
@@ -4921,6 +4923,11 @@ begin
  then raise exception 'Class has an individual Zoom meeting; use Admin Zoom reconciliation before cancellation'; end if;
  update public.schedule_events set status='cancelled',requested_by=p_requested_by,
  change_reason=p_reason,updated_at=now() where id=e.id;
+ if p_requested_by='parent' then
+  insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+  values('admin',e.student_id,e.trainer_id,'cancellation_review_required','action',
+    'Cancellation requires review','A parent-requested class cancellation needs a financial decision.','/admin/cancellation-reviews');
+ end if;
  insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
  values(auth.uid(),'schedule_event',e.id::text,'cancel_class_v2',
  jsonb_build_object('status',e.status),jsonb_build_object('status','cancelled','requested_by',p_requested_by,'reason',p_reason));
