@@ -122,7 +122,7 @@ export interface OnboardingSubmission {
   primaryContact:"mother"|"father"|"guardian"; primaryWhatsApp:string; alternateWhatsApp:string;
   city:string; country:string; state?:string; timezone:string; addressLine1:string; addressLine2?:string; postalCode:string; billingName:string; billingEmail:string; billingPhone:string; childName:string; childDob:string; grade:string; school:string;
   preferredClassDays?:string[]; preferredTimeWindows?:string;
-  interests:string[]; goal:string; codingExperience:string; roboticsExperience:string; source:string;
+  interests:string[]; goal:string; codingExperience:string; roboticsExperience:string; source:string; referringParentName?:string;
   dataConsent:boolean; portfolioConsent:boolean; marketingMediaConsent?:boolean;
   status:OnboardingStatus; assignedCourseId?:string; assignedTrainerId?:string; enrollmentType?:"one_to_one"|"small_group";
   cohortId?:string; startDate?:string; draftScheduleTimezone?:string; draftScheduleRules?:WeeklyScheduleSlot[]; submittedAt:string; activatedAt?:string; updatedAt?:string;
