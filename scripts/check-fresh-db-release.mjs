@@ -46,4 +46,17 @@ if(fs.existsSync(path.join(root,'database/04_hotfixes')))throw new Error('Fresh 
 for(const file of ['database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql','database/03_verify/01_VERIFY_RELEASE.sql','database/02_qa/01_QA_SEED.sql','database/02_qa/02_QA_CLEANUP.sql']){
   if(!fs.existsSync(path.join(root,file)))throw new Error(`Missing required release database file: ${file}`);
 }
+// Guard against stale SQL paths in future check scripts after consolidation.
+const scriptsDir=path.join(root,'scripts');
+const stale=[];
+for(const name of fs.readdirSync(scriptsDir).filter(n=>n.endsWith('.mjs'))){
+ const source=fs.readFileSync(path.join(scriptsDir,name),'utf8');
+ // Identify literals referring to concrete SQL files, excluding dynamic examples.
+ for(const match of source.matchAll(/database\\/[-A-Za-z0-9_./]+\\.sql/g)){
+  const referenced=match[0];
+  if(!fs.existsSync(path.join(root,referenced)))stale.push(name+': '+referenced);
+ }
+}
+if(stale.length)throw new Error('Release scripts refer to missing SQL files:\\n'+stale.join('\\n'));
+
 console.log('Fresh database release check passed: schema is consolidated and no hotfix folder remains.');
