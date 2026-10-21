@@ -13,9 +13,9 @@
 Initial security audit found **three high-severity advisories**. The reviewed compatible lockfile refresh (`cc08c84`) successfully patched two of them:
 1. **Remediated:** `sharp` upgraded from `0.35.4` to `0.35.5` (CVE-2026-96889).
 2. **Remediated:** `source-map-js` upgraded from `1.2.1` to `1.2.2` (GHSA-68fv-2mgg-jv7q).
-3. **Open high-severity blocker:** `xlsx@0.18.5` — known prototype pollution and regex denial of service advisories with **no npm audit remediation available** (GHSA-4r6h-8v6p-xvw6 and GHSA-5pgg-2g8v-p4x9).
+3. **Remediated by removal:** `xlsx@0.18.5` was removed together with its export-only transitive dependency chain (known prototype-pollution and ReDoS advisories; no npm patch available) (GHSA-4r6h-8v6p-xvw6 and GHSA-5pgg-2g8v-p4x9).
 
-**Release blocker:** do not suppress the production dependency audit. The first two are patched and their regression checks passed. Replace the vulnerable Excel export dependency with an audited maintained alternative while preserving multi-sheet Excel behavior and spreadsheet formula-injection protection. Retest exports and update the lockfile consistently. Current static checks/build passing does not clear these findings.
+**Current dependency security gate:** `npm audit --omit=dev --audit-level=high` now passes on the refreshed manifest/lockfile, with no high-severity findings reported in the latest scan. No blanket suppression was added. The two Excel export entry points now use the export-only `lib/export-workbook.ts` writer, with structural ZIP/OOXML, multi-sheet and formula-injection regression tests. **Manual opening of a real exported workbook in Excel remains required as a DEV operational acceptance test** before deploying this change.
 
 ## Phase 2 — Supabase isolation and database security
 - Canonical installer remains `database/01_install/01_CREATE_SCHEMA.sql`. No additional migrations or post-install patches.
@@ -28,6 +28,7 @@ Initial security audit found **three high-severity advisories**. The reviewed co
 - `lib/server/read-limited-body.ts` caps signed webhook payloads even when the client omits Content-Length. Razorpay request processing rejects oversized bodies *before* signature verification and parsing.
 - Admin Zoom scheduling endpoint now validates UUID/action and returns sanitized errors rather than provider internals.
 - `qa/security-static.spec.ts` checks server admin authentication, response headers, signed-webhook order, scheduling RPC privilege markers, and bounded-body edge cases.
+- `qa/workbook-export.spec.ts` checks OOXML package parts, multiple worksheets, hostile formula-looking values, and worksheet name sanitization. This is structural validation, not a substitute for real Excel opening.
 - `qa/security-dev-http.spec.ts` checks unauthorized Admin/Zoom API access, response headers, and oversized webhook rejection against a verified DEV application origin. It needs `SECURITY_QA_DEV_APP_ORIGIN` to match `QA_BASE_URL` and the DEV acknowledgment.
 - Existing protections retained: role guarded routes, active Admin profile verification, signature-verified Razorpay webhook, response security headers, audit histories, and RLS.
 - **CSP qualification:** Zoom SDK currently requires `unsafe-inline`/`unsafe-eval` in `next.config.ts`. This is a hardening weakness requiring compatibility testing for nonce or route-specific CSP; do not remove unsafely without validating live Zoom SDK behavior.
