@@ -22,7 +22,7 @@ export default function CohortScheduling(){
  const existing=events.filter(e=>e.cohortId===selected&&e.eventType==="class");
  const course=courses.find(c=>c.id===cohort?.courseId);
  const preview=useMemo(()=>{if(!cohort||!course||!cohort.startedAt||!cohort.trainerId)return{rows:[],error:""};
-  try{return{rows:previewCourseSchedule({startDate:cohort.startedAt,timezone:cohort.scheduleTimezone,rules:cohort.scheduleRules,horizon,totalSessions:course.totalSessions,weeks,trainerId:cohort.trainerId,existingEvents:events}),error:""}}
+  try{return{rows:previewCourseSchedule({startDate:cohort.startedAt,timezone:cohort.scheduleTimezone,rules:cohort.scheduleRules,horizon,totalSessions:course.totalSessions,weeks,trainerId:cohort.trainerId,ownedCohortId:cohort.id,existingEvents:events}),error:""}}
   catch(e){return{rows:[],error:e instanceof Error?e.message:String(e)}}
  },[cohort,course,horizon,weeks,events]);
  async function generate(){
