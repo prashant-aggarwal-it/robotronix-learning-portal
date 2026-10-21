@@ -5228,3 +5228,66 @@ begin
 end $$;
 revoke all on function public.pause_cohort_member_v2(uuid,date,date,text,text) from public,anon;
 grant execute on function public.pause_cohort_member_v2(uuid,date,date,text,text) to authenticated;
+
+
+-- Scheduling V2: future-only batch trainer replacement.
+create or replace function public.reassign_cohort_trainer_v2(
+ p_cohort_id uuid,p_new_trainer_id uuid,p_reason text
+) returns jsonb language plpgsql security definer set search_path=public as $$
+declare
+ c public.cohorts%rowtype; v_count integer:=0;
+ ev public.schedule_events%rowtype;
+begin
+ if not public.is_admin() then raise exception 'Admin required'; end if;
+ if nullif(trim(coalesce(p_reason,'')),'') is null then raise exception 'Reason required'; end if;
+ select * into c from public.cohorts where id=p_cohort_id for update;
+ if not found or c.status not in ('planned','active') or c.trainer_id is null
+ then raise exception 'Cohort is not eligible for reassignment'; end if;
+ if c.trainer_id=p_new_trainer_id then return jsonb_build_object('updated',0); end if;
+ if not exists(select 1 from public.trainers t join public.trainer_courses tc on tc.trainer_id=t.id
+    where t.id=p_new_trainer_id and t.record_status='active' and tc.course_id=c.course_id)
+ then raise exception 'Replacement trainer is not active/approved for this course'; end if;
+ perform 1 from public.trainers where id in (c.trainer_id,p_new_trainer_id) order by id for update;
+ for ev in select * from public.schedule_events where cohort_id=c.id
+   and event_type='class' and date>=current_date
+   and status not in ('cancelled','rescheduled','conducted')
+   order by date,start_time,id for update
+ loop
+   if ev.status not in ('scheduled','tentative','makeup')
+   then raise exception 'A future class requires manual review'; end if;
+   if exists(select 1 from public.trainer_earnings where schedule_event_id=ev.id and status in ('approved','paid'))
+   then raise exception 'Class has locked payroll'; end if;
+   if exists(select 1 from public.zoom_meetings where schedule_event_id=ev.id and status in ('scheduled','started'))
+   then raise exception 'Existing individual Zoom meeting needs reconciliation before trainer transfer'; end if;
+   if exists(select 1 from public.schedule_events e where e.id<>ev.id
+    and e.trainer_id=p_new_trainer_id and e.status not in ('cancelled','rescheduled')
+    and (e.date+e.start_time) at time zone e.timezone<
+        (ev.date+ev.end_time) at time zone ev.timezone
+    and (e.date+e.end_time) at time zone e.timezone>
+        (ev.date+ev.start_time) at time zone ev.timezone)
+   then raise exception 'Replacement trainer has a conflict on %',ev.date; end if;
+ end loop;
+ update public.schedule_events set trainer_id=p_new_trainer_id,requested_by='admin',
+    change_reason=concat_ws(' | ',nullif(change_reason,''),'Cohort trainer changed: '||trim(p_reason)),
+    updated_at=now()
+ where cohort_id=c.id and event_type='class' and date>=current_date
+   and status in ('scheduled','tentative','makeup');
+ get diagnostics v_count=row_count;
+ update public.cohorts set trainer_id=p_new_trainer_id,updated_at=now() where id=c.id;
+ update public.enrollments set trainer_id=p_new_trainer_id,updated_at=now()
+ where cohort_id=c.id and status in ('active','on_hold');
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'cohort',c.id::text,'cohort_trainer_reassigned_v2',
+ jsonb_build_object('trainer_id',c.trainer_id),
+ jsonb_build_object('trainer_id',p_new_trainer_id,'classes_updated',v_count,'reason',p_reason));
+ insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+ select 'parent',en.student_id,p_new_trainer_id,'cohort_trainer_reassigned','important',
+  'Batch trainer updated','The batch has a new trainer. See your upcoming class schedule.','/parent'
+ from public.enrollments en where en.cohort_id=c.id and en.status in ('active','on_hold');
+ insert into public.portal_notifications(recipient_role,trainer_id,type,priority,title,message,href)
+ values('trainer',p_new_trainer_id,'cohort_trainer_reassigned','action',
+ 'New batch assigned','A cohort and its upcoming sessions are now assigned to you.','/trainer/classes');
+ return jsonb_build_object('updated',v_count);
+end $$;
+revoke all on function public.reassign_cohort_trainer_v2(uuid,uuid,text) from public,anon;
+grant execute on function public.reassign_cohort_trainer_v2(uuid,uuid,text) to authenticated;
