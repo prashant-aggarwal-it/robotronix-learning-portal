@@ -4647,6 +4647,13 @@ begin
  if p_horizon='full' and v_n<v_total then
   raise exception 'Unable to generate all % classes; only % fit',v_total,v_n;
  end if;
+ if v_created>0 then
+  insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+  values('parent',v_en.student_id,v_en.trainer_id,'course_schedule_generated','info',
+    'Course classes scheduled',v_created::text||' new class dates were booked. View the learning timetable.','/parent'),
+   ('trainer',v_en.student_id,v_en.trainer_id,'course_schedule_generated','info',
+    'Course classes scheduled',v_created::text||' future classes added to your timetable.','/trainer/classes');
+ end if;
  return jsonb_build_object('created',v_created,'total',v_n,'mode',p_horizon);
 end $$;
 revoke all on function public.generate_enrollment_schedule_v2(uuid,text,integer) from public,anon;
@@ -5106,6 +5113,15 @@ begin
   exit when v_count>=v_total;
  end loop;
  if p_horizon='full' and v_count<v_total then raise exception 'Not enough cohort slots for entire course'; end if;
+ if v_created>0 then
+  insert into public.portal_notifications(recipient_role,trainer_id,type,priority,title,message,href)
+  values('trainer',c.trainer_id,'cohort_schedule_generated','info',
+     'Batch classes scheduled',v_created::text||' shared cohort classes were added.','/trainer/classes');
+  insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+  select 'parent',en.student_id,c.trainer_id,'cohort_schedule_generated','info',
+     'Batch timetable updated',v_created::text||' new shared batch classes were scheduled.','/parent'
+   from public.enrollments en where en.cohort_id=c.id and en.status in ('active','on_hold');
+ end if;
  return jsonb_build_object('created',v_created,'total',v_count);
 end $$;
 revoke all on function public.generate_cohort_schedule_v2(uuid,text,integer) from public,anon;
