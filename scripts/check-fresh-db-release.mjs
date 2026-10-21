@@ -52,11 +52,11 @@ const stale=[];
 for(const name of fs.readdirSync(scriptsDir).filter(n=>n.endsWith('.mjs'))){
  const source=fs.readFileSync(path.join(scriptsDir,name),'utf8');
  // Identify literals referring to concrete SQL files, excluding dynamic examples.
- for(const match of source.matchAll(/database\\/[-A-Za-z0-9_./]+\\.sql/g)){
+ for(const match of source.matchAll(/database\/[-A-Za-z0-9_./]+\.sql/g)){
   const referenced=match[0];
   if(!fs.existsSync(path.join(root,referenced)))stale.push(name+': '+referenced);
  }
 }
-if(stale.length)throw new Error('Release scripts refer to missing SQL files:\\n'+stale.join('\\n'));
+if(stale.length)throw new Error('Release scripts refer to missing SQL files:\n'+stale.join('\n'));
 
 console.log('Fresh database release check passed: schema is consolidated and no hotfix folder remains.');
