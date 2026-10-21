@@ -56,7 +56,9 @@
     "qa:prod-permanent:generate-sql": "node scripts/generate-permanent-qa-seed.mjs",
     "check:trainer-courses-ui": "node scripts/check-trainer-courses-ui.mjs",
     "check:security": "node scripts/check-security-hardening.mjs",
-    "qa:security-dev": "playwright test qa/security-dev-authorization.spec.ts --project=desktop-chromium --no-deps"
+    "qa:security-dev": "playwright test qa/security-dev-authorization.spec.ts --project=desktop-chromium --no-deps",
+    "qa:security-dev-http": "playwright test qa/security-dev-http.spec.ts --project=desktop-chromium --no-deps",
+    "qa:security-dev-all": "npm run qa:security-dev && npm run qa:security-dev-http"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
