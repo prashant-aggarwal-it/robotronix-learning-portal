@@ -1,3 +1,5 @@
+> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+
 # System Logs — current implementation and DEV verification
 
 **Status:** Initial integration implemented on consolidated release branch; not yet DEV-validated or deployed.
@@ -13,7 +15,6 @@ Admin > System Logs displays recent sanitized operational events. This differs f
 
 ## Schema deployment
 - **Empty DEV database:** the canonical `database/01_install/01_CREATE_SCHEMA.sql` includes logs table.
-- **Existing DEV database:** review and run `database/01_install/06_PORTAL_SYSTEM_LOGS.sql`, without rerunning the full baseline. For all P1/P2/P3 deltas, apply scripts 04, 05, 06 in order.
 - **Production:** no migration or change until tested, backed up and explicitly approved.
 
 ## Manual DEV acceptance
