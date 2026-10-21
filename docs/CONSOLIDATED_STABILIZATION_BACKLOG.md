@@ -83,3 +83,7 @@
 - LOG-01: System Logs UI, server helper, portal-access and Zoom/Razorpay error correlation committed; 90-day retention cleanup via service-only SQL function migration 09. Supabase Cron schedule is operator-managed and not enabled automatically.
 - QA: Added stabilization smoke suite, expanded source release gate and database-object verification; **no real build, CI, database or Playwright pass observed**.
 - Release remains **Draft**, not deployable; full provider/role tests and production migration approval are outstanding.
+
+## Fresh-only SQL consolidation — 2026-10-21
+
+The release branch now contains precisely three install SQL files: `01_CREATE_SCHEMA.sql` (all features formerly in 04–09 integrated), `02_INSERT_MASTER_REFERENCE_DATA.sql` and optional `03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql`. All redundant incremental scripts and existing-DB preflight file were removed **on this branch only**. Read-only release verification and DEV-only QA fixtures remain separate. Actual Supabase/Playwright tests and data migration from any old production project are not complete.
