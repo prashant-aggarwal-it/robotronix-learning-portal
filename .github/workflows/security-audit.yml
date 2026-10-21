@@ -22,7 +22,7 @@ jobs:
       - name: Repository secret and privileged-operation checks
         run: npm run check:security
       - name: Security negative unit tests
-        run: npx playwright test qa/security-static.spec.ts --project=desktop-chromium --no-deps
+        run: npx playwright test qa/security-static.spec.ts qa/workbook-export.spec.ts --project=desktop-chromium --no-deps
       - name: Production dependency vulnerability gate (fail release on high findings)
         run: npm audit --omit=dev --audit-level=high
   # Database role/RLS tests run separately with dedicated QA accounts in DEV.
