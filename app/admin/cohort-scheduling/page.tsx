@@ -1,24 +1,30 @@
 "use client";
-import {useEffect,useState} from "react";
+import {useEffect,useState,useMemo} from "react";
 import Link from "next/link";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
 import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
-import {generateCohortScheduleV2,reassignCohortTrainerV2,listAdminCohorts,listAdminTrainers,listScheduleEvents} from "@/lib/repository";
-import type {CohortAdminRecord,ScheduleEvent,TrainerAdminRecord} from "@/lib/types";
+import {generateCohortScheduleV2,reassignCohortTrainerV2,listAdminCohorts,listAdminCourses,listAdminTrainers,listScheduleEvents} from "@/lib/repository";
+import type {CohortAdminRecord,ScheduleEvent,TrainerAdminRecord,CourseAdminRecord} from "@/lib/types";
+import {previewCourseSchedule} from "@/lib/scheduling-v2-preview";
 
 export default function CohortScheduling(){
- const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[replacement,setReplacement]=useState("");const[replacementReason,setReplacementReason]=useState("");
+ const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[replacement,setReplacement]=useState("");const[replacementReason,setReplacementReason]=useState("");
  const[events,setEvents]=useState<ScheduleEvent[]>([]);
  const[selected,setSelected]=useState("");
  const[horizon,setHorizon]=useState<"full"|"weeks"|"manual">("full");
  const[weeks,setWeeks]=useState(4);
  const[busy,setBusy]=useState(false);
  const[notice,setNotice]=useState("");
- async function refresh(){const[c,e,t]=await Promise.all([listAdminCohorts(),listScheduleEvents(),listAdminTrainers()]);setCohorts(c);setEvents(e);setTrainers(t)}
+ async function refresh(){const[c,e,t,courseRows]=await Promise.all([listAdminCohorts(),listScheduleEvents(),listAdminTrainers(),listAdminCourses()]);setCohorts(c);setEvents(e);setTrainers(t);setCourses(courseRows)}
  useEffect(()=>{void refresh().catch(e=>setNotice(String(e)))},[]);
  const cohort=cohorts.find(c=>c.id===selected);
  const existing=events.filter(e=>e.cohortId===selected&&e.eventType==="class");
+ const course=courses.find(c=>c.id===cohort?.courseId);
+ const preview=useMemo(()=>{if(!cohort||!course||!cohort.startedAt||!cohort.trainerId)return{rows:[],error:""};
+  try{return{rows:previewCourseSchedule({startDate:cohort.startedAt,timezone:cohort.scheduleTimezone,rules:cohort.scheduleRules,horizon,totalSessions:course.totalSessions,weeks,trainerId:cohort.trainerId,existingEvents:events}),error:""}}
+  catch(e){return{rows:[],error:e instanceof Error?e.message:String(e)}}
+ },[cohort,course,horizon,weeks,events]);
  async function generate(){
   if(!cohort)return;
   if(!confirm("Generate shared batch class bookings? The database will reject conflicting bookings and preserve existing generated occurrences."))return;
@@ -44,8 +50,10 @@ export default function CohortScheduling(){
     {horizon==="weeks"&&<div className="formGroup"><label>Number of weeks</label><input className="input" type="number" min={1} max={104} value={weeks} onChange={e=>setWeeks(Number(e.target.value))}/></div>}
    </div>
    {cohort&&<p className="fieldHint">{cohort.name} · {cohort.studentIds.length} enrolled learner(s) · {existing.length} existing class record(s). Learner-specific breaks must not alter this batch calendar.</p>}
+   {preview.error&&<div className="errorBanner">{preview.error}</div>}
+   {cohort&&!preview.error&&<><p className="fieldHint">{preview.rows.length} proposed shared class date(s), {preview.rows.filter(x=>x.conflicts.length).length} with possible overlapping bookings. Final checks are performed by the database.</p><div className="tableWrap" style={{maxHeight:270,overflow:"auto"}}><table><thead><tr><th>Date</th><th>Time</th><th>Conflict</th></tr></thead><tbody>{preview.rows.map((v,i)=><tr key={i}><td>{v.date}</td><td>{v.startTime}–{v.endTime}</td><td>{v.conflicts.join(", ")||"—"}</td></tr>)}</tbody></table></div></>}
    {notice&&<div className="infoBanner">{notice}</div>}
-   <div className="formActions"><button className="button" disabled={busy||!cohort||horizon==="manual"} onClick={generate}>{busy?"Generating…":"Generate shared classes"}</button></div>
+   <div className="formActions"><button className="button" disabled={busy||!cohort||!!preview.error||horizon==="manual"} onClick={generate}>{busy?"Generating…":"Generate shared classes"}</button></div>
   </section>
  {cohort&&<section className="panel" style={{marginTop:16}}>
    <div className="panelHeader"><div><h2>Change batch trainer</h2><p>Completed lessons and payroll stay with the original trainer; only eligible future bookings are transferred.</p></div></div>
