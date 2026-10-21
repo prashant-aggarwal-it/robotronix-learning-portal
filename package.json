@@ -54,7 +54,9 @@
     "check:stabilization": "node scripts/check-consolidated-stabilization.mjs",
     "qa:prod-permanent:create-users": "node scripts/create-permanent-portal-qa-users.mjs",
     "qa:prod-permanent:generate-sql": "node scripts/generate-permanent-qa-seed.mjs",
-    "check:trainer-courses-ui": "node scripts/check-trainer-courses-ui.mjs"
+    "check:trainer-courses-ui": "node scripts/check-trainer-courses-ui.mjs",
+    "check:security": "node scripts/check-security-hardening.mjs",
+    "qa:security-dev": "playwright test qa/security-dev-authorization.spec.ts --project=desktop-chromium --no-deps"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
