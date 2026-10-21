@@ -68,7 +68,8 @@ function storedZip(files:Array<{name:string;content:string}>):Uint8Array{
  return concat([...local,directory,end]);
 }
 function sheetName(input:string,index:number,used:Set<string>):string{
- const base=(input||"Sheet "+index).replace(/[\\[\\]*?:\\/\\\\]/g," ").slice(0,31).trim()||"Sheet "+index;
+ const invalid=new Set(["[","]","*","?",":","/",String.fromCharCode(92)]);
+ const base=Array.from(input||"Sheet "+index).map(ch=>invalid.has(ch)?" ":ch).join("").slice(0,31).trim()||"Sheet "+index;
  let name=base;let n=2;while(used.has(name.toLowerCase()))name=base.slice(0,Math.max(1,31-String(n).length-1))+" "+n++;
  used.add(name.toLowerCase());return name;
 }
