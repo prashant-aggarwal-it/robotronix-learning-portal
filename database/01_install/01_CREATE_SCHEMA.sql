@@ -5009,3 +5009,144 @@ begin
 end $$;
 revoke all on function public.resolve_class_cancellation_v2(uuid,text,text) from public,anon;
 grant execute on function public.resolve_class_cancellation_v2(uuid,text,text) to authenticated;
+
+
+-- Scheduling V2: one shared class per cohort occurrence (never per member).
+create or replace function public.generate_cohort_schedule_v2(
+ p_cohort_id uuid,p_horizon text default 'full',p_weeks integer default null
+) returns jsonb language plpgsql security definer set search_path=public as $$
+declare
+ c public.cohorts%rowtype; course public.courses%rowtype;
+ v_day date; v_slot jsonb; v_start time; v_end time;
+ v_start_at timestamptz; v_end_at timestamptz;
+ v_total integer; v_count integer:=0; v_created integer:=0;
+ v_limit integer; v_key text;
+begin
+ if not public.is_admin() then raise exception 'Admin access required'; end if;
+ if p_horizon not in ('full','weeks','manual') then raise exception 'Invalid horizon'; end if;
+ if p_horizon='manual' then return jsonb_build_object('created',0,'total',0); end if;
+ if p_horizon='weeks' and (p_weeks is null or p_weeks not between 1 and 104)
+ then raise exception 'Weeks must be between 1 and 104'; end if;
+ select * into c from public.cohorts where id=p_cohort_id for update;
+ if not found or c.status not in ('planned','active') or c.trainer_id is null or c.started_at is null
+ then raise exception 'Cohort needs a trainer, start date and active/planned status'; end if;
+ if c.started_at < (now() at time zone 'Asia/Kolkata')::date
+ then raise exception 'Historical cohorts need reviewed forward-only scheduling'; end if;
+ if jsonb_typeof(c.schedule_rules)<>'array' or jsonb_array_length(c.schedule_rules)=0
+ then raise exception 'Cohort schedule is empty'; end if;
+ select * into course from public.courses where id=c.course_id;
+ if not found then raise exception 'Course not found'; end if;
+ v_total:=course.total_sessions;
+ if v_total not between 1 and 500 then raise exception 'Unsupported session count'; end if;
+ perform 1 from public.trainers where id=c.trainer_id for update;
+ v_limit:=case when p_horizon='weeks' then p_weeks*7 else 1461 end;
+ for v_day in select (c.started_at+x)::date from generate_series(0,v_limit-1) as x loop
+  for v_slot in select value from jsonb_array_elements(c.schedule_rules) as value
+   order by (value->>'startTime')::time loop
+   if (v_slot->>'dayOfWeek')::integer<>extract(dow from v_day)::integer then continue; end if;
+   v_start:=(v_slot->>'startTime')::time;v_end:=(v_slot->>'endTime')::time;
+   if v_end<=v_start or extract(minute from v_start)::integer%30<>0
+     or extract(minute from v_end)::integer%30<>0
+   then raise exception 'Use supported same-day half-hour class slots'; end if;
+   v_start_at:=(v_day+v_start) at time zone c.schedule_timezone;
+   v_end_at:=(v_day+v_end) at time zone c.schedule_timezone;
+   if v_end_at<=v_start_at then raise exception 'Invalid class time'; end if;
+   v_key:='cohort:'||c.id::text||':regular:'||v_day::text||':'||v_start::text;
+   if exists(select 1 from public.schedule_events where generation_key=v_key) then
+    v_count:=v_count+1;
+   else
+    if exists(select 1 from public.schedule_events e
+      where e.trainer_id=c.trainer_id and e.status not in ('cancelled','rescheduled')
+      and (e.date+e.start_time) at time zone e.timezone<v_end_at
+      and (e.date+e.end_time) at time zone e.timezone>v_start_at)
+    then raise exception 'Trainer conflict for cohort on % %',v_day,v_start; end if;
+    if exists(select 1 from public.schedule_events e
+      where e.status not in ('cancelled','rescheduled')
+      and (
+        e.student_id in (select student_id from public.enrollments where cohort_id=c.id and status='active')
+        or e.enrollment_id in (select id from public.enrollments where cohort_id=c.id and status='active')
+        or e.cohort_id in (select coalesce(en2.cohort_id,'00000000-0000-0000-0000-000000000000'::uuid)
+           from public.enrollments en2
+           where en2.student_id in
+             (select student_id from public.enrollments where cohort_id=c.id and status='active'))
+      )
+      and (e.date+e.start_time) at time zone e.timezone<v_end_at
+      and (e.date+e.end_time) at time zone e.timezone>v_start_at)
+    then raise exception 'Cohort member class conflict on % %',v_day,v_start; end if;
+    insert into public.schedule_events
+     (trainer_id,course_id,cohort_id,title,date,start_time,end_time,timezone,
+      event_type,delivery_mode,status,occurrence_kind,generation_key)
+    values(c.trainer_id,c.course_id,c.id,course.title||' · '||c.name,v_day,v_start,v_end,c.schedule_timezone,
+      'class','small_group','scheduled','regular',v_key);
+    v_count:=v_count+1;v_created:=v_created+1;
+   end if;
+   exit when v_count>=v_total;
+  end loop;
+  exit when v_count>=v_total;
+ end loop;
+ if p_horizon='full' and v_count<v_total then raise exception 'Not enough cohort slots for entire course'; end if;
+ return jsonb_build_object('created',v_created,'total',v_count);
+end $$;
+revoke all on function public.generate_cohort_schedule_v2(uuid,text,integer) from public,anon;
+grant execute on function public.generate_cohort_schedule_v2(uuid,text,integer) to authenticated;
+
+-- Scheduling V2: a makeup always references a previously cancelled/missed
+-- class; it never represents a new curriculum entitlement.
+create or replace function public.create_makeup_class_v2(
+ p_original_id uuid,p_date date,p_start time,p_end time,p_reason text
+) returns uuid language plpgsql security definer set search_path=public as $$
+declare original public.schedule_events%rowtype; v_id uuid;
+ v_start_at timestamptz;v_end_at timestamptz;
+begin
+ select * into original from public.schedule_events where id=p_original_id for update;
+ if not found or original.event_type<>'class' or original.enrollment_id is null
+ then raise exception 'Makeup requires an individual class with an enrollment'; end if;
+ if original.status not in ('cancelled','missed')
+ then raise exception 'Only cancelled or missed classes can be made up'; end if;
+ if not (public.is_admin() or (auth.uid() is not null and public.current_trainer_id()=original.trainer_id))
+ then raise exception 'Not authorized to create this makeup'; end if;
+ if exists(select 1 from public.schedule_events where original_event_id=p_original_id and status<>'cancelled')
+ then raise exception 'A replacement/makeup already exists for this class'; end if;
+ if nullif(trim(coalesce(p_reason,'')),'') is null
+ then raise exception 'Makeup reason is required'; end if;
+ if p_date is null or p_start is null or p_end is null or p_start>=p_end
+    or (extract(epoch from (p_end-p_start))::integer/60) not in (60,90,120,150)
+ then raise exception 'Choose a supported class duration'; end if;
+ v_start_at:=(p_date+p_start) at time zone original.timezone;
+ v_end_at:=(p_date+p_end) at time zone original.timezone;
+ if v_start_at<=now() then raise exception 'Makeup must be in the future'; end if;
+ perform 1 from public.trainers where id=original.trainer_id for update;
+ if exists(select 1 from public.schedule_events x
+   where x.trainer_id=original.trainer_id and x.status not in ('cancelled','rescheduled')
+    and (x.date+x.start_time) at time zone x.timezone<v_end_at
+    and (x.date+x.end_time) at time zone x.timezone>v_start_at)
+ then raise exception 'Trainer unavailable for proposed makeup'; end if;
+ if exists(select 1 from public.schedule_events x
+   where x.status not in ('cancelled','rescheduled')
+     and (x.student_id=original.student_id or x.enrollment_id in
+          (select id from public.enrollments where student_id=original.student_id)
+          or x.cohort_id in (select cohort_id from public.enrollments where student_id=original.student_id and cohort_id is not null))
+     and (x.date+x.start_time) at time zone x.timezone<v_end_at
+     and (x.date+x.end_time) at time zone x.timezone>v_start_at)
+ then raise exception 'Learner unavailable for proposed makeup'; end if;
+ insert into public.schedule_events
+ (trainer_id,course_id,enrollment_id,student_id,title,date,start_time,end_time,timezone,event_type,
+  delivery_mode,status,occurrence_kind,original_event_id,requested_by,change_reason)
+ values(original.trainer_id,original.course_id,original.enrollment_id,original.student_id,original.title,
+ p_date,p_start,p_end,original.timezone,'class','one_to_one','scheduled','makeup',original.id,
+ case when public.is_admin() then 'admin' else 'trainer' end,p_reason)
+ returning id into v_id;
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'schedule_event',v_id::text,'create_makeup_v2',
+ jsonb_build_object('original_id',original.id),jsonb_build_object('reason',p_reason));
+ if original.student_id is not null then
+  insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+  values('parent',original.student_id,original.trainer_id,'makeup_scheduled','important',
+  'Makeup class scheduled','A makeup class has been arranged. Check the updated class timetable.','/parent'),
+  ('trainer',original.student_id,original.trainer_id,'makeup_scheduled','info',
+  'Makeup class scheduled','A makeup class has been arranged.','/trainer/classes');
+ end if;
+ return v_id;
+end $$;
+revoke all on function public.create_makeup_class_v2(uuid,date,time,time,text) from public,anon;
+grant execute on function public.create_makeup_class_v2(uuid,date,time,time,text) to authenticated;
