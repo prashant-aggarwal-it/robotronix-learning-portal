@@ -23,7 +23,7 @@ union all select '07 payout instruction versions',to_regclass('public.trainer_pa
 union all select '07 monthly lock trigger',
  exists(select 1 from pg_trigger where tgname='trainer_payout_instruction_lock_trg' and not tgisinternal)
 union all select '08 provisioned access state',
- exists(select 1 from pg_constraint where conrelid='public.portal_access_requests'::regclass and pg_get_constraintdef(oid) like '%provisioned%')
+ exists(select 1 from pg_constraint where conrelid=to_regclass('public.portal_access_requests') and pg_get_constraintdef(oid) like '%provisioned%')
 union all select '09 retention function',
  to_regprocedure('public.purge_old_portal_system_logs(integer)') is not null;
 
