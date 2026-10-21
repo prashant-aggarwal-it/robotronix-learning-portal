@@ -211,6 +211,7 @@ create table if not exists public.onboarding_submissions (
   interests text[] not null default '{}', goal text not null default '',
   coding_experience text not null default '', robotics_experience text not null default '',
   source text not null,
+  referring_parent_name text not null default '' check (char_length(referring_parent_name) <= 120),
   data_consent boolean not null default false,
   portfolio_consent boolean not null default false,
   marketing_media_consent boolean not null default false,
