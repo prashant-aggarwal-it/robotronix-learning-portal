@@ -33,7 +33,7 @@ export default function SchedulingV2Admin(){
  const course=courses.find(c=>c.id===enrollment?.courseId);
  const preview=useMemo(()=>{
   if(!enrollment||!course)return{rows:[],error:""};
-  try{return{rows:previewCourseSchedule({startDate:enrollment.startedAt,timezone:enrollment.scheduleTimezone,rules:enrollment.scheduleRules,horizon,totalSessions:enrollment.plannedSessions||course.totalSessions,weeks,trainerId:enrollment.trainerId,learnerId:enrollment.studentId,existingEvents:events}),error:""}}
+  try{return{rows:previewCourseSchedule({startDate:enrollment.startedAt,timezone:enrollment.scheduleTimezone,rules:enrollment.scheduleRules,horizon,totalSessions:enrollment.plannedSessions||course.totalSessions,weeks,trainerId:enrollment.trainerId,learnerId:enrollment.studentId,ownedEnrollmentId:enrollment.id,existingEvents:events}),error:""}}
   catch(e){return{rows:[],error:e instanceof Error?e.message:String(e)};
   }
  },[enrollment,course,horizon,weeks,events]);
