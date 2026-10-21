@@ -1195,7 +1195,7 @@ begin
  base := case when stype='one_to_one' and band='day' then p.one_to_one_day when stype='one_to_one' then p.one_to_one_night
               when stype='small_group' and band='day' then p.group_day when stype='small_group' then p.group_night
               when stype='demo' and band='day' then p.demo_day when stype='demo' then p.demo_night else 0 end;
- factor := case when stype='demo' then 1 else greatest(.25,duration_mins/60.0) end;
+ factor := case when stype='demo' then 1 else duration_mins/60.0 end;
  pct := case when outcome='no_show' then p.no_show_percent when outcome='cancelled' then p.cancelled_percent else 100 end;
  if olde.id is not null then bonus:=case when olde.conversion_applied and stype='demo' then case when band='day' then p.demo_conversion_day else p.demo_conversion_night end else 0 end; adj:=olde.adjustment; end if;
  total:=greatest(0,round((base*factor*(pct/100.0)+bonus+adj)::numeric,2));
@@ -1508,7 +1508,8 @@ begin
  class_at := (e.date + e.start_time) at time zone e.timezone;
  end_at := (e.date + e.end_time) at time zone e.timezone;
  pay_local := class_at at time zone p.timezone;
- duration_mins := case when e.status='conducted' and e.actual_duration_minutes is not null then e.actual_duration_minutes else greatest(1,round(extract(epoch from (end_at-class_at))/60)::int) end;
+ -- Payout duration is the approved scheduled slot; actual teaching minutes affect course progress only.
+ duration_mins := greatest(1,round(extract(epoch from (end_at-class_at))/60)::int);
  band := case when p.day_start<p.day_end and pay_local::time>=p.day_start and pay_local::time<p.day_end then 'day'
               when p.day_start>p.day_end and (pay_local::time>=p.day_start or pay_local::time<p.day_end) then 'day' else 'night' end;
  stype := case when e.event_type='demo' then 'demo' when e.event_type='school' then 'school' when e.event_type='workshop' then 'workshop'
