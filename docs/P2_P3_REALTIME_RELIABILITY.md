@@ -1,3 +1,5 @@
+> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+
 # P2 + P3 — Cross-role refresh and Realtime recovery
 
 **Branch:** `fix/p2-p3-live-sync-reliability-20261020`, based on P1 `fix/p1-action-notifications-20261020`.  
@@ -33,7 +35,7 @@ Existing live-refresh views for Parent and Student dashboard, calendar, attendan
 
 **Empty DEV installation:** `database/01_install/01_CREATE_SCHEMA.sql` includes the P1 triggers and P2/P3 publication section, so apply canonical fresh-install procedures only.
 
-**Existing DEV installation:** apply P1 `04_PRIORITY1_ACTION_NOTIFICATIONS.sql`, then `05_P2_P3_REALTIME_PUBLICATION.sql`. Both should be reviewed and run in the appropriate DB SQL editor. Existing-data migrations are separate from fresh-install scripts; **never rerun the whole schema on Production**.
+**Existing DEV installation:** apply P1 `database/01_install/01_CREATE_SCHEMA.sql`, then `database/01_install/01_CREATE_SCHEMA.sql`. Both should be reviewed and run in the appropriate DB SQL editor. Existing-data migrations are separate from fresh-install scripts; **never rerun the whole schema on Production**.
 
 **Production:** Requires separately approved deployment plan, backup, security/RLS review, database migration and acceptance testing. The GitHub branch itself does not update the deployed Supabase project.
 
