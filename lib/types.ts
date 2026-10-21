@@ -46,7 +46,7 @@ export interface StudentAdminRecord {
 
 export interface TrainerAdminRecord {
   id:string; fullName:string; mobile:string; email:string; city:string; country?:string; state?:string; timezone?:string; designation:string; joiningDate:string;
-  specialties:string[]; courseIds:string[]; recordStatus:RecordStatus; loginLinked:boolean; portalAccessStatus?:"not_linked"|"invite_sent"|"portal_ready"|"disabled"; updatedAt?:string;
+  specialties:string[]; courseIds:string[]; recordStatus:RecordStatus; loginLinked:boolean; zoomJoinUrl?:string; portalAccessStatus?:"not_linked"|"invite_sent"|"portal_ready"|"disabled"; updatedAt?:string;
 }
 
 
