@@ -28,6 +28,7 @@ Security audit revealed **three high-severity advisories** in the currently lock
 - `lib/server/read-limited-body.ts` caps signed webhook payloads even when the client omits Content-Length. Razorpay request processing rejects oversized bodies *before* signature verification and parsing.
 - Admin Zoom scheduling endpoint now validates UUID/action and returns sanitized errors rather than provider internals.
 - `qa/security-static.spec.ts` checks server admin authentication, response headers, signed-webhook order, scheduling RPC privilege markers, and bounded-body edge cases.
+- `qa/security-dev-http.spec.ts` checks unauthorized Admin/Zoom API access, response headers, and oversized webhook rejection against a verified DEV application origin. It needs `SECURITY_QA_DEV_APP_ORIGIN` to match `QA_BASE_URL` and the DEV acknowledgment.
 - Existing protections retained: role guarded routes, active Admin profile verification, signature-verified Razorpay webhook, response security headers, audit histories, and RLS.
 - **CSP qualification:** Zoom SDK currently requires `unsafe-inline`/`unsafe-eval` in `next.config.ts`. This is a hardening weakness requiring compatibility testing for nonce or route-specific CSP; do not remove unsafely without validating live Zoom SDK behavior.
 
@@ -37,6 +38,7 @@ Security audit revealed **three high-severity advisories** in the currently lock
 - [ ] Canonical SQL installs and verification SQL passes on **DEV**.
 - [ ] DEV authenticated security RPC/RLS suite passes with isolated QA identities.
 - [ ] Full Admin/Trainer/Parent/Student E2E acceptance passes with DEV OAuth/webhooks.
+- [ ] `npm run qa:security-dev-all` passes against the isolated DEV Supabase and preview application.
 - [ ] Zoom OAuth/reusable links, sensitive class data, and Razorpay test-mode signatures/replay verified.
 - [ ] Penetration testing against explicitly authorized DEV/staging environment and retest of findings.
 - [ ] Operations owner signs off remaining exceptions, restores backups, and checks monitoring.
