@@ -1364,3 +1364,21 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .demoAdminForm .input:focus,.demoAdminForm .select:focus{border-color:#9d83df;box-shadow:0 0 0 4px rgba(124,89,217,.09);outline:none}
 @media(max-width:980px){.demoGuestHero.premium{grid-template-columns:1fr}.demoHeroStage{max-width:680px}.demoTrustStrip{grid-template-columns:1fr 1fr}.demoTrustStrip .demoGuestSupport{justify-self:start}}
 @media(max-width:720px){.demoGuestTop{padding:11px 13px}.demoGuestTop img{height:38px}.demoGuestHero.premium{padding-top:24px}.demoSessionFacts{grid-template-columns:1fr}.demoDiscoveryJourney{grid-template-columns:1fr;gap:8px}.demoDiscoveryJourney i{transform:rotate(90deg);justify-self:center}.demoTrustStrip{grid-template-columns:1fr}.demoTrustStrip .demoGuestSupport{width:100%;justify-self:stretch}.demoTrustStrip .demoGuestSupport button{flex:1}.demoCodeChip{display:none}}
+
+
+/* Consolidated demo UX and finance review: preserve layout on narrow screens. */
+.demoLearnerOps{display:grid;gap:10px;min-width:0}
+.demoLearnerOps>div{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:flex-start;gap:8px;min-width:0}
+.demoLearnerOps .cellSub{overflow-wrap:anywhere}
+.historyPanel>summary{list-style-position:inside}
+.historyPanel .tableWrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.portalAccessPanel .portalAccessActions{flex-wrap:wrap}
+@media(max-width:760px){
+ .demoLearnerOps>div{display:block}
+ .demoLearnerOps .row{flex-wrap:wrap}
+ .payrollActions{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+ .payrollActions .input{min-width:0;width:100%;max-width:100%}
+ .historyPanel{padding:14px}
+ .historyPanel summary{flex-direction:column;align-items:flex-start!important}
+ .portalAccessPanel .formActions .button{max-width:100%;white-space:normal}
+}

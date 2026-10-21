@@ -3994,3 +3994,479 @@ end $$;
 commit;
 
 -- END INTEGRATED 06_ZOOM_HOST_ALLOCATION_GUARD.sql
+
+
+-- ======================================================================
+-- P1 Action notifications (consolidated into fresh-install baseline)
+-- ======================================================================
+-- Robotronix P1 action-required notifications (idempotent).
+-- Run against DEV first. For an EXISTING installation this is a controlled migration;
+-- fresh installations also include this content at the end of 01_CREATE_SCHEMA.sql.
+begin;
+
+-- Trainer payout: notify Admin when submitted, trainer when reviewed.
+-- Never place account, UPI, PAN, IFSC or trainer notes in notification text.
+create or replace function public.notify_trainer_payout_action()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare v_name text;
+begin
+  select coalesce(nullif(trim(full_name),''),'Trainer')
+    into v_name from public.trainers where id=new.trainer_id;
+  if tg_op='INSERT' and new.status='pending' then
+    insert into public.portal_notifications
+      (recipient_role,trainer_id,type,priority,title,message,href,dedupe_key)
+    values
+      ('admin',new.trainer_id,'trainer_payout_review','action',
+       'Trainer payout change needs review',
+       coalesce(v_name,'Trainer')||' submitted new payout details for review.',
+       '/admin/trainers/'||new.trainer_id::text,
+       'trainer-payout:'||new.id::text||':submitted')
+    on conflict (dedupe_key) where dedupe_key is not null do nothing;
+  elsif tg_op='UPDATE' and new.status is distinct from old.status
+    and new.status in ('approved','rejected','correction_requested') then
+    insert into public.portal_notifications
+      (recipient_role,trainer_id,type,priority,title,message,href,dedupe_key)
+    values
+      ('trainer',new.trainer_id,'trainer_payout_decision',
+       case when new.status='correction_requested' then 'action' else 'important' end,
+       case new.status
+         when 'approved' then 'Payout details approved'
+         when 'rejected' then 'Payout details not approved'
+         else 'Payout details need correction' end,
+       case new.status
+         when 'approved' then 'Your submitted payout details have been approved. Check the effective payroll cycle with Admin.'
+         when 'rejected' then 'Admin did not approve your payout changes. Contact Robotronix Admin for clarification.'
+         else 'Admin requested a correction to your submitted payout details. Open your profile to review.' end,
+       '/trainer/profile',
+       'trainer-payout:'||new.id::text||':'||new.status)
+    on conflict (dedupe_key) where dedupe_key is not null do nothing;
+  end if;
+  return new;
+end $$;
+drop trigger if exists trainer_payout_action_insert_trg on public.trainer_finance_change_requests;
+create trigger trainer_payout_action_insert_trg
+after insert on public.trainer_finance_change_requests
+for each row execute function public.notify_trainer_payout_action();
+drop trigger if exists trainer_payout_action_update_trg on public.trainer_finance_change_requests;
+create trigger trainer_payout_action_update_trg
+after update of status on public.trainer_finance_change_requests
+for each row execute function public.notify_trainer_payout_action();
+
+-- Open urgent progress alerts need Admin attention, and subsequent updates should not
+-- re-notify unless an alert is explicitly re-opened.
+create or replace function public.notify_open_progress_alert()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  if new.status='open'
+     and (tg_op='INSERT' or new.status is distinct from old.status) then
+    insert into public.portal_notifications
+      (recipient_role,student_id,type,priority,title,message,href,dedupe_key)
+    values
+      ('admin',new.student_id,'progress_alert_open','action',
+       'Learner progress alert requires review',
+       'A learner progress alert needs an Admin review.',
+       '/admin/alerts',
+       'progress-alert:'||new.id::text||':open:'||extract(epoch from new.updated_at)::bigint::text)
+    on conflict (dedupe_key) where dedupe_key is not null do nothing;
+  end if;
+  return new;
+end $$;
+drop trigger if exists progress_action_insert_trg on public.progress_alert_actions;
+create trigger progress_action_insert_trg after insert on public.progress_alert_actions
+for each row execute function public.notify_open_progress_alert();
+drop trigger if exists progress_action_update_trg on public.progress_alert_actions;
+create trigger progress_action_update_trg after update of status on public.progress_alert_actions
+for each row execute function public.notify_open_progress_alert();
+
+-- Existing message trigger incorrectly routes trainer-originated messages to Parent
+-- even when there is no Parent on the thread. Correct routing, do not expose message
+-- bodies in notifications, and keep unread counts aligned with actual recipients.
+create or replace function public.handle_communication_message()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare t public.communication_threads%rowtype;
+begin
+ select * into t from public.communication_threads where id=new.thread_id;
+ if not found then return new; end if;
+ update public.communication_threads set
+  last_message_at=new.created_at,
+  last_message_preview=left(new.body,240),
+  status=case
+    when new.sender_role='parent' then 'waiting_team'
+    when new.sender_role='trainer' then 'waiting_team'
+    when t.parent_id is not null then 'waiting_parent'
+    else 'open' end,
+  unread_admin=case when new.sender_role in ('parent','trainer') then unread_admin+1 else unread_admin end,
+  unread_parent=case when new.sender_role<>'parent' and t.parent_id is not null then unread_parent+1 else unread_parent end,
+  unread_trainer=case when new.sender_role<>'trainer' and t.trainer_id is not null then unread_trainer+1 else unread_trainer end,
+  updated_at=now()
+ where id=new.thread_id;
+
+ if new.sender_role in ('parent','trainer') then
+  insert into public.portal_notifications
+   (recipient_role,student_id,trainer_id,type,priority,title,message,href,dedupe_key)
+  values ('admin',t.student_id,t.trainer_id,'message_received','action',
+   case when new.sender_role='parent' then 'Parent message awaiting response' else 'Trainer message awaiting response' end,
+   'A new message in your Robotronix inbox needs attention.',
+   '/admin/messages/'||new.thread_id::text,
+   'message:'||new.id::text||':admin')
+  on conflict (dedupe_key) where dedupe_key is not null do nothing;
+ end if;
+ if new.sender_role='parent' and t.trainer_id is not null then
+  insert into public.portal_notifications
+   (recipient_role,student_id,trainer_id,type,priority,title,message,href,dedupe_key)
+  values ('trainer',t.student_id,t.trainer_id,'message_received','action',
+   'Parent message awaiting reply','A parent sent a message about a learner.',
+   '/trainer/messages/'||new.thread_id::text,'message:'||new.id::text||':trainer')
+  on conflict (dedupe_key) where dedupe_key is not null do nothing;
+ end if;
+ if new.sender_role='admin' and t.trainer_id is not null then
+  insert into public.portal_notifications
+   (recipient_role,student_id,trainer_id,type,priority,title,message,href,dedupe_key)
+  values ('trainer',t.student_id,t.trainer_id,'message_received','action',
+   'Message from Robotronix Admin','You have a new Admin message.',
+   '/trainer/messages/'||new.thread_id::text,'message:'||new.id::text||':trainer')
+  on conflict (dedupe_key) where dedupe_key is not null do nothing;
+ end if;
+ if new.sender_role<>'parent' and t.parent_id is not null then
+  insert into public.portal_notifications
+   (recipient_role,student_id,trainer_id,type,priority,title,message,href,dedupe_key)
+  values ('parent',t.student_id,t.trainer_id,'message_received','action',
+   'New Robotronix message','You have a new message in the family inbox.',
+   '/parent/messages/'||new.thread_id::text,'message:'||new.id::text||':parent')
+  on conflict (dedupe_key) where dedupe_key is not null do nothing;
+ end if;
+ return new;
+end $$;
+
+-- Existing class scheduling trigger already notifies trainers and families.
+-- Notify Admin for cancellations/reschedules made by other roles, not Admin's own edits.
+create or replace function public.notify_admin_critical_schedule_change()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+ if public.is_admin() then return new; end if;
+ if new.event_type='class' and
+   ((new.status in ('cancelled','rescheduled') and new.status is distinct from old.status)
+      or new.date is distinct from old.date
+      or new.start_time is distinct from old.start_time
+      or new.end_time is distinct from old.end_time) then
+  insert into public.portal_notifications
+    (recipient_role,student_id,trainer_id,type,priority,title,message,href,dedupe_key)
+  values ('admin',new.student_id,new.trainer_id,'class_change_review','action',
+    'Class schedule change requires review',
+    'A class was cancelled or its schedule changed. Review the affected class.',
+    '/admin/schedule',
+    'critical-class-change:'||new.id::text||':'||new.updated_at::text)
+  on conflict (dedupe_key) where dedupe_key is not null do nothing;
+ end if;
+ return new;
+end $$;
+drop trigger if exists schedule_admin_action_update_trg on public.schedule_events;
+create trigger schedule_admin_action_update_trg
+after update of status,date,start_time,end_time on public.schedule_events
+for each row execute function public.notify_admin_critical_schedule_change();
+
+commit;
+
+
+-- P2/P3 Realtime publication baseline, shared with existing-install migration.
+-- P2/P3 event delivery: idempotent Supabase Realtime publication membership.
+-- Apply only AFTER baseline schema and P1 action notifications migration.
+-- Never expose sensitive trainer_finance / trainer_finance_change_requests row payloads
+-- to public channels. Realtime Postgres Changes still enforces table RLS.
+begin;
+do $$
+declare t text;
+begin
+ if not exists(select 1 from pg_publication where pubname='supabase_realtime') then
+  raise exception 'Supabase Realtime publication is missing; verify correct DEV project';
+ end if;
+ foreach t in array array[
+  'portal_notifications','onboarding_submissions',
+  'students','trainers','courses','enrollments','cohorts',
+  'schedule_events','class_attendance','session_records',
+  'learning_observations','learner_projects',
+  'trainer_earnings','trainer_payouts','trainer_compensation_plans',
+  'trainer_finance','trainer_finance_change_requests',
+  'trainer_availability','trainer_availability_overrides',
+  'student_invoices','student_fee_payments',
+  'progress_alert_actions','communication_threads','communication_messages'
+ ] loop
+  if to_regclass('public.'||t) is null then
+    raise exception 'Realtime required table public.% missing; check migration order',t;
+  end if;
+  if not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename=t) then
+   execute format('alter publication supabase_realtime add table public.%I',t);
+  end if;
+ end loop;
+end $$;
+commit;
+
+-- Read-only verification:
+-- select tablename from pg_publication_tables
+-- where pubname='supabase_realtime' and schemaname='public' order by tablename;
+
+
+-- Consolidated server-only diagnostics (existing-install delta: 06_PORTAL_SYSTEM_LOGS.sql)
+-- Production-safe operational diagnostics: server-only writes, admin-only reads.
+-- Apply in DEV after current baseline. No secrets, raw request bodies or bank details.
+begin;
+create table if not exists public.portal_system_logs(
+ id uuid primary key default gen_random_uuid(),
+ occurred_at timestamptz not null default now(),
+ level text not null check(level in ('error','warning','info')),
+ source text not null,
+ action text not null,
+ reference_id text not null,
+ error_code text,
+ safe_message text not null
+);
+create index if not exists portal_system_logs_date_idx on public.portal_system_logs(occurred_at desc);
+create index if not exists portal_system_logs_ref_idx on public.portal_system_logs(reference_id);
+alter table public.portal_system_logs enable row level security;
+revoke all on public.portal_system_logs from anon,authenticated;
+grant select on public.portal_system_logs to authenticated;
+drop policy if exists portal_system_logs_admin_read on public.portal_system_logs;
+create policy portal_system_logs_admin_read on public.portal_system_logs
+ for select to authenticated using(public.is_admin());
+-- service_role retains database-side write privileges; no client insert/update/delete policy.
+commit;
+
+
+-- Consolidated payroll cutoff and payout instruction locking (delta: 07_TRAINER_PAYROLL_CUTOFF.sql)
+-- Robotronix trainer payout cut-off and immutable salary instructions.
+-- Controlled DEV-only migration; review existing payout workflows before Production.
+begin;
+
+insert into public.system_settings(key,value_text,description) values
+ ('trainer_payout_change_cutoff_day','25','Last IST calendar day for a verified payout change to apply to the current payroll month')
+on conflict(key) do nothing;
+
+alter table public.trainer_finance_change_requests
+ add column if not exists effective_payroll_month text;
+alter table public.trainer_finance_change_requests
+ drop constraint if exists finance_request_effective_month_format;
+alter table public.trainer_finance_change_requests
+ add constraint finance_request_effective_month_format check(
+  effective_payroll_month is null or effective_payroll_month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$');
+
+create table if not exists public.trainer_payout_instruction_versions (
+ id uuid primary key default gen_random_uuid(),
+ trainer_id uuid not null references public.trainers(id) on delete restrict,
+ source_request_id uuid unique references public.trainer_finance_change_requests(id) on delete set null,
+ effective_payroll_month text not null check(effective_payroll_month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
+ account_holder_name text not null default '',
+ bank_name text not null default '',
+ account_number text not null default '',
+ ifsc text not null default '',
+ upi_id text not null default '',
+ pan text not null default '',
+ preferred_payout_method text not null default 'bank',
+ approved_by uuid references public.profiles(id) on delete set null,
+ approved_at timestamptz not null default now()
+);
+create index if not exists trainer_payout_versions_by_month on public.trainer_payout_instruction_versions(trainer_id,effective_payroll_month desc,approved_at desc);
+alter table public.trainer_payout_instruction_versions enable row level security;
+revoke all on public.trainer_payout_instruction_versions from anon,authenticated;
+grant select on public.trainer_payout_instruction_versions to authenticated;
+drop policy if exists trainer_payout_versions_admin_read on public.trainer_payout_instruction_versions;
+create policy trainer_payout_versions_admin_read on public.trainer_payout_instruction_versions
+ for select to authenticated using(public.is_admin());
+
+-- Preserve the existing verified payout record as a baseline version (only once).
+insert into public.trainer_payout_instruction_versions
+ (trainer_id,effective_payroll_month,account_holder_name,bank_name,account_number,ifsc,upi_id,pan,preferred_payout_method,approved_at)
+select f.trainer_id,'1900-01',f.account_holder_name,f.bank_name,f.account_number,f.ifsc,f.upi_id,f.pan,f.preferred_payout_method,now()
+from public.trainer_finance f
+where not exists(select 1 from public.trainer_payout_instruction_versions v where v.trainer_id=f.trainer_id);
+
+alter table public.trainer_payouts
+ add column if not exists payout_instruction_version_id uuid references public.trainer_payout_instruction_versions(id) on delete restrict;
+alter table public.trainer_payouts
+ add column if not exists payout_details_locked_at timestamptz;
+alter table public.trainer_payouts
+ add column if not exists payout_account_holder_name text;
+alter table public.trainer_payouts
+ add column if not exists payout_bank_name text;
+alter table public.trainer_payouts
+ add column if not exists payout_account_number text;
+alter table public.trainer_payouts
+ add column if not exists payout_ifsc text;
+alter table public.trainer_payouts
+ add column if not exists payout_upi_id text;
+alter table public.trainer_payouts
+ add column if not exists payout_method text;
+
+create or replace function public.review_trainer_finance_request(p_request_id uuid,p_action text,p_admin_note text default '')
+returns void language plpgsql security definer set search_path=public as $$
+declare r public.trainer_finance_change_requests%rowtype;
+ target_status text; v_cutoff integer; v_month text; v_ist timestamp; v_lock boolean;
+begin
+ if not public.is_admin() then raise exception 'Admin access required'; end if;
+ select * into r from public.trainer_finance_change_requests where id=p_request_id for update;
+ if not found then raise exception 'Request not found'; end if;
+ if r.status<>'pending' then raise exception 'This finance request has already been reviewed'; end if;
+ if p_action='approve' then target_status:='approved';
+ elsif p_action='reject' then target_status:='rejected';
+ elsif p_action='request_correction' then target_status:='correction_requested';
+ else raise exception 'Invalid review action'; end if;
+ if target_status in ('rejected','correction_requested') and length(trim(coalesce(p_admin_note,'')))<5 then
+  raise exception 'A meaningful correction/rejection reason is required'; end if;
+ if target_status='approved' then
+  select least(28,greatest(1,coalesce(nullif(value_text,'')::int,25)))
+    into v_cutoff from public.system_settings where key='trainer_payout_change_cutoff_day';
+  v_cutoff:=coalesce(v_cutoff,25);
+  v_ist:=timezone('Asia/Kolkata',now());
+  v_month:=to_char(v_ist,'YYYY-MM');
+  select exists(select 1 from public.trainer_payouts where trainer_id=r.trainer_id
+   and period_month=v_month and status in ('approved','paid')) into v_lock;
+  if extract(day from v_ist)::int>v_cutoff or v_lock then
+   v_month:=to_char(date_trunc('month',v_ist)+interval '1 month','YYYY-MM');
+  end if;
+  insert into public.trainer_payout_instruction_versions(
+   trainer_id,source_request_id,effective_payroll_month,
+   account_holder_name,bank_name,account_number,ifsc,upi_id,pan,preferred_payout_method,approved_by)
+  values(r.trainer_id,r.id,v_month,r.account_holder_name,r.bank_name,r.account_number,r.ifsc,r.upi_id,r.pan,r.preferred_payout_method,auth.uid());
+  -- Trainer Profile shows the latest approved bank details. Actual salary instructions
+  -- are separately snapshotted from the version applicable to each payroll month.
+  perform set_config('robotronix.payout_review','1',true);
+  insert into public.trainer_finance(
+   trainer_id,account_holder_name,bank_name,account_number,ifsc,upi_id,preferred_payout_method,pan,compliance_status,updated_at)
+  values(r.trainer_id,r.account_holder_name,r.bank_name,r.account_number,r.ifsc,r.upi_id,r.preferred_payout_method,r.pan,'pending',now())
+  on conflict(trainer_id) do update set
+   account_holder_name=excluded.account_holder_name,bank_name=excluded.bank_name,
+   account_number=excluded.account_number,ifsc=excluded.ifsc,upi_id=excluded.upi_id,
+   preferred_payout_method=excluded.preferred_payout_method,pan=excluded.pan,updated_at=now();
+ end if;
+ update public.trainer_finance_change_requests set status=target_status,
+  admin_note=coalesce(p_admin_note,''),reviewed_at=now(),reviewed_by=auth.uid(),
+  effective_payroll_month=case when target_status='approved' then v_month else null end
+ where id=p_request_id;
+end $$;
+grant execute on function public.review_trainer_finance_request(uuid,text,text) to authenticated;
+
+-- Finalized netbanking payouts use an immutable snapshot applicable to THAT month.
+-- A future trainer edit never mutates an approved or paid snapshot.
+create or replace function public.lock_trainer_payout_instructions()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare v public.trainer_payout_instruction_versions%rowtype;
+begin
+ if tg_op='UPDATE' and old.status='paid' then
+  if new is distinct from old then raise exception 'Paid trainer payroll is locked. Use an audited adjustment'; end if;
+  return new;
+ end if;
+ if tg_op='UPDATE' and old.status='approved' and old.payout_instruction_version_id is null then
+  raise exception 'Legacy approved payroll needs explicit payout instruction reconciliation before payment';
+ end if;
+ if tg_op='UPDATE' and old.status='approved' then
+  if new.status not in ('approved','paid') then raise exception 'Approved payroll cannot be returned to draft'; end if;
+  if new.gross_amount is distinct from old.gross_amount or new.adjustment_amount is distinct from old.adjustment_amount
+     or new.payable_amount is distinct from old.payable_amount or new.period_month is distinct from old.period_month
+     or new.trainer_id is distinct from old.trainer_id then
+   raise exception 'Approved payroll amounts are locked'; end if;
+ end if;
+ if new.status in ('approved','paid') then
+  if new.status='paid' and (nullif(trim(coalesce(new.payment_reference,'')),'') is null
+    or new.paid_at is null) then raise exception 'Paid payroll requires netbanking transaction reference and payment date'; end if;
+  if new.payout_instruction_version_id is null then
+   select * into v from public.trainer_payout_instruction_versions
+   where trainer_id=new.trainer_id and effective_payroll_month<=new.period_month
+   order by effective_payroll_month desc,approved_at desc limit 1;
+   if not found then raise exception 'No verified payout instructions for payroll month %',new.period_month; end if;
+   new.payout_instruction_version_id:=v.id;
+   new.payout_account_holder_name:=v.account_holder_name;
+   new.payout_bank_name:=v.bank_name;
+   new.payout_account_number:=v.account_number;
+   new.payout_ifsc:=v.ifsc;
+   new.payout_upi_id:=v.upi_id;
+   new.payout_method:=v.preferred_payout_method;
+   new.payout_details_locked_at:=now();
+  elsif tg_op='UPDATE' and old.payout_instruction_version_id is not null then
+   if new.payout_instruction_version_id is distinct from old.payout_instruction_version_id
+    or new.payout_account_number is distinct from old.payout_account_number
+    or new.payout_upi_id is distinct from old.payout_upi_id
+    or new.payout_method is distinct from old.payout_method then
+    raise exception 'Payout instructions are locked for this payroll month'; end if;
+  end if;
+ end if;
+ return new;
+end $$;
+drop trigger if exists trainer_payout_instruction_lock_trg on public.trainer_payouts;
+create trigger trainer_payout_instruction_lock_trg
+before insert or update on public.trainer_payouts
+for each row execute function public.lock_trainer_payout_instructions();
+
+-- Admin's direct edits to sensitive trainer finance fields must also preserve
+-- an effective-dated version, otherwise those edits could evade payroll cutoff.
+create or replace function public.version_direct_admin_payout_change()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare v_cutoff int; v_month text; v_date timestamp; v_locked boolean;
+begin
+ if current_setting('robotronix.payout_review',true)='1' then return new; end if;
+ if tg_op='UPDATE' and row(
+   new.account_holder_name,new.bank_name,new.account_number,new.ifsc,new.upi_id,new.pan,new.preferred_payout_method)
+   is not distinct from row(
+   old.account_holder_name,old.bank_name,old.account_number,old.ifsc,old.upi_id,old.pan,old.preferred_payout_method)
+ then return new; end if;
+ if not public.is_admin() then
+  -- Review RPC runs with a controlled skip marker above. Never allow trainer writes.
+  raise exception 'Admin verification is required before payout details change';
+ end if;
+ select least(28,greatest(1,coalesce(nullif(value_text,'')::int,25)))
+  into v_cutoff from public.system_settings where key='trainer_payout_change_cutoff_day';
+ v_cutoff:=coalesce(v_cutoff,25);
+ v_date:=timezone('Asia/Kolkata',now());v_month:=to_char(v_date,'YYYY-MM');
+ select exists(select 1 from public.trainer_payouts where trainer_id=new.trainer_id
+  and period_month=v_month and status in ('approved','paid')) into v_locked;
+ if extract(day from v_date)::int>v_cutoff or v_locked then
+  v_month:=to_char(date_trunc('month',v_date)+interval '1 month','YYYY-MM');
+ end if;
+ insert into public.trainer_payout_instruction_versions(
+ trainer_id,effective_payroll_month,account_holder_name,bank_name,account_number,ifsc,
+ upi_id,pan,preferred_payout_method,approved_by)
+ values(new.trainer_id,v_month,new.account_holder_name,new.bank_name,new.account_number,
+ new.ifsc,new.upi_id,new.pan,new.preferred_payout_method,auth.uid());
+ return new;
+end $$;
+drop trigger if exists trainer_finance_direct_change_version_trg on public.trainer_finance;
+create trigger trainer_finance_direct_change_version_trg
+after insert or update of account_holder_name,bank_name,account_number,ifsc,upi_id,pan,preferred_payout_method
+on public.trainer_finance for each row execute function public.version_direct_admin_payout_change();
+
+commit;
+
+-- Passwordless access state (existing-install upgrade: 08_PASSWORDLESS_PORTAL_ACCESS.sql)
+-- Expand portal-access state for passwordless Admin-granted accounts.
+-- This is an additive DEV migration, not a full schema install.
+begin;
+alter table public.portal_access_requests
+ drop constraint if exists portal_access_requests_status_check;
+alter table public.portal_access_requests
+ add constraint portal_access_requests_status_check
+ check(status in ('invited','provisioned','linked','disabled'));
+commit;
+
+-- Service-role-only diagnostic retention (existing upgrade: 09_SYSTEM_LOG_RETENTION.sql)
+-- Optional scheduled retention job entrypoint for server-side operations.
+-- Use Supabase's Cron UI / pg_cron scheduler to invoke this function daily.
+-- Existing database upgrade: run only after 06_PORTAL_SYSTEM_LOGS.sql.
+begin;
+create or replace function public.purge_old_portal_system_logs(p_retention_days integer default 90)
+returns bigint
+language plpgsql security invoker
+set search_path=public
+as $$
+declare v_deleted bigint;
+begin
+ if p_retention_days<30 or p_retention_days>365 then
+  raise exception 'Retention must be between 30 and 365 days';
+ end if;
+ delete from public.portal_system_logs
+ where occurred_at < now()-make_interval(days=>p_retention_days);
+ get diagnostics v_deleted=row_count;
+ return v_deleted;
+end $$;
+revoke execute on function public.purge_old_portal_system_logs(integer) from public,anon,authenticated;
+grant execute on function public.purge_old_portal_system_logs(integer) to service_role;
+commit;
+-- In Supabase Cron schedule a daily task with service-role authorization.
+-- Do not schedule in Production until logging retention policy has been approved.

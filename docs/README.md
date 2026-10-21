@@ -1,3 +1,5 @@
+> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+
 # Robotronix™ Learning Portal — Documentation Hub
 
 **Audience:** founders/operations, developers, testers, trainers, support personnel, and deployment administrators.
@@ -38,3 +40,31 @@
 6. Use relative Markdown links so documentation works directly in GitHub.
 
 **Current release state:** local release/build/auth/roles/workflow checks were reported successful; GitHub PR checks and deploy preview passed. This does *not* equal production acceptance. See [Testing](TESTING.md).
+
+## In-progress release branch: Priority 1 action notifications
+
+For this unmerged, untested implementation see [Action-required notification design, upgrade notes and DEV acceptance tests](PRIORITY1_ACTION_NOTIFICATIONS.md). These changes are **not deployed or Production-verified**; the stable release guidance above remains authoritative until merge and successful deployment.
+
+## Work in progress: P2/P3 cross-role data synchronization and Realtime recovery
+
+[Read the P2/P3 implementation, SQL upgrade and DEV test matrix](P2_P3_REALTIME_RELIABILITY.md). This is an **unmerged, unverified implementation** on a separate branch stacked on the P1 notifications branch. It is not proof of deployment or Production acceptance.
+
+## Consolidated release candidate (work in progress)
+
+- [Consolidated stabilization backlog](CONSOLIDATED_STABILIZATION_BACKLOG.md) — approved requirements, implemented/pending distinctions and release acceptance.
+- [System Logs guide](SYSTEM_LOGS.md) — safe diagnostic events, Admin access, installation and testing.
+- [P1 action notifications](PRIORITY1_ACTION_NOTIFICATIONS.md) and [P2/P3 Realtime reliability](P2_P3_REALTIME_RELIABILITY.md) — existing candidate changes carried forward.
+
+**Important:** The consolidated branch contains incomplete/unverified features and must not be treated as Production-ready or run against Production SQL until the full DEV release gate has passed.
+
+## Consolidated release implementation and handover (draft)
+
+- [All-round release QA and configuration handover](CONSOLIDATED_RELEASE_QA_HANDOVER.md)
+- [Unified passwordless login and Admin grants](PASSWORDLESS_PORTAL_ACCESS.md)
+- [Netbanking payout rules and bank-detail cutoff tests](TRAINER_FINANCE_NETBANKING.md)
+- [System logging and cleanup](SYSTEM_LOGS.md)
+
+
+## Database installation for a fresh Supabase project
+
+Follow the [single-schema fresh installation guide](DATABASE_MIGRATION_ORDER.md). Only **01_CREATE_SCHEMA.sql**, **02_INSERT_MASTER_REFERENCE_DATA.sql**, and the **conditional first Admin bootstrap example** remain in `database/01_install/`. QA seed and DEV-reset scripts are not part of Production setup.

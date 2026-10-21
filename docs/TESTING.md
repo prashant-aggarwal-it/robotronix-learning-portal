@@ -58,3 +58,11 @@ Repository owner reported `check:release`, `build`, `qa:auth-check`, `qa:roles` 
 - Only document a suite as passed after an actual test execution; treat skipped provider tests separately.
 - Do not run `database/02_qa/01_QA_SEED.sql` in Production.
 - Production QA users are optional and should not be provisioned solely to make local tests pass.
+
+## P1 action-notification DEV acceptance (unmerged)
+
+Follow the [Priority 1 event matrix and two-browser manual QA](PRIORITY1_ACTION_NOTIFICATIONS.md), covering trainer finance requests/decisions, messaging, progress alerts, scheduling, onboarding regression, offline recovery, RLS and idempotency. This set is **not yet test-executed** and must not be marked passed based only on source inspection.
+
+## P2/P3 Live-view and reconnection QA
+
+Run `npm run check:p2p3-live` (included in `check:release`) for source coverage assertions. Then run the [cross-role DEV two-browser QA and security checklist](P2_P3_REALTIME_RELIABILITY.md), including offline/hidden-tab reconciliation. The static check is **not** a substitute for Supabase Realtime and RLS testing. No DEV test-pass claim has been made for this branch.

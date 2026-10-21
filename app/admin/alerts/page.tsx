@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 import {useEffect,useMemo,useState} from "react";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -13,7 +14,9 @@ import type {EnrollmentAdminRecord,ScheduleEvent,StudentAdminRecord,TrainerAdmin
 type Alert={id:string;type:string;priority:"high"|"medium"|"low";title:string;detail:string;href:string};
 export default function OperationalAlerts(){const[enrollments,setEnrollments]=useState<EnrollmentAdminRecord[]>([]);const[students,setStudents]=useState<StudentAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[events,setEvents]=useState<ScheduleEvent[]>([]);const[q,setQ]=useState("");const[priority,setPriority]=useState("all");const[sortKey,setSortKey]=useState("priority");const[sortDir,setSortDir]=useState<"asc"|"desc">("asc");const[page,setPage]=useState(1);const[pageSize,setPageSize]=useState(25);
  useEffect(()=>{Promise.all([listAdminEnrollments(),listAdminStudents(),listAdminTrainers(),listScheduleEvents()]).then(([e,s,t,ev])=>{setEnrollments(e);setStudents(s);setTrainers(t);setEvents(ev)})},[]);
- const today=new Date().toISOString().slice(0,10);const name=(id:string)=>students.find(s=>s.id===id)?.fullName??"Learner";const trainer=(id:string)=>trainers.find(t=>t.id===id)?.fullName??"Trainer";
+ const reload=async()=>{const[e,s,t,ev]=await Promise.all([listAdminEnrollments(),listAdminStudents(),listAdminTrainers(),listScheduleEvents()]);setEnrollments(e);setStudents(s);setTrainers(t);setEvents(ev)};
+useLiveRefresh(["enrollments","students","trainers","schedule_events","progress_alert_actions"],reload,"admin-alerts");
+const today=new Date().toISOString().slice(0,10);const name=(id:string)=>students.find(s=>s.id===id)?.fullName??"Learner";const trainer=(id:string)=>trainers.find(t=>t.id===id)?.fullName??"Trainer";
  const alerts=useMemo<Alert[]>(()=>{const a:Alert[]=[];enrollments.filter(e=>e.status==="on_hold").forEach(e=>a.push({id:`hold-${e.id}`,type:"Enrollment hold",priority:"medium",title:`${name(e.studentId)} · enrollment on hold`,detail:`${e.holdReason?e.holdReason.replaceAll("_"," "):"Hold"}${e.holdUntil?` until ${new Date(`${e.holdUntil}T12:00:00`).toLocaleDateString("en-IN",{day:"2-digit",month:"short"})}`:""}`,href:`/admin/enrollments/${e.id}`}));events.filter(e=>e.eventType==="class"&&e.date<today&&e.status==="scheduled").forEach(e=>a.push({id:`class-${e.id}`,type:"Class record",priority:"high",title:`Attendance pending · ${e.title}`,detail:`${e.date} · ${e.startTime} · ${trainer(e.trainerId)}`,href:`/admin/classes/${e.id}`}));trainers.filter(t=>t.recordStatus==="active"&&!t.loginLinked).forEach(t=>a.push({id:`login-${t.id}`,type:"Trainer access",priority:"low",title:`Portal access not linked · ${t.fullName}`,detail:"Connect the trainer account before secure live use.",href:`/admin/trainers/${t.id}`}));return a},[enrollments,events,trainers,students,today]);
  const filtered=alerts.filter(a=>`${a.title} ${a.detail} ${a.type}`.toLowerCase().includes(q.toLowerCase())&&(priority==="all"||a.priority===priority)).sort((a,b)=>{
  const order={high:0,medium:1,low:2};const val=sortKey==="priority"?order[a.priority]-order[b.priority]:sortKey==="type"?a.type.localeCompare(b.type):sortKey==="title"?a.title.localeCompare(b.title):a.detail.localeCompare(b.detail);

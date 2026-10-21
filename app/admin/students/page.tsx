@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 import {useEffect,useMemo,useState} from "react";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -19,6 +20,7 @@ export default function StudentsPage(){
  const[notice,setNotice]=useState("");
  const[rows,setRows]=useState<StudentAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[enrollments,setEnrollments]=useState<EnrollmentAdminRecord[]>([]);const[q,setQ]=useState("");const[course,setCourse]=useState("all");const[trainer,setTrainer]=useState("all");const[learning,setLearning]=useState("all");const[channel,setChannel]=useState("all");const[sortKey,setSortKey]=useState<SortKey>("name");const[sortDir,setSortDir]=useState<"asc"|"desc">("asc");const[page,setPage]=useState(1);const[exporting,setExporting]=useState(false);const[showExport,setShowExport]=useState(false);const[exportScope,setExportScope]=useState<ExportScope>("filtered");const[exportError,setExportError]=useState("");const[pageSize,setPageSize]=useState(25);
  useEffect(()=>{Promise.all([listAdminStudents(),listAdminCourses(),listAdminTrainers(),listAdminEnrollments(),listAdminCohorts()]).then(([s,c,t,e,h])=>{setRows(s);setCourses(c);setTrainers(t);setEnrollments(e);setCohorts(h)})},[]);
+ const reload=async()=>{const[s,c,t,e,h]=await Promise.all([listAdminStudents(),listAdminCourses(),listAdminTrainers(),listAdminEnrollments(),listAdminCohorts()]);setRows(s);setCourses(c);setTrainers(t);setEnrollments(e);setCohorts(h)};useLiveRefresh(["students","enrollments","cohorts","courses","trainers"],reload,"admin-students");
  const activeFor=(id:string)=>enrollments.filter(e=>e.studentId===id&&e.status==="active");const holdFor=(id:string)=>enrollments.filter(e=>e.studentId===id&&e.status==="on_hold");const latestFor=(id:string)=>[...enrollments.filter(e=>e.studentId===id)].sort((a,b)=>b.startedAt.localeCompare(a.startedAt))[0];
  const profileIncomplete=(r:StudentAdminRecord)=>!r.dob||!r.grade||!r.city||!r.country||!String(r.primaryGuardianName||r.motherName||r.fatherName||"").trim()||!String(r.primaryGuardianMobile||r.motherMobile||r.fatherMobile||"").trim()||!String(r.primaryWhatsApp||"").trim()||!String(r.parentLoginEmail||"").trim();
  const stateFor=(id:string)=>activeFor(id).length?"in_progress":holdFor(id).length?"on_hold":enrollments.some(e=>e.studentId===id&&e.status==="completed")?"completed":"not_enrolled";const currentFor=(id:string)=>activeFor(id)[0]??holdFor(id)[0]??latestFor(id);

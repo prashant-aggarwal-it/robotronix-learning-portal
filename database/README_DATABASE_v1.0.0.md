@@ -1,33 +1,33 @@
-# Robotronix™ Database — current reference
+# Robotronix — Single-source fresh Supabase database installation
 
-**Authoritative documentation:** [Database and QA](../docs/FRESH_INSTALL_AND_QA.md), [Environment setup](../docs/ENVIRONMENTS.md), [Testing](../docs/TESTING.md).
+**Target:** NEW, EMPTY Supabase project only, for the consolidated release candidate. Database SQL is consolidated; this is not a claim that the new database or frontend has passed tests.
+
+## Production SQL: exactly two mandatory files, one conditional
+
+1. **01_INSTALL_SCHEMA:** Run `database/01_install/01_CREATE_SCHEMA.sql` once in the new Supabase project's SQL Editor. This includes all P1 notifications, P2/P3 Realtime publication, finance cutoff and payout snapshots, system logs/RLS, passwordless provisioning and retention functions. Former scripts 04–09 were integrated and removed.
+2. **02_REFERENCE_DATA:** After schema succeeds, run `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` once. This creates/loads countries, currencies, academic levels, courses and configuration.
+3. **03_ADMIN_BOOTSTRAP (conditional):** Set up Google/SMTP Auth, create/sign in with the actual intended Admin email to establish an `auth.users` identity, then edit and run `database/01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` **only if an Admin profile needs to be bootstrapped**. Replace the literal `ADMIN_EMAIL_HERE`. Never run this unedited or in a project with a verified existing Admin without reviewing the effect.
+
+Then run the **read-only check** `database/03_verify/01_VERIFY_RELEASE.sql`. It is not an installation/migration step. Capture results and address all errors.
+
+## Production rules
+- **Do not run** `database/02_qa/01_QA_SEED.sql`, `02_QA_CLEANUP.sql`, anything in `99_dev_tools`, historical/archive SQL, or the read-only **existing database preflight** as an installation script.
+- A NEW Supabase project has its own URL, publishable/anon key, service role key, Google OAuth/SMTP configuration, redirect URLs, Realtime, RLS, tables and Auth users. None of the old project's data, existing parent accounts, trainers, payments, Zoom host secrets, encrypted access tokens or history automatically transfers.
+- **Fresh Production = empty operational data.** Before replacing an existing live project, decide whether historical learners, attendance, enrollments, finance/payroll, invoices, communication and identities must be migrated. If so, do not cut over to an empty DB until migration and reconciliation are designed and verified. Preserve the old production instance and backups.
+- Environment variables in Netlify, the portal URL/OAuth callbacks, Zoom host connections and Razorpay/webhook endpoints must be reconfigured and verified separately. Do not copy secrets into GitHub.
+- The old database remains untouched by GitHub commits. Nothing is applied merely by downloading this branch.
+- A new Production DB should be used only **after the same consolidated installer and application have passed on a disposable fresh DEV DB**. Verify Google + email OTP, Trainer/Parent RLS, role workflows, Zoom and Razorpay, and the portal build.
+- Do not merge/deploy this Draft release solely on the basis of a combined SQL file.
+
+## Developer QA
+Run `npm ci`, `npm run check:release`, `npm run build`, and configured Playwright QA against DEV. QA fixture scripts are intentionally kept separate. Keep SQL verification results and role-test evidence together with the exact Git commit.
 
 ## SQL inventory
+- `01_install/01_CREATE_SCHEMA.sql`: the ONE canonical schema installer.
+- `01_install/02_INSERT_MASTER_REFERENCE_DATA.sql`: the ONE canonical reference/config seed.
+- `01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql`: optional privileged Admin bootstrap template.
+- `03_verify/01_VERIFY_RELEASE.sql`: read-only schema verification.
+- `02_qa/*`: developer fixtures only; never for Production.
+- `99_dev_tools/*`: destructive DEV tools only; never for Production.
 
-| File | Purpose | Environment |
-| --- | --- | --- |
-| `01_install/01_CREATE_SCHEMA.sql` | Full schema, consolidated integrations and RLS | **Brand new empty project only** |
-| `01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` | Configuration/reference data | New project |
-| `01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` | Admin profile bootstrap example | Only if needed; edit email |
-| `02_qa/01_QA_SEED.sql` | Synthetic profiles and workflow fixtures | **Dev only** |
-| `02_qa/02_QA_CLEANUP.sql` | Remove synthetic fixture data | **Dev only** |
-| `03_verify/01_VERIFY_RELEASE.sql` | Verify important schema features | Dev and Production |
-| `99_dev_tools/00_DEV_ONLY_RESET_PUBLIC_SCHEMA.sql` | Destructive public-schema reset | **Disposable Dev only** |
-
-## Install from zero
-
-1. Create a separate Supabase project for each environment.
-2. In an **empty** project run `01_install/01_CREATE_SCHEMA.sql`, followed by `01_install/02_INSERT_MASTER_REFERENCE_DATA.sql`.
-3. Configure Auth/Google callbacks and create the first Admin account where required.
-4. Run `03_verify/01_VERIFY_RELEASE.sql`.
-5. For Dev only, create dedicated QA Auth users, then run `02_qa/01_QA_SEED.sql` and application test commands.
-
-## Live environment rules
-
-- Both Dev and Production installations have previously been performed in this project; **do not repeat** the fresh schema merely because a new frontend revision is deployed.
-- Preserve the existing Production real Admin. Do not create Dev QA fixtures in Production.
-- Superseded `database/04_upgrade` scripts were integrated into the canonical installer and removed.
-- `database/archive/legacy` contains old sanity/QA SQL for history **only**. Never use those instructions to configure or reset a live environment.
-- Future changes to an already installed database need independently reviewed migration SQL, backup awareness, and an explicit deployment plan.
-
-See the docs hub for Zoom, Razorpay, Netlify and the application lifecycle.
+**Historical incremental scripts 04–09 were deleted from this release branch after verifying their exact content is already included exactly once inside 01_CREATE_SCHEMA.sql.** The Git history retains them if they are ever needed to inspect an older installation; they should not be executed as part of this fresh install.

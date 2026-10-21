@@ -741,3 +741,43 @@ SELECT
   'L_CONSOLIDATED_FEATURES' AS section,
   'Core consolidated objects/constraints' AS check_name,
   'PASS' AS result;
+
+
+-- Consolidated stabilization verification — additive, read-only.
+do $$
+declare obj text;
+begin
+ foreach obj in array array[
+  'portal_system_logs','trainer_finance_change_requests',
+  'trainer_payout_instruction_versions','trainer_payouts',
+  'portal_notifications','portal_access_requests','progress_alert_actions'
+ ] loop
+  if to_regclass('public.'||obj) is null then
+   raise exception 'Missing stabilization table: %',obj;
+  end if;
+ end loop;
+ foreach obj in array array[
+  'trainer_payout_action_insert_trg','trainer_payout_action_update_trg',
+  'progress_action_insert_trg','progress_action_update_trg',
+  'schedule_admin_action_update_trg','trainer_payout_instruction_lock_trg',
+  'trainer_finance_direct_change_version_trg','onboarding_submission_admin_notification_trg'
+ ] loop
+  if not exists(select 1 from pg_trigger where tgname=obj and not tgisinternal and tgenabled<>'D') then
+   raise exception 'Missing/disabled stabilization trigger: %',obj;
+  end if;
+ end loop;
+ if not exists(select 1 from pg_policies where schemaname='public' and tablename='portal_system_logs' and policyname='portal_system_logs_admin_read') then
+  raise exception 'Missing Admin-only diagnostics policy';
+ end if;
+ if not exists(select 1 from pg_policies where schemaname='public' and tablename='trainer_payout_instruction_versions' and policyname='trainer_payout_versions_admin_read') then
+  raise exception 'Missing approved payout-instruction RLS policy';
+ end if;
+ if not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='portal_notifications') then
+  raise exception 'portal_notifications not included in Supabase Realtime publication';
+ end if;
+ if not exists(select 1 from pg_constraint where conrelid='public.portal_access_requests'::regclass
+    and conname='portal_access_requests_status_check' and pg_get_constraintdef(oid) like '%provisioned%') then
+  raise exception 'Passwordless provisioned access state not installed';
+ end if;
+end $$;
+select 'STABILIZATION_DATABASE_GATES' as section,'PASS' as result;
