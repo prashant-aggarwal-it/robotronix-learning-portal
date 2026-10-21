@@ -12,7 +12,10 @@ const files=[
 for(const file of files)if(!fs.existsSync(file))throw new Error("Missing export file: "+file);
 
 const util=fs.readFileSync("lib/export-workbook.ts","utf8");
-for(const marker of ["safeCell","XLSX.writeFile","compression:true"])if(!util.includes(marker))throw new Error("Export utility missing: "+marker);
+for(const marker of ["buildWorkbookBytes","cleanText","storedZip","inlineStr","createObjectURL","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"])
+ if(!util.includes(marker))throw new Error("Secure XLSX export utility missing: "+marker);
+if(util.includes('import("xlsx")')||util.includes("XLSX.writeFile"))
+ throw new Error("Vulnerable SheetJS runtime must not be reintroduced.");
 
 for(const [file,markers] of Object.entries({
  "app/admin/invoices/page.tsx":["Export Excel","Robotronix-Razorpay-Invoices"],
