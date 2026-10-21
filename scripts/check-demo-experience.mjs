@@ -29,7 +29,13 @@ const page=fs.readFileSync("app/demo/[token]/page.tsx","utf8");
 for(const marker of ["Join Discovery Session","Google Calendar","Need another time?","Great first step","How did the demo feel?","ready to build something amazing?"])if(!page.includes(marker))throw new Error("Parent Demo Experience missing: "+marker);
 
 const admin=fs.readFileSync("app/admin/demos/page.tsx","utf8");
-for(const marker of ["Minimum details. Premium experience.","Add learner to group","The trainer will never receive WhatsApp or email details.","Mark resolved","Regenerate guest link","Reschedule","Converted","Lost"])if(!admin.includes(marker))throw new Error("Admin Demo Experience missing: "+marker);
+for(const marker of ["Minimum details. Premium experience.","Add learner to group","The trainer will never receive WhatsApp or email details.","Mark resolved","Regenerate guest link","Reschedule"])if(!admin.includes(marker))throw new Error("Admin Demo Experience missing: "+marker);
+
+// CRM conversion controls were deliberately removed from the Admin demo UI.
+// Preserve historical API actions and database records without resurfacing buttons.
+if(/onClick=\{\(\)=>leadStatus\(|>Converted<|>Lost<|>Follow-up</.test(admin)){
+ throw new Error("Deprecated CRM conversion buttons must stay hidden from Admin Demo Experience.");
+}
 
 const sdk=fs.readFileSync("app/api/zoom/sdk-session/route.ts","utf8");
 for(const marker of ['meeting.purpose==="demo"','This demo is not assigned to you.','Demo guests should use their private invitation page.'])if(!sdk.includes(marker))throw new Error("Demo Zoom authorization missing: "+marker);
