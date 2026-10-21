@@ -4992,6 +4992,14 @@ begin
   and ((x.date+x.start_time) at time zone x.timezone)<v_end
   and ((x.date+x.end_time) at time zone x.timezone)>v_start)
  then raise exception 'Learner has another booking at the new time'; end if;
+ if e.cohort_id is not null and exists(
+  select 1 from public.schedule_events x
+  where x.id<>e.id and x.status not in ('cancelled','rescheduled')
+    and (x.student_id in (select student_id from public.enrollments where cohort_id=e.cohort_id and status='active')
+       or x.enrollment_id in (select id from public.enrollments where cohort_id=e.cohort_id and status='active'))
+    and (x.date+x.start_time) at time zone x.timezone<v_end
+    and (x.date+x.end_time) at time zone x.timezone>v_start)
+ then raise exception 'A cohort learner has another booking at the proposed time'; end if;
  perform 1 from public.trainers where id=e.trainer_id for update;
  insert into public.schedule_events
  (trainer_id,course_id,enrollment_id,cohort_id,student_id,title,date,start_time,end_time,
@@ -5009,6 +5017,12 @@ begin
   insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
   values('parent',e.student_id,e.trainer_id,'class_rescheduled','important','Class rescheduled','The class time has changed. Please check the updated schedule.','/parent'),
   ('student',e.student_id,e.trainer_id,'class_rescheduled','info','Class rescheduled','Please check your updated class time.','/student');
+ end if;
+ if e.cohort_id is not null then
+   insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+   select 'parent',en.student_id,e.trainer_id,'class_rescheduled','important',
+      'Batch class rescheduled','Your shared batch class time has changed. Check the timetable.','/parent'
+   from public.enrollments en where en.cohort_id=e.cohort_id and en.status in ('active','on_hold');
  end if;
  return new_id;
 end $$;
