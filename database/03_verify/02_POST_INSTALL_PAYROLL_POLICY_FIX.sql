@@ -4,6 +4,10 @@
 -- Does not recalculate historical records or edit finalized payouts.
 -- Run in SQL Editor only after reviewing backups and current schema.
 begin;
+-- Accept 15-minute actual-time increments so 75 minutes can be recorded.
+alter table public.schedule_events drop constraint if exists actual_duration_half_hour_check;
+alter table public.schedule_events add constraint actual_duration_half_hour_check
+ check(actual_duration_minutes is null or(actual_duration_minutes between 15 and 480 and actual_duration_minutes % 15=0));
 create or replace function public.sync_trainer_earning(p_event_id uuid,p_force boolean default false)
 returns uuid language plpgsql security definer set search_path=public as $$
 declare
