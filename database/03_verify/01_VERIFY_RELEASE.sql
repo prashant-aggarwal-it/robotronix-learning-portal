@@ -781,3 +781,41 @@ begin
  end if;
 end $$;
 select 'STABILIZATION_DATABASE_GATES' as section,'PASS' as result;
+
+
+-- Scheduling V2 post-install verification (read-only, DEV database first).
+do $$
+declare fn text;
+begin
+ foreach fn in array array[
+  'generate_enrollment_schedule_v2(uuid,text,integer)',
+  'generate_cohort_schedule_v2(uuid,text,integer)',
+  'reassign_enrollment_trainer_v2(uuid,uuid,text)',
+  'reassign_cohort_trainer_v2(uuid,uuid,text)',
+  'pause_enrollment_v2(uuid,date,date,text,text)',
+  'pause_cohort_member_v2(uuid,date,date,text,text)',
+  'resume_enrollment_v2(uuid,text)',
+  'cancel_class_v2(uuid,text,text)',
+  'reschedule_class_v2(uuid,date,time,time,text,text)',
+  'create_makeup_class_v2(uuid,date,time,time,text)',
+  'resolve_class_cancellation_v2(uuid,text,text)',
+  'class_reusable_zoom_link_v2(uuid)'
+ ] loop
+  if to_regprocedure('public.'||fn) is null then
+   raise exception 'Scheduling V2 function missing: %',fn;
+  end if;
+ end loop;
+ if not exists(select 1 from pg_indexes where schemaname='public'
+  and indexname='schedule_events_generation_key_unique') then
+   raise exception 'Scheduling V2 occurrence idempotency index missing';
+ end if;
+ if not exists(select 1 from pg_trigger where tgname='mark_class_cancellation_for_review_v2'
+  and not tgisinternal and tgenabled<>'D') then
+   raise exception 'Cancellation review trigger missing or disabled';
+ end if;
+ if not exists(select 1 from information_schema.columns where table_schema='public'
+  and table_name='trainers' and column_name='zoom_join_url') then
+   raise exception 'Trainer reusable Zoom URL column missing';
+ end if;
+end $$;
+select 'SCHEDULING_V2_OBJECT_GATES' as section,'PASS' as result;
