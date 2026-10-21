@@ -94,3 +94,6 @@ The release branch now contains precisely three install SQL files: `01_CREATE_SC
 - Updated Trainer earning explanations and Admin pay descriptions; added `qa/payroll-rules.spec.ts` coverage and stabilization source checks.
 - The project's **previously installed Supabase schema requires a one-time targeted update** `database/03_verify/02_POST_INSTALL_PAYROLL_POLICY_FIX.sql`. This is distinct from fresh installs, which use only schema 01 and reference data 02. Do not rerun the whole schema or silently recalculate historical approved/paid earnings.
 - Changes committed in release branch; new local build, tests and connected DB application **not yet confirmed**.
+
+## Availability Admin alert fix (2026-10-21)
+Trainer-origin weekly availability saves and date-override add/remove now call the restricted `notify_admin_trainer_availability_change` database RPC after a successful operation. The notification links to Admin Trainer Details; Admin-origin edits do not create a trainer-origin alert. In-app confirmation distinguishes notification delivery failure. Fresh databases include the function in schema 01. An ALREADY INSTALLED Supabase project must execute `database/03_verify/03_POST_INSTALL_AVAILABILITY_NOTIFICATIONS.sql` once (after backup/review) or notifications will not appear. Browser/DB role tests pending.
