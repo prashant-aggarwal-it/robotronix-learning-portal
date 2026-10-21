@@ -551,7 +551,7 @@ export async function generateEnrollmentScheduleV2(enrollmentId:string,horizon:"
  return{ok:true,created:Number(data?.created??0),total:Number(data?.total??0)};
 }
 
-export async function activateOnboarding(id:string,assignment:{courseId:string;trainerId:string;enrollmentType:"one_to_one"|"small_group";cohortId?:string;startDate?:string;scheduleTimezone?:string;scheduleRules?:WeeklyScheduleSlot[];scheduleOverrideConfirmed?:boolean;scheduleOverrideNote?:string}){
+export async function activateOnboarding(id:string,assignment:{courseId:string;trainerId:string;enrollmentType:"one_to_one"|"small_group";cohortId?:string;startDate?:string;scheduleTimezone?:string;scheduleRules?:WeeklyScheduleSlot[];scheduleOverrideConfirmed?:boolean;scheduleOverrideNote?:string;schedulingHorizon?:"full"|"weeks"|"manual";schedulingWeeks?:number}){
   const submission=await getOnboardingSubmission(id);
   if(!submission)return{ok:false,error:"Onboarding submission not found."};
   if(submission.status==="active")return{ok:false,error:"This onboarding submission is already active."};
