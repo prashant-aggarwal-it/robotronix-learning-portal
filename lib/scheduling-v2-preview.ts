@@ -5,7 +5,7 @@ export type SchedulingHorizon="full"|"weeks"|"manual";
 export interface GeneratedClassSlot {date:string;startTime:string;endTime:string;timezone:string;startUtc:number;endUtc:number;conflicts:string[];}
 export interface SchedulePreviewOptions {
  startDate:string; timezone:string; rules:WeeklyScheduleSlot[]; horizon:SchedulingHorizon;
- totalSessions:number; weeks?:number; trainerId:string; learnerId?:string; existingEvents?:ScheduleEvent[];
+ totalSessions:number; weeks?:number; trainerId:string; learnerId?:string; ownedEnrollmentId?:string; ownedCohortId?:string; existingEvents?:ScheduleEvent[];
 }
 
 /** Read-only preview. Booking must be performed by a transaction-safe server operation. */
@@ -35,6 +35,10 @@ export function previewCourseSchedule(options:SchedulePreviewOptions):GeneratedC
    const conflicts:string[]=[];
    for(const event of existingEvents){
     if(["cancelled","rescheduled"].includes(event.status))continue;
+    // Previously generated identical occurrences are idempotent bookings, not conflicts.
+    if(event.occurrenceKind==="regular"&&event.date===date&&event.startTime===slot.startTime&&event.endTime===slot.endTime
+      &&((options.ownedEnrollmentId&&event.enrollmentId===options.ownedEnrollmentId)
+       ||(options.ownedCohortId&&event.cohortId===options.ownedCohortId)))continue;
     const eventEndDate=event.endTime<=event.startTime?new Date(new Date(event.date+"T12:00:00Z").getTime()+86400000).toISOString().slice(0,10):event.date;
     const from=zonedLocalToUtc(event.date,event.startTime,event.timezone).getTime();
     const to=zonedLocalToUtc(eventEndDate,event.endTime,event.timezone).getTime();
