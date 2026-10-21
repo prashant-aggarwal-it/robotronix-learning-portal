@@ -1,0 +1,5 @@
+One-time DEV branch dependency remediation request — 2026-10-21.
+Refresh only compatible lockfile security patches with npm audit fix.
+Validate npm ci, check:release and Next.js build before pushing back.
+Do not modify main, production, or any Supabase database.
+The unpatched xlsx advisory must remain a blocked production security gate.
