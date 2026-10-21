@@ -4682,3 +4682,53 @@ begin
 end $$;
 revoke all on function public.reassign_enrollment_trainer_v2(uuid,uuid,text) from public,anon;
 grant execute on function public.reassign_enrollment_trainer_v2(uuid,uuid,text) to authenticated;
+
+
+-- Scheduling V2: trainer-owned reusable Zoom meetings. Unlike Zoom API-created
+-- per-session meetings, this is a stable join link controlled by the trainer.
+alter table public.trainers add column if not exists zoom_join_url text;
+alter table public.trainers drop constraint if exists trainers_zoom_join_url_valid;
+alter table public.trainers add constraint trainers_zoom_join_url_valid
+ check (zoom_join_url is null or zoom_join_url='' or
+        zoom_join_url ~* '^https://([a-z0-9-]+\\.)*zoom\\.us/(j|wc/join)/[0-9]+([?][a-z0-9_=&%-]+)?$');
+
+create or replace function public.class_reusable_zoom_link_v2(p_event_id uuid)
+returns text language plpgsql security definer set search_path=public as $$
+declare
+ e public.schedule_events%rowtype;
+ v_url text;
+ v_authorized boolean:=false;
+ v_start timestamptz; v_end timestamptz;
+begin
+ if auth.uid() is null then return null; end if;
+ select * into e from public.schedule_events where id=p_event_id;
+ if not found or e.event_type<>'class' or e.status not in ('scheduled','tentative','makeup')
+ then return null; end if;
+ if public.is_admin() or public.current_trainer_id()=e.trainer_id then
+  v_authorized:=true;
+ else
+  select exists(
+   select 1 from public.students s
+   where s.id in (
+     select x.student_id from public.enrollments x
+       where x.id=e.enrollment_id or (e.cohort_id is not null and x.cohort_id=e.cohort_id)
+     union select e.student_id where e.student_id is not null
+   )
+   and (
+     s.profile_id=auth.uid()
+     or exists(select 1 from public.parent_students ps
+          join public.parents p on p.id=ps.parent_id
+          where ps.student_id=s.id and p.profile_id=auth.uid())
+   )
+  ) into v_authorized;
+ end if;
+ if not v_authorized then return null; end if;
+ v_start:=(e.date+e.start_time) at time zone e.timezone;
+ v_end:=(e.date+e.end_time) at time zone e.timezone;
+ if now()<v_start-interval '15 minutes' or now()>v_end+interval '15 minutes'
+ then return null; end if;
+ select nullif(trim(t.zoom_join_url),'') into v_url from public.trainers t where t.id=e.trainer_id;
+ return v_url;
+end $$;
+revoke all on function public.class_reusable_zoom_link_v2(uuid) from public,anon;
+grant execute on function public.class_reusable_zoom_link_v2(uuid) to authenticated;
