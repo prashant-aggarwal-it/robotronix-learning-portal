@@ -819,3 +819,45 @@ begin
  end if;
 end $$;
 select 'SCHEDULING_V2_OBJECT_GATES' as section,'PASS' as result;
+
+
+-- Security acceptance gates (read-only; validate on a separate DEV database).
+do $$
+declare v_table text; v_rpc text; v_fn oid;
+begin
+ foreach v_table in array array[
+  'profiles','parents','students','student_guardians','parent_students',
+  'enrollments','cohorts','schedule_events','class_attendance',
+  'trainer_earnings','trainer_finance','student_fee_payments',
+  'portal_notifications','communication_messages'
+ ] loop
+  if to_regclass('public.'||v_table) is null then
+   raise exception 'Security acceptance: missing sensitive table %',v_table;
+  end if;
+  if not exists(
+   select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+   where n.nspname='public' and c.relname=v_table and c.relrowsecurity
+  ) then raise exception 'Security acceptance: RLS not enabled for %',v_table; end if;
+ end loop;
+ foreach v_rpc in array array[
+  'generate_enrollment_schedule_v2(uuid,text,integer)',
+  'generate_cohort_schedule_v2(uuid,text,integer)',
+  'reassign_enrollment_trainer_v2(uuid,uuid,text)',
+  'reassign_cohort_trainer_v2(uuid,uuid,text)',
+  'pause_enrollment_v2(uuid,date,date,text,text)',
+  'pause_cohort_member_v2(uuid,date,date,text,text)',
+  'resume_enrollment_v2(uuid,text)',
+  'cancel_class_v2(uuid,text,text)',
+  'reschedule_class_v2(uuid,date,time,time,text,text)',
+  'create_makeup_class_v2(uuid,date,time,time,text)',
+  'resolve_class_cancellation_v2(uuid,text,text)',
+  'class_reusable_zoom_link_v2(uuid)'
+ ] loop
+  v_fn:=to_regprocedure('public.'||v_rpc);
+  if v_fn is null then raise exception 'Security acceptance: missing RPC %',v_rpc; end if;
+  if has_function_privilege('anon',v_fn,'EXECUTE') then
+    raise exception 'Security acceptance: anonymous EXECUTE permission on %',v_rpc;
+  end if;
+ end loop;
+end $$;
+select 'SECURITY_RLS_AND_PRIVILEGED_RPC_GATE' as section, 'PASS' as result;
