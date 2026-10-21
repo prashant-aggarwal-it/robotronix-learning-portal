@@ -160,7 +160,7 @@ export interface ScheduleEvent {
   id:string; trainerId:string; courseId:string; enrollmentId?:string; cohortId?:string; studentId?:string;
   title:string; date:string; startTime:string; endTime:string; timezone:string; eventType:ScheduleEventType; deliveryMode:DeliveryMode;
   status:ScheduleEventStatus; actualDurationMinutes?:number; occurrenceKind?:ScheduleOccurrenceKind; notes?:string; rescheduledToId?:string; originalEventId?:string;
-  requestedBy?:"parent"|"student"|"trainer"|"admin"; changeReason?:string; sessionTopic?:string; projectWorkedOn?:string; skillsWorked?:string[];
+  requestedBy?:"parent"|"student"|"trainer"|"admin"; changeReason?:string; financeExceptionStatus?:"none"|"review"|"approved"|"rejected"; financeExceptionNote?:string; sessionTopic?:string; projectWorkedOn?:string; skillsWorked?:string[];
 }
 
 export interface ClassAttendanceRecord {
