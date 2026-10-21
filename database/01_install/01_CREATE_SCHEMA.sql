@@ -5150,3 +5150,40 @@ begin
 end $$;
 revoke all on function public.create_makeup_class_v2(uuid,date,time,time,text) from public,anon;
 grant execute on function public.create_makeup_class_v2(uuid,date,time,time,text) to authenticated;
+
+
+-- Individual leave from a cohort NEVER shifts or cancels the shared batch class.
+create or replace function public.pause_cohort_member_v2(
+ p_enrollment_id uuid,p_from date,p_resume date,p_reason text,p_note text default ''
+) returns jsonb language plpgsql security definer set search_path=public as $$
+declare en public.enrollments%rowtype; v_days integer;
+begin
+ select * into en from public.enrollments where id=p_enrollment_id for update;
+ if not found or en.enrollment_type<>'small_group' or en.status<>'active'
+ then raise exception 'Choose an active cohort learner'; end if;
+ if not (public.is_admin() or (auth.uid() is not null and public.current_trainer_id()=en.trainer_id))
+ then raise exception 'Not authorized'; end if;
+ if p_reason not in ('exams','medical','travel','family','other')
+ then raise exception 'Valid leave reason is required'; end if;
+ if p_from is null or p_resume is null or p_resume<=p_from
+   or p_from<(now() at time zone en.schedule_timezone)::date
+ then raise exception 'Choose valid future leave dates'; end if;
+ v_days:=p_resume-p_from;
+ if v_days>14 and not public.is_admin() then raise exception 'Admin approval required beyond 14 days'; end if;
+ if v_days>365 then raise exception 'Leave cannot exceed one year'; end if;
+ update public.enrollments set status='on_hold',hold_reason=p_reason,hold_from=p_from,
+  hold_until=p_resume,hold_note=p_note,updated_at=now()
+ where id=p_enrollment_id;
+ insert into public.enrollment_holds(enrollment_id,student_id,reason,start_date,end_date,status,note)
+ values(en.id,en.student_id,p_reason,p_from,p_resume,'active',p_note);
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'enrollment',en.id::text,'cohort_member_leave_v2',
+ jsonb_build_object('status',en.status),
+ jsonb_build_object('leave_from',p_from,'resume_from',p_resume,'reason',p_reason,'batch_schedule_unchanged',true));
+ insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+ values('parent',en.student_id,en.trainer_id,'cohort_leave','info','Leave recorded',
+ 'Your learner is excused from cohort sessions during the approved break; other classes continue.','/parent');
+ return jsonb_build_object('moved',0,'shiftDays',0,'cohortUnchanged',true);
+end $$;
+revoke all on function public.pause_cohort_member_v2(uuid,date,date,text,text) from public,anon;
+grant execute on function public.pause_cohort_member_v2(uuid,date,date,text,text) to authenticated;
