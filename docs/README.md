@@ -65,5 +65,6 @@ For this unmerged, untested implementation see [Action-required notification des
 - [System logging and cleanup](SYSTEM_LOGS.md)
 
 
-## Database migration execution order (existing installations)
+## Database installation for a fresh Supabase project
 
+Follow the [single-schema fresh installation guide](DATABASE_MIGRATION_ORDER.md). Only **01_CREATE_SCHEMA.sql**, **02_INSERT_MASTER_REFERENCE_DATA.sql**, and the **conditional first Admin bootstrap example** remain in `database/01_install/`. QA seed and DEV-reset scripts are not part of Production setup.
