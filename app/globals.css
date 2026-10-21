@@ -1382,3 +1382,13 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
  .historyPanel summary{flex-direction:column;align-items:flex-start!important}
  .portalAccessPanel .formActions .button{max-width:100%;white-space:normal}
 }
+
+
+/* Trainer approved courses — distinct, responsive permissions without catalogue levels. */
+.trainerApprovedCourseGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px;padding:4px 0 8px}
+.trainerApprovedCourseCard{min-width:0;display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--surface,#fff);border:1px solid #e2ddf0;border-radius:17px;box-shadow:0 3px 12px rgba(31,27,60,.035)}
+.trainerApprovedCourseIcon{flex:0 0 34px;width:34px;height:34px;display:grid;place-items:center;color:#326a54;background:#e8f6ee;border-radius:10px;font-weight:800}
+.trainerApprovedCourseBody{min-width:0;display:grid;gap:6px}
+.trainerApprovedCourseBody h3{margin:0;font-size:1rem;line-height:1.45;overflow-wrap:anywhere;color:var(--text-primary,#191d30)}
+.trainerApprovedCourseBody>span{color:var(--text-secondary,#667085);font-size:.8rem}
+@media(max-width:620px){.trainerApprovedCourseGrid{grid-template-columns:1fr}.trainerApprovedCourseCard{padding:15px}}
