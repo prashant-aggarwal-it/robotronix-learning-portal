@@ -526,6 +526,17 @@ export async function reassignEnrollmentTrainerV2(enrollmentId:string,trainerId:
  return error?{ok:false,error:error.message}:{ok:true,updated:Number(data?.updated??0)};
 }
 
+export async function generateCohortScheduleV2(cohortId:string,horizon:"full"|"weeks"|"manual"="full",weeks?:number):Promise<{ok:true;created:number;total:number}|{ok:false;error:string}>{
+ const db=getSupabaseBrowserClient();if(!db)return{ok:false,error:"Cohort schedule generation requires database access."};
+ const {data,error}=await db.rpc("generate_cohort_schedule_v2",{p_cohort_id:cohortId,p_horizon:horizon,p_weeks:horizon==="weeks"?weeks:null});
+ return error?{ok:false,error:error.message}:{ok:true,created:Number(data?.created??0),total:Number(data?.total??0)};
+}
+export async function createMakeupClassV2(eventId:string,date:string,startTime:string,endTime:string,reason:string):Promise<{ok:true;id:string}|{ok:false;error:string}>{
+ const db=getSupabaseBrowserClient();if(!db)return{ok:false,error:"Makeup scheduling requires database access."};
+ const {data,error}=await db.rpc("create_makeup_class_v2",{p_original_id:eventId,p_date:date,p_start:startTime,p_end:endTime,p_reason:reason});
+ return error?{ok:false,error:error.message}:{ok:true,id:String(data)};
+}
+
 export async function generateEnrollmentScheduleV2(enrollmentId:string,horizon:"full"|"weeks"|"manual"="full",weeks?:number):Promise<{ok:true;created:number;total:number}|{ok:false;error:string}>{
  if(horizon==="manual")return{ok:true,created:0,total:0};
  const supabase=getSupabaseBrowserClient();
