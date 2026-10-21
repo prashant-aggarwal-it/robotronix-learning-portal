@@ -11,7 +11,7 @@
     "check:communication": "node scripts/check-communication-security.mjs",
     "check:finance": "node --experimental-strip-types scripts/check-student-finance.mjs",
     "check:production-env": "node scripts/check-production-env.mjs",
-    "check:release": "npm run typecheck && npm run check:structure && npm run check:communication && npm run check:finance && npm run check:migration && npm run check:fresh-db && npm run check:zoom-poc && npm run check:zoom-classroom && npm run check:razorpay-ops && npm run check:exports && npm run check:customer-delight && npm run check:calendar && npm run check:demo-experience && npm run check:live-data && npm run check:p2p3-live && npm run check:stabilization",
+    "check:release": "node scripts/check-release-all.mjs",
     "qa:auth-check": "playwright test qa/auth.setup.ts --project=auth-setup",
     "qa:roles": "playwright test qa/admin.spec.ts qa/roles.spec.ts qa/permissions.spec.ts --project=desktop-chromium",
     "qa:workflow": "playwright test qa/workflows.spec.ts --project=desktop-chromium",
