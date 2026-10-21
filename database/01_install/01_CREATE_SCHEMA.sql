@@ -4499,3 +4499,111 @@ begin
 end $$;
 revoke all on function public.notify_admin_trainer_availability_change(uuid,text) from public,anon;
 grant execute on function public.notify_admin_trainer_availability_change(uuid,text) to authenticated;
+
+
+-- ======================================================================
+-- Scheduling V2 foundation: transaction-safe booking of full course slots
+-- The server is authoritative; browser previews never create bookings.
+-- ======================================================================
+alter table public.schedule_events
+ add column if not exists generation_key text;
+create unique index if not exists schedule_events_generation_key_unique
+ on public.schedule_events(generation_key) where generation_key is not null;
+
+create or replace function public.generate_enrollment_schedule_v2(
+ p_enrollment_id uuid,
+ p_horizon text default 'full',
+ p_weeks integer default null
+)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare
+ v_en public.enrollments%rowtype;
+ v_course public.courses%rowtype;
+ v_day date;
+ v_slot jsonb;
+ v_start time;
+ v_end time;
+ v_start_at timestamptz;
+ v_end_at timestamptz;
+ v_n integer:=0;
+ v_created integer:=0;
+ v_total integer;
+ v_limit integer;
+ v_key text;
+ v_type text;
+begin
+ if not public.is_admin() then raise exception 'Admin access required'; end if;
+ if p_horizon not in ('full','weeks','manual') then raise exception 'Invalid scheduling horizon'; end if;
+ if p_horizon='manual' then return jsonb_build_object('created',0,'mode','manual'); end if;
+ if p_horizon='weeks' and (p_weeks is null or p_weeks<1 or p_weeks>104)
+ then raise exception 'Weeks must be between 1 and 104'; end if;
+ select * into v_en from public.enrollments where id=p_enrollment_id for update;
+ if not found then raise exception 'Enrollment not found'; end if;
+ if v_en.status <> 'active' then raise exception 'Only active enrollments can be scheduled'; end if;
+ if v_en.enrollment_type <> 'one_to_one' then
+   raise exception 'Group sessions must be generated at cohort level, not once per learner';
+ end if;
+ select * into v_course from public.courses where id=v_en.course_id;
+ if not found then raise exception 'Course not found'; end if;
+ v_total:=coalesce(v_en.planned_sessions,v_course.total_sessions);
+ if v_total<1 or v_total>500 then raise exception 'Invalid planned class count'; end if;
+ if jsonb_typeof(v_en.schedule_rules)<>'array' or jsonb_array_length(v_en.schedule_rules)=0
+ then raise exception 'Weekly class slots are required'; end if;
+ -- Lock the trainer while building the class plan to serialize generator runs
+ -- across enrollments for the same trainer.
+ perform 1 from public.trainers where id=v_en.trainer_id for update;
+ v_limit:=case when p_horizon='weeks' then p_weeks*7 else 1461 end;
+ for v_day in select (v_en.started_at+n)::date from generate_series(0,v_limit-1) as n loop
+  for v_slot in select value from jsonb_array_elements(v_en.schedule_rules) as value
+     order by (value->>'startTime')::time loop
+   if (v_slot->>'dayOfWeek')::integer <> extract(dow from v_day)::integer then continue; end if;
+   v_start:=(v_slot->>'startTime')::time;
+   v_end:=(v_slot->>'endTime')::time;
+   if v_end<=v_start or extract(minute from v_start)::integer%30<>0 or
+      extract(minute from v_end)::integer%30<>0 then
+    raise exception 'Generated session must use supported same-day 30-minute intervals';
+   end if;
+   v_start_at:=(v_day+v_start) at time zone v_en.schedule_timezone;
+   v_end_at:=(v_day+v_end) at time zone v_en.schedule_timezone;
+   if v_end_at<=v_start_at then raise exception 'Invalid timezone-adjusted slot'; end if;
+   v_key:='enrollment:'||v_en.id::text||':regular:'||v_day::text||':'||v_start::text;
+   -- Preserve already-modified/cancelled events under their original unique key.
+   if exists(select 1 from public.schedule_events where generation_key=v_key) then
+      v_n:=v_n+1;
+   else
+     if exists (
+      select 1 from public.schedule_events e
+       where e.status not in ('cancelled','rescheduled') and e.trainer_id=v_en.trainer_id
+         and (e.date+e.start_time) at time zone e.timezone < v_end_at
+         and (e.date+e.end_time) at time zone e.timezone > v_start_at
+     ) then raise exception 'Trainer conflict for % %',v_day,v_start; end if;
+     if exists (
+      select 1 from public.schedule_events e
+       where e.status not in ('cancelled','rescheduled')
+         and (e.student_id=v_en.student_id or e.enrollment_id in
+               (select id from public.enrollments where student_id=v_en.student_id)
+              or e.cohort_id in
+               (select cohort_id from public.enrollments where student_id=v_en.student_id and cohort_id is not null))
+         and (e.date+e.start_time) at time zone e.timezone < v_end_at
+         and (e.date+e.end_time) at time zone e.timezone > v_start_at
+     ) then raise exception 'Learner conflict for % %',v_day,v_start; end if;
+     insert into public.schedule_events
+      (trainer_id,course_id,enrollment_id,student_id,title,date,start_time,end_time,
+       timezone,event_type,delivery_mode,status,occurrence_kind,generation_key)
+     values(v_en.trainer_id,v_en.course_id,v_en.id,v_en.student_id,
+       v_course.title,v_day,v_start,v_end,v_en.schedule_timezone,
+       'class','one_to_one','scheduled','regular',v_key);
+     v_created:=v_created+1;
+     v_n:=v_n+1;
+   end if;
+   exit when v_n>=v_total;
+  end loop;
+  exit when v_n>=v_total;
+ end loop;
+ if p_horizon='full' and v_n<v_total then
+  raise exception 'Unable to generate all % classes; only % fit',v_total,v_n;
+ end if;
+ return jsonb_build_object('created',v_created,'total',v_n,'mode',p_horizon);
+end $$;
+revoke all on function public.generate_enrollment_schedule_v2(uuid,text,integer) from public,anon;
+grant execute on function public.generate_enrollment_schedule_v2(uuid,text,integer) to authenticated;
