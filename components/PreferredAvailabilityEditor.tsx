@@ -30,7 +30,7 @@ export function PreferredAvailabilityEditor({value,timeZone,onChange,mode="famil
   const[addDayOpen,setAddDayOpen]=useState(false);
   const[copyFrom,setCopyFrom]=useState<string|null>(null);
   const[copyTargets,setCopyTargets]=useState<string[]>([]);
-  const[copyMode,setCopyMode]=useState<"merge"|"replace">("merge");
+  const[copyMode,setCopyMode]=useState<"merge"|"replace">("replace");
   const groupedDays=displayDays.filter(day=>windows.some(w=>w.day===day));
 
   function commit(next:PreferredTimeWindow[],nextNote=note){onChange(serializePreferredTimeWindows(next,nextNote))}
@@ -38,7 +38,7 @@ export function PreferredAvailabilityEditor({value,timeZone,onChange,mode="famil
   function addTime(day:string){commit([...windows,{day,dayOfWeek:classDayNames.indexOf(day),start:"17:00",end:"19:00"}])}
   function update(index:number,patch:Partial<PreferredTimeWindow>){commit(windows.map((w,i)=>{if(i!==index)return w;const next={...w,...patch};if(patch.start!==undefined||patch.end!==undefined)next.endsNextDay=next.end<next.start;return next}))}
   function remove(index:number){commit(windows.filter((_,i)=>i!==index))}
-  function openCopy(day:string){setCopyFrom(day);setCopyTargets([]);setCopyMode("merge")}
+  function openCopy(day:string){setCopyFrom(day);setCopyTargets([]);setCopyMode("replace")}
   function applyCopy(){
     if(!copyFrom||!copyTargets.length){setCopyFrom(null);return}
     const source=windows.filter(w=>w.day===copyFrom);let next=[...windows];
@@ -65,7 +65,7 @@ export function PreferredAvailabilityEditor({value,timeZone,onChange,mode="famil
           <button type="button" className="iconButton dangerIcon" aria-label={`Remove ${day} timing`} onClick={()=>remove(index)}>×</button>
           {overlapPairs.has(index)&&<div className="inlineFieldError timingOverlapError">Overlaps another saved window.</div>}{invalidPairs.has(index)&&<div className="inlineFieldError timingOverlapError">{timeRangeError(w.start,w.end,w.endsNextDay,12*60)}</div>}
         </div>)}</div>
-        {copyFrom===day&&<div className="copyTimingPanel"><div><b>Copy {day} timings to</b><div className="copyDayChoices">{displayDays.filter(d=>d!==day).map(d=><label key={d}><input type="checkbox" checked={copyTargets.includes(d)} onChange={e=>setCopyTargets(x=>e.target.checked?[...x,d]:x.filter(v=>v!==d))}/><span>{d.slice(0,3)}</span></label>)}</div></div><div className="copyModeChoices"><label><input type="radio" checked={copyMode==="merge"} onChange={()=>setCopyMode("merge")}/> Merge non-overlapping</label><label><input type="radio" checked={copyMode==="replace"} onChange={()=>setCopyMode("replace")}/> Replace selected days</label></div><div className="row"><button type="button" className="button ghost smallButton" onClick={()=>setCopyFrom(null)}>Cancel</button><button type="button" className="button smallButton" disabled={!copyTargets.length} onClick={applyCopy}>Copy timings</button></div></div>}
+        {copyFrom===day&&<div className="copyTimingPanel"><div><b>Copy {day} timings to</b><div className="copyDayChoices">{displayDays.filter(d=>d!==day).map(d=><label key={d}><input type="checkbox" checked={copyTargets.includes(d)} onChange={e=>setCopyTargets(x=>e.target.checked?[...x,d]:x.filter(v=>v!==d))}/><span>{d.slice(0,3)}</span></label>)}</div></div><div className="copyModeChoices"><label><input type="radio" checked={copyMode==="merge"} onChange={()=>setCopyMode("merge")}/> Merge non-overlapping (overlapping slots skipped)</label><label><input type="radio" checked={copyMode==="replace"} onChange={()=>setCopyMode("replace")}/> Replace selected days (copy exact times)</label></div><div className="row"><button type="button" className="button ghost smallButton" onClick={()=>setCopyFrom(null)}>Cancel</button><button type="button" className="button smallButton" disabled={!copyTargets.length} onClick={applyCopy}>Copy timings</button></div></div>}
       </div>)}
       {!groupedDays.length&&<div className="emptyScheduleState"><b>{isTrainer?"No recurring availability saved.":"No preferred windows saved."}</b><span>{isTrainer?"Add the trainer’s normal weekly working windows.":"Add the family’s confirmed availability."}</span></div>}
     </div>
