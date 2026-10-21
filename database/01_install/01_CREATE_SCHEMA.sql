@@ -4732,3 +4732,124 @@ begin
 end $$;
 revoke all on function public.class_reusable_zoom_link_v2(uuid) from public,anon;
 grant execute on function public.class_reusable_zoom_link_v2(uuid) to authenticated;
+
+
+-- Scheduling V2: 1-to-1 learner pause. The operation is all-or-nothing.
+-- Shift uncompleted *regular* future classes by complete weeks. This preserves
+-- weekly days/clock times and avoids breaking paid/delivered history.
+create or replace function public.pause_enrollment_v2(
+ p_enrollment_id uuid,p_from date,p_resume date,p_reason text,p_note text default ''
+) returns jsonb language plpgsql security definer set search_path=public as $$
+declare
+ v_en public.enrollments%rowtype;
+ v_days integer; v_shift integer; v_count integer:=0;
+ v_event public.schedule_events%rowtype;
+ v_target_date date;
+ v_from timestamptz;v_to timestamptz;
+ v_is_admin boolean;
+begin
+ v_is_admin:=public.is_admin();
+ select * into v_en from public.enrollments where id=p_enrollment_id for update;
+ if not found then raise exception 'Enrollment not found'; end if;
+ if not (v_is_admin or (public.current_trainer_id()=v_en.trainer_id and auth.uid() is not null))
+ then raise exception 'Not authorized to pause this learner'; end if;
+ if v_en.enrollment_type<>'one_to_one' then raise exception 'An individual cohort learner does not pause the batch calendar'; end if;
+ if v_en.status<>'active' then raise exception 'Only active enrollments can be paused'; end if;
+ if p_reason not in ('exams','medical','travel','family','other') then raise exception 'Choose a valid pause reason'; end if;
+ if p_from is null or p_resume is null or p_resume<=p_from then raise exception 'Choose valid pause and resume dates'; end if;
+ if p_from<(now() at time zone v_en.schedule_timezone)::date then raise exception 'Cannot backdate a pause'; end if;
+ v_days:=p_resume-p_from;
+ if v_days>14 and not v_is_admin then raise exception 'Pauses longer than 14 days need Admin approval'; end if;
+ if v_days>365 then raise exception 'Pause cannot exceed one year'; end if;
+ v_shift:=((v_days+6)/7)*7;
+ -- Lock trainer to protect against concurrent V2 scheduling/reassignment.
+ perform 1 from public.trainers where id=v_en.trainer_id for update;
+ for v_event in select * from public.schedule_events
+   where enrollment_id=p_enrollment_id and event_type='class'
+     and date>=p_from and status not in ('cancelled','rescheduled','conducted')
+   order by date,start_time,id for update
+ loop
+   if v_event.status not in ('scheduled','tentative') or v_event.occurrence_kind<>'regular'
+   then raise exception 'Modified or makeup class % needs individual review',v_event.id; end if;
+   if exists(select 1 from public.class_attendance where schedule_event_id=v_event.id)
+      or exists(select 1 from public.trainer_earnings where schedule_event_id=v_event.id and status in ('approved','paid'))
+   then raise exception 'A future class has protected attendance or payroll'; end if;
+   if exists(select 1 from public.zoom_meetings
+    where schedule_event_id=v_event.id and status in ('scheduled','started'))
+   then raise exception 'Class % already has an individual Zoom meeting. Reconcile its Zoom meeting before moving dates',v_event.id;
+   end if;
+   v_target_date:=v_event.date+v_shift;
+   v_from:=(v_target_date+v_event.start_time) at time zone v_event.timezone;
+   v_to:=(v_target_date+v_event.end_time) at time zone v_event.timezone;
+   if exists(select 1 from public.schedule_events other
+    where other.enrollment_id is distinct from p_enrollment_id
+      and other.trainer_id=v_en.trainer_id and other.status not in ('cancelled','rescheduled')
+      and ((other.date+other.start_time) at time zone other.timezone)<v_to
+      and ((other.date+other.end_time) at time zone other.timezone)>v_from)
+   then raise exception 'Shifted class conflicts with another trainer booking on %',v_target_date; end if;
+   if exists(select 1 from public.schedule_events other
+    where other.enrollment_id is distinct from p_enrollment_id
+     and other.status not in ('cancelled','rescheduled')
+     and (other.student_id=v_en.student_id or other.enrollment_id in
+         (select id from public.enrollments where student_id=v_en.student_id)
+          or other.cohort_id in (select cohort_id from public.enrollments
+              where student_id=v_en.student_id and cohort_id is not null))
+     and ((other.date+other.start_time) at time zone other.timezone)<v_to
+     and ((other.date+other.end_time) at time zone other.timezone)>v_from)
+   then raise exception 'Shifted class conflicts with another learner booking on %',v_target_date; end if;
+   if exists(select 1 from public.trainer_availability_overrides o
+    where o.trainer_id=v_en.trainer_id and o.date=v_target_date
+      and o.override_type='unavailable' and o.start_time<v_event.end_time and o.end_time>v_event.start_time)
+   then raise exception 'Trainer is unavailable on shifted date %',v_target_date; end if;
+ end loop;
+ update public.schedule_events
+ set date=date+v_shift,requested_by=case when v_is_admin then 'admin' else 'trainer' end,
+     change_reason=coalesce(change_reason||' | ','')||'Shifted '||v_shift::text||' days for '||p_reason||' break',
+     updated_at=now()
+ where enrollment_id=p_enrollment_id and event_type='class' and date>=p_from
+   and status in ('scheduled','tentative') and occurrence_kind='regular';
+ get diagnostics v_count=row_count;
+ update public.enrollments set status='on_hold',hold_reason=p_reason,hold_from=p_from,
+  hold_until=p_resume,hold_note=p_note,updated_at=now()
+ where id=p_enrollment_id;
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'enrollment',p_enrollment_id::text,'pause_enrollment_v2',
+ jsonb_build_object('status',v_en.status,'trainer_id',v_en.trainer_id),
+ jsonb_build_object('pause_from',p_from,'resume_from',p_resume,'reason',p_reason,
+                    'shift_days',v_shift,'classes_moved',v_count));
+ insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+ values('parent',v_en.student_id,v_en.trainer_id,'enrollment_paused','important',
+ 'Classes paused','Your agreed class break has been recorded and the future schedule adjusted.','/parent'),
+ ('trainer',v_en.student_id,v_en.trainer_id,'enrollment_paused','info',
+ 'Learner on break','A learner is on a scheduled break. Review the updated timetable.','/trainer/classes');
+ return jsonb_build_object('moved',v_count,'shiftDays',v_shift,'resumeFrom',p_resume);
+end $$;
+revoke all on function public.pause_enrollment_v2(uuid,date,date,text,text) from public,anon;
+grant execute on function public.pause_enrollment_v2(uuid,date,date,text,text) to authenticated;
+
+create or replace function public.resume_enrollment_v2(p_enrollment_id uuid,p_note text default '')
+returns boolean language plpgsql security definer set search_path=public as $$
+declare v_en public.enrollments%rowtype;
+begin
+ select * into v_en from public.enrollments where id=p_enrollment_id for update;
+ if not found then raise exception 'Enrollment not found'; end if;
+ if not (public.is_admin() or (auth.uid() is not null and public.current_trainer_id()=v_en.trainer_id))
+ then raise exception 'Not authorized to resume this learner'; end if;
+ if v_en.status<>'on_hold' then raise exception 'Enrollment is not paused'; end if;
+ if not public.is_admin() and (now() at time zone v_en.schedule_timezone)::date<v_en.hold_until
+ then raise exception 'Early resume requires Admin approval'; end if;
+ update public.enrollments set status='active',hold_note=concat_ws(' | ',hold_note,'Resumed: '||coalesce(p_note,'')),updated_at=now()
+  where id=p_enrollment_id;
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'enrollment',p_enrollment_id::text,'resume_enrollment_v2',
+ jsonb_build_object('status',v_en.status,'hold_until',v_en.hold_until),
+ jsonb_build_object('status','active','note',p_note));
+ insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+ values('parent',v_en.student_id,v_en.trainer_id,'enrollment_resumed','info',
+ 'Classes resumed','The learner schedule is active again.','/parent'),
+ ('trainer',v_en.student_id,v_en.trainer_id,'enrollment_resumed','info',
+ 'Learner resumed','The learner is active again.','/trainer/classes');
+ return true;
+end $$;
+revoke all on function public.resume_enrollment_v2(uuid,text) from public,anon;
+grant execute on function public.resume_enrollment_v2(uuid,text) to authenticated;
