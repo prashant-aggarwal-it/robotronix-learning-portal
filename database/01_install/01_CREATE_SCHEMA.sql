@@ -4690,7 +4690,7 @@ alter table public.trainers add column if not exists zoom_join_url text;
 alter table public.trainers drop constraint if exists trainers_zoom_join_url_valid;
 alter table public.trainers add constraint trainers_zoom_join_url_valid
  check (zoom_join_url is null or zoom_join_url='' or
-        zoom_join_url ~* '^https://([a-z0-9-]+\\.)*zoom\\.us/(j|wc/join)/[0-9]+([?][a-z0-9_=&%-]+)?$');
+        zoom_join_url ~* '^https://([a-z0-9-]+[.])*zoom[.]us/(j|wc/join)/[0-9]+([?][a-z0-9_=&%-]+)?$');
 
 create or replace function public.class_reusable_zoom_link_v2(p_event_id uuid)
 returns text language plpgsql security definer set search_path=public as $$
