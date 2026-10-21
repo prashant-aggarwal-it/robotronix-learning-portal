@@ -63,3 +63,7 @@ For this unmerged, untested implementation see [Action-required notification des
 - [System logging and cleanup](SYSTEM_LOGS.md)
 
 These are current branch implementation guides, **not verified Production configuration**. Run migrations 04–09 only on a reviewed existing DEV database; fresh DEV uses canonical schema. All changes remain unmerged and untested.
+
+## Database migration execution order (existing installations)
+
+[**Read first: exact DEV and Production migration sequence, preflight, verification and release gates**](DATABASE_MIGRATION_ORDER.md). The read-only preflight is `database/03_verify/02_PREFLIGHT_EXISTING_DATABASE.sql`; approved existing-database deltas are 04 → 05 → 06 → 07 → 08 → 09. **This is not confirmation that these migrations have been run or tested.** Never rerun the full installer on an existing database.
