@@ -1176,7 +1176,7 @@ begin
    new.finance_exception_status:=case when new.requested_by='parent' then 'review' else 'none' end;
  end if;
  return new;
-end $;
+end $$;
 drop trigger if exists mark_class_cancellation_for_review_v2 on public.schedule_events;
 create trigger mark_class_cancellation_for_review_v2 before insert or update of status on public.schedule_events
  for each row execute function public.mark_class_cancellation_for_review_v2();
