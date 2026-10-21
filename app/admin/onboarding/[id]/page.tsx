@@ -188,10 +188,10 @@ export default function OnboardingDetail(){
   if(hasScheduleExceptions&&!scheduleOverrideConfirmed){setNotice({type:"error",text:"Review the schedule warnings and confirm the manual override before activation."});return;}
   if(!ready){setNotice({type:"error",text:"Complete all items in the readiness checklist before activation."});return;}
   setActiveAction("activate");setNotice(null);
-  const res=await activateOnboarding(id,{courseId,trainerId,enrollmentType:type,cohortId:type==="small_group"?cohortId:undefined,startDate,scheduleTimezone,scheduleRules,scheduleOverrideConfirmed:hasScheduleExceptions&&scheduleOverrideConfirmed,scheduleOverrideNote:hasScheduleExceptions&&scheduleOverrideConfirmed?"Admin confirmed schedule exception against parent preference and/or trainer availability during activation.":undefined});
+  const res=await activateOnboarding(id,{courseId,trainerId,enrollmentType:type,cohortId:type==="small_group"?cohortId:undefined,startDate,scheduleTimezone,scheduleRules,scheduleOverrideConfirmed:hasScheduleExceptions&&scheduleOverrideConfirmed,scheduleOverrideNote:hasScheduleExceptions&&scheduleOverrideConfirmed?"Admin confirmed schedule exception against parent preference and/or trainer availability during activation.":undefined,schedulingHorizon:type==="small_group"?"manual":schedulingHorizon,schedulingWeeks:schedulingHorizon==="weeks"?schedulingWeeks:undefined});
   setActiveAction(null);
   if(!res.ok){setNotice({type:"error",text:("error" in res?res.error:undefined)??"Unable to activate learner."});return;}
-  setNotice({type:"success",text:"Learner activated successfully and linked to the family account."});await refresh();
+  setNotice("schedulingWarning" in res&&res.schedulingWarning?{type:"error",text:res.schedulingWarning+" You can retry scheduling from enrollment management after resolving it."}:{type:"success",text:`Learner activated successfully.${"classesCreated" in res?` ${res.classesCreated} classes booked.`:""} Linked to the family account.`});await refresh();
  }
 
  const statusIndex=r.status==="active"?3:r.status==="setup_pending"?2:1;
@@ -234,7 +234,7 @@ export default function OnboardingDetail(){
    {type==="small_group"&&cohortId&&<div className="entityBoundaryNote"><b>Cohort schedule</b><span>{formatWeeklySchedule(scheduleRules,scheduleTimezone)}</span></div>}
    </div>
    <div className="panel" style={{marginTop:16}}>
-    <div className="subsectionHeader"><span>SCHEDULING V2 · PREVIEW</span><b>Course calendar preview</b><small>Preview only: activation currently creates the enrollment, not the dated class bookings. Automatic generation will be enabled only after the transaction-safe scheduling service is complete.</small></div>
+    <div className="subsectionHeader"><span>SCHEDULING V2 · PREVIEW</span><b>Course calendar preview</b><small>Activation will book 1-to-1 classes using the server-side scheduling service after creating the enrollment. If booking fails, the learner remains active and a warning is displayed. Cohorts are not booked individually.</small></div>
     <div className="formGrid">
      <div className="formGroup"><label>Scheduling horizon</label><select className="input" value={schedulingHorizon} onChange={e=>setSchedulingHorizon(e.target.value as SchedulingHorizon)}><option value="full">Entire course</option><option value="weeks">Selected weeks</option><option value="manual">Manual booking</option></select></div>
      {schedulingHorizon==="weeks"&&<div className="formGroup"><label>Weeks to preview</label><input className="input" type="number" min={1} max={104} value={schedulingWeeks} onChange={e=>setSchedulingWeeks(Number(e.target.value))}/></div>}
