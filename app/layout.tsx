@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./theme.css";
 import {GridHorizontalScrollBridge} from "@/components/admin/GridHorizontalScrollBridge";
 import {productionConfigurationError} from "@/lib/config";
 
