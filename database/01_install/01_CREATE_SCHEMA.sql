@@ -4879,3 +4879,99 @@ begin
 end $$;
 revoke all on function public.resume_enrollment_v2(uuid,text) from public,anon;
 grant execute on function public.resume_enrollment_v2(uuid,text) to authenticated;
+
+
+-- Scheduling V2: trainer-authorized one-off cancellation, with no automatic pay.
+create or replace function public.cancel_class_v2(p_event_id uuid,p_requested_by text,p_reason text)
+returns boolean language plpgsql security definer set search_path=public as $$
+declare e public.schedule_events%rowtype;
+begin
+ select * into e from public.schedule_events where id=p_event_id for update;
+ if not found or e.event_type<>'class' then raise exception 'Class not found'; end if;
+ if not (public.is_admin() or (auth.uid() is not null and public.current_trainer_id()=e.trainer_id))
+ then raise exception 'Not authorized to cancel this class'; end if;
+ if e.status not in ('scheduled','tentative','makeup') then raise exception 'Only upcoming classes may be cancelled'; end if;
+ if (e.date+e.start_time) at time zone e.timezone <=now() then raise exception 'Past or started classes need Admin review'; end if;
+ if p_requested_by not in ('parent','student','trainer','admin') or nullif(trim(coalesce(p_reason,'')),'') is null
+ then raise exception 'Initiator and reason are required'; end if;
+ if exists(select 1 from public.class_attendance where schedule_event_id=e.id)
+ or exists(select 1 from public.trainer_earnings where schedule_event_id=e.id and status in ('approved','paid'))
+ then raise exception 'Class has protected attendance or payroll'; end if;
+ if exists(select 1 from public.zoom_meetings where schedule_event_id=e.id and status in ('scheduled','started'))
+ then raise exception 'Class has an individual Zoom meeting; use Admin Zoom reconciliation before cancellation'; end if;
+ update public.schedule_events set status='cancelled',requested_by=p_requested_by,
+ change_reason=p_reason,updated_at=now() where id=e.id;
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'schedule_event',e.id::text,'cancel_class_v2',
+ jsonb_build_object('status',e.status),jsonb_build_object('status','cancelled','requested_by',p_requested_by,'reason',p_reason));
+ if e.student_id is not null then
+  insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+  values('parent',e.student_id,e.trainer_id,'class_cancelled','important','Class cancelled','A class was cancelled. The schedule has been updated.','/parent'),
+  ('student',e.student_id,e.trainer_id,'class_cancelled','info','Class cancelled','A class was cancelled.','/student');
+ end if;
+ return true;
+end $$;
+revoke all on function public.cancel_class_v2(uuid,text,text) from public,anon;
+grant execute on function public.cancel_class_v2(uuid,text,text) to authenticated;
+
+-- One-off reschedules are an atomic linked original/replacement pair.
+create or replace function public.reschedule_class_v2(
+ p_event_id uuid,p_date date,p_start time,p_end time,p_requested_by text,p_reason text
+) returns uuid language plpgsql security definer set search_path=public as $$
+declare e public.schedule_events%rowtype; new_id uuid; v_start timestamptz; v_end timestamptz;
+begin
+ select * into e from public.schedule_events where id=p_event_id for update;
+ if not found or e.event_type<>'class' then raise exception 'Class not found'; end if;
+ if not (public.is_admin() or (auth.uid() is not null and public.current_trainer_id()=e.trainer_id))
+ then raise exception 'Not authorized to reschedule this class'; end if;
+ if e.status not in ('scheduled','tentative','makeup') then raise exception 'Class has already been changed or delivered'; end if;
+ if (e.date+e.start_time) at time zone e.timezone <=now() then raise exception 'Past classes need Admin review'; end if;
+ if p_requested_by not in ('parent','student','trainer','admin') or nullif(trim(coalesce(p_reason,'')),'') is null
+ then raise exception 'Initiator and reason are required'; end if;
+ if p_start is null or p_end is null or p_end<=p_start or
+    extract(minute from p_start)::integer%30<>0 or extract(minute from p_end)::integer%30<>0 or
+    (extract(epoch from (p_end-p_start))::integer/60) not in (60,90,120,150)
+ then raise exception 'Choose a valid 1–2.5 hour class in 30-minute steps'; end if;
+ v_start:=(p_date+p_start) at time zone e.timezone;
+ v_end:=(p_date+p_end) at time zone e.timezone;
+ if v_start<=now() then raise exception 'Replacement must be in the future'; end if;
+ if exists(select 1 from public.class_attendance where schedule_event_id=e.id)
+ or exists(select 1 from public.trainer_earnings where schedule_event_id=e.id and status in ('approved','paid'))
+ then raise exception 'Protected class history must remain unchanged'; end if;
+ if exists(select 1 from public.zoom_meetings where schedule_event_id=e.id and status in ('scheduled','started'))
+ then raise exception 'Class already has a per-session Zoom meeting; Admin must reconcile Zoom before rescheduling'; end if;
+ if exists(select 1 from public.schedule_events x where x.id<>e.id and x.trainer_id=e.trainer_id
+  and x.status not in ('cancelled','rescheduled')
+  and ((x.date+x.start_time) at time zone x.timezone)<v_end
+  and ((x.date+x.end_time) at time zone x.timezone)>v_start)
+ then raise exception 'Trainer has another booking at the new time'; end if;
+ if e.student_id is not null and exists(
+  select 1 from public.schedule_events x where x.id<>e.id and x.status not in ('cancelled','rescheduled')
+  and (x.student_id=e.student_id or x.enrollment_id in
+      (select id from public.enrollments where student_id=e.student_id)
+      or x.cohort_id in (select cohort_id from public.enrollments where student_id=e.student_id and cohort_id is not null))
+  and ((x.date+x.start_time) at time zone x.timezone)<v_end
+  and ((x.date+x.end_time) at time zone x.timezone)>v_start)
+ then raise exception 'Learner has another booking at the new time'; end if;
+ perform 1 from public.trainers where id=e.trainer_id for update;
+ insert into public.schedule_events
+ (trainer_id,course_id,enrollment_id,cohort_id,student_id,title,date,start_time,end_time,
+ timezone,event_type,delivery_mode,status,occurrence_kind,original_event_id,requested_by,change_reason,notes)
+ values(e.trainer_id,e.course_id,e.enrollment_id,e.cohort_id,e.student_id,e.title,p_date,p_start,p_end,
+ e.timezone,'class',e.delivery_mode,'scheduled','rescheduled_replacement',e.id,p_requested_by,p_reason,e.notes)
+ returning id into new_id;
+ update public.schedule_events set status='rescheduled',rescheduled_to_id=new_id,
+ requested_by=p_requested_by,change_reason=p_reason,updated_at=now() where id=e.id;
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'schedule_event',e.id::text,'reschedule_class_v2',
+ jsonb_build_object('date',e.date,'start',e.start_time,'end',e.end_time),
+ jsonb_build_object('date',p_date,'start',p_start,'end',p_end,'replacement',new_id,'reason',p_reason));
+ if e.student_id is not null then
+  insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+  values('parent',e.student_id,e.trainer_id,'class_rescheduled','important','Class rescheduled','The class time has changed. Please check the updated schedule.','/parent'),
+  ('student',e.student_id,e.trainer_id,'class_rescheduled','info','Class rescheduled','Please check your updated class time.','/student');
+ end if;
+ return new_id;
+end $$;
+revoke all on function public.reschedule_class_v2(uuid,date,time,time,text,text) from public,anon;
+grant execute on function public.reschedule_class_v2(uuid,date,time,time,text,text) to authenticated;
