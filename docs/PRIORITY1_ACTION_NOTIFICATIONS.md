@@ -9,7 +9,7 @@
 ## Source of truth / installation
 
 - **Fresh DEV database:** `database/01_install/01_CREATE_SCHEMA.sql` already contains this P1 block at its end; follow the normal ordered fresh-install instructions. **Do not run the P1 patch a second time.**
-- **Existing DEV database:** apply `database/01_install/01_CREATE_SCHEMA.sql` once **after** its Production v1 baseline and existing previous fixes. This patch is designed to be repeatable, but it does **not** backfill historical notifications.
+- **Existing DEV database:** **do not run `01_CREATE_SCHEMA.sql`** against an existing database. This file is the consolidated fresh-install schema, not an incremental patch. Review the baseline-to-current schema diff and prepare a separate, backed-up, data-preserving migration; test it on a DEV clone before applying. Notification changes do not backfill historical events.
 - **Production:** do not execute anything until the database migration is reviewed, DEV automated/manual QA passes, and a backup/change window is approved.
 - **No client secrets or financial identifiers in notification bodies.** Notification links point to role-appropriate pages.
 - **Realtime delivery:** Supabase `portal_notifications` must be included in the `supabase_realtime` publication and per-user RLS must permit recipients to read the row. The shared `NotificationBell` and `NotificationCenter` already subscribe to this table. New triggers persist notifications even if the intended user is offline.
