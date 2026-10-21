@@ -4944,7 +4944,7 @@ begin
   from public.enrollments en where en.cohort_id=e.cohort_id and en.status in ('active','on_hold');
  end if;
  return true;
-end $;
+end $$;
 revoke all on function public.cancel_class_v2(uuid,text,text) from public,anon;
 grant execute on function public.cancel_class_v2(uuid,text,text) to authenticated;
 
