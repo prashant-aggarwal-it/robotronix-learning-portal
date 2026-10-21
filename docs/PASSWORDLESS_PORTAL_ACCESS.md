@@ -1,3 +1,5 @@
+> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+
 # Unified passwordless portal access — setup, security and QA
 
 **Status:** Implemented in source; not end-to-end tested in Supabase DEV/Production. Do not remove existing sign-in routes before approval.
@@ -17,7 +19,6 @@
 
 ## Upgrade
 - Fresh DEV installation: canonical 01 schema includes the new `provisioned` access state.
-- Existing DEV: use additive `database/01_install/08_PASSWORDLESS_PORTAL_ACCESS.sql` after migrations 04–07.
 - Existing Production account migration needs a review of duplicate Auth users and whether Google identity is correctly linked before deployment. No delete/recreate of existing live users.
 
 ## Acceptance cases
