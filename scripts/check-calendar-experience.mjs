@@ -16,4 +16,12 @@ const trainer=fs.readFileSync("app/trainer/schedule/page.tsx","utf8");
 for(const marker of ["PRIVATE CALENDAR SUBSCRIPTION","Generate private link","Copy subscription link"])if(!trainer.includes(marker))throw new Error("Trainer calendar subscription missing: "+marker);
 const schema=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
 if(!schema.includes("calendar_subscription_tokens"))throw new Error("Fresh schema missing calendar subscription tokens.");
+const copyEditor=fs.readFileSync("components/PreferredAvailabilityEditor.tsx","utf8");
+for(const marker of ['setCopyMode("replace")','Copy timings','Click Save availability to apply','overlapping slot']){
+ if(!copyEditor.includes(marker))throw new Error("Availability copy UI feedback/regression: missing "+marker);
+}
+const availabilityEditor=fs.readFileSync("components/TrainerAvailabilityEditor.tsx","utf8");
+for(const marker of ["savedValue","Unsaved availability changes","setSavedValue(value)"]){
+ if(!availabilityEditor.includes(marker))throw new Error("Trainer availability unsaved state missing: "+marker);
+}
 console.log("Calendar experience structure: OK");
