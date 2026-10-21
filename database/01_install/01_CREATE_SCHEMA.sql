@@ -4607,3 +4607,73 @@ begin
 end $$;
 revoke all on function public.generate_enrollment_schedule_v2(uuid,text,integer) from public,anon;
 grant execute on function public.generate_enrollment_schedule_v2(uuid,text,integer) to authenticated;
+
+
+-- Scheduling V2: Admin reassignment of future uncompleted 1:1 classes.
+-- Existing delivered, locked and historically attributed classes are untouched.
+create or replace function public.reassign_enrollment_trainer_v2(
+ p_enrollment_id uuid,p_new_trainer_id uuid,p_reason text
+) returns jsonb language plpgsql security definer set search_path=public as $$
+declare
+ v_en public.enrollments%rowtype; v_count integer:=0;
+ v_event record;
+begin
+ if not public.is_admin() then raise exception 'Admin access required'; end if;
+ if nullif(trim(coalesce(p_reason,'')),'') is null then raise exception 'Reason required'; end if;
+ select * into v_en from public.enrollments where id=p_enrollment_id for update;
+ if not found or v_en.status not in ('active','on_hold') or v_en.enrollment_type<>'one_to_one'
+ then raise exception 'Only active or paused 1-to-1 enrollments may be reassigned'; end if;
+ if v_en.trainer_id=p_new_trainer_id then return jsonb_build_object('updated',0,'unchanged',true); end if;
+ if not exists(select 1 from public.trainers where id=p_new_trainer_id and record_status='active') then
+  raise exception 'Replacement trainer is not active';
+ end if;
+ if not exists(select 1 from public.trainer_courses where trainer_id=p_new_trainer_id and course_id=v_en.course_id)
+ then raise exception 'Replacement trainer is not assigned to this course'; end if;
+ -- Serialize with generator/reassignment operations across trainers.
+ perform 1 from public.trainers where id in (v_en.trainer_id,p_new_trainer_id) order by id for update;
+ for v_event in
+  select id,date,start_time,end_time,timezone,status,occurrence_kind
+  from public.schedule_events
+  where enrollment_id=p_enrollment_id and event_type='class'
+    and date>=current_date and status not in ('cancelled','rescheduled','conducted')
+  order by date,start_time,id
+ loop
+  if v_event.status not in ('scheduled','tentative','makeup') then
+   raise exception 'Future session % needs manual review before reassignment',v_event.id;
+  end if;
+  if exists(select 1 from public.trainer_earnings t where t.schedule_event_id=v_event.id and t.status in ('approved','paid')) then
+    raise exception 'A future class has locked payroll'; end if;
+  if exists(select 1 from public.schedule_events e
+   where e.trainer_id=p_new_trainer_id and e.id<>v_event.id
+     and e.status not in ('cancelled','rescheduled')
+     and ((e.date+e.start_time) at time zone e.timezone) <
+           ((v_event.date+v_event.end_time) at time zone v_event.timezone)
+     and ((e.date+e.end_time) at time zone e.timezone) >
+           ((v_event.date+v_event.start_time) at time zone v_event.timezone)
+  ) then raise exception 'Replacement trainer has a conflict on % at %',v_event.date,v_event.start_time; end if;
+  if exists(select 1 from public.trainer_availability_overrides o
+    where o.trainer_id=p_new_trainer_id and o.date=v_event.date
+      and o.override_type='unavailable' and o.start_time<v_event.end_time and o.end_time>v_event.start_time)
+  then raise exception 'Replacement trainer is unavailable on %',v_event.date; end if;
+ end loop;
+ update public.schedule_events
+ set trainer_id=p_new_trainer_id,requested_by='admin',
+     change_reason=coalesce(change_reason||' | ','')||'Trainer reassignment: '||trim(p_reason),
+     updated_at=now()
+ where enrollment_id=p_enrollment_id and event_type='class' and date>=current_date
+   and status in ('scheduled','tentative','makeup');
+ get diagnostics v_count=row_count;
+ update public.enrollments set trainer_id=p_new_trainer_id,updated_at=now() where id=p_enrollment_id;
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'enrollment',p_enrollment_id::text,'reassign_trainer_v2',
+ jsonb_build_object('trainer_id',v_en.trainer_id),
+ jsonb_build_object('trainer_id',p_new_trainer_id,'future_classes_updated',v_count,'reason',trim(p_reason)));
+ insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+ values ('parent',v_en.student_id,p_new_trainer_id,'trainer_reassigned','important',
+ 'Your class trainer has changed','Your upcoming classes now have a replacement trainer. View the updated schedule.','/parent'),
+ ('trainer',v_en.student_id,p_new_trainer_id,'trainer_reassigned','action',
+ 'New learner assigned','A learner and their future classes have been assigned to you.','/trainer/classes');
+ return jsonb_build_object('updated',v_count,'newTrainerId',p_new_trainer_id);
+end $$;
+revoke all on function public.reassign_enrollment_trainer_v2(uuid,uuid,text) from public,anon;
+grant execute on function public.reassign_enrollment_trainer_v2(uuid,uuid,text) to authenticated;
