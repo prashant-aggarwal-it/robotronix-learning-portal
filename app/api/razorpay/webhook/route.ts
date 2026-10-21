@@ -1,4 +1,5 @@
 import {logSystemEvent} from "@/lib/server/system-log";
+import {readTextBodyLimited,RequestBodyTooLarge} from "@/lib/server/read-limited-body";
 import crypto from "node:crypto";
 import {NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
@@ -13,7 +14,10 @@ function eventKey(raw:string,event:any){
 }
 
 export async function POST(request:Request){
- const raw=await request.text();
+ let raw:string;
+ try{raw=await readTextBodyLimited(request,1024*1024)}
+ catch(error){return NextResponse.json({ok:false,error:error instanceof RequestBodyTooLarge?"Webhook payload too large":"Invalid webhook payload"},{status:error instanceof RequestBodyTooLarge?413:400,headers:{"Cache-Control":"no-store"}})}
+
  const sig=request.headers.get("x-razorpay-signature")||"";
  if(!verifyRazorpayWebhook(raw,sig))return NextResponse.json({ok:false,error:"Invalid Razorpay webhook signature."},{status:401});
 
