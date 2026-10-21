@@ -10,12 +10,12 @@
 - Source checks are *not* full secret history scans, SAST coverage, OWASP DAST, or a penetration test. Do not describe them as such.
 
 ### Dependency vulnerability findings
-Security audit revealed **three high-severity advisories** in the currently locked production tree:
-1. `sharp@0.35.4` — upstream patched version >=0.35.5 (CVE-2026-96889).
-2. `source-map-js@1.2.1` — upstream patch >=1.2.2 (GHSA-68fv-2mgg-jv7q).
-3. `xlsx@0.18.5` — known prototype pollution and regex denial of service advisories with **no npm audit remediation available** (GHSA-4r6h-8v6p-xvw6 and GHSA-5pgg-2g8v-p4x9).
+Initial security audit found **three high-severity advisories**. The reviewed compatible lockfile refresh (`cc08c84`) successfully patched two of them:
+1. **Remediated:** `sharp` upgraded from `0.35.4` to `0.35.5` (CVE-2026-96889).
+2. **Remediated:** `source-map-js` upgraded from `1.2.1` to `1.2.2` (GHSA-68fv-2mgg-jv7q).
+3. **Open high-severity blocker:** `xlsx@0.18.5` — known prototype pollution and regex denial of service advisories with **no npm audit remediation available** (GHSA-4r6h-8v6p-xvw6 and GHSA-5pgg-2g8v-p4x9).
 
-**Release blocker:** do not suppress the production dependency audit. Patch the first two through a reviewed dependency lock refresh, and replace the vulnerable Excel export dependency with an audited maintained alternative while preserving multi-sheet Excel behavior and spreadsheet formula-injection protection. Retest exports and update the lockfile consistently. Current static checks/build passing does not clear these findings.
+**Release blocker:** do not suppress the production dependency audit. The first two are patched and their regression checks passed. Replace the vulnerable Excel export dependency with an audited maintained alternative while preserving multi-sheet Excel behavior and spreadsheet formula-injection protection. Retest exports and update the lockfile consistently. Current static checks/build passing does not clear these findings.
 
 ## Phase 2 — Supabase isolation and database security
 - Canonical installer remains `database/01_install/01_CREATE_SCHEMA.sql`. No additional migrations or post-install patches.
