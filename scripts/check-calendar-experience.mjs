@@ -29,5 +29,5 @@ const installer=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8
 for(const marker of ["notify_admin_trainer_availability_change","override_added","override_removed"]){
  if(!repository.includes(marker)||!installer.includes(marker))throw new Error("Availability Admin notification missing: "+marker);
 }
-if(!fs.existsSync("database/03_verify/03_POST_INSTALL_AVAILABILITY_NOTIFICATIONS.sql"))throw new Error("Missing post-install availability notification SQL.");
+if(!installer.includes("create or replace function public.notify_admin_trainer_availability_change("))throw new Error("Canonical schema missing availability notification function.");
 console.log("Calendar and availability notification structure: OK");
