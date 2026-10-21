@@ -22,6 +22,7 @@ import {matchPreferredWindows,validateFinalScheduleSlots} from "@/lib/availabili
 import {isRunningCohort,isUpcomingCohort} from "@/lib/cohort-status";
 import {validInternationalPhone} from "@/lib/phones";
 import {timeRangeError,weeklyScheduleError} from "@/lib/time-range-validation";
+import {previewCourseSchedule,type SchedulingHorizon} from "@/lib/scheduling-v2-preview";
 import {guardianRelationshipOptions,guardiansFromRecord,legacyFieldsFromGuardians,relationshipLabel} from "@/lib/guardians";
 import type {GuardianRelationship} from "@/lib/types";
 
@@ -73,6 +74,8 @@ export default function OnboardingDetail(){
  const[scheduleTimezone,setScheduleTimezone]=useState(IST_TIMEZONE);
  const[scheduleRules,setScheduleRules]=useState<WeeklyScheduleSlot[]>([]);
  const[startDate,setStartDate]=useState(todayIstDate());
+ const[schedulingHorizon,setSchedulingHorizon]=useState<SchedulingHorizon>("full");
+ const[schedulingWeeks,setSchedulingWeeks]=useState(4);
  const[scheduleOverrideConfirmed,setScheduleOverrideConfirmed]=useState(false);
 
  async function refresh(){
@@ -113,6 +116,7 @@ export default function OnboardingDetail(){
  const parentTimingNote=useMemo(()=>preferredTimingNote(r?.preferredTimeWindows),[r?.preferredTimeWindows]);
  const parentWindowDisplays=useMemo(()=>parentWindows.map(window=>preferredWindowAdminDisplay(window,r?.timezone||IST_TIMEZONE,startDate)),[parentWindows,r?.timezone,startDate]);
  const selectedCourse=useMemo(()=>courses.find(c=>c.id===courseId),[courses,courseId]);
+ const schedulePreview=useMemo(()=>{try{return{items:previewCourseSchedule({startDate,timezone:scheduleTimezone,rules:scheduleRules,horizon:schedulingHorizon,totalSessions:selectedCourse?.totalSessions??0,weeks:schedulingWeeks,trainerId}),error:""}}catch(error){return{items:[],error:error instanceof Error?error.message:"Unable to preview schedule."}}},[startDate,scheduleTimezone,scheduleRules,schedulingHorizon,schedulingWeeks,selectedCourse?.totalSessions,trainerId]);
  const scheduleMatches=useMemo(()=>r&&trainerId?matchPreferredWindows({windows:parentWindows,parentTimezone:r.timezone||IST_TIMEZONE,trainerId,startDate,availability,overrides:availabilityOverrides}):[],[r,trainerId,startDate,parentWindows,availability,availabilityOverrides]);
  const trainerAvailabilityConfigured=useMemo(()=>Boolean(
   trainerId&&(
@@ -225,6 +229,14 @@ export default function OnboardingDetail(){
     {hasScheduleExceptions?<label className="scheduleOverrideConfirm"><input type="checkbox" checked={scheduleOverrideConfirmed} onChange={e=>setScheduleOverrideConfirmed(e.target.checked)}/><span><b>Manual schedule override confirmed</b><small>I have confirmed these exception timings with the family and/or trainer and approve activation with this schedule.</small></span></label>:<div className="scheduleValidationSuccess">✓ Final class plan is within the parent preference and trainer availability.</div>}
    </div>}
    {type==="small_group"&&cohortId&&<div className="entityBoundaryNote"><b>Cohort schedule</b><span>{formatWeeklySchedule(scheduleRules,scheduleTimezone)}</span></div>}
+   </div>
+   <div className="panel" style={{marginTop:16}}>
+    <div className="subsectionHeader"><span>SCHEDULING V2 · PREVIEW</span><b>Course calendar preview</b><small>Preview only: activation currently creates the enrollment, not the dated class bookings. Automatic generation will be enabled only after the transaction-safe scheduling service is complete.</small></div>
+    <div className="formGrid">
+     <div className="formGroup"><label>Scheduling horizon</label><select className="input" value={schedulingHorizon} onChange={e=>setSchedulingHorizon(e.target.value as SchedulingHorizon)}><option value="full">Entire course</option><option value="weeks">Selected weeks</option><option value="manual">Manual booking</option></select></div>
+     {schedulingHorizon==="weeks"&&<div className="formGroup"><label>Weeks to preview</label><input className="input" type="number" min={1} max={104} value={schedulingWeeks} onChange={e=>setSchedulingWeeks(Number(e.target.value))}/></div>}
+    </div>
+    {type==="small_group"?<p className="fieldHint">Batch classes must be generated once per cohort, not for each learner. This preview does not create duplicate cohort bookings.</p>:schedulingHorizon==="manual"?<p className="fieldHint">Class dates will be created manually in Admin → Schedule.</p>:schedulePreview.error?<div className="errorBanner">{schedulePreview.error}</div>:<><p className="fieldHint"><b>{schedulePreview.items.length} class dates previewed</b> · {selectedCourse?.totalSessions??0} sessions in course · {schedulePreview.items.filter(x=>x.conflicts.length).length} flagged date(s). Conflicts with existing bookings are checked again when a booking is saved.</p><div style={{maxHeight:220,overflowY:"auto"}}><table className="table"><thead><tr><th>#</th><th>Date</th><th>Time ({shortTimeZoneLabel(scheduleTimezone)})</th><th>Preview checks</th></tr></thead><tbody>{schedulePreview.items.map((slot,i)=><tr key={i}><td>{i+1}</td><td>{slot.date}</td><td>{slot.startTime}–{slot.endTime}</td><td>{slot.conflicts.length?slot.conflicts.join(", "):"No overlapping slots in preview"}</td></tr>)}</tbody></table></div></>}
    </div>
    <div className="readinessCard"><div><b>Ready to activate</b><span>Complete the required learner, course, trainer and final scheduling setup before activation.</span></div><ul><li className={guardianView?.primary.name&&contactsValid?"ok":""}>Primary parent / guardian contact + country code</li><li className={r.childName&&r.childDob&&r.grade&&r.school&&r.timezone?"ok":""}>Child profile + timezone</li><li className={courseId?"ok":""}>Course selected</li><li className={trainerId?"ok":""}>Trainer assigned</li><li className={startDate&&scheduleRules.length&&(type==="one_to_one"||cohortId)?"ok":""}>Delivery setup + weekly schedule</li>{type==="one_to_one"&&scheduleRules.length>0&&<li className={!hasScheduleExceptions||scheduleOverrideConfirmed?"ok":""}>{hasScheduleExceptions?"Schedule exceptions reviewed / override confirmed":"Parent + trainer timing checks passed"}</li>}</ul></div>
    <div className={`saveStateBar ${dirty?"dirty":"clean"}`}><span>{dirty?"● Unsaved changes":activeAction==="draft"?"Saving…":lastSavedAt?`✓ Last saved at ${savedLabel}`:"✓ No unsaved changes"}</span><small>{dirty?"Save the setup before leaving this page.":"Draft schedule and assignment are preserved on reload."}</small></div>
