@@ -36,7 +36,7 @@ export function TrainerAvailabilityOverrideEditor({trainerId,onSaved}:{trainerId
     setReason("");
     await refresh();
     onSaved?.();
-    setMsg(r.notificationWarning?"Override saved, but Admin notification could not be sent: "+r.notificationWarning:(type==="unavailable"?"Unavailable period saved. Admin notified.":"Special availability saved. Admin notified."));
+    setMsg(r.notificationWarning?"Override saved, but Admin notification could not be sent: "+r.notificationWarning:r.notificationSkipped?(type==="unavailable"?"Unavailable period saved.":"Special availability saved."):(type==="unavailable"?"Unavailable period saved. Admin notified.":"Special availability saved. Admin notified."));
   }
 
   async function remove(id:string){
@@ -44,7 +44,7 @@ export function TrainerAvailabilityOverrideEditor({trainerId,onSaved}:{trainerId
     const r=await deleteAvailabilityOverride(id);
     setBusy(false);
     if(!r.ok){setMsg(r.error??"Unable to remove override.");return}
-    await refresh();onSaved?.();setMsg(r.notificationWarning?"Override removed, but Admin notification could not be sent: "+r.notificationWarning:"Override removed. Admin notified.");
+    await refresh();onSaved?.();setMsg(r.notificationWarning?"Override removed, but Admin notification could not be sent: "+r.notificationWarning :r.notificationSkipped?"Override removed.":"Override removed. Admin notified.");
   }
 
   return <div className="availabilityOverrideEditor">
