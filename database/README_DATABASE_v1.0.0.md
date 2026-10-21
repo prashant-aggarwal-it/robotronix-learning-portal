@@ -22,6 +22,13 @@ Then run the **read-only check** `database/03_verify/01_VERIFY_RELEASE.sql`. It 
 ## Developer QA
 Run `npm ci`, `npm run check:release`, `npm run build`, and configured Playwright QA against DEV. QA fixture scripts are intentionally kept separate. Keep SQL verification results and role-test evidence together with the exact Git commit.
 
+## Consolidation verification (21 October 2026)
+- The former `03_verify/02_POST_INSTALL_PAYROLL_POLICY_FIX.sql` and `03_verify/03_POST_INSTALL_AVAILABILITY_NOTIFICATIONS.sql` have been **removed** from the release branch as redundant existing-database patches.
+- Their required logic is included in `01_install/01_CREATE_SCHEMA.sql`: scheduled-duration trainer payroll calculation, supported 15-minute actual teaching durations, and Admin notifications for trainer availability changes.
+- `03_verify/01_VERIFY_RELEASE.sql` is the **only** verification SQL and is read-only.
+- The release check rejects additional post-install verification SQL files, hotfix directories, or unexpected installer SQL. Historical archived QA seed scripts are not part of fresh installation and must never be run on production.
+- GitHub release checks validate file structure, source code, and the application build; actual SQL execution and role workflows still require a separate DEV database.
+
 ## SQL inventory
 - `01_install/01_CREATE_SCHEMA.sql`: the ONE canonical schema installer.
 - `01_install/02_INSERT_MASTER_REFERENCE_DATA.sql`: the ONE canonical reference/config seed.
