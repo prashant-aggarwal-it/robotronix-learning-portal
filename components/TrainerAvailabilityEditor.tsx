@@ -60,7 +60,7 @@ export function TrainerAvailabilityEditor({trainerId,onSaved,onCancel}:{trainerI
     setBusy(false);
     if(!result.ok){setMsg(result.error??"Unable to save availability.");return}
     setSavedValue(value);
-    setMsg("Availability saved.");
+    setMsg(result.notificationWarning?"Availability saved, but Admin notification could not be sent: "+result.notificationWarning:"Availability saved. Admin notified.");
     onSaved?.();
   }
 
