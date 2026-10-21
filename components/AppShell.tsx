@@ -23,7 +23,7 @@ const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}
     {label:"Students",href:"/admin/students",group:"Learners"},
     {label:"Trainers",href:"/admin/trainers",group:"Delivery"},
     {label:"Courses",href:"/admin/courses",group:"Delivery"},
-    {label:"Enrollments & Cohorts",href:"/admin/enrollments",group:"Delivery"},
+    {label:"Enrollments",href:"/admin/enrollments",group:"Delivery"},
     {label:"Demo Experience",href:"/admin/demos",group:"Delivery"},
     {label:"Schedule",href:"/admin/schedule",group:"Operations"},
     {label:"Classes",href:"/admin/classes",group:"Operations"},
