@@ -1,3 +1,5 @@
+> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+
 # Trainer payout approval and netbanking — next release candidate
 
 **Current state:** New UI and schema migration are committed on `release/consolidated-stabilization-20261020`. No DEV SQL execution or browser QA has been performed. Do **not** use this unverified code for real salary processing.
@@ -12,7 +14,7 @@
 - Once a payout is approved, the record's amounts/instructions are locked; when marked paid, it requires date and bank transaction reference, and becomes immutable. Corrections require an explicit audited adjustment process instead of overwriting paid records.
 
 ## Data design and migration
-- `database/01_install/07_TRAINER_PAYROLL_CUTOFF.sql`: additive migrations, payout-instruction version history, cutoff calculation, approval RPC update and immutable per-month instruction snapshot.
+- `database/01_install/01_CREATE_SCHEMA.sql`: additive migrations, payout-instruction version history, cutoff calculation, approval RPC update and immutable per-month instruction snapshot.
 - Fresh database: consolidated `01_CREATE_SCHEMA.sql` includes it.
 - Existing DEV: run migration 07 *after* scripts 04–06 where applicable. Confirm baseline and existing table shapes first.
 - **Never rerun the full fresh installer on Production.** No DB migration has been run yet.
