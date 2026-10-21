@@ -53,7 +53,8 @@
     "check:p2p3-live": "node scripts/check-p2p3-live-sync.mjs",
     "check:stabilization": "node scripts/check-consolidated-stabilization.mjs",
     "qa:prod-permanent:create-users": "node scripts/create-permanent-portal-qa-users.mjs",
-    "qa:prod-permanent:generate-sql": "node scripts/generate-permanent-qa-seed.mjs"
+    "qa:prod-permanent:generate-sql": "node scripts/generate-permanent-qa-seed.mjs",
+    "check:trainer-courses-ui": "node scripts/check-trainer-courses-ui.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
