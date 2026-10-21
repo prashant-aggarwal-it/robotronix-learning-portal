@@ -1,3 +1,5 @@
+> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+
 # Consolidated release — operational handover and QA matrix
 
 > Work in progress. GitHub source commits are not DEV or Production acceptance. No secrets belong in this document.
@@ -35,7 +37,6 @@ Check actual configuration in the corresponding console. Do not claim values or 
 
 ## SQL deployment policy
 1. For **fresh DEV** installation use canonical schema followed by master reference data and approved bootstrap/verification.
-2. For **existing DEV** apply reviewed incremental migrations **04 P1 notifications**, **05 Realtime publication**, **06 Admin System Logs**, **07 Trainer Payroll Cutoff** in order. Verify every required table/policy/function exists beforehand.
 3. Back up and reconcile existing rows before touching Production. Do not rerun full schema as an upgrade, seed QA accounts or backfill synthetic salary data into Production.
 4. Run permission tests as real Trainer and Parent sessions, not only as service-role Admin. Validate updated finance snapshots against existing earnings/payout records.
 5. The current candidate has **not** passed these tests. Keep the PR in Draft.
