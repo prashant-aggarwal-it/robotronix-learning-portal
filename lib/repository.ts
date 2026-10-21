@@ -483,6 +483,19 @@ export async function deleteScheduleEvent(id:string){
 export async function listClassAttendance(scheduleEventId?:string):Promise<ClassAttendanceRecord[]>{const supabase=getSupabaseBrowserClient();if(!supabase){const rows=demoStore.attendance.list();return scheduleEventId?rows.filter(x=>x.scheduleEventId===scheduleEventId):rows;}let q=supabase.from("class_attendance").select("*");if(scheduleEventId)q=q.eq("schedule_event_id",scheduleEventId);const{data}=await q;return(data??[]).map((r:any)=>({id:r.id,scheduleEventId:r.schedule_event_id,studentId:r.student_id,enrollmentId:r.enrollment_id,status:r.status,note:r.note??"",updatedAt:r.updated_at}));}
 export async function saveClassAttendance(scheduleEventId:string,rows:Array<{studentId:string;enrollmentId:string;status:import("./types").AttendanceStatus;note?:string}>,markComplete=true){const supabase=getSupabaseBrowserClient();if(!supabase){for(const row of rows){const existing=demoStore.attendance.list().find(x=>x.scheduleEventId===scheduleEventId&&x.studentId===row.studentId);if(existing)demoStore.attendance.update(existing.id,row);else demoStore.attendance.create({id:makeId("att"),scheduleEventId,...row,updatedAt:new Date().toISOString()});if(row.status==="absent")await emitNotification({recipientRole:"parent",studentId:row.studentId,type:"attendance_absent",priority:"important",title:"Attendance update",message:"Your child was marked absent for a scheduled class. The session has not been counted as attended.",href:"/parent"});}if(markComplete){demoStore.schedule.update(scheduleEventId,{status:"conducted"});await syncTrainerEarningForEvent(scheduleEventId);}return{ok:true};}const payload=rows.map(r=>({schedule_event_id:scheduleEventId,student_id:r.studentId,enrollment_id:r.enrollmentId,status:r.status,note:r.note||null,updated_at:new Date().toISOString()}));const{error}=await supabase.from("class_attendance").upsert(payload,{onConflict:"schedule_event_id,student_id"});if(error)return{ok:false,error:error.message};if(markComplete){const{error:completeError}=await supabase.from("schedule_events").update({status:"conducted"}).eq("id",scheduleEventId);if(completeError)return{ok:false,error:completeError.message};const{error:payError}=await supabase.rpc("sync_trainer_earning",{p_event_id:scheduleEventId});if(payError)return{ok:false,error:`Attendance saved, but trainer payment sync needs review: ${payError.message}`};}return{ok:true};}
 
+export async function pauseEnrollmentV2(enrollmentId:string,from:string,resume:string,reason:"exams"|"medical"|"travel"|"family"|"other",note=""):Promise<{ok:true;moved:number;shiftDays:number}|{ok:false;error:string}>{
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return{ok:false,error:"Pauses require the scheduling database."};
+ const {data,error}=await supabase.rpc("pause_enrollment_v2",{p_enrollment_id:enrollmentId,p_from:from,p_resume:resume,p_reason:reason,p_note:note});
+ return error?{ok:false,error:error.message}:{ok:true,moved:Number(data?.moved??0),shiftDays:Number(data?.shiftDays??0)};
+}
+export async function resumeEnrollmentV2(enrollmentId:string,note=""):Promise<{ok:true}|{ok:false;error:string}>{
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return{ok:false,error:"Resume requires the scheduling database."};
+ const {error}=await supabase.rpc("resume_enrollment_v2",{p_enrollment_id:enrollmentId,p_note:note});
+ return error?{ok:false,error:error.message}:{ok:true};
+}
+
 export async function getClassReusableZoomLinkV2(eventId:string):Promise<string>{
  const supabase=getSupabaseBrowserClient();if(!supabase)return"";
  const {data,error}=await supabase.rpc("class_reusable_zoom_link_v2",{p_event_id:eventId});
