@@ -28,7 +28,7 @@ export default function SchedulingV2Admin(){
   setEnrollments(e);setStudents(s);setCourses(c);setEvents(v);setTrainers(t);
  }
  useEffect(()=>{void refresh().catch(e=>setError(e instanceof Error?e.message:String(e)))},[]);
- const eligible=enrollments.filter(e=>e.status==="active"&&e.enrollmentType==="one_to_one"&&e.scheduleRules.length);
+ const eligible=enrollments.filter(e=>["active","on_hold"].includes(e.status)&&e.enrollmentType==="one_to_one"&&e.scheduleRules.length);
  const enrollment=eligible.find(e=>e.id===selected);
  const course=courses.find(c=>c.id===enrollment?.courseId);
  const preview=useMemo(()=>{
@@ -73,7 +73,7 @@ export default function SchedulingV2Admin(){
    {notice&&<div className="successBanner">{notice}</div>}
    {enrollment&&!preview.error&&<><p className="fieldHint">{preview.rows.length} proposed dates · {preview.rows.filter(x=>x.conflicts.length).length} overlapping-date warning(s). Database checks are authoritative.</p>
    <div className="tableWrap" style={{maxHeight:360,overflow:"auto"}}><table><thead><tr><th>Date</th><th>Local time</th><th>Conflict</th></tr></thead><tbody>{preview.rows.map((slot,i)=><tr key={i}><td>{slot.date}</td><td>{slot.startTime}–{slot.endTime}</td><td>{slot.conflicts.join(", ")||"—"}</td></tr>)}</tbody></table></div></>}
-   <div className="formActions"><button className="button" disabled={busy||!enrollment||!!preview.error||horizon==="manual"} onClick={book}>{busy?"Booking…":"Generate class bookings"}</button></div>
+   <div className="formActions"><button className="button" disabled={busy||!enrollment||enrollment.status!=="active"||!!preview.error||horizon==="manual"} onClick={book}>{busy?"Booking…":"Generate class bookings"}</button></div>
   </section>
   {enrollment&&<EnrollmentPauseControls key={enrollment.id} enrollmentId={enrollment.id} status={enrollment.status} role="admin" onChanged={refresh}/>}
   {enrollment&&<section className="panel" style={{marginTop:16}}>
