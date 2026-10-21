@@ -4594,6 +4594,19 @@ begin
       extract(minute from v_end)::integer%30<>0 then
     raise exception 'Generated session must use supported same-day 30-minute intervals';
    end if;
+   if not exists(select 1 from public.trainer_availability a
+    where a.trainer_id=v_en.trainer_id and a.enabled
+      and a.day_of_week=extract(dow from v_day)::integer
+      and a.start_time<=v_start and a.end_time>=v_end)
+   and not exists(select 1 from public.trainer_availability_overrides o
+      where o.trainer_id=v_en.trainer_id and o.date=v_day and o.override_type='available'
+      and o.start_time<=v_start and o.end_time>=v_end)
+   and not v_en.schedule_override_confirmed
+   then raise exception 'Trainer weekly availability does not cover % %',v_day,v_start; end if;
+   if exists(select 1 from public.trainer_availability_overrides o
+      where o.trainer_id=v_en.trainer_id and o.date=v_day
+      and o.override_type='unavailable' and o.start_time<v_end and o.end_time>v_start)
+   then raise exception 'Trainer unavailable on % %',v_day,v_start; end if;
    v_start_at:=(v_day+v_start) at time zone v_en.schedule_timezone;
    v_end_at:=(v_day+v_end) at time zone v_en.schedule_timezone;
    if v_end_at<=v_start_at then raise exception 'Invalid timezone-adjusted slot'; end if;
@@ -4932,6 +4945,10 @@ begin
     extract(minute from p_start)::integer%30<>0 or extract(minute from p_end)::integer%30<>0 or
     (extract(epoch from (p_end-p_start))::integer/60) not in (60,90,120,150)
  then raise exception 'Choose a valid 1–2.5 hour class in 30-minute steps'; end if;
+ if exists(select 1 from public.trainer_availability_overrides o
+   where o.trainer_id=e.trainer_id and o.date=p_date and o.override_type='unavailable'
+     and o.start_time<p_end and o.end_time>p_start)
+ then raise exception 'Trainer is unavailable on this date'; end if;
  v_start:=(p_date+p_start) at time zone e.timezone;
  v_end:=(p_date+p_end) at time zone e.timezone;
  if v_start<=now() then raise exception 'Replacement must be in the future'; end if;
@@ -5048,6 +5065,10 @@ begin
    if v_end<=v_start or extract(minute from v_start)::integer%30<>0
      or extract(minute from v_end)::integer%30<>0
    then raise exception 'Use supported same-day half-hour class slots'; end if;
+   if exists(select 1 from public.trainer_availability_overrides o
+       where o.trainer_id=c.trainer_id and o.date=v_day
+         and o.override_type='unavailable' and o.start_time<v_end and o.end_time>v_start)
+    then raise exception 'Trainer has leave on % %',v_day,v_start; end if;
    v_start_at:=(v_day+v_start) at time zone c.schedule_timezone;
    v_end_at:=(v_day+v_end) at time zone c.schedule_timezone;
    if v_end_at<=v_start_at then raise exception 'Invalid class time'; end if;
@@ -5112,6 +5133,10 @@ begin
  if p_date is null or p_start is null or p_end is null or p_start>=p_end
     or (extract(epoch from (p_end-p_start))::integer/60) not in (60,90,120,150)
  then raise exception 'Choose a supported class duration'; end if;
+ if exists(select 1 from public.trainer_availability_overrides o
+   where o.trainer_id=original.trainer_id and o.date=p_date
+     and o.override_type='unavailable' and o.start_time<p_end and o.end_time>p_start)
+ then raise exception 'Trainer on leave for proposed makeup'; end if;
  v_start_at:=(p_date+p_start) at time zone original.timezone;
  v_end_at:=(p_date+p_end) at time zone original.timezone;
  if v_start_at<=now() then raise exception 'Makeup must be in the future'; end if;
