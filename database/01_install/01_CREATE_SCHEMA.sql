@@ -4543,6 +4543,11 @@ begin
  if v_en.enrollment_type <> 'one_to_one' then
    raise exception 'Group sessions must be generated at cohort level, not once per learner';
  end if;
+ -- No artificial historical bookings for ongoing or migrated programs.
+ -- Existing advanced enrollments need a separately reviewed forward-only plan.
+ if v_en.started_at < (now() at time zone 'Asia/Kolkata')::date or
+    coalesce(v_en.sessions_completed,0)>0 or coalesce(v_en.opening_completed_sessions,0)>0
+ then raise exception 'Ongoing or historical enrollments require reviewed future-only scheduling'; end if;
  select * into v_course from public.courses where id=v_en.course_id;
  if not found then raise exception 'Course not found'; end if;
  v_total:=coalesce(v_en.planned_sessions,v_course.total_sessions);
