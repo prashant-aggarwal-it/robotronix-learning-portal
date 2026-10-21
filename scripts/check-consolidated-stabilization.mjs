@@ -14,7 +14,7 @@ const checks={
  "lib/trainer-payroll.ts":["const scheduledMinutes=range.durationMinutes","durationMinutes:scheduledMinutes"],
  "lib/course-hours.ts":["Number(event.actualDurationMinutes)","minutes+=eventDurationMinutes(event)"],
  "app/trainer/earnings/page.tsx":["Extra teaching minutes count toward the learner"],
- "database/03_verify/02_POST_INSTALL_PAYROLL_POLICY_FIX.sql":["actual_duration_minutes % 15=0","duration_mins := greatest(1,round(extract(epoch from (end_at-class_at))/60)::int)"],
+ "database/01_install/01_CREATE_SCHEMA.sql":["actual_duration_minutes % 15=0","duration_mins := greatest(1,round(extract(epoch from (end_at-class_at))/60)::int)"],
  "app/admin/zoom/page.tsx":["Cloud recordings by meeting","<details"],
  "docs/PASSWORDLESS_PORTAL_ACCESS.md":["AUTH-01","AUTH-12","Token"],
  "docs/CONSOLIDATED_RELEASE_QA_HANDOVER.md":["SQL deployment policy","Zoom"],
