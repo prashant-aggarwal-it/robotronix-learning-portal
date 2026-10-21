@@ -499,6 +499,11 @@ export async function rescheduleClassV2(eventId:string,date:string,startTime:str
  return error?{ok:false,error:error.message}:{ok:true,id:String(data)};
 }
 
+export async function pauseCohortMemberV2(enrollmentId:string,from:string,resume:string,reason:"exams"|"medical"|"travel"|"family"|"other",note=""):Promise<{ok:true;moved:0;shiftDays:0}|{ok:false;error:string}>{
+ const db=getSupabaseBrowserClient();if(!db)return{ok:false,error:"Cohort leave requires database access."};
+ const {error}=await db.rpc("pause_cohort_member_v2",{p_enrollment_id:enrollmentId,p_from:from,p_resume:resume,p_reason:reason,p_note:note});
+ return error?{ok:false,error:error.message}:{ok:true,moved:0,shiftDays:0};
+}
 export async function pauseEnrollmentV2(enrollmentId:string,from:string,resume:string,reason:"exams"|"medical"|"travel"|"family"|"other",note=""):Promise<{ok:true;moved:number;shiftDays:number}|{ok:false;error:string}>{
  const supabase=getSupabaseBrowserClient();
  if(!supabase)return{ok:false,error:"Pauses require the scheduling database."};
