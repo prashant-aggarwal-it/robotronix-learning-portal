@@ -49,7 +49,7 @@ for(const file of ['database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql','da
 // Guard against stale SQL paths in future check scripts after consolidation.
 const scriptsDir=path.join(root,'scripts');
 const stale=[];
-for(const name of fs.readdirSync(scriptsDir).filter(n=>n.endsWith('.mjs'))){
+// Only static check scripts must refer to tracked, present SQL files.\n// Operational QA generators intentionally reference SQL they create later.\nfor(const name of fs.readdirSync(scriptsDir).filter(n=>n.startsWith('check-')&&n.endsWith('.mjs'))){
  const source=fs.readFileSync(path.join(scriptsDir,name),'utf8');
  // Identify literals referring to concrete SQL files, excluding dynamic examples.
  for(const match of source.matchAll(/database\/[-A-Za-z0-9_./]+\.sql/g)){
