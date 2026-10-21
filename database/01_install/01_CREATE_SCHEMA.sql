@@ -1483,8 +1483,8 @@ commit;
 -- Planned vs verified actual instructional duration.
 alter table if exists public.schedule_events add column if not exists actual_duration_minutes integer;
 alter table if exists public.schedule_events drop constraint if exists actual_duration_half_hour_check;
-alter table if exists public.schedule_events add constraint actual_duration_half_hour_check check(actual_duration_minutes is null or(actual_duration_minutes between 30 and 480 and actual_duration_minutes % 30=0));
-comment on column public.schedule_events.actual_duration_minutes is 'Verified actual taught minutes on a conducted class; scheduled end time remains the original plan.';
+alter table if exists public.schedule_events add constraint actual_duration_half_hour_check check(actual_duration_minutes is null or(actual_duration_minutes between 15 and 480 and actual_duration_minutes % 15=0));
+comment on column public.schedule_events.actual_duration_minutes is 'Verified actual teaching minutes in 15-minute increments, used for learner course consumption; scheduled slot duration remains payroll basis.';
 
 create or replace function public.sync_trainer_earning(p_event_id uuid,p_force boolean default false)
 returns uuid language plpgsql security definer set search_path=public as $$
