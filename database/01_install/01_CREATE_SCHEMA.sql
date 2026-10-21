@@ -4975,3 +4975,37 @@ begin
 end $$;
 revoke all on function public.reschedule_class_v2(uuid,date,time,time,text,text) from public,anon;
 grant execute on function public.reschedule_class_v2(uuid,date,time,time,text,text) to authenticated;
+
+
+-- Scheduling V2: explicit Admin financial decision on parent cancellations.
+create or replace function public.resolve_class_cancellation_v2(
+ p_event_id uuid,p_decision text,p_reason text
+) returns boolean language plpgsql security definer set search_path=public as $$
+declare e public.schedule_events%rowtype;
+begin
+ if not public.is_admin() then raise exception 'Admin approval required'; end if;
+ if p_decision not in ('approved','rejected') or nullif(trim(coalesce(p_reason,'')),'') is null
+ then raise exception 'Choose approve/reject and record the reason'; end if;
+ select * into e from public.schedule_events where id=p_event_id for update;
+ if not found or e.status<>'cancelled' or e.finance_exception_status<>'review'
+ then raise exception 'Class is not awaiting cancellation review'; end if;
+ if exists(select 1 from public.trainer_earnings where schedule_event_id=e.id and status in ('approved','paid'))
+ then raise exception 'Existing locked earnings require a separate payroll correction'; end if;
+ update public.schedule_events set finance_exception_status=p_decision,
+ finance_exception_note=trim(p_reason),updated_at=now() where id=e.id;
+ if p_decision='approved' then
+   -- The Admin has explicitly approved this exception. Compensation is
+   -- calculated according to the existing trainer cancellation pay policy.
+   perform public.sync_trainer_earning(e.id,true);
+ end if;
+ insert into public.portal_audit_log(actor_profile_id,entity_type,entity_id,action,before_data,after_data)
+ values(auth.uid(),'schedule_event',e.id::text,'resolve_cancellation_v2',
+ jsonb_build_object('finance_exception_status',e.finance_exception_status),
+ jsonb_build_object('finance_exception_status',p_decision,'reason',trim(p_reason)));
+ insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
+ values('trainer',e.student_id,e.trainer_id,'cancellation_review_resolved','info',
+ 'Cancellation review resolved','An Admin has reviewed a class cancellation and its financial treatment.','/trainer/classes');
+ return true;
+end $$;
+revoke all on function public.resolve_class_cancellation_v2(uuid,text,text) from public,anon;
+grant execute on function public.resolve_class_cancellation_v2(uuid,text,text) to authenticated;
