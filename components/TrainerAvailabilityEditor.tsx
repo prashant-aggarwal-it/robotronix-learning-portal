@@ -26,6 +26,7 @@ function editorValueToRows(value:string):Row[]{
 
 export function TrainerAvailabilityEditor({trainerId,onSaved,onCancel}:{trainerId:string;onSaved?:()=>void;onCancel?:()=>void}){
   const[value,setValue]=useState("");
+  const[savedValue,setSavedValue]=useState("");
   const[busy,setBusy]=useState(false);
   const[msg,setMsg]=useState("");
   const[loaded,setLoaded]=useState(false);
@@ -36,7 +37,9 @@ export function TrainerAvailabilityEditor({trainerId,onSaved,onCancel}:{trainerI
     setMsg("");
     listTrainerAvailability(trainerId).then(rows=>{
       if(!active)return;
-      setValue(rowsToEditorValue(rows.map(x=>({dayOfWeek:x.dayOfWeek,startTime:x.startTime,endTime:x.endTime,enabled:x.enabled}))));
+      const initial=rowsToEditorValue(rows.map(x=>({dayOfWeek:x.dayOfWeek,startTime:x.startTime,endTime:x.endTime,enabled:x.enabled})));
+      setValue(initial);
+      setSavedValue(initial);
       setLoaded(true);
     });
     return()=>{active=false};
@@ -50,6 +53,7 @@ export function TrainerAvailabilityEditor({trainerId,onSaved,onCancel}:{trainerI
     const result=await saveTrainerAvailability(trainerId,rows);
     setBusy(false);
     if(!result.ok){setMsg(result.error??"Unable to save availability.");return}
+    setSavedValue(value);
     setMsg("Availability saved.");
     onSaved?.();
   }
@@ -64,6 +68,7 @@ export function TrainerAvailabilityEditor({trainerId,onSaved,onCancel}:{trainerI
       mode="trainer"
       showTimingNote={false}
     />
+    {value!==savedValue&&<div role="status" className="fieldHint">Unsaved availability changes — click Save availability to apply them.</div>}
     <div className="row trainerAvailabilitySaveRow">
       <button className="button" type="button" disabled={busy} onClick={save}>{busy?"Saving…":"Save availability"}</button>
       {onCancel&&<button className="button ghost" type="button" disabled={busy} onClick={onCancel}>Cancel</button>}
