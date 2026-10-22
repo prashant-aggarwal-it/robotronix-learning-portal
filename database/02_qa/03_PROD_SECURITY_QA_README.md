@@ -4,7 +4,27 @@ These fixtures support explicitly authorized tests against the production portal
 They do not disable triggers or Row Level Security.
 
 Before running the seed, create seven dedicated confirmed Supabase Auth users and
-assign active `public.profiles` through the existing authorized admin process:
+assign active `public.profiles` through the existing authorized admin process.
+To do this automatically, use `scripts/create-prod-security-qa-users.mjs` with a
+local (never committed) `.env.security-qa.local` file:
+
+```env
+SECURITY_QA_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SECURITY_QA_SUPABASE_SERVICE_ROLE_KEY=YOUR_PRIVATE_SERVICE_ROLE_KEY
+SECURITY_QA_PRODUCTION_ACK=CREATE_SEVEN_SYNTHETIC_USERS
+```
+
+```bash
+node scripts/create-prod-security-qa-users.mjs
+```
+
+The script refuses to change any existing identity. It generates a strong
+individual password per account and prints each password **once**, so capture
+them in your password manager (never send them in chat or commit them).
+Use a private terminal; terminal output may contain credentials. If the run
+fails partway, do not blindly rerun: inspect and resolve the partial setup.
+
+The expected accounts are:
 
 | Email | Role |
 | --- | --- |
