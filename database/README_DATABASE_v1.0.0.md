@@ -2,10 +2,23 @@
 
 **Target:** NEW, EMPTY Supabase project only, for the consolidated release candidate. Database SQL is consolidated; this is not a claim that the new database or frontend has passed tests.
 
-## Production SQL: exactly two mandatory files, one conditional
+## Production SQL: one generated execution, one read-only verification
 
-1. **01_INSTALL_SCHEMA:** Run `database/01_install/01_CREATE_SCHEMA.sql` once in the new Supabase project's SQL Editor. This includes all P1 notifications, P2/P3 Realtime publication, finance cutoff and payout snapshots, system logs/RLS, passwordless provisioning and retention functions. Former scripts 04–09 were integrated and removed.
-2. **02_REFERENCE_DATA:** After schema succeeds, run `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` once. This creates/loads countries, currencies, academic levels, courses and configuration.
+From the repository root, run `npm run db:build-fresh-install`. This validates
+the canonical sources and produces **one** file:
+`database/generated/ROBOTRONIX_FRESH_INSTALL.sql` (gitignored). Copy and run
+the **entire generated file once** in the SQL Editor of a **new, empty**
+Supabase project. It contains the schema followed by reference/config data,
+in that order; do not also run the two source files separately.
+
+Then run the read-only `database/03_verify/01_VERIFY_RELEASE.sql` to confirm
+the installation. The first-admin bootstrap remains an optional, separately
+reviewed identity action after the actual Auth user exists.
+
+### Canonical sources (used by the generator)
+
+1. **01_INSTALL_SCHEMA:** `database/01_install/01_CREATE_SCHEMA.sql` This includes all P1 notifications, P2/P3 Realtime publication, finance cutoff and payout snapshots, system logs/RLS, passwordless provisioning and retention functions. Former scripts 04–09 were integrated and removed.
+2. **02_REFERENCE_DATA:** `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` This creates/loads countries, currencies, academic levels, courses and configuration.
 3. **03_ADMIN_BOOTSTRAP (conditional):** Set up Google/SMTP Auth, create/sign in with the actual intended Admin email to establish an `auth.users` identity, then edit and run `database/01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` **only if an Admin profile needs to be bootstrapped**. Replace the literal `ADMIN_EMAIL_HERE`. Never run this unedited or in a project with a verified existing Admin without reviewing the effect.
 
 Then run the **read-only check** `database/03_verify/01_VERIFY_RELEASE.sql`. It is not an installation/migration step. Capture results and address all errors.
