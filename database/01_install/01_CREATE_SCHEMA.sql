@@ -1169,7 +1169,7 @@ alter table public.schedule_events add constraint schedule_events_finance_except
  check(finance_exception_status in ('none','review','approved','rejected'));
 
 create or replace function public.mark_class_cancellation_for_review_v2()
-returns trigger language plpgsql set search_path=public as $
+returns trigger language plpgsql set search_path=public as $$
 begin
  if new.event_type='class' and new.status='cancelled'
     and (tg_op='INSERT' or old.status is distinct from new.status) then
