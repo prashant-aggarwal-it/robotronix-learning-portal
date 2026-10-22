@@ -7,7 +7,7 @@
 | Requirement | Planned original evidence | Current status |
 | --- | --- | --- |
 | SSDLC | `docs/zoom-beta/SSDLC.md` and GitHub release/security run URLs, owner adoption evidence | Document drafted; owner adoption pending |
-| SAST | GitHub workflow `zoom-beta-sast.yml`: **download scanner-generated `semgrep.json`**, scanner version and run metadata | Workflow configured; retain real report from completed run |
+| SAST | GitHub workflow `zoom-beta-sast.yml`: **download scanner-generated `semgrep.json`**, scanner version and run metadata | Initial genuine Semgrep run #39709798949 produced report (one finding in Zoom AES-GCM token decryption). Fixed in commit b94b070; rerun and verify fresh scanner output before submitting |
 | DAST | GitHub workflow `zoom-beta-dast.yml`: **download scanner-generated `zap-baseline.html` + `zap-baseline.json`** | Manual authorized scan not yet executed |
 | Privacy Policy | Live public privacy policy URL covering Zoom access, OAuth tokens, meetings/recordings, retention, sharing, deletion and contact | Verify URL, factual accuracy and availability |
 | Security policy | `docs/zoom-beta/SECURITY_POLICY.md` | Draft; owner approval pending |
@@ -50,3 +50,12 @@ Do not send this template before the report and policy items are actually comple
 ## Evidence hygiene
 
 Use GitHub Actions **run URLs, exact commit SHA, scan timestamp and artifact filenames** for traceability. Artifacts may expire (configured retention 30 days); preserve a restricted copy before expiry. Do not publish internal incident policies, credentials or sensitive scan findings to public pages. Review scanner reports before sharing with the Zoom reviewer.
+
+## Initial SAST finding and remediation trail
+- Original scanner run: https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/39709798949 (Semgrep 1.168.0; 253 files considered; one finding).
+- Rule: `javascript.node-crypto.security.gcm-no-tag-length.gcm-no-tag-length` at `lib/server/zoom.ts` line 49 (missing expected authentication-tag length).
+- Fix: commit `b94b070` explicitly sets AES-256-GCM `authTagLength:16` and validates 12-byte nonce/16-byte tag at decryption; regression assertion in `qa/security-static.spec.ts`.
+- Final disposition: **Awaiting fresh Semgrep report confirmation**. Successful scanner process execution does not itself mean no findings.
+
+## DAST scope limitation
+The Zoom review may ask for application-authenticated API/Zoom OAuth testing beyond the public ZAP baseline. We should not label passive, unauthenticated crawling as comprehensive DAST or third-party penetration testing. Document the scanner scope honestly and respond to any follow-up requests.
