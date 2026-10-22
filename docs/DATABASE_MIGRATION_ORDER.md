@@ -1,9 +1,9 @@
 # Database installation — consolidated fresh project
 
-**Fresh Production uses only two mandatory SQL files and one conditional Admin bootstrap.**
+**Fresh Production uses one generated SQL execution and one conditional Admin bootstrap.**
 
-1. Run `database/01_install/01_CREATE_SCHEMA.sql` **once** in a brand-new, empty Supabase project.
-2. Run `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` **once**, after schema succeeds.
+1. Run `npm run db:build-fresh-install` from the repository root. It checks the canonical schema and reference sources and creates `database/generated/ROBOTRONIX_FRESH_INSTALL.sql`.
+2. Run that entire generated SQL file **once** in a brand-new, empty Supabase project. Do not run its two constituent source files again.
 3. **Only if needed**, provision the real Admin Auth user, edit `database/01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` with the correct Admin email, review it, then execute it.
 4. Run **read-only** `database/03_verify/01_VERIFY_RELEASE.sql`; inspect all results, then validate in DEV with application/build tests.
 
