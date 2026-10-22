@@ -47,3 +47,11 @@ test.describe("Bounded webhook request reader",()=>{
   await expect(readTextBodyLimited(req,32)).rejects.toBeInstanceOf(RequestBodyTooLarge);
  });
 });
+
+test("Zoom token encryption enforces full AES-GCM authentication tag",()=>{
+ const source=fs.readFileSync("lib/server/zoom.ts","utf8");
+ expect(source).toContain('createCipheriv("aes-256-gcm",encryptionKey(),iv,{authTagLength:16})');
+ expect(source).toContain('createDecipheriv("aes-256-gcm",encryptionKey(),iv,{authTagLength:16})');
+ expect(source).toContain('tag.length!==16');
+ expect(source).toContain('iv.length!==12');
+});
