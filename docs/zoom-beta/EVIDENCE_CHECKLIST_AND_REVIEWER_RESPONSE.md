@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | SSDLC | `docs/zoom-beta/SSDLC.md` and GitHub release/security run URLs, owner adoption evidence | Document drafted; owner adoption pending |
 | SAST | GitHub workflow `zoom-beta-sast.yml`: **download scanner-generated `semgrep.json`**, scanner version and run metadata | Original run #39709798949: one finding. After fix b94b070, retest #39710292096: zero findings among 89 rules across 253 files, with 25 partial parsing warnings. Requires review of scan coverage before declaring full SAST acceptance. |
-| DAST | GitHub workflow `zoom-beta-dast.yml`: **download scanner-generated `zap-baseline.html` + `zap-baseline.json`** | Manual authorized scan not yet executed |
+| DAST | GitHub workflow `zoom-beta-dast.yml`: **download scanner-generated `zap-baseline.html` + `zap-baseline.json`** | First authorized scan completed: run #39710579155, 9 warning categories, 0 FAIL. Reports downloaded; triage pending |
 | Privacy Policy | Live public privacy policy URL covering Zoom access, OAuth tokens, meetings/recordings, retention, sharing, deletion and contact | Verify URL, factual accuracy and availability |
 | Security policy | `docs/zoom-beta/SECURITY_POLICY.md` | Draft; owner approval pending |
 | Incident management and response policy | `docs/zoom-beta/INCIDENT_RESPONSE_POLICY.md` | Draft; owner approval pending |
@@ -59,3 +59,16 @@ Use GitHub Actions **run URLs, exact commit SHA, scan timestamp and artifact fil
 
 ## DAST scope limitation
 The Zoom review may ask for application-authenticated API/Zoom OAuth testing beyond the public ZAP baseline. We should not label passive, unauthenticated crawling as comprehensive DAST or third-party penetration testing. Document the scanner scope honestly and respond to any follow-up requests.
+
+## First real DAST baseline — 2026-10-22
+- Run: https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/39710579155
+- Scanner: OWASP ZAP baseline, short unauthenticated passive crawl, target `https://portal.robotronixstemlab.com`.
+- Original artifacts: `zoom-beta-dast-39710579155`, containing `zap-baseline.html`, `zap-baseline.json`, run metadata.
+- Results as reported by ZAP: **0 FAIL**, **9 WARN** categories (some with Medium risk ratings), **58 PASS** rules; informational categories also appear in JSON.
+- Warnings: CSP wildcard directive; CSP `script-src unsafe-eval`; CSP `script-src unsafe-inline`; CSP `style-src unsafe-inline`; Cross-Origin-Embedder-Policy; Cross-Origin-Resource-Policy; Permissions-Policy; `X-Powered-By` disclosure; `X-Content-Type-Options` missing on some URLs.
+- These findings describe the **currently deployed production URL** (which can be on an older code commit), **not proof of the latest stabilization branch's deployed behavior**. Compare the deployed SHA and retest after rollout.
+- Do not suppress CSP warnings unilaterally: Zoom Meeting SDK compatibility and required origins must be verified before tightening.
+- Each warning must be reviewed, assigned a disposition, fixed or formally accepted with mitigation and rerun before describing the DAST security position as accepted.
+
+## SAST scope caveat
+The Semgrep retest found zero rule matches, **but the JSON contains 25 partial-parse warnings**. These may reduce coverage on TSX modules. Record them for scanner triage, consider a second independent source scanner, and do not describe the analysis as complete coverage.
