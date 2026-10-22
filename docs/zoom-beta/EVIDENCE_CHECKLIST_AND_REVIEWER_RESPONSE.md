@@ -94,3 +94,7 @@ The signed-in Robotronix Classroom app's **Notes** panel shows the Zoom Marketpl
 Observed Beta Test status: **Share outside your account LIMITED / share request declined**. The app offers **Request to Share** for a new request, and the reviewer says notes are evaluated when updates are submitted. No new sharing request or reviewer response has yet been sent.
 
 Observed Technical Design: Overview complete 5/5, Security complete 3/3. SSDLC, SAST/DAST, and third-party penetration-test questions currently remain answered **No** in Overview; Security questions for TLS, webhook signing, and protected stored Zoom data are answered **Yes**. Update attestations only after their underlying evidence/operational adoption is verified. Existing architecture attachment is `Robotronix_Zoom_Architecture_DRAFT.pdf`.
+
+## 60-day retention policy decision and privacy work — 2026-10-22
+
+Owner approved **60 days as the default** and specifically asked for implementation verification before enforcement. Static code/schema review is recorded in `docs/zoom-beta/RECORDING_RETENTION_VERIFICATION.md`; public disclosure draft is `docs/zoom-beta/PRIVACY_ADDENDUM_DRAFT.md`. The cleanup uses Zoom `action=trash` rather than proved permanent erasure, and host overrides/protected recordings may persist longer. **Neither production cleanup verification nor public privacy publication has been completed.** Do not mark the Privacy Policy evidence row ready until the public site is updated and the retention caveats are accurate.
