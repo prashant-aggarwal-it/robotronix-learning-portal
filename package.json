@@ -63,7 +63,7 @@
     "qa:security-dev-all": "npm run qa:security-dev && npm run qa:security-dev-http"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "^2.118.0",
     "next": "16.3.8",
     "react": "19.2.0",
     "react-dom": "19.2.0"
