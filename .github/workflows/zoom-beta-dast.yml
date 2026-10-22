@@ -1,0 +1,65 @@
+name: Zoom Beta DAST passive evidence
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Exact authorized Robotronix portal URL"
+        required: true
+        default: "https://portal.robotronixstemlab.com"
+        type: string
+      approval:
+        description: "Enter AUTHORIZE_PASSIVE_SCAN to confirm permission"
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  zap-passive:
+    if: ${{ github.ref == 'refs/heads/release/consolidated-stabilization-20261020' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Validate target and explicit authorization
+        env:
+          TARGET: ${{ inputs.target }}
+          APPROVAL: ${{ inputs.approval }}
+        shell: bash
+        run: |
+          if [[ "$TARGET" != "https://portal.robotronixstemlab.com" || "$APPROVAL" != "AUTHORIZE_PASSIVE_SCAN" ]]; then
+            echo "Only the explicitly authorized HTTPS portal target is permitted"
+            exit 1
+          fi
+      - name: Prepare evidence directory
+        run: mkdir -p security-reports/dast
+      - name: OWASP ZAP unauthenticated passive baseline
+        id: zap
+        shell: bash
+        run: |
+          set +e
+          docker run --rm --user 0:0 \
+            -v "$PWD/security-reports/dast:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t https://portal.robotronixstemlab.com \
+            -m 1 -T 7 -r zap-baseline.html -J zap-baseline.json \
+            -I
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          printf 'git_sha=%s\nrun_id=%s\ntarget=%s\nscan_exit=%s\nmode=unauthenticated-passive\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" "https://portal.robotronixstemlab.com" "$status" \
+            > security-reports/dast/run-metadata.txt
+          exit 0
+      - name: Preserve original ZAP reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zoom-beta-dast-${{ github.run_id }}
+          path: security-reports/dast/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Require scan completion and evidence
+        run: |
+          test "${{ steps.zap.outputs.exit_code }}" = "0" || test "${{ steps.zap.outputs.exit_code }}" = "2"
+          test -s security-reports/dast/zap-baseline.json
+          test -s security-reports/dast/zap-baseline.html
+  # No active attacks, authenticated crawling, destructive payloads, or rate tests.
+  # This scan is evidence of public-surface DAST only, not a penetration test.
