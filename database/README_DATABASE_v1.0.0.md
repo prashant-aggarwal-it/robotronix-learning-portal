@@ -37,4 +37,9 @@ Run `npm ci`, `npm run check:release`, `npm run build`, and configured Playwrigh
 - `02_qa/*`: developer fixtures only; never for Production.
 - `99_dev_tools/*`: destructive DEV tools only; never for Production.
 
+Two historical production-sanity seed/cleanup scripts were removed because no
+current code or release workflow references them. The archived permanent QA
+seed remains solely as input to `scripts/generate-permanent-qa-seed.mjs`;
+it is **not** part of the install sequence.
+
 **Historical incremental scripts 04–09 were deleted from this release branch after verifying their exact content is already included exactly once inside 01_CREATE_SCHEMA.sql.** The Git history retains them if they are ever needed to inspect an older installation; they should not be executed as part of this fresh install.
