@@ -69,7 +69,7 @@ export default function HomePage(){
       </section>
 
       <footer className="landingFooter">
-        Robotronix™ Learning Portal · <Link href="/privacy">Privacy Policy</Link>
+        Robotronix™ Learning Portal · <Link href="/privacy">Privacy Policy</Link> · <Link href="/terms">Terms of Use</Link> · <Link href="/support">Support</Link> · <Link href="/zoom-guide">Zoom Guide</Link>
       </footer>
     </main>
   );

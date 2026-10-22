@@ -54,6 +54,6 @@ export default function Login(){
    <form className="formStack topGap" onSubmit={passwordSignIn}><label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password" required/></label><button className="button secondary fullButton" disabled={loading}>Sign in with password</button></form>
   </details>
   <div className="entityBoundaryNote"><b>New family?</b><span>Start family onboarding to link your child. Trainers and existing students receive access from Admin.</span><Link href="/onboarding" className="tableAction">Start family onboarding →</Link></div>
-  <p style={{textAlign:"center",margin:"18px 0 0",fontSize:13,color:"#66738c"}}>Learn how we protect your information: <Link href="/privacy" style={{color:"#4537a5",textDecoration:"underline"}}>Privacy Policy</Link></p>
+  <p style={{textAlign:"center",margin:"18px 0 0",fontSize:13,color:"#66738c"}}><Link href="/privacy" style={{color:"#4537a5",textDecoration:"underline"}}>Privacy Policy</Link> · <Link href="/terms" style={{color:"#4537a5",textDecoration:"underline"}}>Terms of Use</Link> · <Link href="/support" style={{color:"#4537a5",textDecoration:"underline"}}>Support</Link> · <Link href="/zoom-guide" style={{color:"#4537a5",textDecoration:"underline"}}>Zoom Guide</Link></p>
  </section></main>;
 }
