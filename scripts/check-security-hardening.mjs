@@ -37,6 +37,9 @@ for(const fn of ['generate_enrollment_schedule_v2','generate_cohort_schedule_v2'
  must(schema.includes('public.'+fn),'Scheduling RPC not present: '+fn);
  must(new RegExp('revoke all on function public\\.'+fn+'\\(').test(schema),'RPC lacks explicit public/anon EXECUTE revoke: '+fn);
 }
+for(const signature of ['next_robotronix_invoice_number\\(date\\)','refresh_enrollment_progress\\(uuid\\)']){
+ must(new RegExp('revoke execute on function public\\.'+signature+'\\s+from public, anon, authenticated','i').test(schema),'Privileged maintenance RPC lacks public/anon/authenticated revoke: '+signature);
+}
 for(const table of ['profiles','parents','students','enrollments','schedule_events','class_attendance','trainer_earnings','student_fee_payments','portal_notifications']){
  must(new RegExp('alter table (?:if exists )?public\\.'+table+' enable row level security','i').test(schema),'RLS enable marker absent: '+table);
 }

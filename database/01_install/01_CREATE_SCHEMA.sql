@@ -5320,3 +5320,13 @@ begin
 end $$;
 revoke all on function public.reassign_cohort_trainer_v2(uuid,uuid,text) from public,anon;
 grant execute on function public.reassign_cohort_trainer_v2(uuid,uuid,text) to authenticated;
+
+-- Privileged maintenance RPCs must not be callable through public PostgREST
+-- roles. Database triggers run as the owning role and the server-side invoice
+-- API uses the service-role client, so those trusted call paths remain intact.
+revoke execute on function public.next_robotronix_invoice_number(date)
+  from public, anon, authenticated;
+revoke execute on function public.refresh_enrollment_progress(uuid)
+  from public, anon, authenticated;
+grant execute on function public.next_robotronix_invoice_number(date)
+  to service_role;

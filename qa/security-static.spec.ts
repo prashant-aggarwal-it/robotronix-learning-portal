@@ -55,3 +55,16 @@ test("Zoom token encryption enforces full AES-GCM authentication tag",()=>{
  expect(source).toContain('tag.length!==16');
  expect(source).toContain('iv.length!==12');
 });
+
+test("Zoom privacy policy is a public, server-rendered route linked before sign-in",()=>{
+ const page=fs.readFileSync("app/privacy/page.tsx","utf8");
+ expect(page).toContain('https://portal.robotronixstemlab.com/privacy');
+ expect(page).toContain('mailto:info@robotronixstemlab.com');
+ expect(page).toContain('Zoom Trash');
+ expect(page).toContain('Default retention: 60 days');
+ expect(page).not.toContain('"use client"');
+ expect(page).not.toContain('RoleGuard');
+ expect(fs.readFileSync("app/page.tsx","utf8")).toContain('href="/privacy"');
+ expect(fs.readFileSync("app/login/page.tsx","utf8")).toContain('href="/privacy"');
+ expect(fs.readFileSync("app/onboarding/page.tsx","utf8")).toContain('href="/privacy"');
+});

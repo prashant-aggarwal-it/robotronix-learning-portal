@@ -6,13 +6,13 @@
 
 | Requirement | Planned original evidence | Current status |
 | --- | --- | --- |
-| SSDLC | `docs/zoom-beta/SSDLC.md` and GitHub release/security run URLs, owner adoption evidence | Document drafted; owner adoption pending |
+| SSDLC | `docs/zoom-beta/SSDLC.md` and GitHub release/security run URLs, owner adoption evidence | **Approved and adopted by Prashant Aggarwal, effective 2026-10-22**; supporting scan/release evidence still requires final assembly |
 | SAST | GitHub workflow `zoom-beta-sast.yml`: **download scanner-generated `semgrep.json`**, scanner version and run metadata | Original run #39709798949: one finding. After fix b94b070, retest #39710292096: zero findings among 89 rules across 253 files, with 25 partial parsing warnings. Requires review of scan coverage before declaring full SAST acceptance. |
 | DAST | GitHub workflow `zoom-beta-dast.yml`: **download scanner-generated `zap-baseline.html` + `zap-baseline.json`** | First authorized scan completed: run #39710579155, 9 warning categories, 0 FAIL. Reports downloaded; triage pending |
 | Privacy Policy | Live public privacy policy URL covering Zoom access, OAuth tokens, meetings/recordings, retention, sharing, deletion and contact | Verify URL, factual accuracy and availability |
-| Security policy | `docs/zoom-beta/SECURITY_POLICY.md` | Draft; owner approval pending |
-| Incident management and response policy | `docs/zoom-beta/INCIDENT_RESPONSE_POLICY.md` | Draft; owner approval pending |
-| Vulnerability management procedure | `docs/zoom-beta/VULNERABILITY_MANAGEMENT_POLICY.md` | Draft; owner approval pending |
+| Security policy | `docs/zoom-beta/SECURITY_POLICY.md` | **Approved and adopted by the founder, effective 2026-10-22** |
+| Incident management and response policy | `docs/zoom-beta/INCIDENT_RESPONSE_POLICY.md` | **Approved and adopted, effective 2026-10-22**; backup escalation contact/tabletop scheduling remain operational actions |
+| Vulnerability management procedure | `docs/zoom-beta/VULNERABILITY_MANAGEMENT_POLICY.md` | **Approved and adopted by the founder, effective 2026-10-22** |
 | TLS 1.2+ | Scanner or TLS configuration screenshot/probe for actual app endpoint | Evidence pending |
 
 The last three policies satisfy the reviewer's **choose any three** supporting-policy requirement after truthful operational adoption. A penetration-test executive summary, third-party audit or certification is **not** claimed. Zoom may request further evidence.
@@ -98,3 +98,23 @@ Observed Technical Design: Overview complete 5/5, Security complete 3/3. SSDLC, 
 ## 60-day retention policy decision and privacy work — 2026-10-22
 
 Owner approved **60 days as the default** and specifically asked for implementation verification before enforcement. Static code/schema review is recorded in `docs/zoom-beta/RECORDING_RETENTION_VERIFICATION.md`; public disclosure draft is `docs/zoom-beta/PRIVACY_ADDENDUM_DRAFT.md`. The cleanup uses Zoom `action=trash` rather than proved permanent erasure, and host overrides/protected recordings may persist longer. **Neither production cleanup verification nor public privacy publication has been completed.** Do not mark the Privacy Policy evidence row ready until the public site is updated and the retention caveats are accurate.
+
+## Production security verification and focused resubmission gate — 2026-10-22
+
+- The owner ran the privileged-RPC permission correction on production and supplied the read-only verification output: `next_robotronix_invoice_number` and `refresh_enrollment_progress` both returned `anon_can_execute=false`, `user_can_execute=false`, `service_can_execute=true`. The canonical fresh-install schema and `scripts/check-security-hardening.mjs` now guard these permissions. This is **not** a substitute for functional invoice/attendance regression tests.
+- Local `npm run check:security`, `npm run check:fresh-db`, and `tsc --noEmit --incremental false` passed after the change. An ordinary `npm run typecheck` could not write TypeScript's cache in the read-only execution environment; the no-cache check succeeded.
+- Cross-family SQL identity simulations for Parent B, Trainer B and Student B denied Family A records. The previously performed browser role checks passed; authenticated bearer-token API authorization tests remain pending and must not be represented as completed.
+- On 2026-10-22 a fresh public check of `https://www.robotronixstemlab.com/privacy` still showed general privacy language with **no Zoom-specific OAuth/recording/retention disclosure**. Publication of the reviewed addendum is the most immediate evidence blocker outside the portal repository.
+- The production privilege correction has been applied **in Supabase**, but the local consolidated source change is **not yet committed or deployed**. Avoid claiming the current Git SHA contains it until it is reconciled through the release branch.
+- For this specific Beta reviewer response, prioritize (1) truthful approval/adoption of SSDLC plus three policies, (2) live Zoom-aware Privacy Policy, (3) original current-SHA SAST/DAST artifacts with a candid warning/coverage summary, (4) TLS 1.2+ evidence, and (5) Marketplace Technical Design update and Request to Share. Do not claim independent penetration testing.
+
+## Policy adoption recorded — 22 October 2026
+
+The application owner **Prashant Aggarwal, Founder, Robotronix™ Tech Lab**, explicitly stated: “I approve all four policies for Robotronix, effective 22 October 2026.” Versions 1.0 of the SSDLC, Information Security, Incident Response and Vulnerability Management policies now record that approval and effective date. They describe controls and targets operating prospectively; approval does **not** establish that all past controls operated, that a penetration test occurred, or that any open scanner issue is fixed. Assign an incident backup contact and vulnerability-evidence archive during operational rollout. Public Zoom Privacy Policy publication, final scanner-triage evidence and actual Marketplace submission remain outstanding.
+
+## Portal-hosted Zoom Privacy Policy candidate — 22 October 2026
+
+- Added a public Next.js route at `app/privacy/page.tsx`, intended URL **https://portal.robotronixstemlab.com/privacy**, with accessible metadata, no role guard, and links from portal landing, login and family onboarding.
+- Wording identifies Zoom OAuth token processing, participant/meeting information, recording visibility, configured 60-day default with overrides, scheduled-job dependency, and the difference between Zoom Trash and permanent erasure. It also covers parent/guardian requests, service providers and a privacy contact.
+- **Not yet published or externally verified.** Do not enter the intended URL into Zoom Marketplace or mark the policy evidence complete until the approved commit is deployed, anonymous HTTPS access is verified, exact Zoom scopes are reconciled with Production Marketplace settings, and the owner confirms the operational/legal accuracy of the disclosure.
+- After deployment, capture an anonymous-browser screenshot of the live page with its URL and update the Zoom *App Listing → Links & Support* Privacy Policy URL. Keep the main website privacy policy separately available.

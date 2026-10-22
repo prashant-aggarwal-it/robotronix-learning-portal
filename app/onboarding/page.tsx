@@ -217,7 +217,7 @@ function OnboardingPageContent(){
       <small className="fieldHint timingExplainer">These are availability windows, not the final class duration. Robotronix™ will choose a class slot inside a preferred window after checking trainer availability.</small>
     </section>
 
-    <div className="consentBox"><label><input type="checkbox" checked={form.dataConsent} onChange={e=>set("dataConsent",e.target.checked)}/><span><b>Parent / guardian consent *</b><small>I confirm I am authorised to provide this information for course delivery, progress tracking and related communication.</small></span></label>{err("dataConsent")}</div>
+    <div className="consentBox"><label><input type="checkbox" checked={form.dataConsent} onChange={e=>set("dataConsent",e.target.checked)}/><span><b>Parent / guardian consent *</b><small>I confirm I am authorised to provide this information for course delivery, progress tracking and related communication. Read our <Link href="/privacy" target="_blank" rel="noopener noreferrer" style={{color:"#4537a5",textDecoration:"underline"}}>Privacy Policy</Link>.</small></span></label>{err("dataConsent")}</div>
     {errors.submit&&<div className="errorBanner">{errors.submit}</div>}
     <div className="wizardActions"><button className="button ghost" onClick={()=>setStep(1)}>Back</button><button className="button" disabled={saving} onClick={submit}>{saving?"Submitting…":"Submit onboarding"}</button></div>
    </>}
