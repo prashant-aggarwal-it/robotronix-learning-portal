@@ -7,7 +7,7 @@
 | Requirement | Planned original evidence | Current status |
 | --- | --- | --- |
 | SSDLC | `docs/zoom-beta/SSDLC.md` and GitHub release/security run URLs, owner adoption evidence | Document drafted; owner adoption pending |
-| SAST | GitHub workflow `zoom-beta-sast.yml`: **download scanner-generated `semgrep.json`**, scanner version and run metadata | Initial genuine Semgrep run #39709798949 produced report (one finding in Zoom AES-GCM token decryption). Fixed in commit b94b070; rerun and verify fresh scanner output before submitting |
+| SAST | GitHub workflow `zoom-beta-sast.yml`: **download scanner-generated `semgrep.json`**, scanner version and run metadata | Original run #39709798949: one finding. After fix b94b070, retest #39710292096: zero findings among 89 rules across 253 files, with 25 partial parsing warnings. Requires review of scan coverage before declaring full SAST acceptance. |
 | DAST | GitHub workflow `zoom-beta-dast.yml`: **download scanner-generated `zap-baseline.html` + `zap-baseline.json`** | Manual authorized scan not yet executed |
 | Privacy Policy | Live public privacy policy URL covering Zoom access, OAuth tokens, meetings/recordings, retention, sharing, deletion and contact | Verify URL, factual accuracy and availability |
 | Security policy | `docs/zoom-beta/SECURITY_POLICY.md` | Draft; owner approval pending |
@@ -55,7 +55,7 @@ Use GitHub Actions **run URLs, exact commit SHA, scan timestamp and artifact fil
 - Original scanner run: https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/39709798949 (Semgrep 1.168.0; 253 files considered; one finding).
 - Rule: `javascript.node-crypto.security.gcm-no-tag-length.gcm-no-tag-length` at `lib/server/zoom.ts` line 49 (missing expected authentication-tag length).
 - Fix: commit `b94b070` explicitly sets AES-256-GCM `authTagLength:16` and validates 12-byte nonce/16-byte tag at decryption; regression assertion in `qa/security-static.spec.ts`.
-- Final disposition: **Awaiting fresh Semgrep report confirmation**. Successful scanner process execution does not itself mean no findings.
+- Retest: https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/39710292096 — **0 reported findings**, original JSON artifact saved. **Caveat: 25 Semgrep partial parsing warnings** on TSX files mean scan coverage is not complete; triage and address the warnings or document a compensating source scan before submission. Do not assert fully clean SAST coverage.
 
 ## DAST scope limitation
 The Zoom review may ask for application-authenticated API/Zoom OAuth testing beyond the public ZAP baseline. We should not label passive, unauthenticated crawling as comprehensive DAST or third-party penetration testing. Document the scanner scope honestly and respond to any follow-up requests.
