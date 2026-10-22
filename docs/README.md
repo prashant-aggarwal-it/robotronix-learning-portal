@@ -1,10 +1,10 @@
-> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+> **Current release candidate (2026-10-22):** Branch `release/consolidated-stabilization-20261020`, release PR #6. Schema and reference data produce one generated installer using `npm run db:build-fresh-install`. Only run it on an **empty** database; do not run it against existing production data.
 
 # Robotronix™ Learning Portal — Documentation Hub
 
 **Audience:** founders/operations, developers, testers, trainers, support personnel, and deployment administrators.
 
-**Source of truth:** this index and the guides below describe the current `chore/consolidated-fresh-install-20261018` release candidate. Verify details against the code when updating behavior. **`docs/archive/` is historical only; archived runbooks are not executable setup instructions.**
+**Source of truth:** the current stabilization branch and the guides below. These explain implemented code and flag unverified provider behavior. Archived runbooks are historical, not installation instructions.
 
 ## Read in order
 
@@ -13,12 +13,14 @@
 | Understand the product and its users | [Application handbook](APPLICATION_HANDBOOK.md) |
 | Follow an entire learner/customer journey | [End-to-end workflows](WORKFLOWS.md) |
 | Install locally or bootstrap a new environment | [Environment setup — Dev and Prod](ENVIRONMENTS.md) |
-| Install/verify the database and test users | [Database and QA](FRESH_INSTALL_AND_QA.md) |
+| Generate/install/verify one-shot SQL and test users | [Database and QA](FRESH_INSTALL_AND_QA.md) |
 | Connect and operate Zoom | [Zoom integration](integrations/ZOOM.md) |
 | Configure billing and Razorpay | [Razorpay integration](integrations/RAZORPAY.md) |
 | Manage Google sign-in and access | [Authentication and roles](integrations/AUTHENTICATION.md) |
 | Release, monitor, troubleshoot or recover | [Operations runbook](OPERATIONS.md) |
 | Run automated and manual tests | [Testing and release checklist](TESTING.md) |
+| Review latest changes and unresolved release gates | [Consolidated stabilization backlog](CONSOLIDATED_STABILIZATION_BACKLOG.md) |
+| Prepare Zoom Beta reviewer evidence and retention policy | [Zoom Beta evidence checklist](zoom-beta/EVIDENCE_CHECKLIST_AND_REVIEWER_RESPONSE.md) |
 
 ## Reference map
 
@@ -35,19 +37,15 @@
 1. Every new feature/change must update the relevant *user workflow*, *integration/setup* and *test* documentation in the same PR.
 2. Keep examples free of passwords, tokens, personal information and real customer details.
 3. Record commands that actually exist in `package.json`; do not resurrect deleted migration or sanity SQL.
-4. Put outdated documents in `docs/archive/` and label their date/status. Archive files are for research, **not** current procedures.
+4. Remove superseded runbooks from the active tree once their useful guidance is folded into current docs; Git history preserves them. `docs/archive/README.md` explains the historical cleanup.
 5. Do not state external integration behavior is proven until verified in the target environment.
 6. Use relative Markdown links so documentation works directly in GitHub.
 
-**Current release state:** local release/build/auth/roles/workflow checks were reported successful; GitHub PR checks and deploy preview passed. This does *not* equal production acceptance. See [Testing](TESTING.md).
+**Current release state:** the candidate built and passed local TypeScript/structural checks on 2026-10-22; GitHub release and security checks passed at commit `7a4ac06`. Subsequent documentation/installer commits require their own CI verification. Authenticated DEV QA and end-to-end Zoom retention behavior have not been freshly certified. Production has not been updated by this work. See [Testing](TESTING.md).
 
-## In-progress release branch: Priority 1 action notifications
+## Consolidated feature specifications and acceptance
 
-For this unmerged, untested implementation see [Action-required notification design, upgrade notes and DEV acceptance tests](PRIORITY1_ACTION_NOTIFICATIONS.md). These changes are **not deployed or Production-verified**; the stable release guidance above remains authoritative until merge and successful deployment.
-
-## Work in progress: P2/P3 cross-role data synchronization and Realtime recovery
-
-[Read the P2/P3 implementation, SQL upgrade and DEV test matrix](P2_P3_REALTIME_RELIABILITY.md). This is an **unmerged, unverified implementation** on a separate branch stacked on the P1 notifications branch. It is not proof of deployment or Production acceptance.
+P1 [action-required notifications](PRIORITY1_ACTION_NOTIFICATIONS.md) and P2/P3 [cross-role Realtime reliability](P2_P3_REALTIME_RELIABILITY.md) have been incorporated into the stabilization candidate's canonical schema and app. Their original incremental-upgrade instructions are historical and must not be applied to a fresh project. Functional cross-role verification is still a release gate.
 
 ## Consolidated release candidate (work in progress)
 
@@ -67,4 +65,4 @@ For this unmerged, untested implementation see [Action-required notification des
 
 ## Database installation for a fresh Supabase project
 
-Follow the [single-schema fresh installation guide](DATABASE_MIGRATION_ORDER.md). Only **01_CREATE_SCHEMA.sql**, **02_INSERT_MASTER_REFERENCE_DATA.sql**, and the **conditional first Admin bootstrap example** remain in `database/01_install/`. QA seed and DEV-reset scripts are not part of Production setup.
+Run `npm run db:build-fresh-install`, then execute the generated `database/generated/ROBOTRONIX_FRESH_INSTALL.sql` **once** in a new empty project. Run the read-only verification SQL afterward. The optional first-Admin bootstrap is separate. See [Database migration order](DATABASE_MIGRATION_ORDER.md); QA seeds and DEV resets are never Production installation steps.

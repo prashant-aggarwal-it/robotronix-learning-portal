@@ -1,15 +1,14 @@
-> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+> **Current fresh-install procedure:** Run `npm run db:build-fresh-install` and execute its generated SQL once in a new empty Supabase project. Legacy incremental SQL guidance below is historical; never run the canonical fresh installer on an existing database. See [database installation](DATABASE_MIGRATION_ORDER.md).
 
 # Robotronix — Consolidated stabilization backlog (2026-10-20)
 
 **Authoritative tracking for the next reconciled release.** This list records requirements and status; it is not a claim that pending features are implemented. Never lose previously working production, SQL, QA or packaging fixes in a future consolidated ZIP/PR.
 
 ## Branch and release strategy
-- Existing consolidated candidate: `chore/consolidated-fresh-install-20261018`
-- P1 event notifications: draft PR #3, `fix/p1-action-notifications-20261020`, untested against DEV/Prod.
-- P2/P3 live sync: draft PR #4, `fix/p2-p3-live-sync-reliability-20261020`, stacked on P1, untested against DEV/Prod.
+- Current consolidated candidate: `release/consolidated-stabilization-20261020`, PR #6 against `main`.
+- Earlier P1 notification PR #3 and P2/P3 Realtime PR #4 were incorporated into the consolidated source/schema. Their historical branch relationship is no longer the installation procedure. DEV cross-role acceptance remains pending.
 - Keep Production untouched until DEV SQL migration, QA, security review and explicit deploy approval.
-- Before final merge, reconcile all approved fixes into **one** tested release with canonical fresh-install SQL plus separate safe incremental migration SQL; include release verification and documentation.
+- Before final merge, reconcile all approved fixes into **one** tested release. For a new empty project use the generated fresh installer; any populated database would need a **separately reviewed** additive migration (not included as a hotfix). Include read-only release verification and documentation.
 
 ## Outstanding product changes
 

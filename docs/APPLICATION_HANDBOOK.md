@@ -23,11 +23,14 @@ Robotronix manages the operational lifecycle of robotics/STEM learners: family i
 | Learner, trainer, course catalog | `/admin/students`, `/admin/trainers`, `/admin/courses` |
 | Enrollments, cohorts | `/admin/enrollments`, `/admin/batches` |
 | Calendar/classes | `/admin/schedule`, `/admin/classes`, `/trainer/classes`, `/parent/calendar` |
+| Scheduling V2 (preview), cohort scheduling | `/admin/scheduling-v2`, `/admin/cohort-scheduling` |
+| Holds and cancellation review | `/trainer/holds`, `/admin/cancellation-reviews`, `/admin/enrollments` |
 | Progress/projects | `/admin/progress`, `/trainer/progress`, `/student/portfolio` |
 | Zoom classroom & recordings | `/admin/zoom`, `/classroom/[scheduleEventId]` |
 | Demos | `/admin/demos`, `/trainer/demos`, `/demo/[token]` |
 | Invoices/finance | `/admin/invoices`, `/admin/finance`, `/admin/trainer-finance` |
 | Messages/alerts/audit | `/admin/messages`, `/admin/alerts`, `/admin/audit` |
+| System logs and portal access | `/admin/system-logs`, `/admin/account` |
 
 ## Operational principles
 
@@ -38,6 +41,10 @@ Robotronix manages the operational lifecycle of robotics/STEM learners: family i
 - Preserve historical migration data for learners joining the portal mid-course; do not create fake attendance or payment receipts.
 - Preserve historical earnings, invoices and recorded attendance. Use supported correction, hold and rescheduling workflows rather than deleting history-bearing records.
 - Parent-visible learning notes and internal Trainer/Admin notes must stay separated.
+- Trainer availability supports multiple daily slots and date overrides; scheduling uses overlap checks. Admin-facing notification behavior requires DEV cross-role acceptance.
+- User-selected **Classic** and **AI Flow** appearance choices are presentation preferences stored in the browser's local storage; they do not synchronize across devices and do not change permissions or course curricula.
+- Cancellation, holds, payroll and payment edits have approval/guard rules. Record the lifecycle instead of silently replacing historical state.
+- Zoom recordings default to 60 days but may have host/recording exceptions and protected records. Expiration initiates a Zoom Trash action only when the scheduled function and permissions operate correctly.
 - Always check provider environment/mode before doing Zoom or Razorpay write actions.
 
 For operational steps, read [Workflows](WORKFLOWS.md), [Zoom](integrations/ZOOM.md) and [Razorpay](integrations/RAZORPAY.md).

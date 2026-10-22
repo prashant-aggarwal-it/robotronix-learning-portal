@@ -23,6 +23,8 @@ npm run qa:prod-gate
 
 Note: `qa:prod-gate` is a **DEV acceptance suite despite its name**; it can run many lifecycle/mobile/provider tests and requires suitable local QA configuration. Review its component scripts in `package.json` before running. `qa:razorpay` write tests require Test Mode only.
 
+For the Zoom Beta/security release also run `npm run check:security` and `npm run qa:security-dev-all` in the isolated DEV environment. Review the GitHub Security audit, Zoom SAST and DAST outputs; a static check passing is not equivalent to successful live attack-surface testing.
+
 ## DEV prerequisites
 
 1. DEV Supabase with current installed schema and reference data.
@@ -42,6 +44,9 @@ Note: `qa:prod-gate` is a **DEV acceptance suite despite its name**; it can run 
 - [ ] Invoices/receipts/Trainer payroll, duplicates and webhook retry guards
 - [ ] Demo guest token, requests, rescheduling and privacy
 - [ ] Zoom host OAuth, classroom, presence and protected recordings (controlled provider test)
+- [ ] Zoom recording 60-day default, protection/extension, dry-run expiry, trash semantics and error/retry paths on disposable DEV records; never use live recordings to test deletion
+- [ ] Trainer availability copy/clear and Admin notification; cancellation/hold request approvals; Scheduling V2 preview and scheduling conflict handling
+- [ ] Theme preference persistence, Trainer Approved Courses display and mobile contrast/readability
 - [ ] Alerts, messages, live-refresh recovery and mobile layouts
 - [ ] Dev SQL verify and security/RLS checks, no real data in QA
 - [ ] Netlify deployment commit, production env and Supabase project correctness
@@ -49,7 +54,7 @@ Note: `qa:prod-gate` is a **DEV acceptance suite despite its name**; it can run 
 
 ## Current candidate evidence
 
-Repository owner reported `check:release`, `build`, `qa:auth-check`, `qa:roles` and `qa:workflow` all passing locally on 2026-10-19. GitHub Actions and Netlify PR preview also passed on the current candidate. This evidence does **not** replace Production smoke/integration acceptance.
+Historical QA evidence was reported on 2026-10-19. On 2026-10-22, commit `7a4ac06` passed GitHub Release candidate and Security audit workflows; local production build and non-incremental TypeScript also passed. Later candidate commits require fresh CI checks. **Authenticated DEV QA, fresh SQL execution, Zoom deletion safety and production provider smoke tests remain unverified for the current candidate.**
 
 ## Release safety
 
@@ -59,9 +64,9 @@ Repository owner reported `check:release`, `build`, `qa:auth-check`, `qa:roles` 
 - Do not run `database/02_qa/01_QA_SEED.sql` in Production.
 - Production QA users are optional and should not be provisioned solely to make local tests pass.
 
-## P1 action-notification DEV acceptance (unmerged)
+## P1 action-notification DEV acceptance (consolidated candidate)
 
-Follow the [Priority 1 event matrix and two-browser manual QA](PRIORITY1_ACTION_NOTIFICATIONS.md), covering trainer finance requests/decisions, messaging, progress alerts, scheduling, onboarding regression, offline recovery, RLS and idempotency. This set is **not yet test-executed** and must not be marked passed based only on source inspection.
+Follow the [Priority 1 event matrix and two-browser manual QA](PRIORITY1_ACTION_NOTIFICATIONS.md), covering trainer finance requests/decisions, messaging, progress alerts, scheduling, onboarding regression, offline recovery, RLS and idempotency. Code is consolidated into the candidate; this set is **not freshly test-certified** and must not be marked passed based only on source inspection.
 
 ## P2/P3 Live-view and reconnection QA
 

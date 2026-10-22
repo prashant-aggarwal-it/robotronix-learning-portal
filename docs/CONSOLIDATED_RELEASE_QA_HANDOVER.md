@@ -1,4 +1,4 @@
-> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts integrated canonical schema were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+> **Current fresh-install procedure:** Run `npm run db:build-fresh-install` and execute its generated SQL once in a new empty Supabase project. The older incremental SQL guidance below is historical; never apply the fresh installer to an existing database. See [database installation](DATABASE_MIGRATION_ORDER.md).
 
 # Consolidated release — operational handover and QA matrix
 
