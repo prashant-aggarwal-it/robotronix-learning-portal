@@ -72,3 +72,12 @@ The Zoom review may ask for application-authenticated API/Zoom OAuth testing bey
 
 ## SAST scope caveat
 The Semgrep retest found zero rule matches, **but the JSON contains 25 partial-parse warnings**. These may reduce coverage on TSX modules. Record them for scanner triage, consider a second independent source scanner, and do not describe the analysis as complete coverage.
+
+## Independent readiness verification — 2026-10-22
+
+- Confirmed stabilization branch HEAD at initial inspection: `e0fef0a`. Existing SSDLC and three supporting policies are **drafts pending owner adoption**. Do not assert operational adoption merely because the documents exist.
+- Verified live `https://portal.robotronixstemlab.com` HEAD response: HTTP/2 200, HSTS `max-age=31536000`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, and a CSP are present on the root HTML response. This does not prove all routes/assets carry these headers. `X-Powered-By: Next.js` remains visible. Broad CSP sources / unsafe inline and eval remain untriaged for Zoom SDK compatibility.
+- A TLS 1.2 handshake was attempted in the inspection environment but did not produce conclusive negotiated-protocol evidence. Obtain an explicit successful protocol/certificate result before checking off the TLS 1.2+ evidence requirement.
+- Zoom's current official Technical Design guidance lists **SSDLC documentation, SAST/DAST reports and a penetration-test report** for Beta/publishable authorization. The private/Beta sharing guide says supporting evidence is reviewed case-by-case and prefers a third-party penetration test. An unauthenticated ZAP baseline is **not** a penetration test; do not imply otherwise. Determine whether Zoom will accept documented scope/exception for this Beta request, or commission an authorized independent test. References: https://developers.zoom.us/docs/build-flow/technical-design/ and https://developers.zoom.us/docs/distribute/sharing-private-and-beta-apps/.
+- Submission status remains **blocked** pending scanner coverage review, ZAP warning dispositions and post-deployment retest, privacy notice verification, owner policy adoption, confirmed TLS evidence, and the penetration-test requirement/Zoom written exception.
+- No release merge or Netlify deploy is authorized by this evidence update.
