@@ -1,0 +1,29 @@
+name: Security audit
+on:
+  push:
+    branches:
+      - release/**
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dependency-and-source-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Repository secret and privileged-operation checks
+        run: npm run check:security
+      - name: Security negative unit tests
+        run: npx playwright test qa/security-static.spec.ts qa/workbook-export.spec.ts --project=desktop-chromium --no-deps
+      - name: Production dependency vulnerability gate (fail release on high findings)
+        run: npm audit --omit=dev --audit-level=high
+  # Database role/RLS tests run separately with dedicated QA accounts in DEV.
+  # Do not inject service-role keys into public pull-request workflows.

@@ -18,7 +18,7 @@ const required={
  "app/trainer/page.tsx":["useLiveRefresh","schedule_events"],
  "app/admin/alerts/page.tsx":["useLiveRefresh","schedule_events"],
  "app/parent/learner/[studentId]/page.tsx":["useLiveRefresh","class_attendance"],
- "database/01_install/05_P2_P3_REALTIME_PUBLICATION.sql":["supabase_realtime","trainer_finance_change_requests","portal_notifications","communication_messages"]
+ "database/01_install/01_CREATE_SCHEMA.sql":["supabase_realtime","trainer_finance_change_requests","portal_notifications","communication_messages"]
 };
 let failures=0;
 for(const [file,terms] of Object.entries(required)){

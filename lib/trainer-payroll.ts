@@ -30,15 +30,17 @@ export function calculateTrainerEarning(input:{event:ScheduleEvent;plan:TrainerC
  if(type==="one_to_one")baseRate=payBand==="day"?plan.oneToOneDay:plan.oneToOneNight;
  else if(type==="small_group")baseRate=payBand==="day"?plan.groupDay:plan.groupNight;
  else if(type==="demo")baseRate=payBand==="day"?plan.demoDay:plan.demoNight;
- const taughtMinutes=event.status==="conducted"&&Number(event.actualDurationMinutes)>0?Number(event.actualDurationMinutes):range.durationMinutes;
- const durationFactor=type==="demo"?1:Math.max(.25,taughtMinutes/60);
+ // Trainer pay follows the agreed scheduled slot, never an unapproved overrun.
+ // Actual teaching minutes remain separate and count toward learners' course hours.
+ const scheduledMinutes=range.durationMinutes;
+ const durationFactor=type==="demo"?1:scheduledMinutes/60;
  const percent=classOutcome==="completed"?100:0;
  const calculatedBase=baseRate*durationFactor*(percent/100);
  const conversionApplied=input.conversionApplied??existing?.conversionApplied??false;
  const conversionBonus=conversionApplied&&type==="demo"?(payBand==="day"?plan.demoConversionDay:plan.demoConversionNight):0;
  const adjustment=input.adjustment??existing?.adjustment??0;
  const totalAmount=Math.round((calculatedBase+conversionBonus+adjustment)*100)/100;
- return {earningDate:range.startDate,sessionType:type,payBand,durationMinutes:taughtMinutes,learnerCount,classOutcome,baseRate,durationFactor,conversionBonus,adjustment,totalAmount,conversionApplied,adjustmentReason:input.adjustmentReason??existing?.adjustmentReason??""};
+ return {earningDate:range.startDate,sessionType:type,payBand,durationMinutes:scheduledMinutes,learnerCount,classOutcome,baseRate,durationFactor,conversionBonus,adjustment,totalAmount,conversionApplied,adjustmentReason:input.adjustmentReason??existing?.adjustmentReason??""};
 }
 
 export function monthKey(date:string){return date.slice(0,7);}

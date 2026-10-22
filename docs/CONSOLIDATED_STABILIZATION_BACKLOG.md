@@ -1,19 +1,20 @@
+> **Current fresh-install procedure:** Run `npm run db:build-fresh-install` and execute its generated SQL once in a new empty Supabase project. Legacy incremental SQL guidance below is historical; never run the canonical fresh installer on an existing database. See [database installation](DATABASE_MIGRATION_ORDER.md).
+
 # Robotronix — Consolidated stabilization backlog (2026-10-20)
 
 **Authoritative tracking for the next reconciled release.** This list records requirements and status; it is not a claim that pending features are implemented. Never lose previously working production, SQL, QA or packaging fixes in a future consolidated ZIP/PR.
 
 ## Branch and release strategy
-- Existing consolidated candidate: `chore/consolidated-fresh-install-20261018`
-- P1 event notifications: draft PR #3, `fix/p1-action-notifications-20261020`, untested against DEV/Prod.
-- P2/P3 live sync: draft PR #4, `fix/p2-p3-live-sync-reliability-20261020`, stacked on P1, untested against DEV/Prod.
+- Current consolidated candidate: `release/consolidated-stabilization-20261020`, PR #6 against `main`.
+- Earlier P1 notification PR #3 and P2/P3 Realtime PR #4 were incorporated into the consolidated source/schema. Their historical branch relationship is no longer the installation procedure. DEV cross-role acceptance remains pending.
 - Keep Production untouched until DEV SQL migration, QA, security review and explicit deploy approval.
-- Before final merge, reconcile all approved fixes into **one** tested release with canonical fresh-install SQL plus separate safe incremental migration SQL; include release verification and documentation.
+- Before final merge, reconcile all approved fixes into **one** tested release. For a new empty project use the generated fresh installer; any populated database would need a **separately reviewed** additive migration (not included as a hotfix). Include read-only release verification and documentation.
 
 ## Outstanding product changes
 
 | ID | Priority | Requirement | Status | Release acceptance |
 |---|---|---|---|---|
-| FIN-UX-01 | P1 | Admin payout-review screen must compare **currently approved vs new proposed** account-holder name, bank name, bank account (masked default; restricted full review if appropriate), IFSC, UPI, PAN and payout method. Explain changed fields and approval purpose. | Pending | Admin can meaningfully review without approving on last four digits alone |
+| FIN-UX-01 | P1 | Admin payout-review screen must compare **currently approved vs new proposed** account-holder name, bank name, bank account (masked default; restricted full review if appropriate), IFSC, UPI, PAN and payout method. Explain changed fields and approval purpose. | Source UI implemented on consolidated branch; QA pending | Admin can meaningfully review without approving on last four digits alone |
 | FIN-UX-02 | P1 | Clear Trainer Profile separate **approved** and **pending** payout details; correct missing spacing, statuses; show corrections and review results, avoid implying that 'approved' means bank ownership was independently verified. | Pending | Both roles see unambiguous pending/approved statuses and changes |
 | FIN-UX-03 | P1 | On correction request require Admin reason and make resubmission clear; preserve previous approved details until decision; maintain audit history without exposing secrets in notifications. | Pending | Rejection/correction/approval paths and audit tested |
 | FIN-PAY-01 | P1 | Manual netbanking only. Admin records salary paid/date/amount/UTR; Trainer sees payroll/payment history; no Razorpay payout automation. | Pending | No simulated automatic bank transfer; paid status Admin-controlled |
@@ -46,3 +47,52 @@
 3. Sensitive payout details restricted at storage, RLS, API, logs and notifications, with masking by default.
 4. Each implemented item updates this tracker, relevant integration/workflow document, test case and release notes.
 5. Reconcile all earlier fixes including onboarding Admin notification trigger, timing stability, QA scripts, payroll guards, and portal-access changes.
+
+## Consolidated release candidate implementation log
+
+- 2026-10-20: Created `release/consolidated-stabilization-20261020` from P2/P3, retaining P1–P3 changes. Implemented `components/finance/PayoutReview.tsx` and integrated it into Admin Trainer Details as a restricted before/after review, with masked defaults, deliberate confirmation and mandatory correction/rejection reason. **Not tested or deployed.**
+- Remaining backlog items are **not completed** merely because the release branch exists. Each requires source implementation, security review and documented tests.
+
+- 2026-10-20: Began LOG-01: Admin-only System Logs page and read API, RLS-enabled server-only `portal_system_logs` database table, safe logging helper, and portal access error-path integration. Canonical fresh-install and existing-install migrations prepared. **Partial implementation only**; coverage across remaining Zoom/Razorpay/scheduling endpoints, retention jobs, DEV QA and security testing remain pending. No live migration has run.
+
+- 2026-10-20: FIN-PAY-02 source migration drafted: `database/01_install/01_CREATE_SCHEMA.sql` adds a configurable 25th-day IST cutoff, effective-dated payout instructions, and immutable snapshots at payroll approval/payment; direct Admin edits are also versioned. Trainer UI shows latest effective month. **Database has not been migrated or QA-tested; not ready for salary processing.**
+- 2026-10-20: ZOOM-03 grouped-recordings UI committed in `app/admin/zoom/page.tsx` (one expandable meeting with separate video/audio/file actions, MB units). Playback and delete/sync fixes still require provider investigation/verification.
+
+## Implementation continuation — 2026-10-20
+
+- AUTH-01: Added Admin `provision`/Grant Portal Access action using a pre-provisioned Supabase Auth user, no invitation email; retained existing link/disable/invite compatibility. Added separate `provisioned` DB state in migration `database/01_install/01_CREATE_SCHEMA.sql` and first-login pending status. Existing Google and email OTP sign-in helpers remain, but **provider testing and Google identity-linking behavior remain unverified**.
+- CRM-01: Removed visible follow-up/converted/lost controls from Admin Demo Experience. Database records and backend historical actions were preserved; mobile regression check pending.
+- QA: Added `qa/consolidated-stabilization.spec.ts` and `npm run qa:stabilization` for protected Admin logs and role screen smoke checks; **not executed**. Added consolidated handover and integration configuration matrix in `docs/CONSOLIDATED_RELEASE_QA_HANDOVER.md`.
+
+## Unresolved release gates — DO NOT DEPLOY
+
+- Verified Next.js/TypeScript build and full static release gate on exact commit.
+- Full multi-role authenticated Playwright run and linked evidence for all financial, scheduling, notifications, onboarding, and payment workflows.
+- Zoom provider-backed playback 401 and delete/re-sync testing; Host 2 external-sharing provider approval and actual second-host OAuth.
+- Complete System Logs coverage, retention and provider error instrumentation; validated access/PII sanitization.
+- Real payroll cutoff boundary tests, concurrent pay changes, bank-owner verification and proper monthly instruction display.
+- Final Demo UX responsive testing and updated instructions tied to screenshots/verified provider settings.
+- Final release ZIP and merge/deployment are **not completed**; no Production change approved.
+
+## Final checkpoint for current implementation pass
+- FIN-PAY-01: Admin payroll now must be approved before a netbanking transfer is marked paid; UTR and confirmation are required. Monthly payout instruction snapshots are recorded at approval by migration 07. DEV/Production tests remain pending.
+- AUTH-01: New `provision` portal access action and state, Admin panel labels, email OTP/Google sign-in and migration 08 committed. Verify Supabase magic-link template delivers OTP and Google identity linking in DEV.
+- DEMO-01 / CRM-01: Nonessential conversion/follow-up/lost buttons hidden; demo and Zoom recording layout given mobile overflow/wrapping improvements; mobile QA unexecuted.
+- ZOOM-01: Recording stream now retries a 401/403 once using a refreshed recording file URL from Zoom's recordings API. This addresses a plausible stale-download-URL failure; **actual playback still requires provider-backed verification**.
+- LOG-01: System Logs UI, server helper, portal-access and Zoom/Razorpay error correlation committed; 90-day retention cleanup via service-only SQL function migration 09. Supabase Cron schedule is operator-managed and not enabled automatically.
+- QA: Added stabilization smoke suite, expanded source release gate and database-object verification; **no real build, CI, database or Playwright pass observed**.
+- Release remains **Draft**, not deployable; full provider/role tests and production migration approval are outstanding.
+
+## Fresh-only SQL consolidation — 2026-10-21
+
+The release branch now contains precisely three install SQL files: `01_CREATE_SCHEMA.sql` (all features formerly in 04–09 integrated), `02_INSERT_MASTER_REFERENCE_DATA.sql` and optional `03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql`. All redundant incremental scripts and existing-DB preflight file were removed **on this branch only**. Read-only release verification and DEV-only QA fixtures remain separate. Actual Supabase/Playwright tests and data migration from any old production project are not complete.
+
+## Payroll-duration policy correction (2026-10-21)
+- Source `lib/trainer-payroll.ts` and canonical SQL `public.sync_trainer_earning` now use **scheduled** duration for trainer compensation, regardless of actual overtime.
+- Actual 15-minute increment teaching time still counts against participating learners' remaining purchased course hours. Existing `lib/course-hours.ts` behavior is retained. No extra salary or course budget is generated by overruns.
+- Updated Trainer earning explanations and Admin pay descriptions; added `qa/payroll-rules.spec.ts` coverage and stabilization source checks.
+- The project's **previously installed Supabase schema requires a one-time targeted update** `database/03_verify/02_POST_INSTALL_PAYROLL_POLICY_FIX.sql`. This is distinct from fresh installs, which use only schema 01 and reference data 02. Do not rerun the whole schema or silently recalculate historical approved/paid earnings.
+- Changes committed in release branch; new local build, tests and connected DB application **not yet confirmed**.
+
+## Availability Admin alert fix (2026-10-21)
+Trainer-origin weekly availability saves and date-override add/remove now call the restricted `notify_admin_trainer_availability_change` database RPC after a successful operation. The notification links to Admin Trainer Details; Admin-origin edits do not create a trainer-origin alert. In-app confirmation distinguishes notification delivery failure. Fresh databases include the function in schema 01. An ALREADY INSTALLED Supabase project must execute `database/03_verify/03_POST_INSTALL_AVAILABILITY_NOTIFICATIONS.sql` once (after backup/review) or notifications will not appear. Browser/DB role tests pending.

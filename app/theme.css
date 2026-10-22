@@ -1,0 +1,100 @@
+/*
+ * Robotronix two-theme foundation.
+ * Classic = the unmodified globals.css styling.
+ * AI Flow = scoped overrides; the data attribute can be changed at runtime.
+ * Add future themes using [data-portal-theme="..."] without editing components.
+ */
+.portalThemeControl{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.portalThemeControl label{font-size:11px;font-weight:750;color:var(--muted,#65708a)}
+.portalThemeControl select{appearance:auto;min-width:90px;max-width:110px;padding:8px 9px;border-radius:11px;border:1px solid var(--line,#e8e8f2);background:#fff;color:var(--ink,#182033);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.portalThemeControl select:focus-visible{outline:2px solid #6b38ed;outline-offset:2px}
+[data-portal-theme="ai-flow"]{
+ --ink:#101932;--muted:#627391;--line:#dfe6f6;
+ --surface:#fff;--surface-soft:#f7f9ff;
+ --purple:#702afa;--purple-dark:#5522bb;--pink:#2860ff;--teal:#08bfe7;
+ --shadow:0 15px 43px rgba(39,70,156,.09);
+ --radius:23px;
+ --premium-purple:#702afa;--premium-pink:#09c7ee;
+ --premium-shadow-hover:0 18px 45px rgba(45,76,150,.13);
+ color-scheme:light;
+}
+[data-portal-theme="ai-flow"] body{
+ font-family:Inter,"Segoe UI Variable",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ font-synthesis:none;
+ -webkit-font-smoothing:antialiased;
+ text-rendering:optimizeLegibility;
+ background:radial-gradient(ellipse at 12% 2%,rgba(139,115,255,.14),transparent 38%),
+ radial-gradient(ellipse at 92% 12%,rgba(9,194,245,.15),transparent 34%),
+ linear-gradient(155deg,#fbfcff 3%,#eef4ff 68%,#f9f7ff);
+ color:var(--ink);
+}
+[data-portal-theme="ai-flow"] :is(h1,h2,h3,h4,strong,b){letter-spacing:-.025em}
+[data-portal-theme="ai-flow"] :is(.workspaceShell){background:transparent}
+[data-portal-theme="ai-flow"] .workspaceSidebar{
+ background:radial-gradient(circle at 92% 7%,rgba(93,124,255,.09),transparent 9rem),linear-gradient(180deg,#fff,#f5f8ff);
+ color:var(--ink);
+ border-right:1px solid #dfe6f5;
+ box-shadow:10px 0 38px rgba(50,68,129,.045);
+}
+[data-portal-theme="ai-flow"] .workspaceSidebar:after{background:#e4e8f5}
+[data-portal-theme="ai-flow"] .sidebarBrand{box-shadow:none;border:1px solid #f0f1fa}
+[data-portal-theme="ai-flow"] .portalName{color:#121b34}
+[data-portal-theme="ai-flow"] .portalName span,
+[data-portal-theme="ai-flow"] .navGroupLabel{color:#6d7c9b}
+[data-portal-theme="ai-flow"] .sidebarNav a{color:#293858}
+[data-portal-theme="ai-flow"] .sidebarNav a:hover{color:#5621c8;background:#f0edff}
+[data-portal-theme="ai-flow"] .sidebarNav a.active{
+ background:linear-gradient(105deg,#822cf5 0%,#315bff 58%,#08bee9 100%);
+ color:#fff;
+ box-shadow:0 9px 23px rgba(87,70,235,.22);
+ border-color:transparent;
+}
+[data-portal-theme="ai-flow"] .navIndicator{background:#cbd6ee}
+[data-portal-theme="ai-flow"] .sidebarNav a.active .navIndicator{background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.23)}
+[data-portal-theme="ai-flow"] .sidebarFooter{border-color:#e3e8f4}
+[data-portal-theme="ai-flow"] .roleBadge,[data-portal-theme="ai-flow"] .sidebarSignout{color:#556585}
+[data-portal-theme="ai-flow"] .workspaceTopbar{
+ background:rgba(255,255,255,.82);border-color:rgba(219,229,251,.9);
+ box-shadow:0 8px 26px rgba(42,65,135,.045);
+ backdrop-filter:blur(15px);
+}
+[data-portal-theme="ai-flow"] .workspaceContent{position:relative}
+[data-portal-theme="ai-flow"] :is(.panel,.card,.kpiCard,.experienceKpi,.experienceCard,.familySwitcher,.childSwitch,.topbar){
+ border-color:#e0e7f6;
+ box-shadow:0 13px 37px rgba(55,76,140,.075);
+}
+[data-portal-theme="ai-flow"] :is(.panel,.card,.kpiCard,.experienceKpi,.experienceCard){background:rgba(255,255,255,.95)}
+[data-portal-theme="ai-flow"] .kpiCard{border-radius:21px}
+[data-portal-theme="ai-flow"] .kpiCard:before{background:linear-gradient(180deg,#842cff,#2368ff,#0dc7e9)}
+[data-portal-theme="ai-flow"] :is(.panelHeader h2,.adminPageHeader h1,.kpiValue,.familyHeroCopy h1){color:#101832}
+[data-portal-theme="ai-flow"] :is(.eyebrow,.experienceLabel){color:#6530ec}
+[data-portal-theme="ai-flow"] .button:not(.ghost):not(.secondary){
+ background:linear-gradient(105deg,#842df7,#3258ff 62%,#05bee7);
+ color:white;
+ box-shadow:0 10px 27px rgba(64,80,226,.18);
+}
+[data-portal-theme="ai-flow"] .button.secondary{background:#eeeefd;color:#5125b9}
+[data-portal-theme="ai-flow"] .button.ghost{background:#fff;color:#273553;border-color:#dce4f5}
+[data-portal-theme="ai-flow"] :is(.input,input:not([type="checkbox"]):not([type="radio"]),select,textarea):focus-visible{outline-color:#7745ff}
+[data-portal-theme="ai-flow"] .input:focus{border-color:#7960ee;box-shadow:0 0 0 3px rgba(103,86,239,.12)}
+[data-portal-theme="ai-flow"] .experienceTopbar{
+ background:rgba(255,255,255,.91);border-radius:22px;
+}
+[data-portal-theme="ai-flow"] .experienceTopbar .nav a.active{color:#5826c7;background:#f0eaff}
+[data-portal-theme="ai-flow"] .experienceTopbar .nav a.active:after{background:linear-gradient(90deg,#7c2bf1,#17bbea)}
+[data-portal-theme="ai-flow"] .familyHero{
+ background:radial-gradient(circle at 92% 16%,rgba(191,138,253,.20),transparent 32%),radial-gradient(circle at 20% 95%,rgba(27,169,246,.12),transparent 43%),linear-gradient(130deg,#fff,#f6faff);
+ border-color:#dde5fb;box-shadow:0 17px 50px rgba(76,83,161,.095);
+}
+[data-portal-theme="ai-flow"] :is(.experienceIcon,.experienceEmptyIcon){background:#f1ecff;color:#642af0}
+[data-portal-theme="ai-flow"] .miniBarTrack i{background:linear-gradient(90deg,#812af7,#2961ff,#05c1e9)}
+[data-portal-theme="ai-flow"] .notificationBell i{background:linear-gradient(130deg,#7e2bf5,#315dff)}
+[data-portal-theme="ai-flow"] .portalThemeControl select{background:#fff;border-color:#dadffa;color:#293858}
+@media(max-width:760px){
+ .portalThemeControl{gap:4px}
+ .portalThemeControl label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .portalThemeControl select{max-width:96px;min-width:78px;padding:7px 5px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ [data-portal-theme="ai-flow"] :is(.card,.panel,.button,.kpiCard,.experienceCard){transition:none!important}
+}

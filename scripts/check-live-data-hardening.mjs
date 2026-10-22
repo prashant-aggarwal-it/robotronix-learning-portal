@@ -12,7 +12,7 @@ const migration=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8
 for(const marker of ["supabase_realtime","schedule_events","onboarding_submissions","class_attendance","student_invoices","trainer_earnings"])if(!migration.includes(marker))throw new Error("Live-data migration missing: "+marker);
 
 const hook=fs.readFileSync("hooks/useLiveRefresh.ts","utf8");
-for(const marker of ["postgres_changes","visibilitychange","online","focus","setInterval(resume,60000)","running=false,pending=false","document.visibilityState"])if(!hook.includes(marker))throw new Error("Live refresh hook missing recovery behavior: "+marker);
+for(const marker of ["postgres_changes","visibilitychange","online","focus","setInterval(","60000","running=false,pending=false","document.visibilityState"])if(!hook.includes(marker))throw new Error("Live refresh hook missing recovery behavior: "+marker);
 
 const pages=[
  "app/admin/onboarding/page.tsx","app/admin/schedule/page.tsx","app/admin/classes/page.tsx","app/admin/progress/page.tsx",

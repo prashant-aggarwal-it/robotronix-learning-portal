@@ -1,3 +1,5 @@
+> **Current fresh-install procedure:** Run `npm run db:build-fresh-install` and execute its generated SQL once in a new empty Supabase project. Legacy incremental SQL guidance below is historical; never run the canonical fresh installer on an existing database. See [database installation](DATABASE_MIGRATION_ORDER.md).
+
 # Priority 1: action-required notifications — implementation and acceptance
 
 **Branch:** `fix/p1-action-notifications-20261020`  
@@ -7,7 +9,7 @@
 ## Source of truth / installation
 
 - **Fresh DEV database:** `database/01_install/01_CREATE_SCHEMA.sql` already contains this P1 block at its end; follow the normal ordered fresh-install instructions. **Do not run the P1 patch a second time.**
-- **Existing DEV database:** apply `database/01_install/04_PRIORITY1_ACTION_NOTIFICATIONS.sql` once **after** its Production v1 baseline and existing previous fixes. This patch is designed to be repeatable, but it does **not** backfill historical notifications.
+- **Existing DEV database:** **do not run `01_CREATE_SCHEMA.sql`** against an existing database. This file is the consolidated fresh-install schema, not an incremental patch. Review the baseline-to-current schema diff and prepare a separate, backed-up, data-preserving migration; test it on a DEV clone before applying. Notification changes do not backfill historical events.
 - **Production:** do not execute anything until the database migration is reviewed, DEV automated/manual QA passes, and a backup/change window is approved.
 - **No client secrets or financial identifiers in notification bodies.** Notification links point to role-appropriate pages.
 - **Realtime delivery:** Supabase `portal_notifications` must be included in the `supabase_realtime` publication and per-user RLS must permit recipients to read the row. The shared `NotificationBell` and `NotificationCenter` already subscribe to this table. New triggers persist notifications even if the intended user is offline.

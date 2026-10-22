@@ -1,0 +1,57 @@
+import {test,expect} from "@playwright/test";
+import fs from "node:fs";
+
+test.describe("Security invariants (offline, no production network)",()=>{
+ test("Admin API checks verified identity, active profile and role",()=>{
+  const source=fs.readFileSync("lib/server/admin-api.ts","utf8");
+  expect(source).toContain("admin.auth.getUser(token)");
+  expect(source).toContain('profile?.role!=="admin"');
+  expect(source).toContain("!profile.active");
+ });
+ test("Security headers prevent framing and content-type sniffing",()=>{
+  const source=fs.readFileSync("next.config.ts","utf8");
+  expect(source).toContain('key: "X-Frame-Options", value: "DENY"');
+  expect(source).toContain('key: "X-Content-Type-Options", value: "nosniff"');
+  expect(source).toContain("frame-ancestors 'none'");
+ });
+ test("Razorpay webhook verifies signed raw payload before processing",()=>{
+  const source=fs.readFileSync("app/api/razorpay/webhook/route.ts","utf8");
+  expect(source.indexOf("verifyRazorpayWebhook(raw,sig)")).toBeGreaterThan(0);
+  expect(source.indexOf("verifyRazorpayWebhook(raw,sig)")).toBeLessThan(source.indexOf("JSON.parse(raw)"));
+ });
+ test("Scheduling RPCs are restricted and enforce roles server-side",()=>{
+  const source=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
+  for(const name of ["generate_enrollment_schedule_v2","generate_cohort_schedule_v2","reassign_enrollment_trainer_v2","reassign_cohort_trainer_v2","resolve_class_cancellation_v2"]){
+   expect(source).toContain("revoke all on function public."+name+"(");
+   const i=source.toLowerCase().indexOf("create or replace function public."+name+"(");
+   expect(i).toBeGreaterThan(-1);
+   expect(source.slice(i,i+1600)).toContain("public.is_admin()");
+  }
+ });
+});
+
+test.describe("Bounded webhook request reader",()=>{
+ test("returns the precise signed UTF-8 payload under the limit",async()=>{
+  const {readTextBodyLimited}=await import("../lib/server/read-limited-body");
+  const body='{"note":"安全"}';
+  expect(await readTextBodyLimited(new Request("https://example.test/webhook",{method:"POST",body}),64)).toBe(body);
+ });
+ test("refuses Content-Length above limit before processing",async()=>{
+  const {readTextBodyLimited,RequestBodyTooLarge}=await import("../lib/server/read-limited-body");
+  const req=new Request("https://example.test/webhook",{method:"POST",body:"x",headers:{"content-length":"4000"}});
+  await expect(readTextBodyLimited(req,32)).rejects.toBeInstanceOf(RequestBodyTooLarge);
+ });
+ test("rejects oversize streaming body when Content-Length is absent",async()=>{
+  const {readTextBodyLimited,RequestBodyTooLarge}=await import("../lib/server/read-limited-body");
+  const req=new Request("https://example.test/webhook",{method:"POST",body:"x".repeat(33)});
+  await expect(readTextBodyLimited(req,32)).rejects.toBeInstanceOf(RequestBodyTooLarge);
+ });
+});
+
+test("Zoom token encryption enforces full AES-GCM authentication tag",()=>{
+ const source=fs.readFileSync("lib/server/zoom.ts","utf8");
+ expect(source).toContain('createCipheriv("aes-256-gcm",encryptionKey(),iv,{authTagLength:16})');
+ expect(source).toContain('createDecipheriv("aes-256-gcm",encryptionKey(),iv,{authTagLength:16})');
+ expect(source).toContain('tag.length!==16');
+ expect(source).toContain('iv.length!==12');
+});

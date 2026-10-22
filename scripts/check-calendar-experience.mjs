@@ -16,4 +16,18 @@ const trainer=fs.readFileSync("app/trainer/schedule/page.tsx","utf8");
 for(const marker of ["PRIVATE CALENDAR SUBSCRIPTION","Generate private link","Copy subscription link"])if(!trainer.includes(marker))throw new Error("Trainer calendar subscription missing: "+marker);
 const schema=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
 if(!schema.includes("calendar_subscription_tokens"))throw new Error("Fresh schema missing calendar subscription tokens.");
-console.log("Calendar experience structure: OK");
+const copyEditor=fs.readFileSync("components/PreferredAvailabilityEditor.tsx","utf8");
+for(const marker of ['setCopyMode("replace")','Copy timings','Click Save availability to apply','overlapping slot','timingValidationMessages']){
+ if(!copyEditor.includes(marker))throw new Error("Availability copy UI feedback/regression: missing "+marker);
+}
+const availabilityEditor=fs.readFileSync("components/TrainerAvailabilityEditor.tsx","utf8");
+for(const marker of ["savedValue","Unsaved availability changes","setSavedValue(value)","preferredWindowsOverlap(w,other)","timeRangeError(w.start,w.end,w.endsNextDay,12*60)"]){
+ if(!availabilityEditor.includes(marker))throw new Error("Trainer availability unsaved state missing: "+marker);
+}
+const repository=fs.readFileSync("lib/repository.ts","utf8");
+const installer=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
+for(const marker of ["notify_admin_trainer_availability_change","override_added","override_removed"]){
+ if(!repository.includes(marker)||!installer.includes(marker))throw new Error("Availability Admin notification missing: "+marker);
+}
+if(!installer.includes("create or replace function public.notify_admin_trainer_availability_change("))throw new Error("Canonical schema missing availability notification function.");
+console.log("Calendar and availability notification structure: OK");

@@ -1,3 +1,5 @@
+> **Current fresh-install procedure:** Run `npm run db:build-fresh-install` and execute its generated SQL once in a new empty Supabase project. Legacy incremental SQL guidance below is historical; never run the canonical fresh installer on an existing database. See [database installation](DATABASE_MIGRATION_ORDER.md).
+
 # P2 + P3 — Cross-role refresh and Realtime recovery
 
 **Branch:** `fix/p2-p3-live-sync-reliability-20261020`, based on P1 `fix/p1-action-notifications-20261020`.  
@@ -31,9 +33,9 @@ Existing live-refresh views for Parent and Student dashboard, calendar, attendan
 
 ## Installation
 
-**Empty DEV installation:** `database/01_install/01_CREATE_SCHEMA.sql` includes the P1 triggers and P2/P3 publication section, so apply canonical fresh-install procedures only.
+**Empty DEV installation:** generate and execute the current one-shot SQL as described in [database installation](DATABASE_MIGRATION_ORDER.md). It contains P1 triggers and P2/P3 publication rules.
 
-**Existing DEV installation:** apply P1 `04_PRIORITY1_ACTION_NOTIFICATIONS.sql`, then `05_P2_P3_REALTIME_PUBLICATION.sql`. Both should be reviewed and run in the appropriate DB SQL editor. Existing-data migrations are separate from fresh-install scripts; **never rerun the whole schema on Production**.
+**Existing DEV installation:** do **not** run the fresh-install schema on top of populated data. Use a separately reviewed additive migration or recreate only a deliberately disposable DEV project.
 
 **Production:** Requires separately approved deployment plan, backup, security/RLS review, database migration and acceptance testing. The GitHub branch itself does not update the deployed Supabase project.
 
