@@ -29,8 +29,8 @@ begin
 end $$;
 
 insert into public.courses
- (id,slug,title,short_title,code,category,grade_from,grade_to,age_from,age_to,level,total_sessions,session_duration,planned_hours,status)
-values ('9e100000-0000-4000-8000-000000000001','qa-security-isolation-2026','QA Security Isolation Course','QA Security','QA-SEC-2026','Robotics',5,8,10,14,'Beginner',8,60,8,'active');
+ (id,slug,title,short_title,code,category,grade_from,grade_to,age_from,age_to,level,total_sessions,session_duration,planned_hours,status,public_name,internal_name)
+values ('9e100000-0000-4000-8000-000000000001','qa-security-isolation-2026','QA Security Isolation Course','QA Security','QA-SEC-2026','Robotics',5,8,10,14,'Beginner',8,60,8,'active','QA Security Isolation Course','QA Security Isolation Course');
 
 insert into public.trainers
  (id,profile_id,full_name,email,record_status,login_linked,city,timezone)
