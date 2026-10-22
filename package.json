@@ -40,6 +40,8 @@
     "check:customer-delight": "node scripts/check-customer-delight.mjs",
     "check:calendar": "node scripts/check-calendar-experience.mjs",
     "check:fresh-db": "node scripts/check-fresh-db-release.mjs",
+    "check:docs": "node scripts/check-documentation.mjs",
+    "db:build-fresh-install": "npm run check:fresh-db && node scripts/build-fresh-db-install.mjs",
     "qa:pre-go-live": "playwright test qa/pre-go-live-features.spec.ts --project=desktop-chromium",
     "sanity:create-users": "node scripts/create-prod-sanity-auth-users.mjs",
     "sanity:delete-users": "node scripts/delete-prod-sanity-auth-users.mjs",
@@ -53,14 +55,18 @@
     "check:p2p3-live": "node scripts/check-p2p3-live-sync.mjs",
     "check:stabilization": "node scripts/check-consolidated-stabilization.mjs",
     "qa:prod-permanent:create-users": "node scripts/create-permanent-portal-qa-users.mjs",
-    "qa:prod-permanent:generate-sql": "node scripts/generate-permanent-qa-seed.mjs"
+    "qa:prod-permanent:generate-sql": "node scripts/generate-permanent-qa-seed.mjs",
+    "check:trainer-courses-ui": "node scripts/check-trainer-courses-ui.mjs",
+    "check:security": "node scripts/check-security-hardening.mjs",
+    "qa:security-dev": "playwright test qa/security-dev-authorization.spec.ts --project=desktop-chromium --no-deps",
+    "qa:security-dev-http": "playwright test qa/security-dev-http.spec.ts --project=desktop-chromium --no-deps",
+    "qa:security-dev-all": "npm run qa:security-dev && npm run qa:security-dev-http"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
     "next": "16.3.8",
     "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "xlsx": "^0.18.5"
+    "react-dom": "19.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

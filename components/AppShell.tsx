@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { ModeBadge } from "./ModeBadge";
 import { NotificationBell } from "./NotificationBell";
 import { SignOutButton } from "./SignOutButton";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 import type { UserRole } from "@/lib/types";
 
 const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}>> = {
@@ -22,7 +23,7 @@ const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}
     {label:"Students",href:"/admin/students",group:"Learners"},
     {label:"Trainers",href:"/admin/trainers",group:"Delivery"},
     {label:"Courses",href:"/admin/courses",group:"Delivery"},
-    {label:"Enrollments & Cohorts",href:"/admin/enrollments",group:"Delivery"},
+    {label:"Enrollments",href:"/admin/enrollments",group:"Delivery"},
     {label:"Demo Experience",href:"/admin/demos",group:"Delivery"},
     {label:"Schedule",href:"/admin/schedule",group:"Operations"},
     {label:"Classes",href:"/admin/classes",group:"Operations"},
@@ -63,14 +64,14 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
         })}</nav>
         <div className="sidebarFooter"><div className="roleBadge"><span className="statusDot"/> {role==="admin"?"Administrator":"Trainer account"}</div><SignOutButton className="sidebarSignout" label="Sign out"/></div>
       </aside>
-      <div className="workspaceMain"><header className="workspaceTopbar"><div><b>Robotronix™ Learning Portal</b><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main><div className="footer">Robotronix™ Learning Portal · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
+      <div className="workspaceMain"><header className="workspaceTopbar"><div><b>Robotronix™ Learning Portal</b><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main><div className="footer">Robotronix™ Learning Portal · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
   }
   return <>
     <div className="shell experienceShell">
       <header className="topbar experienceTopbar">
         <Link href={`/${role}`} className="brandLogo" aria-label="Robotronix Learning Portal"><img src="/brand/robotronix-horizontal.png" alt="Robotronix Future Ready Skills" /></Link>
         <nav className="nav">{navByRole[role].map(({label,href}) => <Link className={isActive(pathname,href)?"active":""} href={href} key={href}>{label}</Link>)}</nav>
-        <div className="experienceAccount"><NotificationBell role={role}/><span>{role==="parent"?"Family account":"Learner account"}</span><SignOutButton label="Sign out"/></div>
+        <div className="experienceAccount"><ThemeSwitcher/><NotificationBell role={role}/><span>{role==="parent"?"Family account":"Learner account"}</span><SignOutButton label="Sign out"/></div>
       </header>
       {children}
       <div className="footer">Robotronix™ Learning Portal · Learning progress, projects and mentor feedback in one place</div>

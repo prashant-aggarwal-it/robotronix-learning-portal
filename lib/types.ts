@@ -46,7 +46,7 @@ export interface StudentAdminRecord {
 
 export interface TrainerAdminRecord {
   id:string; fullName:string; mobile:string; email:string; city:string; country?:string; state?:string; timezone?:string; designation:string; joiningDate:string;
-  specialties:string[]; courseIds:string[]; recordStatus:RecordStatus; loginLinked:boolean; portalAccessStatus?:"not_linked"|"invite_sent"|"portal_ready"|"disabled"; updatedAt?:string;
+  specialties:string[]; courseIds:string[]; recordStatus:RecordStatus; loginLinked:boolean; zoomJoinUrl?:string; portalAccessStatus?:"not_linked"|"invite_sent"|"portal_ready"|"disabled"; updatedAt?:string;
 }
 
 
@@ -122,7 +122,7 @@ export interface OnboardingSubmission {
   primaryContact:"mother"|"father"|"guardian"; primaryWhatsApp:string; alternateWhatsApp:string;
   city:string; country:string; state?:string; timezone:string; addressLine1:string; addressLine2?:string; postalCode:string; billingName:string; billingEmail:string; billingPhone:string; childName:string; childDob:string; grade:string; school:string;
   preferredClassDays?:string[]; preferredTimeWindows?:string;
-  interests:string[]; goal:string; codingExperience:string; roboticsExperience:string; source:string;
+  interests:string[]; goal:string; codingExperience:string; roboticsExperience:string; source:string; referringParentName?:string;
   dataConsent:boolean; portfolioConsent:boolean; marketingMediaConsent?:boolean;
   status:OnboardingStatus; assignedCourseId?:string; assignedTrainerId?:string; enrollmentType?:"one_to_one"|"small_group";
   cohortId?:string; startDate?:string; draftScheduleTimezone?:string; draftScheduleRules?:WeeklyScheduleSlot[]; submittedAt:string; activatedAt?:string; updatedAt?:string;
@@ -160,7 +160,7 @@ export interface ScheduleEvent {
   id:string; trainerId:string; courseId:string; enrollmentId?:string; cohortId?:string; studentId?:string;
   title:string; date:string; startTime:string; endTime:string; timezone:string; eventType:ScheduleEventType; deliveryMode:DeliveryMode;
   status:ScheduleEventStatus; actualDurationMinutes?:number; occurrenceKind?:ScheduleOccurrenceKind; notes?:string; rescheduledToId?:string; originalEventId?:string;
-  requestedBy?:"parent"|"student"|"trainer"|"admin"; changeReason?:string; sessionTopic?:string; projectWorkedOn?:string; skillsWorked?:string[];
+  requestedBy?:"parent"|"student"|"trainer"|"admin"; changeReason?:string; financeExceptionStatus?:"none"|"review"|"approved"|"rejected"; financeExceptionNote?:string; sessionTopic?:string; projectWorkedOn?:string; skillsWorked?:string[];
 }
 
 export interface ClassAttendanceRecord {

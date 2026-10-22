@@ -34,15 +34,13 @@ npm run dev
 ## B. Provision an entirely new Supabase environment
 
 1. Create a new project in the correct environment and save the project URL and keys securely.
-2. In Supabase SQL Editor, **for an empty project only**, execute:
-   - `database/01_install/01_CREATE_SCHEMA.sql`
-   - `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql`
+2. Run `npm run db:build-fresh-install` from the repo root. In Supabase SQL Editor, **for an empty project only**, execute the entire `database/generated/ROBOTRONIX_FRESH_INSTALL.sql` once. Do not execute the constituent schema/seed separately afterward.
 3. In Supabase Authentication, configure Google OAuth provider and Google Cloud OAuth client for the exact application/callback URIs shown in the provider consoles. Set appropriate Supabase Auth Site URL and allowed redirect URLs for local and deployed environments; do not mix Dev/Prod credentials.
 4. For Production, create the real Admin Auth identity and use `database/01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` only after intentionally replacing the placeholder. If the real Admin profile already exists, **do not bootstrap again**.
-5. Run `database/03_verify/01_VERIFY_RELEASE.sql`; review warnings and expected grants/RLS.
+5. Run the **read-only** `database/03_verify/01_VERIFY_RELEASE.sql`; review warnings and expected grants/RLS. Record evidence before connecting the app.
 6. DEV only: create QA identities and execute `database/02_qa/01_QA_SEED.sql`, then run tests.
 
-**Existing project warning:** the fresh schema is an **installer**, not an incremental migration. Do not rerun it on a live installed project merely to deploy a new frontend. For future schema changes create a reviewed and backward-compatible migration.
+**Existing project warning:** the generated SQL is a **fresh installer**, not an incremental migration. Do not rerun it on a live installed project merely to deploy a new frontend. For future schema changes create a reviewed and backward-compatible migration. Resetting/replacing a Production Supabase project also changes its URL, secrets and Auth identities; Netlify/OAuth/webhook configuration must be updated explicitly.
 
 ## C. Configure integrations
 
@@ -61,7 +59,7 @@ Use `.env.example` as the authoritative *variable-name template*; secret values 
 4. Configure the production hostname in Netlify Domains and the DNS CNAME in the domain DNS provider. Confirm TLS/HTTPS.
 5. Set OAuth and webhook callbacks for the production hostname in the **actual** Supabase, Google, Zoom and Razorpay consoles.
 6. In a safe private environment with production variables loaded, run `npm run check:production-env` (it checks consistency but not third-party connectivity).
-7. Confirm the Netlify deploy commit matches the approved GitHub commit. Smoke-test role login and read-only module pages.
+7. Confirm the Netlify deploy commit matches the approved GitHub commit. Smoke-test role login and read-only module pages. Confirm scheduled functions `process-reminders` and `zoom-retention` exist; never manually run recording deletion as a smoke test.
 
 ## E. Validate before acceptance
 

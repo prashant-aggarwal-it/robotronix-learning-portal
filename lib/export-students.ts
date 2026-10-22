@@ -2,16 +2,11 @@
 
 import type {CohortAdminRecord,CourseAdminRecord,EnrollmentAdminRecord,StudentAdminRecord,TrainerAdminRecord} from "./types";
 import {dayNames,formatWeeklySchedule,timeZoneLabel} from "./timezones";
+import {exportWorkbook} from "./export-workbook";
 
 function dateLabel(value?:string){if(!value)return "";return new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric"}).format(new Date(`${value}T12:00:00`));}
 
-function setWidths(sheet:any,rows:Record<string,unknown>[]){
-  const keys=rows.length?Object.keys(rows[0]):[];
-  sheet["!cols"]=keys.map(key=>({wch:Math.min(42,Math.max(key.length+2,...rows.slice(0,200).map(row=>String(row[key]??"").length+2)))}));
-}
-
 export async function exportStudentWorkbook(input:{students:StudentAdminRecord[];enrollments:EnrollmentAdminRecord[];courses:CourseAdminRecord[];trainers:TrainerAdminRecord[];cohorts:CohortAdminRecord[]}){
-  const XLSX=await import("xlsx");
   const {students,enrollments,courses,trainers,cohorts}=input;
   const courseName=(id:string)=>courses.find(c=>c.id===id)?.title??id;
   const trainerName=(id:string)=>trainers.find(t=>t.id===id)?.fullName??"Unassigned";
@@ -50,11 +45,11 @@ export async function exportStudentWorkbook(input:{students:StudentAdminRecord[]
     "Delivery Channel":enrollment.deliveryChannel??"online","Center / Location":enrollment.centerLocation??"","Schedule Mode":enrollment.scheduleMode??"recurring","Day":dayNames[slot.dayOfWeek],"Start Time":slot.startTime,"End Time":slot.endTime,"Timezone":timeZoneLabel(enrollment.scheduleTimezone),"Enrollment ID":enrollment.id
   })));
 
-  const wb=XLSX.utils.book_new();
-  const studentSheet=XLSX.utils.json_to_sheet(studentRows);setWidths(studentSheet,studentRows);XLSX.utils.book_append_sheet(wb,studentSheet,"Students");
-  const enrollmentSheet=XLSX.utils.json_to_sheet(enrollmentRows);setWidths(enrollmentSheet,enrollmentRows);XLSX.utils.book_append_sheet(wb,enrollmentSheet,"Enrollment History");
-  const scheduleSheet=XLSX.utils.json_to_sheet(scheduleRows.length?scheduleRows:[{"Student":"No recurring schedule records"}]);setWidths(scheduleSheet,scheduleRows.length?scheduleRows:[{"Student":"No recurring schedule records"}]);XLSX.utils.book_append_sheet(wb,scheduleSheet,"Weekly Schedules");
   const filename=`Robotronix-Student-Export-${new Date().toISOString().slice(0,10)}.xlsx`;
-  XLSX.writeFile(wb,filename,{compression:true});
+  await exportWorkbook(filename,[
+    {name:"Students",rows:studentRows},
+    {name:"Enrollment History",rows:enrollmentRows},
+    {name:"Weekly Schedules",rows:scheduleRows.length?scheduleRows:[{"Student":"No recurring schedule records"}]}
+  ]);
   return filename;
 }

@@ -29,6 +29,18 @@ The current code implements Zoom host OAuth, host management, meeting operations
 6. Recording access uses protected playback endpoints; only authorized users should see them.
 7. Respect recording retention/protection; scheduled Netlify retention function exists in `netlify.toml` (`15 2 * * *`), but confirm actual scheduled execution and safe deletion behavior before relying on it.
 
+## Recording retention and privacy
+
+- The default is **60 days** for newly reconciled Zoom cloud recordings. A host-specific retention value or Admin recording-level protection/extension can override the default.
+- `zoom_recordings.retain_until` controls eligibility; records with no expiry are not selected by the current expiry query. The cleanup also excludes protected records and rechecks authorization/eligibility before acting.
+- At expiry, the implementation requests Zoom `action=trash`, **not guaranteed irreversible deletion**. Robotronix retains a metadata/status record; Zoom's own Trash/recovery policy may differ.
+- The scheduled function `zoom-retention` is configured for **02:15 UTC daily (07:45 IST)**. Verify function execution and secret matching in Netlify before claiming live enforcement. Do not use its manual Run action for production testing.
+- Use the [recording-retention verification register](../zoom-beta/RECORDING_RETENTION_VERIFICATION.md) and [privacy addendum draft](../zoom-beta/PRIVACY_ADDENDUM_DRAFT.md) before publishing a public privacy promise.
+
+## Zoom Marketplace Beta approval
+
+The Technical Design review and Security/Privacy Compliance review are separate. The reviewer requested SSDLC evidence, raw SAST/DAST outputs, public Privacy Policy, TLS 1.2+, and applicable security policies. See [the reviewer response and evidence checklist](../zoom-beta/EVIDENCE_CHECKLIST_AND_REVIEWER_RESPONSE.md). Do not claim approval, publish the app, or invite external accounts until Zoom approves the Beta submission.
+
 ## Safe acceptance test
 
 - Host 1 OAuth connect and reconnect; no redirect errors.

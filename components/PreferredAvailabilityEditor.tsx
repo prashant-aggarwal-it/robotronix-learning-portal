@@ -30,23 +30,36 @@ export function PreferredAvailabilityEditor({value,timeZone,onChange,mode="famil
   const[addDayOpen,setAddDayOpen]=useState(false);
   const[copyFrom,setCopyFrom]=useState<string|null>(null);
   const[copyTargets,setCopyTargets]=useState<string[]>([]);
-  const[copyMode,setCopyMode]=useState<"merge"|"replace">("merge");
+  const[copyMode,setCopyMode]=useState<"merge"|"replace">("replace");
+  const[copyNotice,setCopyNotice]=useState("");
   const groupedDays=displayDays.filter(day=>windows.some(w=>w.day===day));
 
-  function commit(next:PreferredTimeWindow[],nextNote=note){onChange(serializePreferredTimeWindows(next,nextNote))}
+  function commit(next:PreferredTimeWindow[],nextNote=note){setCopyNotice("");onChange(serializePreferredTimeWindows(next,nextNote))}
   function addDay(day:string){if(windows.some(w=>w.day===day))return;commit([...windows,{day,dayOfWeek:classDayNames.indexOf(day),start:"17:00",end:"19:00"}])}
   function addTime(day:string){commit([...windows,{day,dayOfWeek:classDayNames.indexOf(day),start:"17:00",end:"19:00"}])}
   function update(index:number,patch:Partial<PreferredTimeWindow>){commit(windows.map((w,i)=>{if(i!==index)return w;const next={...w,...patch};if(patch.start!==undefined||patch.end!==undefined)next.endsNextDay=next.end<next.start;return next}))}
   function remove(index:number){commit(windows.filter((_,i)=>i!==index))}
-  function openCopy(day:string){setCopyFrom(day);setCopyTargets([]);setCopyMode("merge")}
+  function openCopy(day:string){setCopyFrom(day);setCopyTargets([]);setCopyMode("replace")}
   function applyCopy(){
-    if(!copyFrom||!copyTargets.length){setCopyFrom(null);return}
-    const source=windows.filter(w=>w.day===copyFrom);let next=[...windows];
-    for(const target of copyTargets.filter(t=>t!==copyFrom)){
+    if(!copyFrom||!copyTargets.length)return;
+    const targets=copyTargets.filter(day=>day!==copyFrom);
+    const source=windows.filter(w=>w.day===copyFrom);
+    let next=[...windows];
+    let copied=0,skipped=0;
+    for(const target of targets){
       if(copyMode==="replace")next=next.filter(w=>w.day!==target);
-      for(const src of source){const candidate={...src,day:target,dayOfWeek:classDayNames.indexOf(target)};if(!next.some(w=>preferredWindowsOverlap(candidate,w)))next.push(candidate)}
+      for(const src of source){
+        const candidate={...src,day:target,dayOfWeek:classDayNames.indexOf(target)};
+        if(next.some(w=>preferredWindowsOverlap(candidate,w))){skipped++;continue;}
+        next.push(candidate);copied++;
+      }
     }
-    commit(next);setCopyFrom(null);setCopyTargets([])
+    onChange(serializePreferredTimeWindows(next,note));
+    const dayCount=targets.length;
+    setCopyNotice(copied
+      ?`${source.length} time slot${source.length===1?"":"s"} copied from ${copyFrom} to ${dayCount} day${dayCount===1?"":"s"}.${skipped?` ${skipped} overlapping slot${skipped===1?" was":"s were"} skipped.`:""} ${mode==="trainer"?"Click Save availability to apply.":"Review your updated timings before continuing."}`
+      :`No timings were copied. ${skipped} overlapping slot${skipped===1?" was":"s were"} skipped. Choose Replace selected days to overwrite existing times.`);
+    setCopyFrom(null);setCopyTargets([]);
   }
   const invalidPairs=new Set<number>();windows.forEach((w,i)=>{if(timeRangeError(w.start,w.end,w.endsNextDay,12*60))invalidPairs.add(i)});
   const overlapPairs=new Set<number>();
@@ -56,6 +69,7 @@ export function PreferredAvailabilityEditor({value,timeZone,onChange,mode="famil
   const isIst=shortTimeZoneLabel(timeZone)==="IST"||timeZone===IST_TIMEZONE;
   return <div className={`structuredAvailabilityEditor ${isTrainer?"trainerWindowMode":""}`}>
     <div className="structuredAvailabilityMeta"><b>{isTrainer?`Trainer working time: ${shortTimeZoneLabel(timeZone)}`:`Family local time: ${shortTimeZoneLabel(timeZone)}`}</b><span>{isTrainer?(isIst?"Add recurring weekly working windows. Multiple slots per day are supported.":"India time is shown beside each trainer window for Admin scheduling."):"India time is shown beside each window. Overnight windows are supported."}</span></div>
+    {copyNotice&&<div role="status" aria-live="polite" className="successBanner">{copyNotice}</div>}
     <div className="timingDayList">
       {groupedDays.map(day=><div className="timingDayCard" key={day}>
         <div className="timingDayHead"><div><span>{day}</span>{!isTrainer&&<small>{`${shortTimeZoneLabel(timeZone)} local time`}</small>}</div><div className="timingDayActions"><button type="button" className="textButton" onClick={()=>addTime(day)}>+ Add another time</button><button type="button" className="textButton" onClick={()=>openCopy(day)}>Copy to…</button></div></div>
@@ -63,9 +77,9 @@ export function PreferredAvailabilityEditor({value,timeZone,onChange,mode="famil
           <div className="timeField"><label>From</label><input className={`input ${overlapPairs.has(index)?"invalid":""}`} type="time" value={w.start} onChange={e=>update(index,{start:e.target.value})}/></div><span className="timeArrow">to</span><div className="timeField"><label>Until</label><input className={`input ${overlapPairs.has(index)?"invalid":""}`} type="time" value={w.end} onChange={e=>update(index,{end:e.target.value})}/></div>
           {preferredWindowEndsNextDay(w)&&<div className="overnightHint"><span>↪</span><b>Ends {classDayNames[(w.dayOfWeek+1)%7]} {formatClock(w.end)}</b></div>}{(!isTrainer||!isIst)&&<div className="indiaTimePreview"><span>India time</span><b>{timeRangeError(w.start,w.end,w.endsNextDay,12*60)?"Correct this range":indiaReference(w,timeZone)}</b>{preferredWindowEndsNextDay(w)&&<small>Overnight window · {preferredWindowDurationMinutes(w.start,w.end)/60} hrs</small>}</div>}
           <button type="button" className="iconButton dangerIcon" aria-label={`Remove ${day} timing`} onClick={()=>remove(index)}>×</button>
-          {overlapPairs.has(index)&&<div className="inlineFieldError timingOverlapError">Overlaps another saved window.</div>}{invalidPairs.has(index)&&<div className="inlineFieldError timingOverlapError">{timeRangeError(w.start,w.end,w.endsNextDay,12*60)}</div>}
+          {(overlapPairs.has(index)||invalidPairs.has(index))&&<div className="timingValidationMessages" role="alert">{overlapPairs.has(index)&&<div className="inlineFieldError">Overlaps another saved window.</div>}{invalidPairs.has(index)&&<div className="inlineFieldError">{timeRangeError(w.start,w.end,w.endsNextDay,12*60)}</div>}</div>}
         </div>)}</div>
-        {copyFrom===day&&<div className="copyTimingPanel"><div><b>Copy {day} timings to</b><div className="copyDayChoices">{displayDays.filter(d=>d!==day).map(d=><label key={d}><input type="checkbox" checked={copyTargets.includes(d)} onChange={e=>setCopyTargets(x=>e.target.checked?[...x,d]:x.filter(v=>v!==d))}/><span>{d.slice(0,3)}</span></label>)}</div></div><div className="copyModeChoices"><label><input type="radio" checked={copyMode==="merge"} onChange={()=>setCopyMode("merge")}/> Merge non-overlapping</label><label><input type="radio" checked={copyMode==="replace"} onChange={()=>setCopyMode("replace")}/> Replace selected days</label></div><div className="row"><button type="button" className="button ghost smallButton" onClick={()=>setCopyFrom(null)}>Cancel</button><button type="button" className="button smallButton" disabled={!copyTargets.length} onClick={applyCopy}>Copy timings</button></div></div>}
+        {copyFrom===day&&<div className="copyTimingPanel"><div><b>Copy {day} timings to</b><div className="copyDayChoices">{displayDays.filter(d=>d!==day).map(d=><label key={d}><input type="checkbox" checked={copyTargets.includes(d)} onChange={e=>setCopyTargets(x=>e.target.checked?[...x,d]:x.filter(v=>v!==d))}/><span>{d.slice(0,3)}</span></label>)}</div></div><div className="copyModeChoices"><label><input type="radio" checked={copyMode==="merge"} onChange={()=>setCopyMode("merge")}/> Merge non-overlapping (overlapping slots skipped)</label><label><input type="radio" checked={copyMode==="replace"} onChange={()=>setCopyMode("replace")}/> Replace selected days (copy exact times)</label></div><div className="row"><button type="button" className="button ghost smallButton" onClick={()=>setCopyFrom(null)}>Cancel</button><button type="button" className="button smallButton" disabled={!copyTargets.length} onClick={applyCopy}>Copy timings</button></div></div>}
       </div>)}
       {!groupedDays.length&&<div className="emptyScheduleState"><b>{isTrainer?"No recurring availability saved.":"No preferred windows saved."}</b><span>{isTrainer?"Add the trainer’s normal weekly working windows.":"Add the family’s confirmed availability."}</span></div>}
     </div>

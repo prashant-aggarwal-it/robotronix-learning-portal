@@ -1,4 +1,4 @@
-> **Fresh database consolidation (2026-10-21):** Former incremental SQL scripts 04–09 were included once in `database/01_install/01_CREATE_SCHEMA.sql` and removed from this branch. Follow [the current 2-file fresh installation and conditional Admin bootstrap](DATABASE_MIGRATION_ORDER.md). Historic upgrade instructions below are superseded; **do not execute the canonical fresh schema against an existing database**.
+> **Current fresh-install procedure:** Run `npm run db:build-fresh-install` and execute its generated SQL once in a new empty Supabase project. Legacy incremental SQL guidance below is historical; never run the canonical fresh installer on an existing database. See [database installation](DATABASE_MIGRATION_ORDER.md).
 
 # Trainer payout approval and netbanking — next release candidate
 
@@ -44,3 +44,11 @@
 - The current Admin payroll form may need user-visible display of the snapshotted instruction version applicable to the month being paid.
 - Formal bank ownership verification is not built into the portal; distinguish manual review from real bank verification.
 - Support for exceptional effective-month overrides must be auditable and not modify finalized salary instructions.
+
+## Class duration vs trainer pay — definitive policy (2026-10-21)
+
+For a normally scheduled **60/90/120/150-minute** teaching session, trainer base pay uses the **scheduled, Admin-agreed class slot only**. Actual teaching time beyond the slot **never automatically increases trainer pay**. When verified actual time differs, it is tracked separately and consumed from each attending learner's purchased course balance. For example, a 60-minute slot taught for 75 minutes pays the trainer for 60 minutes but consumes 75 minutes from the learner's course. Total purchased hours are not increased by overruns; completion must remain within the allocated course budget. If a longer *payable* class is genuinely required, Admin must expressly reschedule/approve its duration, not rely on an unapproved actual-duration overrun.
+
+Implementation: `lib/trainer-payroll.ts` and `public.sync_trainer_earning` (canonical `database/01_install/01_CREATE_SCHEMA.sql`) use scheduled minutes; `lib/course-hours.ts` uses actual minutes for attendance/course consumption. The actual-duration DB constraint allows 15-minute increments. Tests: `qa/payroll-rules.spec.ts`. This does not retroactively rewrite locked/paid salaries.
+
+**Important for databases already initialized with the earlier schema:** Updating GitHub and redeploying Next.js will not replace the SQL function in an already installed Supabase database. After reviewing existing finance records/backups, run the one-time `database/03_verify/02_POST_INSTALL_PAYROLL_POLICY_FIX.sql` in that project's SQL Editor. That targeted SQL replaces only the calculation function and the actual-duration check constraint; it does not re-run the full schema or reset data. A NEW database built with the updated 01 schema does **not** need this file. Recheck verified course-hour totals and unpaid class earnings after updating; approved/paid records are intentionally not rewritten.

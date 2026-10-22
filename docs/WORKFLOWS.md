@@ -8,6 +8,7 @@ Use this guide for **how to use the system**. For technical configuration, see [
 2. Admin opens `/admin/onboarding`, reviews the submission and completes missing details.
 3. Admin creates/links the Student record, selects a Course, and makes an Enrollment (one-to-one or group/cohort).
 4. Assign an eligible Trainer and confirm scheduling with the relevant time zone and availability.
+   Trainer availability can include multiple weekly slots and date-specific overrides; check overlap validation and Admin visibility when availability changes.
 5. Activate appropriate Parent access; optional Student access is a separate linking decision.
 6. Verify Parent dashboard shows the learner and next steps.
 
@@ -30,6 +31,7 @@ Use this guide for **how to use the system**. For technical configuration, see [
 5. Trainer records progress, observations, skills/projects and appropriate parent-facing notes.
 6. Verify the Parent/Student view reflects permitted progress and that Trainer earnings follow recorded delivered time, not merely the schedule.
 7. If class cannot happen, use cancel, hold, reschedule or makeup flows. Do not delete historical delivered classes.
+8. Where a Trainer submits a hold/cancellation request, use `/trainer/holds` and Admin's `/admin/cancellation-reviews` for review; check the resulting schedule, notifications and financial effects rather than treating a request as automatically approved.
 
 **Checkpoint:** a completed lesson should have the correct status, attendance and progress; finance/payroll records should not be duplicated.
 
@@ -53,6 +55,15 @@ Use this guide for **how to use the system**. For technical configuration, see [
 
 See [Razorpay](integrations/RAZORPAY.md).
 
+## 5a. Trainer payroll and payout review
+
+1. Trainer submits actual attendance/duration; delivered teaching minutes determine earnings subject to the configured payroll rules.
+2. Admin reviews `/admin/trainer-finance` and the trainer-specific finance page; reconcile rates, exceptions, effective month and payout instructions.
+3. Respect payout-instruction locking/cutoff and immutable approved/paid records. Use documented correction and approval processes rather than editing paid history.
+4. Verify Trainer `/trainer/earnings` against approved delivered sessions, and separate student fee receipts from Trainer payout records.
+
+See [Trainer finance rules](TRAINER_FINANCE_NETBANKING.md).
+
 ## 6. Family support & renewal
 
 1. Use `/admin/messages`, notifications and alerts for follow-ups and record continuity.
@@ -65,3 +76,10 @@ See [Razorpay](integrations/RAZORPAY.md).
 - **Daily:** new onboarding/demos, today's classes, absent/missed sessions, help requests, messages and payment exceptions.
 - **Weekly:** unresolved alerts, upcoming scheduling conflicts, learner progress, near-renewal students, Trainer payout exceptions.
 - **At release:** follow [Testing](TESTING.md) and [Operations](OPERATIONS.md).
+
+## 8. Admin configuration and access
+
+- Review `/admin/account` for Portal Access status: unlinked, invited, provisioned, linked or disabled. Google/OTP authentication establishes identity; profile and RLS linkage controls role access.
+- Trainer course approval and their displayed course lists are separate from any per-course difficulty/level framework; the latter has not been designed as individual course modules.
+- Check notification events and recipient roles after availability, finance, onboarding and messaging changes. A submitted change is not evidence that every intended recipient was notified.
+- Treat the theme switcher as a per-user display choice; verify persistence and responsiveness across roles.

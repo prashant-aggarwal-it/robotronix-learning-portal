@@ -1,0 +1,50 @@
+name: Zoom Beta SAST evidence
+on:
+  push:
+    branches:
+      - release/consolidated-stabilization-20261020
+    paths:
+      - 'app/**'
+      - 'lib/**'
+      - 'components/**'
+      - 'scripts/**'
+      - '.github/workflows/zoom-beta-sast.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  semgrep-sast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install security scanner
+        run: python -m pip install 'semgrep==1.168.0'
+      - name: Run Semgrep static scan and preserve original scanner output
+        id: scan
+        shell: bash
+        run: |
+          mkdir -p security-reports/sast
+          set +e
+          semgrep scan --config p/javascript --config p/typescript --config p/security-audit --metrics=off --json --output security-reports/sast/semgrep.json app lib components scripts
+          rc=$?
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          semgrep --version > security-reports/sast/scanner-version.txt
+          printf 'git_sha=%s\nworkflow_run=%s\nscan_exit=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$rc" > security-reports/sast/run-metadata.txt
+          exit 0
+      - name: Upload unmodified scanner reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zoom-beta-sast-${{ github.sha }}
+          path: security-reports/sast/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Require scanner success
+        run: |
+          test "${{ steps.scan.outputs.exit_code }}" = "0"
