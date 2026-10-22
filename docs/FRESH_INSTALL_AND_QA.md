@@ -26,7 +26,7 @@ The six former `database/04_upgrade` migrations are consolidated and removed. Fi
 ## New empty database procedure
 
 1. Create a new separate Supabase project and verify you are connected to the correct one.
-2. Run schema SQL, then reference-data SQL in the Supabase SQL editor.
+2. Run `npm run db:build-fresh-install` from the repository root, then execute the entire `database/generated/ROBOTRONIX_FRESH_INSTALL.sql` file once in the Supabase SQL editor. Do not also run the two source SQL files.
 3. Configure Supabase Authentication Google provider and callbacks.
 4. Bootstrap first real Admin only if the intended Auth identity has no Admin profile.
 5. Run `03_verify/01_VERIFY_RELEASE.sql` and inspect results.
