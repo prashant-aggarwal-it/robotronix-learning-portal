@@ -40,6 +40,7 @@
     "check:customer-delight": "node scripts/check-customer-delight.mjs",
     "check:calendar": "node scripts/check-calendar-experience.mjs",
     "check:fresh-db": "node scripts/check-fresh-db-release.mjs",
+    "db:build-fresh-install": "npm run check:fresh-db && node scripts/build-fresh-db-install.mjs",
     "qa:pre-go-live": "playwright test qa/pre-go-live-features.spec.ts --project=desktop-chromium",
     "sanity:create-users": "node scripts/create-prod-sanity-auth-users.mjs",
     "sanity:delete-users": "node scripts/delete-prod-sanity-auth-users.mjs",
