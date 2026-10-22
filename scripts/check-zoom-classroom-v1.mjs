@@ -43,8 +43,17 @@ if(!recordingDetail.includes('recording.status!=="completed"'))throw new Error("
 const retention=fs.readFileSync("app/api/zoom/retention/route.ts","utf8");
 for(const marker of ["retain_until","protected_from_deletion","action=trash","INTERNAL_CRON_SECRET"])if(!retention.includes(marker))throw new Error("Zoom retention hardening missing: "+marker);
 
+// Verify the selected 60-day default remains consistent from schema to reconciliation.
+// These static checks do not attest to production DB values, Netlify schedule, or Zoom Trash expiry.
+for(const table of ["zoom_host_accounts","zoom_meetings"]){
+ const column=new RegExp("alter\\s+table\\s+public\\."+table+"\\s+add\\s+column\\s+if\\s+not\\s+exists\\s+recording_retention_days\\s+integer\\s+not\\s+null\\s+default\\s+60\\s*;","i");
+ if(!column.test(migration))throw new Error("60-day recording retention default missing for "+table);
+}
+const retentionSchedule=fs.readFileSync("netlify.toml","utf8");
+if(!/schedule\\s*=\\s*["']15 2 \\* \\* \\*["']/.test(retentionSchedule))throw new Error("Daily Zoom retention schedule declaration is missing.");
+
 const recordingReconcile=fs.readFileSync("lib/server/zoom-recording-reconcile.ts","utf8");
-for(const marker of ["ignoreDuplicates:true","recording_retention_days","retain_until"]){
+for(const marker of ["ignoreDuplicates:true","recording_retention_days","retain_until","||60","days*86400000"]){
  if(!recordingReconcile.includes(marker))throw new Error("Recording lifecycle reconciliation safeguard missing: "+marker);
 }
 for(const file of ["app/api/zoom/reconcile/route.ts","app/api/zoom/webhook/route.ts"]){
