@@ -1,5 +1,10 @@
 name: Zoom Beta DAST passive evidence
 on:
+  push:
+    branches:
+      - release/consolidated-stabilization-20261020
+    paths:
+      - docs/zoom-beta/DAST_RUN_TRIGGER.md
   workflow_dispatch:
     inputs:
       target:
@@ -19,13 +24,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Validate target and explicit authorization
         env:
           TARGET: ${{ inputs.target }}
           APPROVAL: ${{ inputs.approval }}
         shell: bash
         run: |
-          if [[ "$TARGET" != "https://portal.robotronixstemlab.com" || "$APPROVAL" != "AUTHORIZE_PASSIVE_SCAN" ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            test "$GITHUB_REF" = "refs/heads/release/consolidated-stabilization-20261020"
+            test -f docs/zoom-beta/DAST_RUN_TRIGGER.md
+            grep -q "AUTHORIZE_PASSIVE_SCAN" docs/zoom-beta/DAST_RUN_TRIGGER.md
+          elif [[ "$TARGET" != "https://portal.robotronixstemlab.com" || "$APPROVAL" != "AUTHORIZE_PASSIVE_SCAN" ]]; then
             echo "Only the explicitly authorized HTTPS portal target is permitted"
             exit 1
           fi
