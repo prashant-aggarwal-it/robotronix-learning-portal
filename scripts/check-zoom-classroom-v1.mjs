@@ -50,7 +50,7 @@ for(const table of ["zoom_host_accounts","zoom_meetings"]){
  if(!column.test(migration))throw new Error("60-day recording retention default missing for "+table);
 }
 const retentionSchedule=fs.readFileSync("netlify.toml","utf8");
-if(!/schedule\\s*=\\s*["']15 2 \\* \\* \\*["']/.test(retentionSchedule))throw new Error("Daily Zoom retention schedule declaration is missing.");
+if(!/schedule\s*=\s*["']15 2 \* \* \*["']/.test(retentionSchedule))throw new Error("Daily Zoom retention schedule declaration is missing.");
 
 const recordingReconcile=fs.readFileSync("lib/server/zoom-recording-reconcile.ts","utf8");
 for(const marker of ["ignoreDuplicates:true","recording_retention_days","retain_until","||60","days*86400000"]){
