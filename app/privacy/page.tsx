@@ -28,6 +28,6 @@ export default function PrivacyPolicyPage(){
      <section id="contact"><h2>10. Contact</h2><p>For privacy, access, correction, deletion or Zoom Classroom data enquiries, email <a href="mailto:info@robotronixstemlab.com">info@robotronixstemlab.com</a>.</p><p>Robotronix™ Tech Lab · Delhi, India</p></section>
     </article>
    </div>
-  </div><footer className={styles.footer}><span>© Robotronix™ Tech Lab</span><Link href="/">Learning Portal</Link><a href="https://www.robotronixstemlab.com/privacy">Website Privacy Policy</a></footer>
+  </div><footer className={styles.footer}><span>© Robotronix™ Tech Lab</span><Link href="/terms">Terms of Use</Link><Link href="/support">Support</Link><Link href="/zoom-guide">Zoom Guide</Link><Link href="/">Learning Portal</Link></footer>
  </main>;
 }
