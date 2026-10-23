@@ -1406,3 +1406,14 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 @media(max-width:1180px){.onboardingSummaryCards{gap:14px}}
 @media(max-width:760px){.onboardingSummaryCards{grid-template-columns:minmax(0,1fr)}.onboardingSummaryCards .summaryDefinitionGrid>div{grid-template-columns:minmax(100px,.7fr) minmax(0,1.4fr);gap:10px}}
 @media(max-width:420px){.onboardingSummaryCards .summaryDefinitionGrid>div{grid-template-columns:minmax(90px,.7fr) minmax(0,1.3fr)}}
+
+/* Manual QA: compact trainer access and readable actionable follow-ups. */
+.trainerOverviewGrid .attentionRow{display:flex;align-items:center;justify-content:space-between;gap:18px;min-width:0;text-align:left}
+.trainerOverviewGrid .attentionRow>span{flex:1 1 auto;min-width:0;max-width:none;overflow-wrap:normal;line-height:1.5}
+.trainerOverviewGrid .attentionRow>b{flex:0 0 auto;white-space:nowrap;text-align:right}
+.portalAccessPanel{max-width:920px;padding:22px 26px}
+.portalAccessPanel .panelHeader{align-items:center;gap:14px;flex-wrap:wrap}
+.portalAccessPanel .formGroup{max-width:540px;margin-bottom:10px}
+.portalAccessPanel .fieldHint{display:block;max-width:580px;line-height:1.5}
+.portalAccessPanel .portalAccessActions{margin-top:12px}
+@media(max-width:600px){.trainerOverviewGrid .attentionRow{align-items:flex-start;flex-wrap:wrap}.trainerOverviewGrid .attentionRow>b{margin-left:auto}.portalAccessPanel{padding:18px}}
