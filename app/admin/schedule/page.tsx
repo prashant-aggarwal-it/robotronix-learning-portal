@@ -86,7 +86,7 @@ function ScheduleWorkspace(){
   {dayGrid}
   {allWeekGrid}
   {trainerWeekGrid}
-  {selectedClass&&<div className="scheduleModalBackdrop" role="presentation" onClick={()=>setSelectedClass(null)}><section className="scheduleModal" role="dialog" aria-modal="true" aria-label="Scheduled class details" onClick={e=>e.stopPropagation()} style={{maxWidth:560}}>
+  {selectedClass&&<div className="scheduleModalBackdrop" role="presentation" onClick={()=>setSelectedClass(null)}><section className="panel formPanel scheduleModal" role="dialog" aria-modal="true" aria-label="Scheduled class details" onClick={e=>e.stopPropagation()} style={{maxWidth:560}}>
     <div className="panelHeader"><div><h2>Scheduled class details</h2><p>{selectedClass.title}</p></div><button type="button" className="button ghost" onClick={()=>setSelectedClass(null)}>Close</button></div>
     <div className="formGrid"><p><b>Date:</b> {selectedClass.date}</p><p><b>Time:</b> {fmtTime((eventIndex.ist.get(selectedClass.id)??eventIst(selectedClass)).startTime)}–{fmtTime((eventIndex.ist.get(selectedClass.id)??eventIst(selectedClass)).endTime)} IST</p><p><b>Trainer:</b> {trainerMap.get(selectedClass.trainerId)?.fullName??"Unassigned"}</p><p><b>Course:</b> {courses.find(c=>c.id===selectedClass.courseId)?.title??selectedClass.title}</p><p><b>Student:</b> {students.find(st=>st.id===selectedClass.studentId)?.fullName??"See enrollment / cohort"}</p><p><b>Status:</b> {selectedClass.status}</p></div>
     <div className="modalActions"><a className="button" href={`/classroom/${encodeURIComponent(selectedClass.id)}`}>Open Zoom Classroom</a><button type="button" className="button ghost" onClick={()=>setSelectedClass(null)}>Close</button></div>
