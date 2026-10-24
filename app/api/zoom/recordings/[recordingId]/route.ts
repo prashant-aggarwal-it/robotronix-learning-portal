@@ -36,7 +36,7 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
    sizeBytes:recording.file_size_bytes,status:recording.status,retainUntil:recording.retain_until,protected:recording.protected_from_deletion,
    learnerVisible:recording.learner_visible,streamUrl:`/api/zoom/recordings/${recording.id}/stream?token=${encodeURIComponent(token)}`}},
    {headers:{"Cache-Control":"no-store"}});
- }catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:400});}
+ }catch(error){console.error("Zoom recording API failed",error instanceof Error?error.name:"UnknownError");return NextResponse.json({ok:false,error:"Unable to process recording request."},{status:400,headers:{"Cache-Control":"no-store"}});}
 }
 
 export async function PATCH(request:NextRequest,{params}:{params:Promise<{recordingId:string}>}){
