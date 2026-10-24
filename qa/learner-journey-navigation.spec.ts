@@ -127,3 +127,14 @@ test("AI Flow is the default appearance, while a saved Classic preference is res
  expect(switcher).toContain('if(isPortalTheme(value))saved=value');
  expect(switcher).toContain('window.localStorage.setItem(STORAGE_KEY,next)');
 });
+
+
+test("finance payout review requires a deliberate decision and masks sensitive values",()=>{
+ const review=source("components/finance/PayoutReview.tsx");
+ expect(review).toContain('useState<""|"approve"|"request_correction"|"reject">("")');
+ expect(review).toContain('if(!decision){setError("Choose a review decision first.");return;}');
+ expect(review).toContain('disabled={!decision||busy}');
+ expect(review).toContain('aria-pressed={showFull}');
+ expect(review).toContain('timeZone:"Asia/Kolkata"');
+ expect(review).toContain('const[showFull,setShowFull]=useState(false)');
+});
