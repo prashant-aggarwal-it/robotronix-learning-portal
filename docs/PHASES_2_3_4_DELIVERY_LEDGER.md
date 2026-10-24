@@ -122,3 +122,8 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Added `qa:journey-contracts` and included it in the comprehensive `qa:prod-gate` command.
 - Recording playback now exposes error and a secure URL renewal action rather than leaving a broken media player with no recovery.
 - All new changes stay on PR #23; database migration and real provider/role tests remain separate release gates.
+
+## Zoom recording actions and security contract additions
+- Zoom Admin recording actions now clear stale errors, reload records and provide an explicit success message for deletion, protection, sharing and retention changes.
+- Offline regression suite additionally checks that Zoom host overlap constraint and remote-meeting conflict cleanup stay wired, and secure recording streaming keeps profile/role checks.
+- These are source-contract regression guards, **not** equivalent to an authenticated Zoom playback/delete/concurrency production test.
