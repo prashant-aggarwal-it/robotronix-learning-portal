@@ -27,6 +27,12 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(schedule).toContain("/admin/classes/");
   expect(schedule).not.toContain('href={`/classroom/${encodeURIComponent(selectedClass.id)}`}');
  });
+ test("calendar dialog shows IST date and hides class action for non-class events",()=>{
+  const schedule=source("app/admin/schedule/page.tsx");
+  expect(schedule).toContain("selectedClass.eventType===\"class\"&&");
+  expect(schedule).toContain("IST date:");
+  expect(schedule).toContain('e.key==="Escape"');
+ });
  test("class editor is authoritative for Zoom, cancellation and enrollment return",()=>{
   const editor=source("components/operations/ClassRecordEditor.tsx");
   for(const action of ["ZoomClassActions","cancelClassV2","rescheduleClassV2","saveClassAttendance","Open enrollment"])expect(editor).toContain(action);
