@@ -5374,3 +5374,20 @@ begin
 end $$;
 revoke all on function public.replace_trainer_availability_v1(uuid,jsonb) from public,anon;
 grant execute on function public.replace_trainer_availability_v1(uuid,jsonb) to authenticated;
+
+
+-- P0/P1 audit-history coverage (fresh-install source of truth).
+-- Keep aligned with database/04_migrations/2026_10_25_P0_P1_AUDIT_COVERAGE.sql.
+DO $audit_history$
+DECLARE t text;
+BEGIN
+ FOREACH t IN ARRAY ARRAY['portal_access_requests','student_invoices','zoom_meetings','zoom_recordings'] LOOP
+  IF to_regclass('public.'||t) IS NOT NULL AND NOT EXISTS (
+   SELECT 1 FROM pg_trigger trg JOIN pg_class c ON c.oid=trg.tgrelid
+   JOIN pg_namespace ns ON ns.oid=c.relnamespace
+   WHERE ns.nspname='public' AND c.relname=t AND trg.tgname='audit_'||t
+  ) THEN
+   EXECUTE format('CREATE TRIGGER %I AFTER INSERT OR UPDATE OR DELETE ON public.%I FOR EACH ROW EXECUTE FUNCTION public.audit_core_change()', 'audit_'||t,t);
+  END IF;
+ END LOOP;
+END $audit_history$;
