@@ -6,7 +6,7 @@ import type {PortalAuditRecord} from "@/lib/types";
 import {safeAuditChanges} from "@/lib/audit-display";
 
 const supported:Record<string,string[]>={
- onboarding:["onboarding_submissions"],enrollments:["enrollments","enrollment_holds"],
+ onboarding:["onboarding_submissions"],account:["profiles","portal_access_requests"],parents:["parents","parent_students","portal_access_requests"],"portal-access":["portal_access_requests"],enrollments:["enrollments","enrollment_holds"],
  classes:["schedule_events","class_attendance"],schedule:["schedule_events"],
  students:["students","student_guardians","parent_students"],trainers:["trainers","trainer_availability","trainer_availability_overrides","trainer_courses"],
  courses:["courses"],cohorts:["cohorts"],
