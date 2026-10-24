@@ -408,17 +408,33 @@ export async function createCommunicationThread(input: {
     return { ok: true, id: thread.id };
   }
 
-  let liveParentId: string | null | undefined = thread.parentId;
+  // Never send demo identifiers such as "parent-<student>" to a UUID foreign key.
+  // In live mode resolve the authenticated family rather than choosing an arbitrary parent.
+  let liveParentId: string | null = null;
   if (input.senderRole === "parent") {
-    const { data: p } = await supabase.from("parents").select("id").limit(1).maybeSingle();
-    liveParentId = p?.id ?? null;
-  } else if (input.senderRole === "admin" && !liveParentId && thread.studentId) {
-    const { data: link } = await supabase.from("parent_students").select("parent_id").eq("student_id", thread.studentId).limit(1).maybeSingle();
-    liveParentId = link?.parent_id ?? null;
-  } else if (input.senderRole === "trainer") {
-    // A database BEFORE INSERT trigger resolves the learner's family link without exposing parent data to the trainer client.
-    liveParentId = null;
+    const {data: authData, error: authError} = await supabase.auth.getUser();
+    if (authError || !authData.user) return {ok:false,error:"Sign in as the parent before sending a message."};
+    const {data: ownParent, error: parentError} = await supabase.from("parents").select("id").eq("profile_id",authData.user.id).maybeSingle();
+    if (parentError || !ownParent) return {ok:false,error:"Your parent portal account is not linked."};
+    if (thread.studentId) {
+      const {data: familyLink, error: linkError} = await supabase.from("parent_students").select("parent_id").eq("parent_id",ownParent.id).eq("student_id",thread.studentId).maybeSingle();
+      if (linkError || !familyLink) return {ok:false,error:"This learner is not linked to your parent account."};
+    }
+    liveParentId = ownParent.id;
+  } else if (input.senderRole === "admin") {
+    if (thread.studentId) {
+      const {data: link, error: linkError} = await supabase.from("parent_students").select("parent_id").eq("student_id",thread.studentId).limit(1).maybeSingle();
+      if (linkError) return {ok:false,error:linkError.message};
+      if (input.parentId && link?.parent_id !== input.parentId) return {ok:false,error:"Selected family does not belong to this learner."};
+      liveParentId = link?.parent_id ?? null;
+    } else if (input.parentId) {
+      // An explicit UUID is allowed only if it exists in the parents table.
+      const {data: selectedParent, error: lookupError} = await supabase.from("parents").select("id").eq("id",input.parentId).maybeSingle();
+      if (lookupError || !selectedParent) return {ok:false,error:"Selected parent account could not be verified."};
+      liveParentId = selectedParent.id;
+    }
   }
+  // Trainers deliberately omit parent_id; the database trigger may resolve it securely.
 
   const { data, error } = await supabase
     .from("communication_threads")

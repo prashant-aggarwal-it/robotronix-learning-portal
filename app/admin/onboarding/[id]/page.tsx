@@ -12,6 +12,7 @@ import {PhoneField} from "@/components/PhoneField";
 import {CountryCityFields} from "@/components/CountryCityFields";
 import {PreferredAvailabilityEditor} from "@/components/PreferredAvailabilityEditor";
 import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
+import {adminApi} from "@/lib/admin-api-client";
 import {WeeklyScheduleEditor} from "@/components/admin/WeeklyScheduleEditor";
 import {parsePreferredTimeWindows,preferredTimingNote,suggestedScheduleFromPreferences} from "@/lib/learner-options";
 import type {PreferredTimeWindow} from "@/lib/learner-options";
@@ -190,11 +191,18 @@ export default function OnboardingDetail(){
   if(!ready){setNotice({type:"error",text:"Complete all items in the readiness checklist before activation."});return;}
   setActiveAction("activate");setNotice(null);
   const res=await activateOnboarding(id,{courseId,trainerId,enrollmentType:type,cohortId:type==="small_group"?cohortId:undefined,startDate,scheduleTimezone,scheduleRules,scheduleOverrideConfirmed:hasScheduleExceptions&&scheduleOverrideConfirmed,scheduleOverrideNote:hasScheduleExceptions&&scheduleOverrideConfirmed?"Admin confirmed schedule exception against parent preference and/or trainer availability during activation.":undefined,schedulingHorizon:type==="small_group"?"manual":schedulingHorizon,schedulingWeeks:schedulingHorizon==="weeks"?schedulingWeeks:undefined});
+  if(!res.ok){setActiveAction(null);setNotice({type:"error",text:("error" in res?res.error:undefined)??"Unable to activate learner."});return;}
+  let zoomWarning="";
+  if(type==="one_to_one"&&schedulingHorizon!=="manual"&&("classesCreated" in res)&&Number(res.classesCreated)>0&&("enrollmentId" in res)&&res.enrollmentId){
+   try{
+    const zoom=await adminApi("/api/zoom/reconcile-classes",{method:"POST",body:JSON.stringify({enrollmentId:res.enrollmentId})});
+    if(zoom.failed)zoomWarning=`${zoom.failed} classroom(s) need Zoom setup. Open Zoom Classroom to review.`;
+   }catch(error){zoomWarning=`Classes booked, but Zoom setup is pending: ${error instanceof Error?error.message:String(error)}`;}
+  }
   setActiveAction(null);
-  if(!res.ok){setNotice({type:"error",text:("error" in res?res.error:undefined)??"Unable to activate learner."});return;}
   const result={studentId:("studentId" in res?res.studentId:"")??"",enrollmentId:("enrollmentId" in res?res.enrollmentId:"")??"",classesCreated:("classesCreated" in res?res.classesCreated:undefined),schedulingWarning:("schedulingWarning" in res?res.schedulingWarning:undefined)};
   setActivationResult(result);
-  setNotice(result.schedulingWarning?{type:"error",text:result.schedulingWarning+" Open the enrollment to resolve scheduling."}:{type:"success",text:"Learner activated and linked to the family account."});await refresh();
+  setNotice(result.schedulingWarning||zoomWarning?{type:"error",text:[result.schedulingWarning,zoomWarning].filter(Boolean).join(" ")||"Review setup."}:{type:"success",text:"Learner activated, classes booked and Zoom setup checked."});await refresh();
  }
 
  const statusIndex=r.status==="active"?3:r.status==="setup_pending"?2:1;
@@ -247,7 +255,7 @@ export default function OnboardingDetail(){
    {type==="small_group"&&cohortId&&<div className="entityBoundaryNote"><b>Cohort schedule</b><span>{formatWeeklySchedule(scheduleRules,scheduleTimezone)}</span></div>}
    </div>
    <div className="panel" style={{marginTop:16}}>
-    <div className="subsectionHeader"><span>SCHEDULING V2 · PREVIEW</span><b>Course calendar preview</b><small>Activation will book 1-to-1 classes using the server-side scheduling service after creating the enrollment. If booking fails, the learner remains active and a warning is displayed. Cohorts are not booked individually.</small></div>
+    <div className="subsectionHeader"><span>COURSE SCHEDULE</span><b>Course calendar preview</b><small>Review class dates and times before activating this learner.</small></div>
     <div className="formGrid">
      <div className="formGroup"><label>How should classes be booked?</label><select className="input" value={schedulingHorizon} onChange={e=>setSchedulingHorizon(e.target.value as SchedulingHorizon)}><option value="full">Automatically schedule the entire course</option><option value="weeks">Automatically schedule selected weeks</option><option value="manual">I will schedule classes manually</option></select></div>
      {schedulingHorizon==="weeks"&&<div className="formGroup"><label>Weeks to preview</label><input className="input" type="number" min={1} max={104} value={schedulingWeeks} onChange={e=>setSchedulingWeeks(Number(e.target.value))}/></div>}

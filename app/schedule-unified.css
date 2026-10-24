@@ -49,3 +49,16 @@
 .weekEvent.status-conducted{border-left:4px solid #885fc5;background:#f0ebff}
 .weekEvent.status-scheduled{border-left:4px solid #4d84d0;background:#edf5ff}
 .weekEvent.status-missed{border-left:4px solid #db8d49;background:#fff0dc}
+
+/* Zoom operations: clear hierarchy and compact one-line actions. */
+.zoomOperationsActions{gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.zoomOperationsActions .zoomUtilityButton,.zoomUtilityButton{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;width:auto;min-height:36px;height:auto;padding:8px 13px;font-size:13px;line-height:1.25;border-radius:12px;flex:0 0 auto}
+.zoomClassFilters{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+.zoomClassFilters label{display:grid;gap:4px;font-size:12px;font-weight:600;min-width:170px}
+.zoomClassFilters label:nth-child(2){flex:1;max-width:320px}
+.zoomClassFilters .input{min-height:38px}
+.zoomCompactTable td{vertical-align:middle;padding-top:10px;padding-bottom:10px}
+.zoomCompactTable .zoomTableAction{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;border-radius:9px;padding:7px 11px;background:var(--primary-soft,#f2efff);border:1px solid var(--border,#dbe2f1);color:var(--text,#26345c);font-size:12px;font-weight:700;text-decoration:none;min-width:87px}
+.zoomCompactTable .zoomTableAction:hover{background:var(--surface-soft,#ebe5ff)}
+.zoomPagination{justify-content:flex-end;align-items:center;gap:10px;margin-top:12px}
+@media(max-width:960px){.zoomOperationsActions{width:100%;justify-content:flex-start}}

@@ -11,10 +11,13 @@ export async function POST(request:NextRequest){
   const {data:hosts,error:hostError}=await auth.admin.from("zoom_host_accounts").select("id").eq("status","connected").eq("enabled",true).limit(1);
   if(hostError)throw new Error(hostError.message);
   if(!hosts?.length)return NextResponse.json({ok:false,error:"Connect and enable a Zoom host before reconciling classes."},{status:409});
-  const {data:events,error:eventError}=await auth.admin.from("schedule_events")
+  const input=await request.json().catch(()=>({}));
+  const enrollmentId=typeof input?.enrollmentId==="string"&&/^[a-f0-9-]{36}$/i.test(input.enrollmentId)?input.enrollmentId:null;
+  const baseQuery=auth.admin.from("schedule_events")
    .select("id,date,start_time,timezone,event_type,status")
    .eq("event_type","class").in("status",["scheduled","tentative","makeup"])
    .order("date",{ascending:true}).limit(200);
+  const {data:events,error:eventError}=await (enrollmentId?baseQuery.eq("enrollment_id",enrollmentId):baseQuery);
   if(eventError)throw new Error(eventError.message);
   const {data:existing,error:meetingError}=await auth.admin.from("zoom_meetings")
    .select("schedule_event_id").eq("purpose","class").not("schedule_event_id","is",null);

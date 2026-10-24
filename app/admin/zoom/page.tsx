@@ -9,7 +9,7 @@ import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type Host={id:string;label:string;zoomEmail:string;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;lastSyncAt:string|null};
 type Recording={id:string;recording_type:string;file_type:string;file_size_bytes:number;recording_start:string|null;status:string;learner_visible:boolean;retain_until:string|null;protected_from_deletion:boolean};
-type Meeting={id:string;purpose:"class"|"general"|"demo";topic:string;status:string;scheduled_start:string;duration_minutes:number;recording_status:string;recording_enabled:boolean;join_url?:string|null;passcode?:string|null;meeting_notes?:string|null;event:any;host?:{label:string;email:string}|null;presence:any;recordings:Recording[]};
+type Meeting={id:string;purpose:"class"|"general"|"demo";topic:string;status:string;scheduled_start:string;duration_minutes:number;recording_status:string;recording_enabled:boolean;join_url?:string|null;passcode?:string|null;meeting_notes?:string|null;last_error?:string|null;event:any;host?:{label:string;email:string}|null;presence:any;recordings:Recording[]};
 
 export default function ZoomAdmin(){return <RoleGuard allow={["admin"]}><AppShell role="admin"><Suspense fallback={<p>Loading Zoom administration…</p>}><Workspace/></Suspense></AppShell></RoleGuard>}
 
@@ -25,6 +25,9 @@ function Workspace(){
  const[hosts,setHosts]=useState<Host[]>([]),[meetings,setMeetings]=useState<Meeting[]>([]),[storage,setStorage]=useState<Array<{hostId:string;bytes:number}>>([]);
  const[label,setLabel]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const[showCreate,setShowCreate]=useState(false);
+ const[classView,setClassView]=useState<"today"|"upcoming"|"issues"|"all">("today");
+ const[classQuery,setClassQuery]=useState("");
+ const[classPage,setClassPage]=useState(1);
  const[newMeeting,setNewMeeting]=useState({title:"",startAt:"",durationMinutes:60,recording:true,notes:""});
 
  async function load(){setError("");try{const x=await adminApi("/api/zoom/overview");setHosts(x.hosts||[]);setMeetings(x.meetings||[]);setStorage(x.storageByHost||[])}catch(e){setError(e instanceof Error?e.message:String(e))}}
@@ -47,6 +50,23 @@ function Workspace(){
  const classes=useMemo(()=>meetings.filter(m=>m.purpose==="class"),[meetings]);
  const general=useMemo(()=>meetings.filter(m=>m.purpose==="general"),[meetings]);
  const recordings=useMemo(()=>meetings.flatMap(m=>m.recordings.map(r=>Object.assign({},r,{meeting:m}))).filter((r:any)=>r.status!=="deleted"),[meetings]);
+ const now=Date.now();
+ const dayKey=(date:Date)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(date);
+ const todayKey=dayKey(new Date());
+ const needsAttention=(m:Meeting)=>m.status==="error"||Boolean(m.last_error)||(!m.event?.id)||m.status==="cancelled";
+ const filteredClasses=classes.filter(m=>{
+   const start=new Date(m.scheduled_start).getTime();
+   const relevant=classView==="today"?dayKey(new Date(m.scheduled_start))===todayKey:classView==="upcoming"?start>=now:classView==="issues"?needsAttention(m):true;
+   const query=classQuery.trim().toLowerCase();
+   return relevant&&(!query||[m.topic,m.event?.title,m.host?.label,m.event?.id,m.status].filter(Boolean).join(" ").toLowerCase().includes(query));
+ }).sort((a,b)=>classView==="upcoming"?new Date(a.scheduled_start).getTime()-new Date(b.scheduled_start).getTime():new Date(b.scheduled_start).getTime()-new Date(a.scheduled_start).getTime());
+ const classPageSize=12;
+ const pageCount=Math.max(1,Math.ceil(filteredClasses.length/classPageSize));
+ const visibleClasses=filteredClasses.slice((Math.min(classPage,pageCount)-1)*classPageSize,Math.min(classPage,pageCount)*classPageSize);
+ const withinHostWindow=(m:Meeting)=>{
+   const start=new Date(m.scheduled_start).getTime();
+   return Number.isFinite(start)&&now>=start-30*60_000&&now<=start+(Number(m.duration_minutes)||60)*60_000+30*60_000;
+ };
  const active=hosts.filter(h=>h.enabled&&h.status==="connected").length;
  const live=meetings.filter(m=>m.status==="started").length;
 
@@ -73,19 +93,30 @@ function Workspace(){
   </section>
 
   <section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row"><button className="button" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New Meeting</button><button className="button ghost" disabled={busy} onClick={reconcileClasses}>Reconcile missing classes</button><button className="button secondary" disabled={busy} onClick={syncZoom}>{busy?"Syncing…":"Sync with Zoom"}</button></div></div>
+   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row zoomOperationsActions"><button className="button zoomUtilityButton" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New meeting</button><button className="button ghost zoomUtilityButton" disabled={busy} onClick={reconcileClasses}>Reconcile missing classes</button><button className="button secondary zoomUtilityButton" disabled={busy} onClick={syncZoom}>{busy?"Syncing…":"Sync with Zoom"}</button></div></div>
    <div className="row" style={{gap:8,flexWrap:"wrap"}}>{tabButton("overview","Classes",classes.length)}{tabButton("meetings","Meetings",general.length)}{tabButton("recordings","Recordings",recordings.length)}{tabButton("hosts","Hosts",hosts.length)}</div>
   </section>
 
   {tab==="overview"&&<section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">CLASSROOM DELIVERY</div><h2>Recent classes</h2><p>Admin can start any class for support or takeover. Presence is operational evidence, not academic attendance.</p></div></div>
-   <div className="tableWrap"><table><thead><tr><th>Class</th><th>Scheduled</th><th>Host</th><th>Status</th><th>Trainer</th><th>Learner</th><th>Recording</th><th>Action</th></tr></thead><tbody>
-    {classes.slice(0,60).map(m=><tr key={m.id}><td><b>{m.event?.title||m.topic}</b>{m.presence?.earlyEnd&&<div className="cellSub">Ended earlier than scheduled</div>}</td><td>{when(m.scheduled_start)}</td><td>{m.host?.label||"—"}</td><td><span className={"statusBadge status-"+m.status}>{m.status}</span></td>
-     <td><span className={"statusBadge "+signalClass(m.presence?.trainerSignal)}>{signalLabel(m.presence?.trainerSignal)}</span><div className="cellSub">{(m.presence?.trainerConnections||0)+" connection(s) · "+mins(m.presence?.trainerSeconds)}</div></td>
-     <td><span className={"statusBadge "+signalClass(m.presence?.learnerSignal)}>{signalLabel(m.presence?.learnerSignal)}</span><div className="cellSub">{(m.presence?.learnerConnections||0)+" connection(s) · "+mins(m.presence?.learnerSeconds)}</div></td>
-     <td>{m.recording_enabled?<span className="softBadge">{m.recording_status}</span>:"Off"}</td><td>{["scheduled","started"].includes(m.status)?<a className="button small" href={"/classroom/"+m.event?.id+"?mode=host"} target="_blank" rel="noopener noreferrer">{m.status==="started"?"Join live":"Start class"}</a>:<span className="cellSub">No live action</span>}</td></tr>)}
-    {!classes.length&&<tr><td colSpan={8}><div className="emptyState compact">No Zoom classes provisioned yet.</div></td></tr>}
+   <div className="panelHeader"><div><div className="eyebrow">CLASSROOM DELIVERY</div><h2>Zoom classroom operations</h2><p>Today's sessions appear first. Use the learner's enrollment for their full course timetable.</p></div></div>
+   <div className="row zoomClassFilters">
+    <label>View <select className="input" value={classView} onChange={e=>{setClassView(e.target.value as typeof classView);setClassPage(1)}}>
+     <option value="today">Today</option><option value="upcoming">Upcoming</option><option value="issues">Needs attention</option><option value="all">All provisioned</option>
+    </select></label>
+    <label>Find classroom <input className="input" type="search" value={classQuery} onChange={e=>{setClassQuery(e.target.value);setClassPage(1)}} placeholder="Search class, host or course"/></label>
+    <span className="cellSub">{filteredClasses.length} matching classroom{filteredClasses.length===1?"":"s"}</span>
+   </div>
+   <div className="tableWrap"><table className="zoomCompactTable"><thead><tr><th>Class</th><th>Scheduled</th><th>Host</th><th>Status</th><th>Trainer</th><th>Learner</th><th>Recording</th><th>Action</th></tr></thead><tbody>
+    {visibleClasses.map(m=><tr key={m.id}><td><b>{m.event?.title||m.topic}</b>{m.presence?.earlyEnd&&<div className="cellSub">Ended early</div>}</td><td>{when(m.scheduled_start)}</td><td>{m.host?.label||"—"}</td><td><span className={"statusBadge status-"+m.status}>{m.status}</span>{m.last_error&&<div className="cellSub" title={m.last_error}>Needs attention</div>}</td>
+     <td><span className={"statusBadge "+signalClass(m.presence?.trainerSignal)}>{signalLabel(m.presence?.trainerSignal)}</span><div className="cellSub">{(m.presence?.trainerConnections||0)+" connections"}</div></td>
+     <td><span className={"statusBadge "+signalClass(m.presence?.learnerSignal)}>{signalLabel(m.presence?.learnerSignal)}</span><div className="cellSub">{(m.presence?.learnerConnections||0)+" connections"}</div></td>
+     <td>{m.recording_enabled?<span className="softBadge">{m.recording_status}</span>:"Off"}</td>
+     <td>{m.event?.id&&["scheduled","started"].includes(m.status)&&withinHostWindow(m)?
+       <a className="zoomTableAction" href={"/classroom/"+encodeURIComponent(m.event.id)+"?mode=host"} target="_blank" rel="noopener noreferrer">{m.status==="started"?"Join live":"Start class"}</a>:
+       <span className="cellSub">{m.status==="scheduled"?"Scheduled":m.status==="started"?"Access closed":"—"}</span>}</td></tr>)}
+    {!visibleClasses.length&&<tr><td colSpan={8}><div className="emptyState compact">{classView==="today"?"No Zoom classrooms scheduled for today.":classView==="issues"?"No provisioned classrooms are flagged. Missing meetings can be reconciled above.":"No classrooms match these filters."}</div></td></tr>}
    </tbody></table></div>
+   {pageCount>1&&<div className="row zoomPagination"><button className="button ghost zoomUtilityButton" disabled={classPage<=1} onClick={()=>setClassPage(p=>Math.max(1,p-1))}>Previous</button><span className="cellSub">Page {Math.min(classPage,pageCount)} of {pageCount}</span><button className="button ghost zoomUtilityButton" disabled={classPage>=pageCount} onClick={()=>setClassPage(p=>Math.min(pageCount,p+1))}>Next</button></div>}
   </section>}
 
   {tab==="meetings"&&<>
