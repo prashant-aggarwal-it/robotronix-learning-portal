@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./theme.css";
+import "./schedule-unified.css";
 import {GridHorizontalScrollBridge} from "@/components/admin/GridHorizontalScrollBridge";
 import {productionConfigurationError} from "@/lib/config";
 
