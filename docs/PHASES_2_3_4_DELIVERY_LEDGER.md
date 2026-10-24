@@ -9,7 +9,7 @@ Treat Onboarding → Enrollment → Class → Zoom as ONE end-to-end Admin workf
 
 ## Phase 2 — Seamless learner journey
 - [x] Activation confirmation links to exact newly created enrollment and student, provides booking count/warning and schedule shortcut; avoid claiming Zoom is provisioned.
-- [ ] When revisiting an activated onboarding record, resolve existing student/enrollment links without duplication.
+- [ ] When revisiting an activated onboarding record, resolve existing student/enrollment links without duplication; may require explicit persisted IDs/schema migration.
 - [x] Enrollment detail shows agreed session count, reconciled current class records and guarded full-course generation (DB test pending).
 - [x] Next class and up to 12 upcoming class links appear above billing; timezone appears from schedule record. [ ] Add user-local conversion and meeting state directly in enrollment.
 - [x] Day, Week Overview and Trainer Week booking controls open the same summary with link to authoritative ClassRecordEditor; keyboard-based button activation. Browser QA pending.
@@ -38,7 +38,7 @@ Treat Onboarding → Enrollment → Class → Zoom as ONE end-to-end Admin workf
 ## Quality/release gate
 - [ ] `npm ci`, `npm run typecheck`, `npm run check:release`, `npm run build`.
 - [ ] Playwright QA on full role workflows, scheduling, notifications, finance and security.
-- [ ] Next.js critical dependency audit vulnerability fixed and security job green (separate dependency/security work).
+- [x] Next.js dependency upgraded from vulnerable 16.3.8 to 16.4.3, updating package and lockfile together; one-time upgrade job passed npm audit, typecheck, release checks and build. [ ] Reconfirm checks on final branch head and role-based E2E before release.
 - [ ] Test Zoom functionality against the real authorized app while approval review is pending.
 - [ ] Review database schema changes and backup prior to reset; no reset without deliberate approval.
 - [ ] Merge only verified increments; track specific commits and tests in PR.
@@ -50,3 +50,14 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - This does **not** mean all Phase 2/3/4 requirements are complete; billing, rescheduling, recordings, security and role testing require further validation.
 - Shared prelaunch Supabase database was not modified. Existing code paths reused; no schema migration necessary for the above UI changes.
 - GitHub Actions TypeScript regression discovered in first build and was fixed; final run must be checked before release.
+
+## Additional code improvements completed (subject to browser QA)
+- Student Profile now offers a contextual Open Enrollment and Next Class shortcut.
+- Classes list has an All Classes view and `?enrollment=...` filter for the entire course.
+- Enrollment class list shows future booking times in IST and learner-local timezone and links to the filtered history.
+- Enrollments list primary actions reduced from four to three; individual generation relocated into enrollment context.
+- Trainer Classes "Today" filter now follows IST instead of UTC.
+- Release candidate CI covers dedicated learner-journey navigation contract tests.
+- Next.js patched upgrade committed; one-time upgrade automation removed after successful validation.
+
+**Scope still outstanding:** Complete Phase 3 host/recording E2E, notifications and policy QA; Phase 4 full screen-by-screen UX pass and mobile/role regression. No production data or schema were changed by this work.
