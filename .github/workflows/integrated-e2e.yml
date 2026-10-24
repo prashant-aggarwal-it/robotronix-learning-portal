@@ -1,0 +1,51 @@
+name: Integrated authenticated E2E (isolated QA only)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrated-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: qa
+    env:
+      QA_BASE_URL: ${{ vars.E2E_QA_BASE_URL }}
+      QA_NO_WEBSERVER: '1'
+      QA_TARGET: dev
+      SECURITY_QA_PROJECT_REF: ${{ vars.E2E_SUPABASE_PROJECT_REF }}
+      SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      QA_ADMIN_EMAIL: ${{ secrets.E2E_QA_ADMIN_EMAIL }}
+      QA_ADMIN_PASSWORD: ${{ secrets.E2E_QA_ADMIN_PASSWORD }}
+      QA_TRAINER_EMAIL: ${{ secrets.E2E_QA_TRAINER_EMAIL }}
+      QA_TRAINER_PASSWORD: ${{ secrets.E2E_QA_TRAINER_PASSWORD }}
+      QA_PARENT_EMAIL: ${{ secrets.E2E_QA_PARENT_EMAIL }}
+      QA_PARENT_PASSWORD: ${{ secrets.E2E_QA_PARENT_PASSWORD }}
+      QA_STUDENT_EMAIL: ${{ secrets.E2E_QA_STUDENT_EMAIL }}
+      QA_STUDENT_PASSWORD: ${{ secrets.E2E_QA_STUDENT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Refuse production or unconfigured QA target
+        run: node scripts/guard-integrated-e2e-target.mjs
+      - name: Install Chromium for browser E2E
+        run: npx playwright install --with-deps chromium
+      - name: Run authenticated workflow suite
+        run: npm run qa:integrated-e2e
+      - name: Upload Playwright reports (including failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-integrated-e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
