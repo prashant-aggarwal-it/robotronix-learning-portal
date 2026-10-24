@@ -41,3 +41,11 @@
 .calendarViewToggle{display:flex;align-items:center;gap:5px;color:#536685;font-size:12px}
 .learnerUpcomingList{margin-top:14px}
 @media(max-width:800px){.learnerWeekCalendar{grid-template-columns:repeat(7,minmax(125px,1fr))}}
+
+/* Calendar event states match the legend, across the operational and learner roles. */
+.timelineEvent.class.scheduled,.timelineEvent.class.tentative{background:#dceaff;color:#1a4c8a;border:1px solid #82a9e1}
+.timelineEvent.conducted,.timelineEvent.class.conducted{background:#ebe3ff;color:#5e35a3;border:1px solid #bba5e9}
+.timelineEvent.blocked,.timelineEvent.leave,.timelineEvent.missed{background:#ffe4c8;color:#8f481f;border:1px solid #dda66e}
+.weekEvent.status-conducted{border-left:4px solid #885fc5;background:#f0ebff}
+.weekEvent.status-scheduled{border-left:4px solid #4d84d0;background:#edf5ff}
+.weekEvent.status-missed{border-left:4px solid #db8d49;background:#fff0dc}
