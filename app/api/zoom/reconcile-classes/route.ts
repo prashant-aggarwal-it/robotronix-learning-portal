@@ -30,7 +30,7 @@ export async function POST(request:NextRequest){
   // remain the final guard against competing provisioning requests.
   for(const event of eligible){
    try{
-    const result=await syncZoomForScheduleEvent(auth.admin,event.id,auth.profile.id);
+    const result=await syncZoomForScheduleEvent(auth.admin,event.id,auth.actorId);
     if(result.action==="created")created++;
     else skipped++;
    }catch(error){
