@@ -63,7 +63,8 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  });
  test("Zoom shows meeting pending or failures rather than empty controls",()=>{
   const zoom=source("components/ZoomClassActions.tsx");
-  expect(zoom).toContain("Zoom meeting not ready yet");
+  expect(zoom).toContain("Zoom setup pending");
+  expect(zoom).toContain("Reconcile missing classes");
   expect(zoom).toContain("data.meeting?.lastError");
   expect(zoom).toContain("!data.available&&reusableLink&&data.canJoin");
   expect(zoom).toContain("data.withinJoinWindow");
