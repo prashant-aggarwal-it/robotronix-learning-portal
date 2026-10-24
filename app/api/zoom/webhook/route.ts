@@ -58,7 +58,10 @@ async function matchIntent(db:any,meetingId:string,name:string){
  if(error)throw new Error(error.message);
  const target=normalise(name);
  const rows=(data||[]) as any[];
- return rows.find(r=>normalise(String(r.participant_name||""))===target)||rows[0]||null;
+ // Never assign an unmatched attendee to the most recent join request.
+ // Ambiguous duplicate display names cannot establish a reliable identity.
+ const matches=target?rows.filter(r=>normalise(String(r.participant_name||""))===target):[];
+ return matches.length===1?matches[0]:null;
 }
 
 async function handleParticipantJoined(db:any,meeting:any,body:any){
