@@ -20,9 +20,9 @@ export function ZoomClassActions({scheduleEventId,compact=false}:{scheduleEventI
  if(!data.available&&reusableLink&&data.canJoin&&!data.meeting?.recordingId){
   return data.withinJoinWindow
    ?<a className={"button "+(compact?"small":"")} href={reusableLink} target="_blank" rel="noopener noreferrer">Join Trainer Zoom Room</a>
-   :<small role="status" className="muted">Trainer Zoom room available during the scheduled class window.</small>;
+   :<small role="status" className="muted">Trainer Zoom room connected. Joining opens shortly before the class.</small>;
  }
- if(!data.available&&!data.meeting?.recordingId)return <small role="status" className="muted">Zoom meeting not ready yet. The scheduled class is still recorded in the timetable.</small>;
+ if(!data.available&&!data.meeting?.recordingId)return <div role="status" className="infoBanner compactInfoBanner"><b>Zoom setup pending</b><span>{data.meeting?.lastError?"Zoom requires attention: "+data.meeting.lastError:"The class is booked, but its Zoom meeting has not been provisioned. An administrator can use Zoom Classroom → Reconcile missing classes after connecting a host."}</span></div>;
  const disabled=!data.withinJoinWindow;
  return <div className={compact?"row":"row topGap"}>
   {data.available&&data.canHost&&<Link aria-disabled={disabled} className={"button "+(compact?"small ":"")+(disabled?"disabled":"")} href={disabled?"#":"/classroom/"+scheduleEventId+"?mode=host"} onClick={e=>disabled&&e.preventDefault()}>Start Class</Link>}
