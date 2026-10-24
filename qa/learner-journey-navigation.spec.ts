@@ -61,6 +61,16 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(repo).toContain("Previous slots could NOT be restored automatically");
   expect(repo).toContain("notifyAdminOfOwnAvailability(trainerId,\"weekly\")");
  });
+ test("availability has an authorized atomic transaction and compatibility fallback",()=>{
+  const sql=source("database/01_install/01_CREATE_SCHEMA.sql");
+  const repo=source("lib/repository.ts");
+  expect(sql).toContain("function public.replace_trainer_availability_v1");
+  expect(sql).toContain("pg_advisory_xact_lock");
+  expect(sql).toContain("public.current_trainer_id()=p_trainer_id");
+  expect(sql).toContain("Overlapping trainer availability slots");
+  expect(repo).toContain('supabase.rpc("replace_trainer_availability_v1"');
+  expect(repo).toContain('atomicError.code!=="PGRST202"');
+ });
  test("trainer today is calculated in IST rather than UTC",()=>{
   const trainer=source("app/trainer/classes/page.tsx");
   expect(trainer).toContain('timeZone:"Asia/Kolkata"');
