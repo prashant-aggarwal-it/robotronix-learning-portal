@@ -19,16 +19,16 @@ Treat Onboarding → Enrollment → Class → Zoom as ONE end-to-end Admin workf
 
 ## Phase 3 — Daily operations
 - [ ] Trainer weekly availability: copy/clear, overlap prevention, date overrides, approvals, notifications.
-- [ ] Trainer daily workspace: next class, Zoom start, attendance, learning outcomes and earnings.
+- [x] Trainer weekly schedule class cards deep-link to the existing session editor; trainer week anchors to IST. [ ] Complete trainer dashboard next-class validation, attendance, learning observations and earnings E2E.
 - [ ] Admin class actions: reschedule/cancel/makeup, policy enforcement, no-shows, notifications and overrides.
 - [ ] Correct delivered-hour payroll, attended-hour progress, cancellations/penalties and paid-lock behavior.
-- [ ] Zoom host allocation, concurrent bookings, meeting create/start/join/end, recording sync/stream/delete/retention and role permissions.
+- [x] Classroom control now shows unavailable and setup error state rather than hiding pending messages. [ ] Zoom host allocation, concurrent bookings, meeting create/start/join/end, recording sync/stream/delete/retention and role permissions require end-to-end proof.
 - [ ] Notification center action links, finance verification (#18), trainer portal invitation/first-login (#20), realtime refresh across roles.
 - [ ] Parent/student next class and correct local timezone, permissions, progress and recordings.
 - [ ] Demo Experience create/share/outcome/convert flow, without broader CRM scope.
 
 ## Phase 4 — UX consolidation
-- [ ] Reduce duplicate primary actions on Enrollments; contextual actions on enrollment/class.
+- [x] Reduced competing Enrollments CTAs, contextual individual-class booking and cross-workspace shortcuts (browser UI acceptance pending).
 - [ ] Simplify onboarding KPI strip and remove misleading statuses.
 - [ ] Clarify Student (permanent learner), Enrollment (specific course), Class (session) and Zoom (service).
 - [ ] Fix trainer grammar, clipped tables, responsive horizontal scrolling and redundant summary cards.
@@ -61,3 +61,10 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Next.js patched upgrade committed; one-time upgrade automation removed after successful validation.
 
 **Scope still outstanding:** Complete Phase 3 host/recording E2E, notifications and policy QA; Phase 4 full screen-by-screen UX pass and mobile/role regression. No production data or schema were changed by this work.
+
+## Additional Phase 3 increment — 24 Oct 2026
+- Trainer weekly event cards now link directly to the assigned class editor (no extra menu search).
+- Trainer current week calculation anchors on IST date rather than browser current date.
+- ZoomClassActions shows pending and error states consistently in compact mode, plus meeting provisioning error detail when returned.
+- Navigation contract tests cover these improvements; the most recent CI run must pass before release.
+- **Still outstanding:** concurrency-safe Zoom host reservation, actual recording playback/delete/expiry tests, detailed finance/late-cancellation policy verification, notifications, parent/learner access security and complete mobile UX.
