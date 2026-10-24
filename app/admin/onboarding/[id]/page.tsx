@@ -175,6 +175,7 @@ export default function OnboardingDetail(){
   setNotice(null);setActiveAction("draft");
   const parsedDays=[...new Set(parsePreferredTimeWindows(r!.preferredTimeWindows).map(w=>w.day))];
   const nextPreferredClassDays=parsedDays.length?parsedDays:r!.preferredClassDays;
+  try {
   const result=await updateOnboardingSubmission(id,{motherName:r!.motherName,motherMobile:r!.motherMobile,fatherName:r!.fatherName,fatherMobile:r!.fatherMobile,primaryGuardianName:r!.primaryGuardianName,primaryGuardianRelationship:r!.primaryGuardianRelationship,primaryGuardianMobile:r!.primaryGuardianMobile,secondaryGuardianName:r!.secondaryGuardianName,secondaryGuardianRelationship:r!.secondaryGuardianRelationship,secondaryGuardianMobile:r!.secondaryGuardianMobile,primaryContact:r!.primaryContact,primaryWhatsApp:r!.primaryWhatsApp,alternateWhatsApp:r!.alternateWhatsApp,city:r!.city,country:r!.country,state:r!.state??"",timezone:r!.timezone,childName:r!.childName,childDob:r!.childDob,grade:r!.grade,school:r!.school,preferredClassDays:nextPreferredClassDays,preferredTimeWindows:r!.preferredTimeWindows,interests:r!.interests,goal:r!.goal,codingExperience:r!.codingExperience,roboticsExperience:r!.roboticsExperience,source:r!.source,referringParentName:(r!.source==="Existing parent"||r!.source==="Referred by an existing Robotronix parent")?(r!.referringParentName??"").trim():"",assignedCourseId:courseId||undefined,assignedTrainerId:trainerId||undefined,enrollmentType:type,cohortId:type==="small_group"?cohortId||undefined:undefined,startDate,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules,status:"setup_pending"});
   setActiveAction(null);
   if(!result){setNotice({type:"error",text:"Unable to save setup. Your changes are still on screen; please retry."});return;}
@@ -182,6 +183,11 @@ export default function OnboardingDetail(){
   const nextRecord={...r!,preferredClassDays:nextPreferredClassDays,status:"setup_pending" as const,updatedAt:savedAt,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules};
   setLastSavedAt(savedAt);setBaseline(signature({record:nextRecord,courseId,trainerId,type,cohortId,startDate,scheduleTimezone,scheduleRules}));setNotice({type:"success",text:"Draft saved successfully."});
   setR(nextRecord);
+  } catch (error) {
+   setNotice({type:"error",text:error instanceof Error?`Unable to save draft: ${error.message}`:"Unable to save draft. Your changes remain on screen; please retry."});
+  } finally {
+   setActiveAction(null);
+  }
  }
 
  async function activate(){
@@ -265,7 +271,7 @@ export default function OnboardingDetail(){
    <div className="readinessCard"><div><b>Ready to activate</b><span>Complete the required learner, course, trainer and final scheduling setup before activation.</span></div><ul><li className={guardianView?.primary.name&&contactsValid?"ok":""}>Primary parent / guardian contact + country code</li><li className={r.childName&&r.childDob&&r.grade&&r.school&&r.timezone?"ok":""}>Child profile + timezone</li><li className={courseId?"ok":""}>Course selected</li><li className={trainerId?"ok":""}>Trainer assigned</li><li className={startDate&&scheduleRules.length&&(type==="one_to_one"||cohortId)?"ok":""}>Delivery setup + weekly schedule</li>{type==="one_to_one"&&scheduleRules.length>0&&<li className={!hasScheduleExceptions||scheduleOverrideConfirmed?"ok":""}>{hasScheduleExceptions?"Schedule exceptions reviewed / override confirmed":"Parent + trainer timing checks passed"}</li>}</ul></div>
    <div className={`saveStateBar ${dirty?"dirty":"clean"}`}><span>{dirty?"● Unsaved changes":activeAction==="draft"?"Saving…":lastSavedAt?`✓ Last saved at ${savedLabel}`:"✓ No unsaved changes"}</span><small>{dirty?"Save the setup before leaving this page.":"Draft schedule and assignment are preserved on reload."}</small></div>
    {notice&&<div className={notice.type==="error"?"errorBanner":notice.type==="success"?"successBanner":"infoBanner"}>{notice.text}</div>}
-   <div className="formActions stickyOnboardingActions"><button className="button ghost" disabled={busy||!dirty} onClick={saveDraft}>{activeAction==="draft"?"Saving draft…":dirty?"Save draft":"Draft saved"}</button><button className="button" disabled={busy||!ready} onClick={activate}>{activeAction==="activate"?"Activating…":"Activate learner"}</button></div>
+   <div className="formActions stickyOnboardingActions"><div role="status" aria-live="polite" aria-atomic="true" style={{flex:"1 1 240px",minWidth:0}}>{notice?<span className={notice.type==="error"?"errorBanner":notice.type==="success"?"successBanner":"infoBanner"} style={{display:"inline-block",margin:0,padding:"8px 12px",fontSize:"0.9rem"}}>{notice.text}</span>:<span style={{fontSize:"0.85rem",color:"var(--text-muted, #64748b)"}}>{dirty?"● Unsaved changes":lastSavedAt?"✓ Draft saved":"No unsaved changes"}</span>}</div><button className="button ghost" disabled={busy||!dirty} onClick={saveDraft}>{activeAction==="draft"?"Saving draft…":dirty?"Save draft":"Draft saved"}</button><button className="button" disabled={busy||!ready} onClick={activate}>{activeAction==="activate"?"Activating…":"Activate learner"}</button></div>
   </section>:<section className="successPanel familyActivationPanel"><div><span>✓</span><div><b>Learner active</b><p>The student and enrollment are active. {r.childName} is available inside the parent’s Family Account; a separate student login is optional, not required.</p><small>Family login: {r.loginEmail||"linked parent account"}</small></div></div><div className="row"><button className="button ghost" onClick={()=>router.push("/admin/students")}>Open Students</button><Link className="button" href="/admin/enrollments">Open Enrollments</Link></div></section>}
  </AppShell></RoleGuard>;
 }
