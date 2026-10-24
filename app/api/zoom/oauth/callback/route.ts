@@ -12,5 +12,5 @@ export async function GET(request:NextRequest){
   const db=zoomServiceClient();const row={label:parsed.label||`Zoom · ${me.email||me.id}`,zoom_user_id:String(me.id),zoom_email:String(me.email||""),zoom_account_id:me.account_id?String(me.account_id):null,status:"connected",access_token_encrypted:encryptZoomSecret(tokens.access_token),refresh_token_encrypted:encryptZoomSecret(tokens.refresh_token),access_token_expires_at:new Date(Date.now()+Math.max(60,tokens.expires_in-60)*1000).toISOString(),connected_by:parsed.actorId,connected_at:new Date().toISOString(),last_sync_at:new Date().toISOString()};
   const {error:saveError}=await db.from("zoom_host_accounts").upsert(row,{onConflict:"zoom_user_id"});if(saveError)throw new Error(saveError.message);
   base.searchParams.set("connected","1");base.searchParams.set("email",String(me.email||""));return NextResponse.redirect(base);
- }catch(error){base.searchParams.set("zoom_error",error instanceof Error?error.message:String(error));return NextResponse.redirect(base);}
+ }catch(error){console.error("Zoom OAuth callback failed",error instanceof Error?error.name:"UnknownError");base.searchParams.set("zoom_error","Unable to connect Zoom account. Check the Zoom app permissions and try again.");return NextResponse.redirect(base);}
 }

@@ -11,32 +11,62 @@ import {WeeklyScheduleEditor} from "@/components/admin/WeeklyScheduleEditor";
 import {OfflineLocationField} from "@/components/admin/OfflineLocationField";
 import {SessionCycleProgress} from "@/components/SessionCycleProgress";
 import {EnrollmentInvoicePanel} from "@/components/finance/EnrollmentInvoicePanel";
-import {getAdminEnrollment,listAdminCohorts,listAdminCourses,listAdminStudents,listAdminTrainers,updateAdminEnrollment} from "@/lib/repository";
-import type {CohortAdminRecord,CourseAdminRecord,EnrollmentAdminRecord,StudentAdminRecord,TrainerAdminRecord} from "@/lib/types";
-import {formatWeeklySchedule} from "@/lib/timezones";
+import {generateEnrollmentScheduleV2,getAdminEnrollment,listAdminCohorts,listAdminCourses,listAdminStudents,listAdminTrainers,listScheduleEvents,updateAdminEnrollment} from "@/lib/repository";
+import type {CohortAdminRecord,CourseAdminRecord,EnrollmentAdminRecord,ScheduleEvent,StudentAdminRecord,TrainerAdminRecord} from "@/lib/types";
+import {IST_TIMEZONE,formatWeeklySchedule,zonedRangeParts} from "@/lib/timezones";
 import {displayLabel} from "@/lib/display";
 
 export default function EnrollmentDetail(){
- const{id}=useParams<{id:string}>();const[record,setRecord]=useState<EnrollmentAdminRecord|null|undefined>(undefined);const[students,setStudents]=useState<StudentAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[baseline,setBaseline]=useState("");const[editing,setEditing]=useState(false);const[lastSavedAt,setLastSavedAt]=useState<string|undefined>();const[msg,setMsg]=useState("");const[saving,setSaving]=useState(false);const loadSeq=useRef(0);const editingRef=useRef(false);
+ const{id}=useParams<{id:string}>();const[record,setRecord]=useState<EnrollmentAdminRecord|null|undefined>(undefined);const[students,setStudents]=useState<StudentAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[baseline,setBaseline]=useState("");const[editing,setEditing]=useState(false);const[lastSavedAt,setLastSavedAt]=useState<string|undefined>();const[msg,setMsg]=useState("");const[saving,setSaving]=useState(false);const[bookings,setBookings]=useState<ScheduleEvent[]>([]);const[bookingStatus,setBookingStatus]=useState("");const[generating,setGenerating]=useState(false);const loadSeq=useRef(0);const editingRef=useRef(false);
  async function refresh(force=false){
   const seq=++loadSeq.current;
-  const[e,s,c,t,h]=await Promise.all([getAdminEnrollment(id),listAdminStudents(),listAdminCourses(),listAdminTrainers(),listAdminCohorts()]);
+  const[e,s,c,t,h,scheduled]=await Promise.all([getAdminEnrollment(id),listAdminStudents(),listAdminCourses(),listAdminTrainers(),listAdminCohorts(),listScheduleEvents()]);
   if(seq!==loadSeq.current)return;
-  setStudents(s);setCourses(c);setTrainers(t);setCohorts(h);
+  setStudents(s);setCourses(c);setTrainers(t);setCohorts(h);setBookings(scheduled.filter(ev=>ev.enrollmentId===id||Boolean(e?.cohortId&&ev.cohortId===e.cohortId)));
   if(!force&&editingRef.current)return;
   setRecord(e);setBaseline(e?JSON.stringify(e):"");editingRef.current=false;
 }
 
-useLiveRefresh(["enrollments","cohorts","students","trainers","courses"],()=>{if(!editingRef.current&&!saving)return refresh()},`admin-enrollment-${id}`);
+useLiveRefresh(["enrollments","cohorts","students","trainers","courses","schedule_events"],()=>{if(!editingRef.current&&!saving)return refresh()},`admin-enrollment-${id}`);
 useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
  const eligibleTrainers=useMemo(()=>trainers.filter(t=>t.recordStatus==="active"&&(!record?.courseId||t.courseIds.includes(record.courseId))),[trainers,record?.courseId]);const eligibleCohorts=useMemo(()=>cohorts.filter(c=>c.status==="active"&&c.courseId===record?.courseId&&c.trainerId===record?.trainerId&&(c.id===record?.cohortId||c.studentIds.length<c.capacity)),[cohorts,record?.courseId,record?.trainerId,record?.cohortId]);
  if(record===undefined)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="panel">Loading enrollment…</div></AppShell></RoleGuard>;if(!record)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="emptyState">Enrollment not found.</div></AppShell></RoleGuard>;
  const dirty=JSON.stringify(record)!==baseline;const student=students.find(s=>s.id===record.studentId);const course=courses.find(c=>c.id===record.courseId);const trainer=trainers.find(t=>t.id===record.trainerId);const cohort=record.cohortId?cohorts.find(c=>c.id===record.cohortId):undefined;
+ const upcomingBookings=bookings.filter(b=>!["cancelled","rescheduled","blocked"].includes(b.status)).sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime));
+ const now=new Date();
+ const nextClass=upcomingBookings.find(e=>zonedRangeParts(e.date,e.startTime,e.endTime,e.timezone||IST_TIMEZONE,IST_TIMEZONE).endInstant.getTime()>=now.getTime());
+ const nextClassIst=nextClass?zonedRangeParts(nextClass.date,nextClass.startTime,nextClass.endTime,nextClass.timezone||IST_TIMEZONE,IST_TIMEZONE):null;
+ const futureBookings=upcomingBookings.filter(e=>zonedRangeParts(e.date,e.startTime,e.endTime,e.timezone||IST_TIMEZONE,IST_TIMEZONE).endInstant.getTime()>=now.getTime());
+ const expectedSessions=record.plannedSessions||course?.totalSessions||0;
+ const countedBookings=bookings.filter(e=>e.eventType==="class"&&!["cancelled","rescheduled"].includes(e.status)).length;
+ async function generateMissingClasses(){
+  if(!record||record.enrollmentType!=="one_to_one"||generating)return;
+  setGenerating(true);setBookingStatus("");
+  try{const result=await generateEnrollmentScheduleV2(record.id,"full");
+   setBookingStatus(result.ok?`Schedule checked: ${result.created} new bookings; ${result.total} course occurrences accounted for.`:`Unable to generate classes: ${result.error}`);
+   if(result.ok)await refresh(true);
+  }catch(error){setBookingStatus(error instanceof Error?error.message:String(error))}
+  finally{setGenerating(false)}
+ }
  function set<K extends keyof EnrollmentAdminRecord>(k:K,v:EnrollmentAdminRecord[K]){editingRef.current=true;setRecord(r=>r?{...r,[k]:v}:r)}
  function chooseCohort(cohortId:string){editingRef.current=true;const selected=cohorts.find(c=>c.id===cohortId);setRecord(r=>r?{...r,cohortId,scheduleTimezone:selected?.scheduleTimezone||r.scheduleTimezone,scheduleRules:selected?.scheduleRules??r.scheduleRules}:r)}
  async function save(){if(!record)return;setMsg("");if(!record.courseId||!record.trainerId||!record.startedAt){setMsg("Course, trainer and start date are required.");return;}if(record.enrollmentType==="small_group"&&!record.cohortId){setMsg("Choose a cohort for cohort delivery.");return;}if(!record.scheduleTimezone){setMsg("Record the enrollment timezone.");return;}if((record.scheduleMode||"recurring")==="recurring"&&!record.scheduleRules.length){setMsg("Record at least one weekly class slot for a recurring schedule.");return;}if((record.scheduleMode||"recurring")==="recurring"&&record.scheduleRules.some(s=>!s.startTime||!s.endTime||s.endTime<=s.startTime)){setMsg("Every recurring class slot needs a valid start and end time.");return;}if((record.deliveryChannel||"online")!=="online"&&!record.centerLocation?.trim()){setMsg("Add the offline/hybrid center or location.");return;}if(record.status==="on_hold"&&!record.holdReason){setMsg("Select a reason for the hold.");return;}if(record.migrationType==="active_existing"){const target=record.plannedSessions??course?.totalSessions??0;if((record.openingCompletedSessions??0)<0||target>0&&(record.openingCompletedSessions??0)>target){setMsg("Opening completed classes must be between 0 and the planned session count.");return;}}setSaving(true);const r=await updateAdminEnrollment(id,record);setSaving(false);if(!r.ok){setMsg(r.error??"Unable to update enrollment.");return;}setLastSavedAt(new Date().toISOString());editingRef.current=false;await refresh(true);setMsg("Enrollment updated successfully.");setEditing(false);}
  return <RoleGuard allow={["admin"]}><AppShell role="admin">
   <AdminPageHeader eyebrow="ENROLLMENT JOURNEY" title={student?.fullName||"Learner enrollment"} description={`${course?.title||"Course"} · ${record.enrollmentType==="one_to_one"?"1-to-1":cohort?.name||"Cohort"} · ${(record.deliveryChannel||"online").toUpperCase()} · ${(record.scheduleMode||"recurring")==="recurring"?formatWeeklySchedule(record.scheduleRules,record.scheduleTimezone):(record.scheduleMode==="flexible"?"Flexible schedule":"Ad-hoc schedule")}`} actions={<><Link href={`/admin/students/${record.studentId}`} className="button ghost">Student profile</Link><Link href="/admin/enrollments" className="button ghost">Back to enrollments</Link></>}/>
+  <section className="panel" aria-label="Enrollment classes" style={{marginBottom:18}}>
+   <div className="panelHeader"><div><div className="eyebrow">NEXT STEP · COURSE DELIVERY</div><h2>Your class schedule</h2><p>Manage the upcoming lesson and all class records here. Zoom readiness and session outcomes are available from each class.</p></div></div>
+   <div className="financeSummaryGrid"><div><span>Course sessions</span><b>{expectedSessions||"Not set"}</b></div><div><span>Booked class records</span><b>{countedBookings}</b></div><div><span>Next class</span><b>{nextClassIst?`${nextClassIst.startDate} · ${nextClassIst.startTime} IST`:"No upcoming booking"}</b></div></div>
+   {nextClass?<div className="entityBoundaryNote"><b>Next class · {nextClass.title}</b><span>{nextClassIst?.startDate} · {nextClassIst?.startTime}–{nextClassIst?.endTime} IST · Learner/local {nextClass.date} {nextClass.startTime} {nextClass.timezone||IST_TIMEZONE} · {displayLabel(nextClass.status)}</span><div className="formActions"><Link href={`/admin/classes/${encodeURIComponent(nextClass.id)}`} className="button">Open class details →</Link></div></div>:<p className="fieldHint">There is no future class on the current schedule. Check the enrollment status and class bookings.</p>}
+   <div className="formActions" style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+    {record.enrollmentType==="one_to_one"&&record.status==="active"&&<button type="button" className="button secondary" disabled={generating||editing||dirty} onClick={generateMissingClasses}>{generating?"Checking class bookings…":"Generate / reconcile full course"}</button>}
+    <Link className="button ghost" href="/admin/schedule">Open timetable</Link>
+    <Link className="button ghost" href={`/admin/classes?enrollment=${encodeURIComponent(record.id)}`}>All enrollment classes</Link>
+   </div>
+   {record.enrollmentType==="small_group"&&<p className="fieldHint">Cohort sessions are shared by all members. Generate class dates from the cohort workflow rather than once per learner.</p>}
+   {bookingStatus&&<p role="status" className="infoBanner">{bookingStatus}</p>}
+   {futureBookings.length>0&&<div className="tableWrap professionalTable" style={{marginTop:12}}><table><thead><tr><th>Date</th><th>Class</th><th>Time</th><th>Status</th><th>Action</th></tr></thead><tbody>{futureBookings.slice(0,12).map(ev=><tr key={ev.id}><td>{ev.date}</td><td>{ev.title}</td><td>{ev.startTime}–{ev.endTime} {ev.timezone||IST_TIMEZONE}</td><td>{displayLabel(ev.status)}</td><td><Link className="tableAction" href={`/admin/classes/${encodeURIComponent(ev.id)}`}>Details / Zoom →</Link></td></tr>)}</tbody></table></div>}
+   {futureBookings.length>12&&<p className="fieldHint">Showing the next 12 eligible classes. Open “All enrollment classes” to view the entire course history.</p>}
+  </section>
   <section className="dashboardKpis"><KpiCard label="Status" value={record.status==="on_hold"?"On hold":record.status} detail={record.status==="on_hold"?record.holdReason??"Paused learning":"Enrollment lifecycle"} tone="purple"/><KpiCard label="Delivered hours" value={`${(record.hoursCompleted??0).toFixed((record.hoursCompleted??0)%1?1:0)} hrs`} detail={`${record.sessionsCompleted} attended sessions · hours are canonical`} tone="teal"/><KpiCard label="Course progress" value={`${record.progressPercent}%`} detail={`${(record.hoursRemaining??0).toFixed((record.hoursRemaining??0)%1?1:0)} of ${(record.plannedHours??0).toFixed((record.plannedHours??0)%1?1:0)} hrs remaining`} tone="amber"/><KpiCard label="Trainer" value={trainer?.fullName||"Unassigned"} detail={record.enrollmentType==="one_to_one"?"Individual delivery":cohort?.name||"Cohort pending"} tone="slate"/></section>
   <section className="panel billingMilestonePanel"><div className="panelHeader"><div><div className="eyebrow">COURSE PROGRESS</div><h2>Instructional hours completed</h2><p>Verified actual attended teaching time drives course progress. Attendance remains a separate class count.</p></div></div><SessionCycleProgress hoursCompleted={record.hoursCompleted} plannedHours={record.plannedHours} attendedClasses={record.sessionsCompleted}/></section>
   <EnrollmentInvoicePanel enrollmentId={record.id} studentName={student?.fullName||"Student"}/>

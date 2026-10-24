@@ -861,3 +861,22 @@ begin
  end loop;
 end $$;
 select 'SECURITY_RLS_AND_PRIVILEGED_RPC_GATE' as section, 'PASS' as result;
+
+-- Phase 2–4 additive migration verification (read-only).
+do $$
+begin
+ if to_regprocedure('public.replace_trainer_availability_v1(uuid,jsonb)') is null then
+  raise exception 'Phase 3 atomic trainer availability function missing';
+ end if;
+ if has_function_privilege('anon','public.replace_trainer_availability_v1(uuid,jsonb)','EXECUTE') then
+  raise exception 'Anonymous access to trainer availability RPC is forbidden';
+ end if;
+ if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='onboarding_submissions' and column_name='activated_student_id') or
+    not exists(select 1 from information_schema.columns where table_schema='public' and table_name='onboarding_submissions' and column_name='activated_enrollment_id') then
+  raise exception 'Phase 2 activated onboarding reference columns missing';
+ end if;
+ if not exists(select 1 from pg_constraint where conname='zoom_host_active_meeting_no_overlap' and conrelid='public.zoom_meetings'::regclass) then
+  raise exception 'Zoom host active-window concurrency exclusion constraint missing';
+ end if;
+end $$;
+select 'PHASES_2_3_4_MIGRATION_GATES' as section,'PASS' as result;

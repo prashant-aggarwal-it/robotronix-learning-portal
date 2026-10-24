@@ -27,6 +27,10 @@ const must=[
   'zoom_participant_sessions',
   'calendar_subscription_tokens',
   'razorpay_webhook_events',
+  'activated_student_id',
+  'activated_enrollment_id',
+  'replace_trainer_availability_v1',
+  'onboarding_submission_admin_notification_trg',
   'grant usage on schema public to authenticated',
 ];
 for(const marker of must){if(!schema.includes(marker))throw new Error(`Fresh schema missing consolidated marker: ${marker}`)}
@@ -71,5 +75,27 @@ for(const name of fs.readdirSync(scriptsDir).filter(n=>n.startsWith('check-')&&n
  }
 }
 if(stale.length)throw new Error('Release scripts refer to missing SQL files:\n'+stale.join('\n'));
+
+
+// Confirm the post-activation IDs and atomic availability function are in the
+// canonical fresh schema, so fresh installs never need the additive migration.
+const onboarding=schema.match(/create table if not exists public\.onboarding_submissions \([\s\S]*?\n\);/)?.[0]??'';
+for(const column of ['activated_student_id','activated_enrollment_id']){
+ if(!onboarding.includes(column))throw new Error('Fresh onboarding schema missing activation link: '+column);
+}
+for(const marker of [
+ 'create or replace function public.replace_trainer_availability_v1(',
+ 'pg_advisory_xact_lock',
+ 'revoke all on function public.replace_trainer_availability_v1',
+ 'grant execute on function public.replace_trainer_availability_v1',
+ 'zoom_host_active_meeting_no_overlap',
+ 'onboarding_submission_admin_notification_trg'
+]){
+ if(!schema.includes(marker))throw new Error('Fresh schema missing protected workflow: '+marker);
+}
+const verify=fs.readFileSync(path.join(root,'database/03_verify/01_VERIFY_RELEASE.sql'),'utf8');
+for(const marker of ['replace_trainer_availability_v1','activated_student_id','activated_enrollment_id','zoom_host_active_meeting_no_overlap']){
+ if(!verify.includes(marker))throw new Error('Release database verification missing: '+marker);
+}
 
 console.log('Fresh database release check passed: schema is consolidated and no hotfix folder remains.');

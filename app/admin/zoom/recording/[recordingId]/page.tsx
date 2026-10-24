@@ -14,7 +14,9 @@ export default function RecordingPlaybackPage(){
 function Playback(){
  const {recordingId}=useParams<{recordingId:string}>();
  const[data,setData]=useState<RecordingView|null>(null),[error,setError]=useState("");
+ const[playbackError,setPlaybackError]=useState(""),[renewing,setRenewing]=useState(false);
  useEffect(()=>{let active=true;(async()=>{try{const x=await adminApi("/api/zoom/recordings/"+encodeURIComponent(recordingId));if(active)setData(x.recording)}catch(e){if(active)setError(e instanceof Error?e.message:String(e))}})();return()=>{active=false}},[recordingId]);
+ async function renewStream(){setRenewing(true);setPlaybackError("");try{const x=await adminApi("/api/zoom/recordings/"+encodeURIComponent(recordingId));setData(x.recording)}catch(e){setPlaybackError("Unable to renew recording access: "+(e instanceof Error?e.message:String(e)))}finally{setRenewing(false)}}
  const file=(data?.fileType||"").toUpperCase();
  return <main className="dataSection">
   <div className="panelHeader"><div><div className="eyebrow">SECURE RECORDING PLAYBACK</div><h2>{data?.topic||"Zoom recording"}</h2><p>The media is streamed through Robotronix after checking your portal access.</p></div><a className="button secondary" href="/admin/zoom">Back to Zoom Classroom</a></div>
@@ -22,8 +24,9 @@ function Playback(){
   {!data&&!error&&<div className="emptyState compact">Preparing secure playback…</div>}
   {data&&<section style={{maxWidth:1100}}>
    {file==="M4A"||String(data.recordingType||"").toLowerCase().includes("audio")
-    ?<audio controls preload="metadata" src={data.streamUrl} style={{width:"100%"}}/>
-    :<video controls playsInline preload="metadata" src={data.streamUrl} style={{width:"100%",maxHeight:"72vh",background:"#07152c",borderRadius:18}}/>}
+    ?<audio key={data.streamUrl} controls preload="metadata" src={data.streamUrl} onError={()=>setPlaybackError("Playback could not load. Try refreshing secure access.")} style={{width:"100%"}}/>
+    :<video key={data.streamUrl} controls playsInline preload="metadata" src={data.streamUrl} onError={()=>setPlaybackError("Playback could not load. Try refreshing secure access.")} style={{width:"100%",maxHeight:"72vh",background:"#07152c",borderRadius:18}}/>}
+   {playbackError&&<div role="alert" className="errorBanner">{playbackError} <button type="button" className="button secondary smallButton" disabled={renewing} onClick={renewStream}>{renewing?"Refreshing…":"Refresh secure access"}</button></div>}
    <div className="row topGap" style={{flexWrap:"wrap"}}>
     <span className="softBadge">{data.recordingType||data.fileType||"Recording"}</span>
     <span className="cellSub">{(Number(data.sizeBytes||0)/1024/1024).toFixed(1)} MB</span>

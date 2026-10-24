@@ -124,7 +124,7 @@ export interface OnboardingSubmission {
   preferredClassDays?:string[]; preferredTimeWindows?:string;
   interests:string[]; goal:string; codingExperience:string; roboticsExperience:string; source:string; referringParentName?:string;
   dataConsent:boolean; portfolioConsent:boolean; marketingMediaConsent?:boolean;
-  status:OnboardingStatus; assignedCourseId?:string; assignedTrainerId?:string; enrollmentType?:"one_to_one"|"small_group";
+  status:OnboardingStatus; activatedStudentId?:string; activatedEnrollmentId?:string; assignedCourseId?:string; assignedTrainerId?:string; enrollmentType?:"one_to_one"|"small_group";
   cohortId?:string; startDate?:string; draftScheduleTimezone?:string; draftScheduleRules?:WeeklyScheduleSlot[]; submittedAt:string; activatedAt?:string; updatedAt?:string;
   // Legacy/optional values retained for migration only.
   board?:string; device?:string; learningNote?:string;
