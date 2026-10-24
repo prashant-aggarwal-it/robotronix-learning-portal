@@ -134,7 +134,7 @@ test("Admin and Trainer schedule expose availability and bookings with a shared 
  const css=source("app/schedule-unified.css");
  expect(admin).toContain('const[showTrainerAvailability,setShowTrainerAvailability]=useState(true)');
  expect(admin).toContain('scheduleDateNavigator');
- expect(admin).toContain('displayAvailability(t.id,date,h)');
+ expect(admin).toContain('freeWindowsFor(t.id,date,rows)');
  expect(admin).toContain('className="blockedBand"');
  expect(admin).toContain("Remaining hours*");
  expect(trainer).toContain('trainer_availability_overrides');
