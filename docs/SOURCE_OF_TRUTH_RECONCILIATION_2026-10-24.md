@@ -41,3 +41,15 @@ This branch is a **work-in-progress reconciliation branch**, not a production-re
 ## Outstanding production QA fixture defects
 
 The previously shared SQL packs were not validated on production, and failed first with malformed Auth subqueries, then with missing mandatory course columns. They must **not** be considered approved release assets.
+
+## Reconciliation progress — same day
+
+- [x] Established protected candidate based on the 14-commit Zoom/navigation branch (not production).
+- [x] Imported four previously isolated production-security QA fixture files from `security/prod-qa-fixtures-20261022`. **These have not been exercised in production and must not be run until reviewed**.
+- [x] Verified `database/01_install/01_CREATE_SCHEMA.sql`, `database/04_migrations/2026_10_24_PHASES_2_3_4_ADDITIVE.sql`, `docs/PHASES_2_3_4_DELIVERY_LEDGER.md` and `qa/integrated-journey-e2e.spec.ts` have **identical content SHAs** in the candidate and learner-journey branch. Their presence in an outstanding divergent PR does not mean they are absent from main.
+- [ ] Reconcile remaining *different* screen versions: classes, courses, enrollment list/details, onboarding list/details, schedule, and Zoom admin, at minimum. These have overlapping modifications; **do not replace newer candidate versions wholesale**.
+- [ ] Review differences in manually patched QA/finance/notification branches against the candidate, not only against main.
+- [ ] Verify live production database schema without writes and reconcile migration history against source tree.
+- [ ] Execute repository checks / QA against an isolated database and capture results.
+
+**Do not represent this branch as complete or merge-ready until remaining work and test evidence are recorded.**
