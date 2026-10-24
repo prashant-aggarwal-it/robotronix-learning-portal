@@ -53,3 +53,8 @@ The previously shared SQL packs were not validated on production, and failed fir
 - [ ] Execute repository checks / QA against an isolated database and capture results.
 
 **Do not represent this branch as complete or merge-ready until remaining work and test evidence are recorded.**
+
+- [x] Corrected live communication thread creation in `lib/communication-repository.ts`: parent identities now resolve from the signed-in user's `parents.profile_id`; linked learners are verified; Admin links must match the selected learner; synthetic demo parent IDs are no longer written into UUID `communication_threads.parent_id`. Commit `b01fa65c5784e6df822905e8dae1a6098b8eed68`. **Needs QA with authenticated parent/Admin/Trainer roles**.
+- [x] Checked `app/layout.tsx`: the current candidate already includes `schedule-unified.css` as well as AI-flow theme. The older theme branch version would remove the CSS import, so it was intentionally not copied.
+- [x] Checked `components/finance/PayoutReview.tsx`: candidate includes stronger changed-row badges and avoids displaying historically misleading change counts; older version intentionally not copied.
+- [x] Confirmed `components/NotificationCenter.tsx` and `components/ThemeSwitcher.tsx` already have exact matching content with their respective older fix branches.
