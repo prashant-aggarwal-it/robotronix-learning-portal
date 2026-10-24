@@ -1,0 +1,23 @@
+/* Unified Robotronix schedule visual language — shared across role views. */
+.scheduleStatusLegend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 16px;color:#50617b;font-size:12px}
+.scheduleStatusLegend span{display:inline-flex;align-items:center;gap:6px}
+.scheduleStatusLegend span:before{content:"";display:inline-block;width:11px;height:11px;border-radius:4px;background:#e5e7eb;border:1px solid #bdc7d8}
+.scheduleStatusLegend .legendAvailable:before{background:#c9efd9;border-color:#68ad86}
+.scheduleStatusLegend .legendBooked:before{background:#cce1ff;border-color:#668ecc}
+.scheduleStatusLegend .legendBlocked:before{background:#ffe2be;border-color:#db9b5c}
+.scheduleStatusLegend .legendCompleted:before{background:#e4d9ff;border-color:#9874dc}
+.scheduleStatusLegend span:last-child:before{display:none}
+.scheduleDateNavigator{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.scheduleDateNavigator .button{white-space:nowrap}
+.dayTimelineSection .availabilityBand,.trainerWeekTimelineSection .availabilityBand{background:rgba(46,177,104,.2);border:1px solid rgba(32,138,80,.42)}
+.dayTimelineSection .blockedBand,.trainerWeekTimelineSection .blockedBand{background:repeating-linear-gradient(135deg,rgba(232,148,45,.22),rgba(232,148,45,.22) 8px,rgba(232,148,45,.36) 8px,rgba(232,148,45,.36) 16px);border:1px solid #d99b54}
+.weekCell.availableCell{background:#f1fcf5}
+.weekCell.unavailableCell{background:#fafbfe}
+.weekCell .weekEvent{position:relative;z-index:2}
+.calendarEventCard.status-completed{border-left:4px solid #8755cf}
+.calendarEventCard.status-scheduled{border-left:4px solid #437acf}
+.calendarEventCard.status-tentative{border-left:4px solid #dc9b4a}
+.calendarEventCard.status-blocked{border-left:4px solid #d97647}
+.learnerUpcomingSummary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.learnerUpcomingSummary .softBadge{padding:8px 12px}
+@media(max-width:760px){.scheduleDateNavigator{width:100%}.scheduleDateNavigator .input[type=date]{min-width:160px;flex:1}.scheduleStatusLegend{gap:8px}.trainerWeekToolbar{flex-wrap:wrap}.scheduleToolbar{flex-wrap:wrap}}
