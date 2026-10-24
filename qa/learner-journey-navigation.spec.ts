@@ -47,6 +47,11 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(zoom).toContain("Zoom meeting not ready yet");
   expect(zoom).toContain("data.meeting?.lastError");
  });
+ test("availability save checks delete errors before reporting success",()=>{
+  const repo=source("lib/repository.ts");
+  expect(repo).toContain("if(deleteError)return{ok:false,error:");
+  expect(repo).toContain("notifyAdminOfOwnAvailability(trainerId,\"weekly\")");
+ });
  test("trainer today is calculated in IST rather than UTC",()=>{
   const trainer=source("app/trainer/classes/page.tsx");
   expect(trainer).toContain('timeZone:"Asia/Kolkata"');
