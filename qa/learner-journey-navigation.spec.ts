@@ -90,6 +90,23 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(admin).toContain("Recording protection updated.");
   expect(admin).toContain("Learner recording access updated.");
  });
+ test("Zoom host overlap and remote meeting cleanup remain wired",()=>{
+  const schema=source("database/01_install/01_CREATE_SCHEMA.sql");
+  const classroom=source("lib/server/zoom-classroom.ts");
+  expect(schema).toContain("zoom_host_active_meeting_no_overlap");
+  expect(schema).toContain("exclude using gist");
+  expect(classroom).toContain('error.code==="23P01"');
+  expect(classroom).toContain("deleteRemoteMeetingSafely(host.id,String(created.id))");
+ });
+ test("Recording streaming remains permission-gated and avoids public URLs",()=>{
+  const route=source("app/api/zoom/recordings/[recordingId]/route.ts");
+  const stream=source("app/api/zoom/recordings/[recordingId]/stream/route.ts");
+  expect(route).toContain("requirePortalUser");
+  expect(route).toContain("createRecordingStreamToken");
+  expect(stream).toContain("readRecordingStreamToken");
+  expect(stream).toContain("classAccessForProfile");
+  expect(stream).toContain("Cache-Control");
+ });
  test("trainer today is calculated in IST rather than UTC",()=>{
   const trainer=source("app/trainer/classes/page.tsx");
   expect(trainer).toContain('timeZone:"Asia/Kolkata"');
