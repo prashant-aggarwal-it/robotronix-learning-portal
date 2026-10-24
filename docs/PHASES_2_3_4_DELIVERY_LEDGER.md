@@ -116,3 +116,9 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Expanded offline source-contract Playwright tests; the live 4-role and third-party Zoom tests are intentionally left for the later user-run production test round.
 - **Release order:** DB backup → apply additive migration → read-only SQL verification → merge validated PR → Netlify production deploy → manual production QA. No full reset required.
 - Historic activated onboarding records are deliberately not guessed/backfilled from names; only future activations persist the IDs.
+
+## Final QA / UI alignment additions
+- Course editor now calls course `level` metadata "Recommended experience" rather than implying courses are internally divided into separate levels; course filter labels agree.
+- Added `qa:journey-contracts` and included it in the comprehensive `qa:prod-gate` command.
+- Recording playback now exposes error and a secure URL renewal action rather than leaving a broken media player with no recovery.
+- All new changes stay on PR #23; database migration and real provider/role tests remain separate release gates.
