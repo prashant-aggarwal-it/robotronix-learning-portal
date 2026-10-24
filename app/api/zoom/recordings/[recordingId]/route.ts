@@ -68,5 +68,5 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{record
    if(error)throw new Error(error.message);return NextResponse.json({ok:true,status:"deleted"});
   }
   throw new Error("Unsupported recording action.");
- }catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:400});}
+ }catch(error){console.error("Zoom recording update failed",error instanceof Error?error.name:"UnknownError");return NextResponse.json({ok:false,error:"Unable to update recording."},{status:400,headers:{"Cache-Control":"no-store"}});}
 }
