@@ -841,6 +841,17 @@ export async function listPortalAuditLog(limit=100):Promise<PortalAuditRecord[]>
 }
 
 
+/** Fetch a record's own audit trail; do not infer history from the global recent-events window. */
+export async function listPortalAuditLogForRecord(entityTypes:string[],entityId:string,limit=500):Promise<PortalAuditRecord[]>{
+ const types=entityTypes.filter(Boolean);
+ if(!types.length||!entityId)return[];
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return demoStore.auditLog.list().filter(a=>types.includes(a.entityType)&&a.entityId===entityId).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,limit);
+ const{data,error}=await supabase.from("portal_audit_log").select("*").in("entity_type",types).eq("entity_id",entityId).order("created_at",{ascending:false}).limit(Math.min(limit,1000));
+ if(error)throw new Error("Unable to load record history: "+error.message);
+ return(data??[]).map((r:any)=>({id:String(r.id),actorProfileId:r.actor_profile_id??undefined,entityType:r.entity_type,entityId:r.entity_id,action:r.action,beforeData:r.before_data??undefined,afterData:r.after_data??undefined,createdAt:r.created_at}));
+}
+
 // ---------------- Role profile, community and trainer finance self-service ----------------
 export async function getCurrentTrainerRecord():Promise<TrainerAdminRecord|null>{
  const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.trainers.list()[0]??null;
