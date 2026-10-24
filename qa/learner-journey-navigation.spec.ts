@@ -127,3 +127,25 @@ test("AI Flow is the default appearance, while a saved Classic preference is res
  expect(switcher).toContain('if(isPortalTheme(value))saved=value');
  expect(switcher).toContain('window.localStorage.setItem(STORAGE_KEY,next)');
 });
+
+test("Admin and Trainer schedule expose availability and bookings with a shared legend",()=>{
+ const admin=source("app/admin/schedule/page.tsx");
+ const trainer=source("app/trainer/schedule/page.tsx");
+ const css=source("app/schedule-unified.css");
+ expect(admin).toContain('const[showTrainerAvailability,setShowTrainerAvailability]=useState(true)');
+ expect(admin).toContain('scheduleDateNavigator');
+ expect(admin).toContain('displayAvailability(t.id,date,h)');
+ expect(admin).toContain('className="blockedBand"');
+ expect(admin).toContain("Remaining hours*");
+ expect(trainer).toContain('trainer_availability_overrides');
+ expect(trainer).toContain('scheduleStatusLegend');
+ for(const marker of ['legendAvailable','legendBooked','legendBlocked','legendCompleted'])expect(css).toContain(marker);
+});
+test("Parent and Student calendar has upcoming classes and status differentiation",()=>{
+ const component=source("components/calendar/LearnerCalendar.tsx");
+ expect(component).toContain('upcoming class');
+ expect(component).toContain('status-${e.status}');
+ expect(component).toContain("learnerUpcomingSummary");
+ expect(source("app/parent/calendar/page.tsx")).toContain('<LearnerCalendar');
+ expect(source("app/student/calendar/page.tsx")).toContain('<LearnerCalendar');
+});
