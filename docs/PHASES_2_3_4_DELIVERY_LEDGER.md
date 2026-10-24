@@ -94,3 +94,14 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Application now calls this RPC when present; guarded legacy delete/insert fallback is used **only** for `PGRST202` (RPC absent). Existing prelaunch Supabase DB has **not** been migrated from this session.
 - CI regression asserts SQL function, permissions, lock and caller. This does not replace live concurrent transaction testing.
 - Required before production certification: apply canonical function to shared database, refresh PostgREST schema cache if needed, verify trainer/admin role permission, replacement when occupied, overlapping slots, and concurrent saves; then remove fallback.
+
+## Phase 2–4 implementation follow-through (2026-10-24)
+- [x] Added durable onboarding activation student/enrollment references to canonical schema.
+- [x] Added non-destructive, rerunnable upgrade SQL: `database/04_migrations/2026_10_24_PHASES_2_3_4_ADDITIVE.sql`, avoiding prelaunch database reset.
+- [x] Returning to an activated onboarding record can now show its exact enrollment/student actions (for newly activated records after migration).
+- [x] Onboarding activation refuses to create a learner when the migration is absent. Persistence failures return a warning with exact IDs to avoid misleading retries.
+- [x] Added read-only SQL verification for activated references, atomic availability RPC privileges and Zoom host overlap exclusion constraint.
+- [x] Added source-based regression coverage for migration parity / activation references.
+- [ ] Migration has **not** been executed on the shared Supabase project; the app and database upgrade should be rolled out together.
+- [ ] Previously activated records are not automatically backfilled, to avoid unsafe name-based matching.
+- [ ] Zoom provider lifecycle, recording files, full four-role access, end-to-end finance and mobile acceptance remain externally unverified.
