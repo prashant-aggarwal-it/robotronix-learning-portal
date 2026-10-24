@@ -28,3 +28,8 @@
 .calendarEventCard.status-conducted{border-left:4px solid #8755cf}
 .monthCell i.status-conducted{background:#ede9fe;color:#6334a3}
 .monthCell i.status-scheduled{background:#e2efff;color:#245d9d}
+
+/* Financial review: differences must be identifiable without relying on row colour alone. */
+.financeChangeBadge{display:inline-block;padding:3px 7px;margin-left:8px;border-radius:7px;background:#fff0c4;color:#7b4e00;border:1px solid #e8bd54;font-size:11px;letter-spacing:0;text-transform:none}
+.financeValueOld{background:#fff6e4;color:#80501e;font-weight:650}
+.financeValueNew{background:#ddf5e6;color:#135b35;font-weight:750;box-shadow:inset 3px 0 #39a46c}
