@@ -21,3 +21,10 @@
 .learnerUpcomingSummary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .learnerUpcomingSummary .softBadge{padding:8px 12px}
 @media(max-width:760px){.scheduleDateNavigator{width:100%}.scheduleDateNavigator .input[type=date]{min-width:160px;flex:1}.scheduleStatusLegend{gap:8px}.trainerWeekToolbar{flex-wrap:wrap}.scheduleToolbar{flex-wrap:wrap}}
+
+.dayTimelineSection .scheduleFreeSlot{position:absolute;top:9px;bottom:9px;z-index:1;background:transparent;border:1px dashed transparent;border-radius:8px;color:transparent;cursor:pointer;font-weight:800;font-size:18px}
+.dayTimelineSection .scheduleFreeSlot:hover,.dayTimelineSection .scheduleFreeSlot:focus-visible{background:rgba(33,150,89,.13);color:#116438;border-color:#479b70;outline-offset:1px}
+.dayTimelineSection .timelineEvent{z-index:3}
+.calendarEventCard.status-conducted{border-left:4px solid #8755cf}
+.monthCell i.status-conducted{background:#ede9fe;color:#6334a3}
+.monthCell i.status-scheduled{background:#e2efff;color:#245d9d}
