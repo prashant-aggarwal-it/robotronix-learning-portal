@@ -24,6 +24,7 @@
     "qa:razorpay": "playwright test qa/razorpay.spec.ts --project=desktop-chromium",
     "qa:mobile-smoke": "playwright test qa/public.spec.ts qa/production-readiness.spec.ts --project=mobile-chromium --grep \"public homepage|login is role-neutral\"",
     "qa:journey-contracts": "playwright test qa/learner-journey-navigation.spec.ts --project=desktop-chromium",
+    "qa:production-readonly": "node scripts/guard-production-readonly-qa.mjs && playwright test qa/production-readonly.spec.ts --project=desktop-chromium --no-deps",
     "qa:integrated-e2e": "node scripts/guard-integrated-e2e-target.mjs && playwright test qa/integrated-journey-e2e.spec.ts qa/workflows.spec.ts qa/scheduling-lifecycle.spec.ts qa/attendance-exceptions.spec.ts qa/finance-lifecycle.spec.ts qa/demo-experience.spec.ts qa/production-readiness.spec.ts qa/payroll-rules.spec.ts qa/roles.spec.ts qa/permissions.spec.ts --project=desktop-chromium",
     "qa:prod-gate": "npm run check:release && npm run qa:journey-contracts && npm run qa:auth-check && npm run qa:roles && npm run qa:workflow && npm run qa:risk-lifecycles && npm run qa:payroll-rules && npm run qa:production-readiness && npm run qa:razorpay && npm run qa:mobile && npm run qa:demo-experience",
     "qa:payroll-rules": "playwright test qa/payroll-rules.spec.ts --project=desktop-chromium",
