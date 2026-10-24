@@ -1,0 +1,59 @@
+name: Production read-only QA (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      authenticated:
+        description: 'Run four-role authenticated read-only smoke (requires production SANITY test accounts)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  production-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: production-qa
+    env:
+      QA_BASE_URL: https://portal.robotronixstemlab.com
+      QA_NO_WEBSERVER: '1'
+      QA_TARGET: production
+      PRODUCTION_READONLY_QA_ACK: READ_ONLY_ONLY
+      QA_RUN_AUTH: ${{ inputs.authenticated && '1' || '0' }}
+      SANITY_SUPABASE_URL: ${{ secrets.PROD_SANITY_SUPABASE_URL }}
+      SANITY_SUPABASE_ANON_KEY: ${{ secrets.PROD_SANITY_SUPABASE_ANON_KEY }}
+      SANITY_ADMIN_EMAIL: ${{ secrets.PROD_SANITY_ADMIN_EMAIL }}
+      SANITY_ADMIN_PASSWORD: ${{ secrets.PROD_SANITY_ADMIN_PASSWORD }}
+      SANITY_TRAINER_EMAIL: ${{ secrets.PROD_SANITY_TRAINER_EMAIL }}
+      SANITY_TRAINER_PASSWORD: ${{ secrets.PROD_SANITY_TRAINER_PASSWORD }}
+      SANITY_PARENT_EMAIL: ${{ secrets.PROD_SANITY_PARENT_EMAIL }}
+      SANITY_PARENT_PASSWORD: ${{ secrets.PROD_SANITY_PARENT_PASSWORD }}
+      SANITY_STUDENT_EMAIL: ${{ secrets.PROD_SANITY_STUDENT_EMAIL }}
+      SANITY_STUDENT_PASSWORD: ${{ secrets.PROD_SANITY_STUDENT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate production target and no privileged credentials
+        run: node scripts/guard-production-readonly-qa.mjs
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Anonymous production smoke tests
+        run: npm run qa:production-public
+      - name: Authenticated four-role read-only checks (opt-in)
+        if: ${{ inputs.authenticated }}
+        run: npm run qa:production-readonly
+      - name: Save failure traces and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-readonly-qa-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
