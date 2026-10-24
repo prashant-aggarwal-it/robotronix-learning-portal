@@ -65,6 +65,9 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   const zoom=source("components/ZoomClassActions.tsx");
   expect(zoom).toContain("Zoom meeting not ready yet");
   expect(zoom).toContain("data.meeting?.lastError");
+  expect(zoom).toContain("!data.available&&reusableLink&&data.canJoin");
+  expect(zoom).toContain("data.withinJoinWindow");
+  expect(zoom).not.toContain("if(reusableLink)return");
  });
  test("availability requires an authorized atomic transaction",()=>{
   const sql=source("database/01_install/01_CREATE_SCHEMA.sql");
