@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import {ZoomClassActions} from "@/components/ZoomClassActions";
+import {adminApi} from "@/lib/admin-api-client";
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {useParams} from "next/navigation";
@@ -30,6 +32,18 @@ export default function EnrollmentDetail(){
 
 useLiveRefresh(["enrollments","cohorts","students","trainers","courses","schedule_events"],()=>{if(!editingRef.current&&!saving)return refresh()},`admin-enrollment-${id}`);
 useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
+ const[zoomByClass,setZoomByClass]=useState<Record<string,{status:string;lastError?:string|null}>>({});
+ useEffect(()=>{
+  let active=true;
+  adminApi("/api/zoom/overview").then(result=>{
+    if(!active)return;
+    const map:Record<string,{status:string;lastError?:string|null}>={};
+    for(const meeting of result.meetings||[])if(meeting.purpose==="class"&&meeting.schedule_event_id)
+      map[meeting.schedule_event_id]={status:meeting.status,lastError:meeting.last_error};
+    setZoomByClass(map);
+  }).catch(()=>{if(active)setZoomByClass({})});
+  return()=>{active=false};
+ },[id,bookings.length]);
  const eligibleTrainers=useMemo(()=>trainers.filter(t=>t.recordStatus==="active"&&(!record?.courseId||t.courseIds.includes(record.courseId))),[trainers,record?.courseId]);const eligibleCohorts=useMemo(()=>cohorts.filter(c=>c.status==="active"&&c.courseId===record?.courseId&&c.trainerId===record?.trainerId&&(c.id===record?.cohortId||c.studentIds.length<c.capacity)),[cohorts,record?.courseId,record?.trainerId,record?.cohortId]);
  if(record===undefined)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="panel">Loading enrollment…</div></AppShell></RoleGuard>;if(!record)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="emptyState">Enrollment not found.</div></AppShell></RoleGuard>;
  const dirty=JSON.stringify(record)!==baseline;const student=students.find(s=>s.id===record.studentId);const course=courses.find(c=>c.id===record.courseId);const trainer=trainers.find(t=>t.id===record.trainerId);const cohort=record.cohortId?cohorts.find(c=>c.id===record.cohortId):undefined;
@@ -57,7 +71,7 @@ useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
   <section className="panel" aria-label="Enrollment classes" style={{marginBottom:18}}>
    <div className="panelHeader"><div><div className="eyebrow">NEXT STEP · COURSE DELIVERY</div><h2>Your class schedule</h2><p>Manage the upcoming lesson and all class records here. Zoom readiness and session outcomes are available from each class.</p></div></div>
    <div className="financeSummaryGrid"><div><span>Course sessions</span><b>{expectedSessions||"Not set"}</b></div><div><span>Booked class records</span><b>{countedBookings}</b></div><div><span>Next class</span><b>{nextClassIst?`${nextClassIst.startDate} · ${enrollmentDisplayTime(nextClassIst.startTime)} IST`:"No upcoming booking"}</b></div></div>
-   {nextClass?<div className="entityBoundaryNote"><b>Next class · {nextClass.title}</b><span>{nextClassIst?.startDate} · {nextClassIst?enrollmentDisplayTime(nextClassIst.startTime):""}–{nextClassIst?enrollmentDisplayTime(nextClassIst.endTime):""} IST · Learner/local {nextClass.date} {enrollmentDisplayTime(nextClass.startTime)} {nextClass.timezone||IST_TIMEZONE} · {displayLabel(nextClass.status)}</span><div className="formActions"><Link href={`/admin/classes/${encodeURIComponent(nextClass.id)}`} className="button">Open class details →</Link></div></div>:<p className="fieldHint">There is no future class on the current schedule. Check the enrollment status and class bookings.</p>}
+   {nextClass?<div className="entityBoundaryNote"><b>Next class · {nextClass.title}</b><span>{nextClassIst?.startDate} · {nextClassIst?enrollmentDisplayTime(nextClassIst.startTime):""}–{nextClassIst?enrollmentDisplayTime(nextClassIst.endTime):""} IST · Learner/local {nextClass.date} {enrollmentDisplayTime(nextClass.startTime)} {nextClass.timezone||IST_TIMEZONE} · {displayLabel(nextClass.status)}</span><div className="row" style={{marginTop:12,flexWrap:"wrap"}}><ZoomClassActions scheduleEventId={nextClass.id}/><Link href={`/admin/classes/${encodeURIComponent(nextClass.id)}`} className="button ghost">Class details →</Link></div></div>:<p className="fieldHint">There is no future class on the current schedule. Check the enrollment status and class bookings.</p>}
    <div className="formActions" style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
     {record.enrollmentType==="one_to_one"&&record.status==="active"&&<button type="button" className="button secondary" disabled={generating||editing||dirty} onClick={generateMissingClasses}>{generating?"Checking class bookings…":"Generate / reconcile full course"}</button>}
     <Link className="button ghost" href="/admin/schedule">Open timetable</Link>
@@ -65,7 +79,7 @@ useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
    </div>
    {record.enrollmentType==="small_group"&&<p className="fieldHint">Cohort sessions are shared by all members. Generate class dates from the cohort workflow rather than once per learner.</p>}
    {bookingStatus&&<p role="status" className="infoBanner">{bookingStatus}</p>}
-   {futureBookings.length>0&&<div className="tableWrap professionalTable" style={{marginTop:12}}><table><thead><tr><th>Date</th><th>Class</th><th>Time</th><th>Status</th><th>Action</th></tr></thead><tbody>{futureBookings.slice(0,12).map(ev=><tr key={ev.id}><td>{ev.date}</td><td>{ev.title}</td><td>{enrollmentDisplayTime(ev.startTime)}–{enrollmentDisplayTime(ev.endTime)} {ev.timezone||IST_TIMEZONE}</td><td>{displayLabel(ev.status)}</td><td><Link className="tableAction" href={`/admin/classes/${encodeURIComponent(ev.id)}`}>Details / Zoom →</Link></td></tr>)}</tbody></table></div>}
+   {futureBookings.length>0&&<div className="tableWrap professionalTable" style={{marginTop:12}}><table><thead><tr><th>Date</th><th>Class</th><th>Time</th><th>Status</th><th>Zoom</th><th>Action</th></tr></thead><tbody>{futureBookings.slice(0,12).map(ev=><tr key={ev.id}><td>{ev.date}</td><td>{ev.title}</td><td>{enrollmentDisplayTime(ev.startTime)}–{enrollmentDisplayTime(ev.endTime)} {ev.timezone||IST_TIMEZONE}</td><td>{displayLabel(ev.status)}</td><td><span className="softBadge">{zoomByClass[ev.id]?.status==="error"||zoomByClass[ev.id]?.lastError?"Needs attention":zoomByClass[ev.id]? "Provisioned":"Check classroom"}</span></td><td><Link className="tableAction" href={`/admin/classes/${encodeURIComponent(ev.id)}`}>Details / Zoom →</Link></td></tr>)}</tbody></table></div>}
    {futureBookings.length>12&&<p className="fieldHint">Showing the next 12 eligible classes. Open “All enrollment classes” to view the entire course history.</p>}
   </section>
   <section className="dashboardKpis"><KpiCard label="Status" value={record.status==="on_hold"?"On hold":record.status} detail={record.status==="on_hold"?record.holdReason??"Paused learning":"Enrollment lifecycle"} tone="purple"/><KpiCard label="Delivered hours" value={`${(record.hoursCompleted??0).toFixed((record.hoursCompleted??0)%1?1:0)} hrs`} detail={`${record.sessionsCompleted} attended sessions · hours are canonical`} tone="teal"/><KpiCard label="Course progress" value={`${record.progressPercent}%`} detail={`${(record.hoursRemaining??0).toFixed((record.hoursRemaining??0)%1?1:0)} of ${(record.plannedHours??0).toFixed((record.plannedHours??0)%1?1:0)} hrs remaining`} tone="amber"/><KpiCard label="Trainer" value={trainer?.fullName||"Unassigned"} detail={record.enrollmentType==="one_to_one"?"Individual delivery":cohort?.name||"Cohort pending"} tone="slate"/></section>
