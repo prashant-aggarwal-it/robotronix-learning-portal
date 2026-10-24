@@ -38,7 +38,7 @@ useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
  const expectedSessions=record.plannedSessions||course?.totalSessions||0;
  const countedBookings=bookings.filter(e=>e.eventType==="class"&&!["cancelled","rescheduled"].includes(e.status)).length;
  async function generateMissingClasses(){
-  if(record.enrollmentType!=="one_to_one"||generating)return;
+  if(!record||record.enrollmentType!=="one_to_one"||generating)return;
   setGenerating(true);setBookingStatus("");
   try{const result=await generateEnrollmentScheduleV2(record.id,"full");
    setBookingStatus(result.ok?`Schedule checked: ${result.created} new bookings; ${result.total} course occurrences accounted for.`:`Unable to generate classes: ${result.error}`);
