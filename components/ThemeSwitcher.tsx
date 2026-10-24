@@ -15,9 +15,9 @@ function applyTheme(theme:PortalTheme){
  document.documentElement.style.colorScheme="light";
 }
 export function ThemeSwitcher(){
- const[theme,setTheme]=useState<PortalTheme>("classic");
+ const[theme,setTheme]=useState<PortalTheme>("ai-flow");
  useEffect(()=>{
-  let saved:PortalTheme="classic";
+  let saved:PortalTheme="ai-flow";
   try{
    const value=window.localStorage.getItem(STORAGE_KEY);
    if(isPortalTheme(value))saved=value;
