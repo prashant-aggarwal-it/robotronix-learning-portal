@@ -37,6 +37,16 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(classes).toContain('view==="all"');
   expect(classes).toContain("enrollmentFilter");
  });
+ test("trainer week offers direct class access and is based on IST",()=>{
+  const trainerSchedule=source("app/trainer/schedule/page.tsx");
+  expect(trainerSchedule).toContain("/trainer/classes/");
+  expect(trainerSchedule).toContain("timeZone:IST_TIMEZONE");
+ });
+ test("Zoom shows meeting pending or failures rather than empty controls",()=>{
+  const zoom=source("components/ZoomClassActions.tsx");
+  expect(zoom).toContain("Zoom meeting not ready yet");
+  expect(zoom).toContain("data.meeting?.lastError");
+ });
  test("trainer today is calculated in IST rather than UTC",()=>{
   const trainer=source("app/trainer/classes/page.tsx");
   expect(trainer).toContain('timeZone:"Asia/Kolkata"');
