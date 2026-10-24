@@ -10,10 +10,10 @@ Treat Onboarding → Enrollment → Class → Zoom as ONE end-to-end Admin workf
 ## Phase 2 — Seamless learner journey
 - [x] Activation confirmation links to exact newly created enrollment and student, provides booking count/warning and schedule shortcut; avoid claiming Zoom is provisioned.
 - [ ] When revisiting an activated onboarding record, resolve existing student/enrollment links without duplication.
-- [ ] Show course agreed sessions vs existing class count and remaining unscheduled sessions on enrollment detail, with safe contextual **Generate missing classes**.
-- [ ] Display *Next class* (learner/course/trainer/date, IST and local zone), *All scheduled classes*, and meeting state on enrollment detail above billing.
-- [ ] Make all Schedule views open a consistent class detail; keyboard-accessible, with accurate student/course/trainer and status.
-- [ ] Classes list/detail: one authoritative class details view; Zoom meeting state **pending / ready / failed**, start/join only when allowed, exact source URL when provisioned.
+- [x] Enrollment detail shows agreed session count, reconciled current class records and guarded full-course generation (DB test pending).
+- [x] Next class and up to 12 upcoming class links appear above billing; timezone appears from schedule record. [ ] Add user-local conversion and meeting state directly in enrollment.
+- [x] Day, Week Overview and Trainer Week booking controls open the same summary with link to authoritative ClassRecordEditor; keyboard-based button activation. Browser QA pending.
+- [x] Reused existing ClassRecordEditor as the single session authority; added enrollment-return link. [ ] Verify Zoom meeting states, start/join and recorded access end-to-end.
 - [ ] Confirm cohort generation shares one class event per cohort, not per child; cancellations and reschedules preserved.
 - [ ] Regression tests for exactly-once full-course generation, schedule conflicts, DST and lifecycle navigation.
 
@@ -44,3 +44,9 @@ Treat Onboarding → Enrollment → Class → Zoom as ONE end-to-end Admin workf
 - [ ] Merge only verified increments; track specific commits and tests in PR.
 
 Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security evidence backlog.
+
+## Execution notes — 24 October 2026
+- Implemented first vertical slice: onboarding outcome → enrollment hub → schedule calendar → class editor → existing ZoomClassActions component.
+- This does **not** mean all Phase 2/3/4 requirements are complete; billing, rescheduling, recordings, security and role testing require further validation.
+- Shared prelaunch Supabase database was not modified. Existing code paths reused; no schema migration necessary for the above UI changes.
+- GitHub Actions TypeScript regression discovered in first build and was fixed; final run must be checked before release.
