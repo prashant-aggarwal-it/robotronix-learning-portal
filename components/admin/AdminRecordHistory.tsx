@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
 import {usePathname} from "next/navigation";
-import {listPortalAuditLog} from "@/lib/repository";
+import {listPortalAuditLogForRecord} from "@/lib/repository";
 import type {PortalAuditRecord} from "@/lib/types";
 
 const supported:Record<string,string[]>={
@@ -33,7 +33,7 @@ export function AdminRecordHistory(){
  const[loading,setLoading]=useState(false);
  const[error,setError]=useState("");
  useEffect(()=>{setOpen(false);setEvents([])},[pathname]);
- async function load(){setLoading(true);setError("");try{setEvents((await listPortalAuditLog(2000)).filter(x=>types.includes(x.entityType)&&x.entityId===recordId))}catch(e){setError(e instanceof Error?e.message:"Unable to load history")}finally{setLoading(false)}}
+ async function load(){setLoading(true);setError("");try{setEvents(await listPortalAuditLogForRecord(types,recordId,500))}catch(e){setError(e instanceof Error?e.message:"Unable to load history")}finally{setLoading(false)}}
  const ordered=useMemo(()=>[...events].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)),[events]);
  if(!eligible||section==="audit")return null;
  return <><button type="button" className="button ghost" style={{position:"fixed",right:22,bottom:90,zIndex:40,boxShadow:"0 3px 14px #0002"}} onClick={()=>{setOpen(x=>!x);if(!open)void load()}} aria-expanded={open} aria-controls="admin-record-history">↺ View history</button>
@@ -43,6 +43,6 @@ export function AdminRecordHistory(){
   <button className="button ghost" disabled={loading} onClick={()=>void load()}>Refresh</button>
   {error&&<div role="alert" className="errorBanner">{error}</div>}
   {loading?<p>Loading history…</p>:ordered.length?ordered.map(e=><article key={e.id} style={{padding:"14px 0",borderBottom:"1px solid #dbe3f0"}}><b>{e.action.toUpperCase()} · {e.entityType.replaceAll("_"," ")}</b><div style={{fontSize:12,opacity:.8}}>{timestamp(e.createdAt)} · {e.actorProfileId||"System / unknown actor"}</div>
-  {changes(e).length?<ul style={{paddingLeft:20}}>{changes(e).map(c=><li key={c.name}><b>{c.name}</b>: {printable(c.from)} → {printable(c.to)}</li>)}</ul>:<p style={{fontSize:13}}>No displayable field changes (or fields are restricted).</p>}</article>):<p>No events found for this record in the latest 2,000 events. This is not proof that no previous changes occurred.</p>}
+  {changes(e).length?<ul style={{paddingLeft:20}}>{changes(e).map(c=><li key={c.name}><b>{c.name}</b>: {printable(c.from)} → {printable(c.to)}</li>)}</ul>:<p style={{fontSize:13}}>No displayable field changes (or fields are restricted).</p>}</article>):<p>No events found for this record in the latest 500 matching records. This is not proof that no previous changes occurred.</p>}
  </div>}</>;
 }
