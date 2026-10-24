@@ -83,6 +83,12 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(repo).toContain('supabase.rpc("replace_trainer_availability_v1"');
   expect(repo).toContain('atomicError.code!=="PGRST202"');
  });
+ test("recording playback offers secure stream refresh on media errors",()=>{
+  const playback=source("app/admin/zoom/recording/[recordingId]/page.tsx");
+  expect(playback).toContain("Refresh secure access");
+  expect(playback).toContain("onError={()=>setPlaybackError");
+  expect(playback).toContain("adminApi(\"/api/zoom/recordings/\"");
+ });
  test("trainer today is calculated in IST rather than UTC",()=>{
   const trainer=source("app/trainer/classes/page.tsx");
   expect(trainer).toContain('timeZone:"Asia/Kolkata"');
