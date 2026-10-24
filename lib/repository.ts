@@ -852,6 +852,48 @@ export async function listPortalAuditLogForRecord(entityTypes:string[],entityId:
  return(data??[]).map((r:any)=>({id:String(r.id),actorProfileId:r.actor_profile_id??undefined,entityType:r.entity_type,entityId:r.entity_id,action:r.action,beforeData:r.before_data??undefined,afterData:r.after_data??undefined,createdAt:r.created_at}));
 }
 
+/** Admin learner journey: link onboarding, enrollments, classes, attendance and progress.
+ * Requests use normal Supabase RLS. No privileged browser keys.
+ */
+export async function listLearnerJourneyAudit(studentId:string,limit=500):Promise<PortalAuditRecord[]>{
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return demoStore.auditLog.list().filter(a=>a.entityId===studentId).slice(0,limit);
+ const [enrollmentResult,classResult,onboardingResult]=await Promise.all([
+  supabase.from("enrollments").select("id").eq("student_id",studentId),
+  supabase.from("schedule_events").select("id").eq("student_id",studentId),
+  supabase.from("onboarding_submissions").select("id").eq("activated_student_id",studentId)
+ ]);
+ for(const result of [enrollmentResult,classResult,onboardingResult])if(result.error)throw new Error("Unable to build learner journey: "+result.error.message);
+ const enrollmentIds=(enrollmentResult.data??[]).map((r:any)=>String(r.id));
+ const classIds=(classResult.data??[]).map((r:any)=>String(r.id));
+ const onboardingIds=(onboardingResult.data??[]).map((r:any)=>String(r.id));
+ const filters=[
+  {types:["students","student_guardians","learning_observations","learning_observation_internal_notes"],ids:[studentId]},
+  {types:["enrollments","enrollment_holds"],ids:enrollmentIds},
+  {types:["schedule_events","class_attendance"],ids:classIds},
+  {types:["onboarding_submissions"],ids:onboardingIds}
+ ];
+ const queries=filters.filter(f=>f.ids.length).map(f=>supabase.from("portal_audit_log").select("*").in("entity_type",f.types).in("entity_id",f.ids.slice(0,500)).order("created_at",{ascending:false}).limit(limit));
+ const results=await Promise.all(queries);
+ const items=new Map<string,PortalAuditRecord>();
+ for(const result of results){
+  if(result.error)throw new Error("Unable to load learner history: "+result.error.message);
+  for(const r of result.data??[])items.set(String(r.id),{id:String(r.id),actorProfileId:r.actor_profile_id??undefined,entityType:r.entity_type,entityId:r.entity_id,action:r.action,beforeData:r.before_data??undefined,afterData:r.after_data??undefined,createdAt:r.created_at});
+ }
+ return [...items.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,limit);
+}
+
+/** Resolve audit actors into profile labels for Admin screens. */
+export async function resolveAuditActorNames(ids:string[]):Promise<Record<string,string>>{
+ const unique=[...new Set(ids.filter(Boolean))].slice(0,500);
+ if(!unique.length)return{};
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return{};
+ const{data,error}=await supabase.from("profiles").select("id,full_name,role").in("id",unique);
+ if(error)throw new Error("Unable to resolve audit actors: "+error.message);
+ return Object.fromEntries((data??[]).map((p:any)=>[p.id,p.full_name?String(p.full_name):String(p.role??"User")]));
+}
+
 // ---------------- Role profile, community and trainer finance self-service ----------------
 export async function getCurrentTrainerRecord():Promise<TrainerAdminRecord|null>{
  const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.trainers.list()[0]??null;
