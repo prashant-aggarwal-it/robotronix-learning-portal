@@ -28,6 +28,17 @@ function Workspace(){
  const[newMeeting,setNewMeeting]=useState({title:"",startAt:"",durationMinutes:60,recording:true,notes:""});
 
  async function load(){setError("");try{const x=await adminApi("/api/zoom/overview");setHosts(x.hosts||[]);setMeetings(x.meetings||[]);setStorage(x.storageByHost||[])}catch(e){setError(e instanceof Error?e.message:String(e))}}
+ async function reconcileClasses(){
+  if(!window.confirm("Provision Zoom rooms for scheduled online classes that have no linked meeting? Existing class bookings will remain unchanged."))return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   const x=await adminApi("/api/zoom/reconcile-classes",{method:"POST"});
+   setNotice(`Classroom reconciliation: ${x.created||0} created, ${x.skipped||0} skipped, ${x.failed||0} need review. ${x.failed?"See error details below.":""}`);
+   if(x.failures?.length)setError(x.failures.slice(0,5).map((f:{eventId:string;reason:string})=>f.eventId+": "+f.reason).join(" · "));
+   await load();
+  }catch(e){setError(e instanceof Error?e.message:String(e))}
+  finally{setBusy(false)}
+ }
  async function syncZoom(){setBusy(true);setError("");setNotice("");try{const x=await adminApi("/api/zoom/reconcile",{method:"POST"});setNotice(`Synced with Zoom · ${x.meetingsSynced||0} meetings · ${x.recordingsSynced||0} recording files${x.errors?` · ${x.errors} item(s) need review`:""}`);await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
  useEffect(()=>{void load()},[]);
  useLiveRefresh(["zoom_meetings","zoom_recordings","zoom_host_accounts"],load,"admin-zoom");
@@ -62,7 +73,7 @@ function Workspace(){
   </section>
 
   <section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row"><button className="button" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New Meeting</button><button className="button secondary" disabled={busy} onClick={syncZoom}>{busy?"Syncing…":"Sync with Zoom"}</button></div></div>
+   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row"><button className="button" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New Meeting</button><button className="button ghost" disabled={busy} onClick={reconcileClasses}>Reconcile missing classes</button><button className="button secondary" disabled={busy} onClick={syncZoom}>{busy?"Syncing…":"Sync with Zoom"}</button></div></div>
    <div className="row" style={{gap:8,flexWrap:"wrap"}}>{tabButton("overview","Classes",classes.length)}{tabButton("meetings","Meetings",general.length)}{tabButton("recordings","Recordings",recordings.length)}{tabButton("hosts","Hosts",hosts.length)}</div>
   </section>
 
