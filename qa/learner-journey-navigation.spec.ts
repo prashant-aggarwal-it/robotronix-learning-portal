@@ -84,6 +84,12 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(playback).toContain("onError={()=>setPlaybackError");
   expect(playback).toContain("adminApi(\"/api/zoom/recordings/\"");
  });
+ test("Zoom recording actions report results and refresh listing",()=>{
+  const admin=source("app/admin/zoom/page.tsx");
+  expect(admin).toContain("Recording moved to Zoom trash and removed from active list.");
+  expect(admin).toContain("Recording protection updated.");
+  expect(admin).toContain("Learner recording access updated.");
+ });
  test("trainer today is calculated in IST rather than UTC",()=>{
   const trainer=source("app/trainer/classes/page.tsx");
   expect(trainer).toContain('timeZone:"Asia/Kolkata"');
