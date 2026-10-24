@@ -6,6 +6,7 @@ import { ModeBadge } from "./ModeBadge";
 import { NotificationBell } from "./NotificationBell";
 import { SignOutButton } from "./SignOutButton";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { AdminRecordHistory } from "./admin/AdminRecordHistory";
 import type { UserRole } from "@/lib/types";
 
 const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}>> = {
@@ -87,7 +88,7 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
         })}</nav>
         <div className="sidebarFooter"><div className="roleBadge"><span className="statusDot"/> {role==="admin"?"Administrator":"Trainer account"}</div><SignOutButton className="sidebarSignout" label="Sign out"/></div>
       </aside>
-      <div className="workspaceMain"><header className="workspaceTopbar"><div><b>Robotronix™ Learning Portal</b><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main><div className="footer">Robotronix™ Learning Portal · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
+      <div className="workspaceMain"><header className="workspaceTopbar"><div><b>Robotronix™ Learning Portal</b><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main>{role==="admin"&&<AdminRecordHistory/>}<div className="footer">Robotronix™ Learning Portal · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
   }
   return <>
     <div className="shell experienceShell">
