@@ -68,3 +68,22 @@ test("Zoom privacy policy is a public, server-rendered route linked before sign-
  expect(fs.readFileSync("app/login/page.tsx","utf8")).toContain('href="/privacy"');
  expect(fs.readFileSync("app/onboarding/page.tsx","utf8")).toContain('href="/privacy"');
 });
+
+
+test.describe("Zoom authorization and privacy regressions",()=>{
+ test("unmatched or ambiguous webhook participant identity is never guessed",()=>{
+  const source=fs.readFileSync("app/api/zoom/webhook/route.ts","utf8");
+  expect(source).toContain("matches.length===1?matches[0]:null");
+  expect(source).not.toContain("||rows[0]||null");
+ });
+ test("recording endpoints do not expose provider or database errors",()=>{
+  const source=fs.readFileSync("app/api/zoom/recordings/[recordingId]/route.ts","utf8");
+  expect(source).toContain('error:"Unable to process recording request."');
+  expect(source).not.toContain('error:error instanceof Error?error.message:String(error)');
+ });
+ test("OAuth callback does not disclose raw provider failure messages via redirect",()=>{
+  const source=fs.readFileSync("app/api/zoom/oauth/callback/route.ts","utf8");
+  expect(source).toContain('base.searchParams.set("zoom_error","Unable to connect Zoom account.');
+  expect(source).not.toContain('base.searchParams.set("zoom_error",error instanceof Error?error.message:String(error))');
+ });
+});
