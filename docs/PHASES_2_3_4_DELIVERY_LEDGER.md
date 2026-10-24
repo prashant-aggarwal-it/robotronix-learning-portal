@@ -80,3 +80,11 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Schedule event dialog displays IST date and avoids routing demos/workshops to the class-only editor; Escape keyboard dismissal added.
 - Added regression assertions for notification/availability and schedule UI contracts.
 - No database reset, migration, or production merge performed in this round.
+
+## Phase 4 further polish (24 Oct 2026)
+- Onboarding now shows four balanced lifecycle cards; monthly conversion is a compact secondary metric.
+- Trainer roster supports keyboard-focusable horizontal scrolling and clearer accessible naming.
+- Schedule event detail modal focuses when opened, can dismiss with Escape, uses IST date and offers Class Editor only for actual class records.
+- Trainer availability UI catches unexpected save/network errors and always releases the Save button loading state.
+- Supabase availability save now snapshots existing slots and attempts restore when insertion fails, but this cannot substitute for the transactional SQL RPC tracked in #25.
+- Live Zoom deletion/playback and concurrency were inspected at the API layer only; no proof of actual Zoom account behavior. These remain blocked on authorized end-to-end testing.
