@@ -58,3 +58,6 @@ The previously shared SQL packs were not validated on production, and failed fir
 - [x] Checked `app/layout.tsx`: the current candidate already includes `schedule-unified.css` as well as AI-flow theme. The older theme branch version would remove the CSS import, so it was intentionally not copied.
 - [x] Checked `components/finance/PayoutReview.tsx`: candidate includes stronger changed-row badges and avoids displaying historically misleading change counts; older version intentionally not copied.
 - [x] Confirmed `components/NotificationCenter.tsx` and `components/ThemeSwitcher.tsx` already have exact matching content with their respective older fix branches.
+
+- [x] Added read-only full production column/constraint audit at `docs/sql/PRODUCTION_SCHEMA_PARITY_READ_ONLY.sql`. Located **outside** `database/03_verify` because the release guard requires `01_VERIFY_RELEASE.sql` to be the only verification SQL in that directory. Live query outputs remain pending.
+- [ ] The recent messages parent-ID repair is code-reviewed but has **not** passed runtime/role E2E tests. Keep candidate unmerged.
