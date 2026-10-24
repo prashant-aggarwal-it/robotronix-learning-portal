@@ -132,3 +132,11 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Reusable trainer Zoom links no longer cause an immediate component return that hides scheduled Zoom meeting controls or recordings.
 - Reusable link is only an authorized, time-window-limited fallback for classes without a provisioned Zoom meeting; the classroom API remains the source of permission and join-window truth.
 - Added an offline regression contract so future refactors do not reintroduce the bypass.
+
+## Security review — 24 October 2026
+- [x] Zoom webhook join-intent matching now **rejects unmatched or ambiguous participant display names** instead of assigning a participant to the latest unrelated portal intent. Participant attendance remains unlinked until positively matched.
+- [x] Zoom recording API exceptions no longer disclose underlying database or Zoom provider messages to client responses.
+- [x] Zoom OAuth callback redirects now show a generic error instead of returning raw Zoom failure details in the query string.
+- [x] Added offline security regression tests to `qa/security-static.spec.ts` for these three invariants.
+- [ ] Confirm webhook attendance behavior with real Zoom participants; ambiguous names require explicit/manual reconciliation, not guessed association.
+- [ ] Run dedicated DAST against authorized deployment and confirm Zoom Marketplace Beta compliance. Passing source and dependency checks does not prove complete security.
