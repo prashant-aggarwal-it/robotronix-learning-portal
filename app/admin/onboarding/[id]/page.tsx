@@ -192,7 +192,7 @@ export default function OnboardingDetail(){
   const res=await activateOnboarding(id,{courseId,trainerId,enrollmentType:type,cohortId:type==="small_group"?cohortId:undefined,startDate,scheduleTimezone,scheduleRules,scheduleOverrideConfirmed:hasScheduleExceptions&&scheduleOverrideConfirmed,scheduleOverrideNote:hasScheduleExceptions&&scheduleOverrideConfirmed?"Admin confirmed schedule exception against parent preference and/or trainer availability during activation.":undefined,schedulingHorizon:type==="small_group"?"manual":schedulingHorizon,schedulingWeeks:schedulingHorizon==="weeks"?schedulingWeeks:undefined});
   setActiveAction(null);
   if(!res.ok){setNotice({type:"error",text:("error" in res?res.error:undefined)??"Unable to activate learner."});return;}
-  const result={studentId:res.studentId!,enrollmentId:res.enrollmentId!,classesCreated:("classesCreated" in res?res.classesCreated:undefined),schedulingWarning:("schedulingWarning" in res?res.schedulingWarning:undefined)};
+  const result={studentId:("studentId" in res?res.studentId:"")??"",enrollmentId:("enrollmentId" in res?res.enrollmentId:"")??"",classesCreated:("classesCreated" in res?res.classesCreated:undefined),schedulingWarning:("schedulingWarning" in res?res.schedulingWarning:undefined)};
   setActivationResult(result);
   setNotice(result.schedulingWarning?{type:"error",text:result.schedulingWarning+" Open the enrollment to resolve scheduling."}:{type:"success",text:"Learner activated and linked to the family account."});await refresh();
  }
