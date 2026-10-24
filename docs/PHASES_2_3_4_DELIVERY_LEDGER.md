@@ -127,3 +127,8 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Zoom Admin recording actions now clear stale errors, reload records and provide an explicit success message for deletion, protection, sharing and retention changes.
 - Offline regression suite additionally checks that Zoom host overlap constraint and remote-meeting conflict cleanup stay wired, and secure recording streaming keeps profile/role checks.
 - These are source-contract regression guards, **not** equivalent to an authenticated Zoom playback/delete/concurrency production test.
+
+## Zoom classroom button interoperability
+- Reusable trainer Zoom links no longer cause an immediate component return that hides scheduled Zoom meeting controls or recordings.
+- Reusable link is only an authorized, time-window-limited fallback for classes without a provisioned Zoom meeting; the classroom API remains the source of permission and join-window truth.
+- Added an offline regression contract so future refactors do not reintroduce the bypass.
