@@ -55,6 +55,7 @@ export default function OnboardingDetail(){
  const{id}=useParams<{id:string}>();
  const router=useRouter();
  const[r,setR]=useState<OnboardingSubmission|null|undefined>(undefined);
+ const[loadError,setLoadError]=useState("");
  const[courses,setCourses]=useState<CourseAdminRecord[]>([]);
  const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);
  const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);
@@ -84,6 +85,8 @@ export default function OnboardingDetail(){
  const[scheduleOverrideConfirmed,setScheduleOverrideConfirmed]=useState(false);
 
  async function refresh(){
+  setLoadError("");
+  try {
   const[a,c,t,h,av,ov]=await Promise.all([getOnboardingSubmission(id),listAdminCourses(),listAdminTrainers(),listAdminCohorts(),listTrainerAvailability(),listAvailabilityOverrides()]);
   setR(a);setCourses(c);setTrainers(t);setCohorts(h);setAvailability(av);setAvailabilityOverrides(ov);
   if(!a)return;
@@ -112,8 +115,11 @@ export default function OnboardingDetail(){
   setCourseId(nextCourseId);setTrainerId(nextTrainerId);setType(nextType);setCohortId(nextCohortId);setScheduleTimezone(nextTimezone);setScheduleRules(nextRules);setStartDate(nextStartDate);
   setBaseline(signature({record:a,courseId:nextCourseId,trainerId:nextTrainerId,type:nextType,cohortId:nextCohortId,startDate:nextStartDate,scheduleTimezone:nextTimezone,scheduleRules:nextRules}));
   setLastSavedAt(a.updatedAt);
+  } catch (error) {
+   setLoadError(error instanceof Error?error.message:"Unable to load onboarding details.");
+  }
  }
- useEffect(()=>{refresh()},[id]);
+ useEffect(()=>{void refresh()},[id]);
 
  const eligibleTrainers=useMemo(()=>trainers.filter(t=>t.recordStatus==="active"&&(!courseId||t.courseIds.includes(courseId))),[trainers,courseId]);
  const eligibleCohorts=useMemo(()=>cohorts.filter(c=>(isRunningCohort(c)||isUpcomingCohort(c))&&c.courseId===courseId&&c.trainerId===trainerId&&c.studentIds.length<c.capacity),[cohorts,courseId,trainerId]);
@@ -148,6 +154,7 @@ export default function OnboardingDetail(){
  const dirty=Boolean(r&&baseline&&currentSignature!==baseline);
  const busy=activeAction!==null;
 
+ if(loadError)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="panel" role="alert"><h2>Unable to load onboarding</h2><p>{loadError}</p><button type="button" className="button" onClick={()=>void refresh()}>Retry</button></div></AppShell></RoleGuard>;
  if(r===undefined)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="panel">Loading onboarding record…</div></AppShell></RoleGuard>;
  if(!r)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="emptyState">Onboarding record not found.</div></AppShell></RoleGuard>;
 
