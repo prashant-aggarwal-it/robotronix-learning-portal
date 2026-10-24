@@ -3,6 +3,7 @@ import {useEffect,useMemo,useState} from "react";
 import {usePathname} from "next/navigation";
 import {listPortalAuditLogForRecord,listLearnerJourneyAudit,resolveAuditActorNames} from "@/lib/repository";
 import type {PortalAuditRecord} from "@/lib/types";
+import {safeAuditChanges} from "@/lib/audit-display";
 
 const supported:Record<string,string[]>={
  onboarding:["onboarding_submissions"],enrollments:["enrollments","enrollment_holds"],
@@ -14,12 +15,7 @@ const supported:Record<string,string[]>={
  progress:["learning_observations","learning_observation_internal_notes","learner_projects"],
  zoom:["zoom_meetings","zoom_recordings"],invoices:["student_invoices"]
 };
-const sensitive=/password|token|secret|authorization|api_key|bank|account_number|ifsc|pan|phone|mobile|email|address|dob|birth|razorpay_payload|razorpay_response/i;
-function changes(entry:PortalAuditRecord){
- const old=(entry.beforeData??{}) as Record<string,unknown>,next=(entry.afterData??{}) as Record<string,unknown>;
- const keys=Array.from(new Set([...Object.keys(old),...Object.keys(next)]));
- return keys.filter(k=>!sensitive.test(k)&&JSON.stringify(old[k])!==JSON.stringify(next[k])).map(k=>({name:k.replaceAll("_"," "),from:old[k],to:next[k]}));
-}
+const changes=(entry:PortalAuditRecord)=>safeAuditChanges(entry.beforeData,entry.afterData);
 function printable(v:unknown){if(v===undefined||v===null||v==="")return "—";const s=typeof v==="object"?JSON.stringify(v):String(v);return s.length>180?s.slice(0,180)+"…":s;}
 function timestamp(d:string){return new Date(d).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})+" IST";}
 export function AdminRecordHistory(){
