@@ -1,3 +1,21 @@
+## Existing prelaunch Supabase project — Phases 2–4 update (no reset)
+
+**Do not run the fresh-install script or reset the existing project.** The fresh-install script is intended for a *new, empty* Supabase project. It is not a migration and will not safely reconcile a database containing students, Zoom credentials or Finance data.
+
+For an existing prelaunch project using the consolidated schema, first back up the database and then apply exactly:
+`database/04_migrations/2026_10_24_PHASES_2_3_4_ADDITIVE.sql`
+
+This migration only adds two nullable onboarding foreign keys and creates/replaces the atomic trainer availability RPC. It is safe to rerun after a failure. It does not reset any learner, trainer, Zoom, schedule or invoice records.
+
+After applying the migration, run the read-only:
+`database/03_verify/01_VERIFY_RELEASE.sql`
+
+The portal's onboarding activation will intentionally refuse new activation until the migration is present, so it cannot create a second learner after a half-installed upgrade. Existing activated onboarding rows predate the new linkage columns; historic links are not backfilled automatically because guessing student matches by names would be unsafe.
+
+**Only use a full reset** if you explicitly decide to discard every operational record and have taken backups of required data, Auth identities and secrets.
+
+---
+
 # Robotronix — Single-source fresh Supabase database installation
 
 **Target:** NEW, EMPTY Supabase project only, for the consolidated release candidate. Database SQL is consolidated; this is not a claim that the new database or frontend has passed tests.
