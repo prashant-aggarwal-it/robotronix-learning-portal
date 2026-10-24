@@ -67,6 +67,14 @@ export function NotificationCenter({ role }: { role: UserRole }) {
   const actionCount = rows.filter((n) => n.priority === "action" && !n.readAt).length;
   const importantCount = rows.filter((n) => n.priority === "important" && !n.readAt).length;
 
+  function notificationHref(n: PortalNotification) {
+    const fallback = n.href || `/${role}`;
+    if (role !== "admin" || !n.trainerId) return fallback;
+    const financeEvent = /finance|compliance|payout details/i.test(`${n.type} ${n.title} ${n.message}`);
+    if (!financeEvent) return fallback;
+    // Keep sensitive finance data out of the URL. Only the trainer record ID is needed.
+    return `/admin/trainers/${encodeURIComponent(n.trainerId)}?tab=finance&review=1#trainer-finance-review`;
+  }
   async function open(n: PortalNotification) {
     if (!n.readAt) {
       await markNotificationRead(n.id);
@@ -101,7 +109,7 @@ export function NotificationCenter({ role }: { role: UserRole }) {
         </div>
         <div className="notificationList">
           {filtered.length ? filtered.map((n) => (
-            <Link href={n.href || `/${role}`} key={n.id} className={`notificationItem ${!n.readAt ? "unread" : ""}`} onClick={() => void open(n)}>
+            <Link href={notificationHref(n)} key={n.id} className={`notificationItem ${!n.readAt ? "unread" : ""}`} onClick={() => void open(n)}>
               <span className={`notificationType priority-${n.priority}`}>{n.priority === "action" ? "!" : n.priority === "important" ? "◆" : "•"}</span>
               <div className="notificationBody">
                 <div className="notificationMeta"><span>{typeLabel(n.type)}</span><time>{timeLabel(n.createdAt)}</time></div>
