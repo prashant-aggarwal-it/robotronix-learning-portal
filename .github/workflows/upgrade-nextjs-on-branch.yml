@@ -1,0 +1,44 @@
+name: Upgrade vulnerable Next.js on learner-journey branch
+on:
+  push:
+    branches: [feature/seamless-learner-journey-20261024]
+    paths: ['.github/workflows/upgrade-nextjs-on-branch.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade-validate-commit:
+    if: github.ref == 'refs/heads/feature/seamless-learner-journey-20261024'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          ref: feature/seamless-learner-journey-20261024
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Upgrade Next.js and refresh lockfile
+        run: npm install next@16.4.3 --save-exact
+      - name: Validate reproducible install and security
+        run: |
+          npm ci
+          npm audit --omit=dev --audit-level=high
+          npm run typecheck
+          npm run check:release
+          npm run build
+      - name: Commit only after successful validation
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "Dependencies already patched."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "fix(security): upgrade Next.js to patched release"
+          git push origin HEAD:feature/seamless-learner-journey-20261024
