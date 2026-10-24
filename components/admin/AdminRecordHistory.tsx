@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
 import {usePathname} from "next/navigation";
-import {listPortalAuditLogForRecord} from "@/lib/repository";
+import {listPortalAuditLogForRecord,listLearnerJourneyAudit,resolveAuditActorNames} from "@/lib/repository";
 import type {PortalAuditRecord} from "@/lib/types";
 
 const supported:Record<string,string[]>={
@@ -31,18 +31,21 @@ export function AdminRecordHistory(){
  const[open,setOpen]=useState(false);
  const[events,setEvents]=useState<PortalAuditRecord[]>([]);
  const[loading,setLoading]=useState(false);
+ const[actorNames,setActorNames]=useState<Record<string,string>>({});
+ const[journey,setJourney]=useState(false);
  const[error,setError]=useState("");
- useEffect(()=>{setOpen(false);setEvents([])},[pathname]);
- async function load(){setLoading(true);setError("");try{setEvents(await listPortalAuditLogForRecord(types,recordId,500))}catch(e){setError(e instanceof Error?e.message:"Unable to load history")}finally{setLoading(false)}}
+ useEffect(()=>{setOpen(false);setEvents([]);setJourney(false);setActorNames({})},[pathname]);
+ async function load(includeJourney=journey){setLoading(true);setError("");try{const entries=includeJourney&&section==="students"?await listLearnerJourneyAudit(recordId,500):await listPortalAuditLogForRecord(types,recordId,500);setEvents(entries);setActorNames(await resolveAuditActorNames(entries.map(e=>e.actorProfileId??"")))}catch(e){setError(e instanceof Error?e.message:"Unable to load history")}finally{setLoading(false)}}
  const ordered=useMemo(()=>[...events].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)),[events]);
  if(!eligible||section==="audit")return null;
- return <><button type="button" className="button ghost" style={{position:"fixed",right:22,bottom:90,zIndex:40,boxShadow:"0 3px 14px #0002"}} onClick={()=>{setOpen(x=>!x);if(!open)void load()}} aria-expanded={open} aria-controls="admin-record-history">↺ View history</button>
+ return <><button type="button" className="button ghost" style={{position:"fixed",right:22,bottom:90,zIndex:40,boxShadow:"0 3px 14px #0002"}} onClick={()=>{setOpen(x=>!x);if(!open)void load(false)}} aria-expanded={open} aria-controls="admin-record-history">↺ View history</button>
  {open&&<div id="admin-record-history" role="dialog" aria-modal="false" aria-label="Record change history" style={{position:"fixed",right:16,top:100,bottom:150,width:"min(520px,calc(100vw - 32px))",zIndex:45,background:"var(--surface,#fff)",color:"var(--text,#18243c)",border:"1px solid #cbd5e1",borderRadius:16,boxShadow:"0 12px 42px #0003",padding:20,overflowY:"auto"}}>
   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}><h2 style={{margin:0}}>Record history</h2><button className="button ghost" onClick={()=>setOpen(false)} aria-label="Close history">Close</button></div>
   <p style={{overflowWrap:"anywhere",fontSize:13}}>Showing audit events for {recordId}. Times are displayed in IST. Sensitive fields are hidden.</p>
+  {section==="students"&&<label style={{display:"flex",gap:8,alignItems:"center",marginBottom:10}}><input type="checkbox" checked={journey} onChange={e=>{const value=e.target.checked;setJourney(value);void load(value)}}/> Include learner journey (onboarding, enrollments, classes and progress)</label>}
   <button className="button ghost" disabled={loading} onClick={()=>void load()}>Refresh</button>
   {error&&<div role="alert" className="errorBanner">{error}</div>}
-  {loading?<p>Loading history…</p>:ordered.length?ordered.map(e=><article key={e.id} style={{padding:"14px 0",borderBottom:"1px solid #dbe3f0"}}><b>{e.action.toUpperCase()} · {e.entityType.replaceAll("_"," ")}</b><div style={{fontSize:12,opacity:.8}}>{timestamp(e.createdAt)} · {e.actorProfileId||"System / unknown actor"}</div>
+  {loading?<p>Loading history…</p>:ordered.length?ordered.map(e=><article key={e.id} style={{padding:"14px 0",borderBottom:"1px solid #dbe3f0"}}><b>{e.action.toUpperCase()} · {e.entityType.replaceAll("_"," ")}</b><div style={{fontSize:12,opacity:.8}}>{timestamp(e.createdAt)} · {e.actorProfileId?(actorNames[e.actorProfileId]||e.actorProfileId):"System / unknown actor"}</div>
   {changes(e).length?<ul style={{paddingLeft:20}}>{changes(e).map(c=><li key={c.name}><b>{c.name}</b>: {printable(c.from)} → {printable(c.to)}</li>)}</ul>:<p style={{fontSize:13}}>No displayable field changes (or fields are restricted).</p>}</article>):<p>No events found for this record in the latest 500 matching records. This is not proof that no previous changes occurred.</p>}
  </div>}</>;
 }
