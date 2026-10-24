@@ -1,0 +1,51 @@
+/* Unified Robotronix schedule visual language — shared across role views. */
+.scheduleStatusLegend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 16px;color:#50617b;font-size:12px}
+.scheduleStatusLegend span{display:inline-flex;align-items:center;gap:6px}
+.scheduleStatusLegend span:before{content:"";display:inline-block;width:11px;height:11px;border-radius:4px;background:#e5e7eb;border:1px solid #bdc7d8}
+.scheduleStatusLegend .legendAvailable:before{background:#c9efd9;border-color:#68ad86}
+.scheduleStatusLegend .legendBooked:before{background:#cce1ff;border-color:#668ecc}
+.scheduleStatusLegend .legendBlocked:before{background:#ffe2be;border-color:#db9b5c}
+.scheduleStatusLegend .legendCompleted:before{background:#e4d9ff;border-color:#9874dc}
+.scheduleStatusLegend span:last-child:before{display:none}
+.scheduleDateNavigator{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.scheduleDateNavigator .button{white-space:nowrap}
+.dayTimelineSection .availabilityBand,.trainerWeekTimelineSection .availabilityBand{background:rgba(46,177,104,.2);border:1px solid rgba(32,138,80,.42)}
+.dayTimelineSection .blockedBand,.trainerWeekTimelineSection .blockedBand{background:repeating-linear-gradient(135deg,rgba(232,148,45,.22),rgba(232,148,45,.22) 8px,rgba(232,148,45,.36) 8px,rgba(232,148,45,.36) 16px);border:1px solid #d99b54}
+.weekCell.availableCell{background:#f1fcf5}
+.weekCell.unavailableCell{background:#fafbfe}
+.weekCell .weekEvent{position:relative;z-index:2}
+.calendarEventCard.status-completed{border-left:4px solid #8755cf}
+.calendarEventCard.status-scheduled{border-left:4px solid #437acf}
+.calendarEventCard.status-tentative{border-left:4px solid #dc9b4a}
+.calendarEventCard.status-blocked{border-left:4px solid #d97647}
+.learnerUpcomingSummary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.learnerUpcomingSummary .softBadge{padding:8px 12px}
+@media(max-width:760px){.scheduleDateNavigator{width:100%}.scheduleDateNavigator .input[type=date]{min-width:160px;flex:1}.scheduleStatusLegend{gap:8px}.trainerWeekToolbar{flex-wrap:wrap}.scheduleToolbar{flex-wrap:wrap}}
+
+.dayTimelineSection .scheduleFreeSlot{position:absolute;top:9px;bottom:9px;z-index:1;background:transparent;border:1px dashed transparent;border-radius:8px;color:transparent;cursor:pointer;font-weight:800;font-size:18px}
+.dayTimelineSection .scheduleFreeSlot:hover,.dayTimelineSection .scheduleFreeSlot:focus-visible{background:rgba(33,150,89,.13);color:#116438;border-color:#479b70;outline-offset:1px}
+.dayTimelineSection .timelineEvent{z-index:3}
+.calendarEventCard.status-conducted{border-left:4px solid #8755cf}
+.monthCell i.status-conducted{background:#ede9fe;color:#6334a3}
+.monthCell i.status-scheduled{background:#e2efff;color:#245d9d}
+
+/* Financial review: differences must be identifiable without relying on row colour alone. */
+.financeChangeBadge{display:inline-block;padding:3px 7px;margin-left:8px;border-radius:7px;background:#fff0c4;color:#7b4e00;border:1px solid #e8bd54;font-size:11px;letter-spacing:0;text-transform:none}
+.financeValueOld{background:#fff6e4;color:#80501e;font-weight:650}
+.financeValueNew{background:#ddf5e6;color:#135b35;font-weight:750;box-shadow:inset 3px 0 #39a46c}
+
+.learnerWeekCalendar{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));gap:7px;overflow-x:auto;padding:8px 0}
+.learnerWeekDay{display:flex;min-width:105px;flex-direction:column;align-items:flex-start;gap:7px;border:1px solid #dce5f5;border-radius:13px;background:#fafcff;padding:12px;text-align:left;cursor:pointer;color:#21324e}
+.learnerWeekDay.selected{background:#ede9ff;border-color:#8d69ed}
+.learnerWeekDay span,.learnerWeekDay small{font-size:11px;color:#536685;overflow-wrap:anywhere}
+.calendarViewToggle{display:flex;align-items:center;gap:5px;color:#536685;font-size:12px}
+.learnerUpcomingList{margin-top:14px}
+@media(max-width:800px){.learnerWeekCalendar{grid-template-columns:repeat(7,minmax(125px,1fr))}}
+
+/* Calendar event states match the legend, across the operational and learner roles. */
+.timelineEvent.class.scheduled,.timelineEvent.class.tentative{background:#dceaff;color:#1a4c8a;border:1px solid #82a9e1}
+.timelineEvent.conducted,.timelineEvent.class.conducted{background:#ebe3ff;color:#5e35a3;border:1px solid #bba5e9}
+.timelineEvent.blocked,.timelineEvent.leave,.timelineEvent.missed{background:#ffe4c8;color:#8f481f;border:1px solid #dda66e}
+.weekEvent.status-conducted{border-left:4px solid #885fc5;background:#f0ebff}
+.weekEvent.status-scheduled{border-left:4px solid #4d84d0;background:#edf5ff}
+.weekEvent.status-missed{border-left:4px solid #db8d49;background:#fff0dc}

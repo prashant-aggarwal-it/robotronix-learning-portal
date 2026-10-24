@@ -144,7 +144,16 @@ function OnboardingPageContent(){
    if(!form.source)e.source="Please tell us how you heard about Robotronix™.";
    if(!form.dataConsent)e.dataConsent="Parent / guardian consent is required.";
   }
-  setErrors(e);return Object.keys(e).length===0;
+  setErrors(e);
+  if(Object.keys(e).length){
+   window.requestAnimationFrame(()=>{
+    const first=document.querySelector<HTMLElement>(".onboardingPage .invalid, .onboardingPage [aria-invalid=\"true\"], .onboardingPage .fieldError");
+    first?.scrollIntoView({behavior:"smooth",block:"center"});
+    if(first instanceof HTMLInputElement||first instanceof HTMLSelectElement||first instanceof HTMLTextAreaElement)first.focus({preventScroll:true});
+    else first?.closest(".formGroup")?.querySelector<HTMLElement>("input,select,textarea,button")?.focus({preventScroll:true});
+   });
+  }
+  return Object.keys(e).length===0;
  }
  function next(){if(validate(1))setStep(2)}
  function startAnotherChild(){
@@ -218,6 +227,7 @@ function OnboardingPageContent(){
     </section>
 
     <div className="consentBox"><label><input type="checkbox" checked={form.dataConsent} onChange={e=>set("dataConsent",e.target.checked)}/><span><b>Parent / guardian consent *</b><small>I confirm I am authorised to provide this information for course delivery, progress tracking and related communication. Read our <Link href="/privacy" target="_blank" rel="noopener noreferrer" style={{color:"#4537a5",textDecoration:"underline"}}>Privacy Policy</Link>.</small></span></label>{err("dataConsent")}</div>
+    {Object.keys(errors).filter(k=>k!=="submit"&&Boolean(errors[k])).length>0&&<div className="errorBanner" role="alert">Please complete {Object.keys(errors).filter(k=>k!=="submit"&&Boolean(errors[k])).length} required field(s). We have highlighted the missing information above.</div>}
     {errors.submit&&<div className="errorBanner">{errors.submit}</div>}
     <div className="wizardActions"><button className="button ghost" onClick={()=>setStep(1)}>Back</button><button className="button" disabled={saving} onClick={submit}>{saving?"Submitting…":"Submit onboarding"}</button></div>
    </>}
