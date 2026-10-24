@@ -218,6 +218,8 @@ create table if not exists public.onboarding_submissions (
   status text not null default 'new' check (status in ('draft','new','setup_pending','active')),
   assigned_course_id uuid references public.courses(id) on delete set null,
   assigned_trainer_id uuid references public.trainers(id) on delete set null,
+  activated_student_id uuid references public.students(id) on delete set null,
+  activated_enrollment_id uuid references public.enrollments(id) on delete set null,
   enrollment_type text check (enrollment_type is null or enrollment_type in ('one_to_one','small_group')),
   cohort_id uuid references public.cohorts(id) on delete set null,
   start_date date,
