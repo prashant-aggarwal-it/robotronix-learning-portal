@@ -32,6 +32,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(schedule).toContain("selectedClass.eventType===\"class\"&&");
   expect(schedule).toContain("IST date:");
   expect(schedule).toContain('e.key==="Escape"');
+  expect(schedule).toContain("classDialogRef.current?.focus()");
  });
  test("class editor is authoritative for Zoom, cancellation and enrollment return",()=>{
   const editor=source("components/operations/ClassRecordEditor.tsx");
