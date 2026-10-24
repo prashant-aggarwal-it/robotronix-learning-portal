@@ -116,3 +116,14 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(trainer).not.toContain("const today=new Date().toISOString()");
  });
 });
+
+
+test("AI Flow is the default appearance, while a saved Classic preference is respected",()=>{
+ const layout=source("app/layout.tsx");
+ const switcher=source("components/ThemeSwitcher.tsx");
+ expect(layout).toContain('data-portal-theme="ai-flow"');
+ expect(switcher).toContain('useState<PortalTheme>("ai-flow")');
+ expect(switcher).toContain('let saved:PortalTheme="ai-flow"');
+ expect(switcher).toContain('if(isPortalTheme(value))saved=value');
+ expect(switcher).toContain('window.localStorage.setItem(STORAGE_KEY,next)');
+});

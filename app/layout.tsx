@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en" data-scroll-behavior="smooth" data-portal-theme="ai-flow">
       <body>{productionConfigurationError ? <main className="loginShell"><section className="card"><h1>Portal configuration required</h1><p>The production portal is not connected to its database. Contact the Robotronix administrator.</p></section></main> : <>{children}<GridHorizontalScrollBridge/></>}</body>
     </html>
   );
