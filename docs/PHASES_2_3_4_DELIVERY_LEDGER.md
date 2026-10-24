@@ -73,3 +73,10 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Correctly detect Supabase deletion failure when replacing trainer availability; **atomic replacement is still required** to prevent losing slots if the next insert fails.
 - Trainer workload statistics now pluralize students correctly, including highest load and running cohort summaries.
 - Added availability save regression contract assertion.
+
+## Further fixes committed in this round (QA pending)
+- Trainer availability replacement now checks failed deletion, snapshots previous records, and attempts to restore original slots when replacement insertion fails. This is defensive recovery, **not** atomicity: transactional RPC #25 remains required.
+- Admin Trainer KPI wording now uses correct singular/plural and clearer portal status copy.
+- Schedule event dialog displays IST date and avoids routing demos/workshops to the class-only editor; Escape keyboard dismissal added.
+- Added regression assertions for notification/availability and schedule UI contracts.
+- No database reset, migration, or production merge performed in this round.
