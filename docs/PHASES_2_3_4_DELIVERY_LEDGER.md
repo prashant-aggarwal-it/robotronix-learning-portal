@@ -88,3 +88,9 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - Trainer availability UI catches unexpected save/network errors and always releases the Save button loading state.
 - Supabase availability save now snapshots existing slots and attempts restore when insertion fails, but this cannot substitute for the transactional SQL RPC tracked in #25.
 - Live Zoom deletion/playback and concurrency were inspected at the API layer only; no proof of actual Zoom account behavior. These remain blocked on authorized end-to-end testing.
+
+## Phase 3 atomic availability database preparation
+- Added authorized `replace_trainer_availability_v1(uuid,jsonb)` function to canonical database schema with transaction-level advisory serialization, ordered overlap validation and transactional delete/insert.
+- Application now calls this RPC when present; guarded legacy delete/insert fallback is used **only** for `PGRST202` (RPC absent). Existing prelaunch Supabase DB has **not** been migrated from this session.
+- CI regression asserts SQL function, permissions, lock and caller. This does not replace live concurrent transaction testing.
+- Required before production certification: apply canonical function to shared database, refresh PostgREST schema cache if needed, verify trainer/admin role permission, replacement when occupied, overlapping slots, and concurrent saves; then remove fallback.
