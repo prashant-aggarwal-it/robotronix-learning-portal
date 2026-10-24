@@ -140,3 +140,10 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - [x] Added offline security regression tests to `qa/security-static.spec.ts` for these three invariants.
 - [ ] Confirm webhook attendance behavior with real Zoom participants; ambiguous names require explicit/manual reconciliation, not guessed association.
 - [ ] Run dedicated DAST against authorized deployment and confirm Zoom Marketplace Beta compliance. Passing source and dependency checks does not prove complete security.
+
+## QA E2E automation extension
+- Added `qa/integrated-journey-e2e.spec.ts`: actual Admin Student → Enrollment → filtered class history, class detail → enrollment, Trainer/Parent pages, four-role Zoom classroom API permissions and anonymous recording/classroom denial.
+- Added `qa:integrated-e2e` command including the previously implemented real operational browser tests (onboarding, scheduling, attendance, finance, payroll, demo, permissions).
+- Added manual-dispatch GitHub Action `integrated-e2e.yml` scoped to restricted QA environment, including input target guard, credentials and Playwright trace/report artifacts.
+- Added `scripts/guard-integrated-e2e-target.mjs` fail-closed URL/QA-Supabase guard and `docs/QA_AUTOMATION_COVERAGE_AND_EXECUTION.md` instructions/coverage matrix.
+- **Important:** Standard PR security/build checks are separate from authenticated E2E, which must run on the isolated QA preview and seeded Supabase data. Live provider Zoom + fresh-Supabase execution still require connected QA infrastructure and are not marked passed.
