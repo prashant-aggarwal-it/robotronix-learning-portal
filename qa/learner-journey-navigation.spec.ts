@@ -10,8 +10,8 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(repository).toContain("enrollmentId:enrollment.id");
   expect(repository).toContain("generateEnrollmentScheduleV2(enrollment.id");
   expect(onboarding).toContain("Continue to enrollment");
-  expect(onboarding).toContain("activationResult.enrollmentId");
-  expect(onboarding).toContain("activationResult.studentId");
+  expect(onboarding).toContain("activationResult?.enrollmentId");
+  expect(onboarding).toContain("activationResult?.studentId");
   expect(onboarding).toContain("booking needs attention");
  });
  test("activated onboarding persists links and existing Supabase needs additive migration",()=>{
@@ -66,14 +66,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(zoom).toContain("Zoom meeting not ready yet");
   expect(zoom).toContain("data.meeting?.lastError");
  });
- test("availability save checks delete errors before reporting success",()=>{
-  const repo=source("lib/repository.ts");
-  expect(repo).toContain("if(deleteError)return{ok:false,error:");
-  expect(repo).toContain("previousRows");
-  expect(repo).toContain("Previous slots could NOT be restored automatically");
-  expect(repo).toContain("notifyAdminOfOwnAvailability(trainerId,\"weekly\")");
- });
- test("availability has an authorized atomic transaction and compatibility fallback",()=>{
+ test("availability requires an authorized atomic transaction",()=>{
   const sql=source("database/01_install/01_CREATE_SCHEMA.sql");
   const repo=source("lib/repository.ts");
   expect(sql).toContain("function public.replace_trainer_availability_v1");
@@ -81,7 +74,9 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(sql).toContain("public.current_trainer_id()=p_trainer_id");
   expect(sql).toContain("Overlapping trainer availability slots");
   expect(repo).toContain('supabase.rpc("replace_trainer_availability_v1"');
-  expect(repo).toContain('atomicError.code!=="PGRST202"');
+  expect(repo).toContain("Trainer availability upgrade missing");
+  expect(repo).not.toContain("Previous slots could NOT be restored automatically");
+  expect(repo).toContain('notifyAdminOfOwnAvailability(trainerId,"weekly")');
  });
  test("recording playback offers secure stream refresh on media errors",()=>{
   const playback=source("app/admin/zoom/recording/[recordingId]/page.tsx");
