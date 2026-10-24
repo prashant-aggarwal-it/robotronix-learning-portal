@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {useEffect,useRef} from "react";
 import { usePathname } from "next/navigation";
 import { ModeBadge } from "./ModeBadge";
 import { NotificationBell } from "./NotificationBell";
@@ -50,6 +51,28 @@ function isActive(path:string, href:string){
 
 export function AppShell({ role, children }: { role: UserRole; children: React.ReactNode }) {
   const pathname=usePathname();
+  const sidebarRef=useRef<HTMLElement|null>(null);
+  useEffect(()=>{
+    const nav=sidebarRef.current;
+    if(!nav)return;
+    const key="robotronix-sidebar-scroll-"+role;
+    try{
+      const previous=Number(sessionStorage.getItem(key));
+      if(Number.isFinite(previous)&&previous>0)nav.scrollTop=previous;
+      else nav.querySelector<HTMLElement>("a.active")?.scrollIntoView({block:"nearest"});
+    }catch{}
+    const save=()=>{try{sessionStorage.setItem(key,String(nav.scrollTop))}catch{}};
+    nav.addEventListener("scroll",save,{passive:true});
+    return()=>{save();nav.removeEventListener("scroll",save)};
+  },[role]);
+  useEffect(()=>{
+    const nav=sidebarRef.current;
+    if(!nav)return;
+    const active=nav.querySelector<HTMLElement>("a.active");
+    if(!active)return;
+    const bounds=nav.getBoundingClientRect(),item=active.getBoundingClientRect();
+    if(item.top<bounds.top||item.bottom>bounds.bottom)active.scrollIntoView({block:"nearest"});
+  },[pathname]);
   const workspace=role==="admin"||role==="trainer";
   if(workspace){
     let lastGroup="";
@@ -57,7 +80,7 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
       <aside className="workspaceSidebar">
         <Link href={`/${role}`} className="sidebarBrand" aria-label="Robotronix Learning Portal"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
         <div className="portalName">Learning Portal <span>{role==="admin"?"Admin":"Trainer"}</span></div>
-        <nav className="sidebarNav">{navByRole[role].map(item=>{
+        <nav className="sidebarNav" ref={sidebarRef}>{navByRole[role].map(item=>{
           const showGroup=role==="admin"&&item.group&&item.group!==lastGroup;
           if(showGroup)lastGroup=item.group!;
           return <div key={item.href}>{showGroup&&<div className="navGroupLabel">{item.group}</div>}<Link className={isActive(pathname,item.href)?"active":""} href={item.href}><span className="navIndicator"/>{item.label}</Link></div>
