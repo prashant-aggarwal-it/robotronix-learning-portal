@@ -858,19 +858,29 @@ export async function listPortalAuditLogForRecord(entityTypes:string[],entityId:
 export async function listLearnerJourneyAudit(studentId:string,limit=500):Promise<PortalAuditRecord[]>{
  const supabase=getSupabaseBrowserClient();
  if(!supabase)return demoStore.auditLog.list().filter(a=>a.entityId===studentId).slice(0,limit);
- const [enrollmentResult,classResult,onboardingResult]=await Promise.all([
+ const [enrollmentResult,classResult,onboardingResult,attendanceResult,observationResult,holdsResult]=await Promise.all([
   supabase.from("enrollments").select("id").eq("student_id",studentId),
   supabase.from("schedule_events").select("id").eq("student_id",studentId),
-  supabase.from("onboarding_submissions").select("id").eq("activated_student_id",studentId)
+  supabase.from("onboarding_submissions").select("id").eq("activated_student_id",studentId),
+  supabase.from("class_attendance").select("id").eq("student_id",studentId),
+  supabase.from("learning_observations").select("id").eq("student_id",studentId),
+  supabase.from("enrollment_holds").select("id,enrollment_id").limit(1000)
  ]);
- for(const result of [enrollmentResult,classResult,onboardingResult])if(result.error)throw new Error("Unable to build learner journey: "+result.error.message);
+ for(const result of [enrollmentResult,classResult,onboardingResult,attendanceResult,observationResult,holdsResult])if(result.error)throw new Error("Unable to build learner journey: "+result.error.message);
  const enrollmentIds=(enrollmentResult.data??[]).map((r:any)=>String(r.id));
  const classIds=(classResult.data??[]).map((r:any)=>String(r.id));
  const onboardingIds=(onboardingResult.data??[]).map((r:any)=>String(r.id));
+ const attendanceIds=(attendanceResult.data??[]).map((r:any)=>String(r.id));
+ const observationIds=(observationResult.data??[]).map((r:any)=>String(r.id));
+ const holdIds=(holdsResult.data??[]).filter((r:any)=>enrollmentIds.includes(String(r.enrollment_id))).map((r:any)=>String(r.id));
  const filters=[
-  {types:["students","student_guardians","learning_observations","learning_observation_internal_notes"],ids:[studentId]},
-  {types:["enrollments","enrollment_holds"],ids:enrollmentIds},
-  {types:["schedule_events","class_attendance"],ids:classIds},
+  {types:["students","student_guardians"],ids:[studentId]},
+  {types:["enrollments"],ids:enrollmentIds},
+  {types:["enrollment_holds"],ids:holdIds},
+  {types:["schedule_events"],ids:classIds},
+  {types:["class_attendance"],ids:attendanceIds},
+  {types:["learning_observations"],ids:observationIds},
+  {types:["learning_observation_internal_notes"],ids:[studentId]},
   {types:["onboarding_submissions"],ids:onboardingIds}
  ];
  const queries=filters.filter(f=>f.ids.length).map(f=>supabase.from("portal_audit_log").select("*").in("entity_type",f.types).in("entity_id",f.ids.slice(0,500)).order("created_at",{ascending:false}).limit(limit));
