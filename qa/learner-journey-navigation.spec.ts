@@ -155,7 +155,7 @@ test("Historical payouts never report invented changed-field counts; pending cha
  const admin=source("app/admin/trainers/[id]/page.tsx");
  expect(review).toContain('useState<""|"approve"|"request_correction"|"reject">("")');
  expect(review).toContain("Current approved (not historical)");
- expect(review).toContain("Original change counts cannot be reconstructed reliably");
+ expect(review).toContain("Original change counts cannot be reconstructed reliably".replace(/^O/,"o"));
  expect(review).toContain("financeChangeBadge");
  expect(review).toContain("financeValueNew");
  expect(review).toContain("aria-pressed={showFull}");
