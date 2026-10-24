@@ -56,12 +56,17 @@ export function TrainerAvailabilityEditor({trainerId,onSaved,onCancel}:{trainerI
     if(invalid||overlap){setMsg("Please correct invalid or overlapping time slots before saving.");return;}
     setBusy(true);
     setMsg("");
-    const result=await saveTrainerAvailability(trainerId,rows);
-    setBusy(false);
-    if(!result.ok){setMsg(result.error??"Unable to save availability.");return}
-    setSavedValue(value);
-    setMsg(result.notificationWarning?"Availability saved, but Admin notification could not be sent: "+result.notificationWarning:result.notificationSkipped?"Availability saved.":"Availability saved. Admin notified.");
-    onSaved?.();
+    try{
+      const result=await saveTrainerAvailability(trainerId,rows);
+      if(!result.ok){setMsg(result.error??"Unable to save availability.");return}
+      setSavedValue(value);
+      setMsg(result.notificationWarning?"Availability saved, but Admin notification could not be sent: "+result.notificationWarning:result.notificationSkipped?"Availability saved.":"Availability saved. Admin notified.");
+      await onSaved?.();
+    }catch(error){
+      setMsg("Unable to save availability: "+(error instanceof Error?error.message:String(error)));
+    }finally{
+      setBusy(false);
+    }
   }
 
   if(!loaded)return <div className="emptyState compact">Loading availability…</div>;
