@@ -56,6 +56,8 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  test("availability save checks delete errors before reporting success",()=>{
   const repo=source("lib/repository.ts");
   expect(repo).toContain("if(deleteError)return{ok:false,error:");
+  expect(repo).toContain("previousRows");
+  expect(repo).toContain("Previous slots could NOT be restored automatically");
   expect(repo).toContain("notifyAdminOfOwnAvailability(trainerId,\"weekly\")");
  });
  test("trainer today is calculated in IST rather than UTC",()=>{
