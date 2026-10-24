@@ -41,7 +41,7 @@ export function PayoutReview({request,approved,onDecision}:Props){
  return <section className="panel" aria-label="Trainer payout change request">
   <div className="panelHeader"><div><b>{pending?"Awaiting finance review":statusLabel}</b><p className="cellSub">Submitted {new Date(request.submittedAt).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})} IST · {pending?`${changed.length} changed ${changed.length===1?"field":"fields"}`:"Archived review"}</p></div>
   <button type="button" className="button ghost smallButton" aria-pressed={showFull} onClick={()=>setShowFull(x=>!x)}>{showFull?"Hide sensitive values":"Reveal sensitive values"}</button></div>
-  {pending&&<p className="cellSub" style={{margin:"0 0 12px"}}>Compare the approved record with the trainer's request. Only highlighted rows are different; sensitive values are masked until you reveal them.</p>}
+  {pending?<p className="cellSub" style={{margin:"0 0 12px"}}>Compare approved records with the submitted values. Highlighted rows changed; sensitive values are masked until you reveal them.</p>:<p className="cellSub" style={{margin:"0 0 12px"}}>The on-file values are current, not necessarily the values before this historical request. Original change counts cannot be reconstructed reliably without an approval-time snapshot.</p>}
   <div style={{overflowX:"auto"}}>
    <table style={{width:"100%",borderCollapse:"collapse"}}>
     <thead><tr><th style={{textAlign:"left",padding:"8px"}}>Field</th><th style={{textAlign:"left",padding:"8px"}}>{historic?"Current approved (not historical)":"Approved on file"}</th><th style={{textAlign:"left",padding:"8px"}}>Trainer's proposed change</th></tr></thead>
