@@ -2,7 +2,7 @@ import {readFileSync,existsSync} from "node:fs";
 const read=(p)=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const checks={
  "app/admin/trainers/[id]/page.tsx":["PayoutReview","reviewTrainerFinanceRequest"],
- "components/finance/PayoutReview.tsx":["Approved on file","proposed change","request_correction","Reveal for authorized review"],
+ "components/finance/PayoutReview.tsx":["Approved on file","proposed change","request_correction","Reveal sensitive values"],
  "app/api/admin/system-logs/route.ts":["getUser","active","role!==\"admin\"","no-store"],
  "app/admin/system-logs/page.tsx":["/api/admin/system-logs","System Logs"],
  "lib/server/system-log.ts":["SUPABASE_SERVICE_ROLE_KEY","portal_system_logs","reference_id"],
