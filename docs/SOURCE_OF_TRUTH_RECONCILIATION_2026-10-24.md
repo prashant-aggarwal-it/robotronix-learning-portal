@@ -61,3 +61,20 @@ The previously shared SQL packs were not validated on production, and failed fir
 
 - [x] Added read-only full production column/constraint audit at `docs/sql/PRODUCTION_SCHEMA_PARITY_READ_ONLY.sql`. Located **outside** `database/03_verify` because the release guard requires `01_VERIFY_RELEASE.sql` to be the only verification SQL in that directory. Live query outputs remain pending.
 - [ ] The recent messages parent-ID repair is code-reviewed but has **not** passed runtime/role E2E tests. Keep candidate unmerged.
+
+## Production read-only parity observation — 24 October 2026
+
+Connected Supabase project display name: **Production DB - Robotronix Learning Portal**. The audit executed READ-ONLY catalog queries: **72 public base tables** and **265 public functions** reported. Both `courses.public_name` and `courses.internal_name` are NOT NULL without defaults, and must be provided when inserting course fixtures. There are **7 Auth users** with `rtqa26-` prefixes; do not recreate them without checking ownership and roles. `public.onboarding_submission_admin_notification_trg` exists and `public.replace_trainer_availability_v1(uuid,jsonb)` resolves. Supabase migration-history API returned an empty list, consistent with SQL Editor execution and not proof of an absent schema.
+
+Mandatory insert columns reported by production:
+- courses: slug, title, code, category, grade_from, grade_to, total_sessions, public_name, internal_name
+- cohorts: name, code, course_id
+- enrollments: student_id, course_id, trainer_id, enrollment_type, started_at
+- schedule_events: trainer_id, title, date, start_time, end_time, event_type
+- parents: profile_id; profiles: id, role; students/trainers: full_name
+- onboarding_submissions: child_name, source
+- communication_threads: category, subject
+- communication_messages: thread_id, sender_role, sender_name, body
+- student_fee_packages: id, enrollment_id, name, scheme, currency, amount, sessions, start_date, end_date, installments
+
+**Limitations:** This is a subset parity audit, not byte-for-byte function/policy parity or a successful migration dry run. No changes were applied to Supabase. Final QA seed still needs safe fixture reconciliation and validation. Never rerun fresh-install SQL on this existing production database.
