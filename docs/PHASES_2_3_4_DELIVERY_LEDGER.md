@@ -18,7 +18,7 @@ Treat Onboarding → Enrollment → Class → Zoom as ONE end-to-end Admin workf
 - [ ] Regression tests for exactly-once full-course generation, schedule conflicts, DST and lifecycle navigation.
 
 ## Phase 3 — Daily operations
-- [ ] Trainer weekly availability: copy/clear, overlap prevention, date overrides, approvals, notifications.
+- [x] Existing weekly availability editor validates overlaps; repository now surfaces deletion failure instead of false save success. [ ] Replace non-atomic delete+insert with transactional database RPC; verify copy/clear, date overrides, approvals and notifications in live QA.
 - [x] Trainer weekly schedule class cards deep-link to the existing session editor; trainer week anchors to IST. [ ] Complete trainer dashboard next-class validation, attendance, learning observations and earnings E2E.
 - [ ] Admin class actions: reschedule/cancel/makeup, policy enforcement, no-shows, notifications and overrides.
 - [ ] Correct delivered-hour payroll, attended-hour progress, cancellations/penalties and paid-lock behavior.
@@ -31,7 +31,7 @@ Treat Onboarding → Enrollment → Class → Zoom as ONE end-to-end Admin workf
 - [x] Reduced competing Enrollments CTAs, contextual individual-class booking and cross-workspace shortcuts (browser UI acceptance pending).
 - [ ] Simplify onboarding KPI strip and remove misleading statuses.
 - [ ] Clarify Student (permanent learner), Enrollment (specific course), Class (session) and Zoom (service).
-- [ ] Fix trainer grammar, clipped tables, responsive horizontal scrolling and redundant summary cards.
+- [x] Corrected pluralization in trainer workload summary and neutral portal access language. [ ] Confirm table clipping, mobile horizontal scrolling and redundant summary cards with screenshot/browser review.
 - [ ] Harmonize action hierarchy, labels, cards, empty states, date/time display and themes.
 - [ ] Test keyboard, mobile, Admin/Trainer/Parent/Student views.
 
@@ -68,3 +68,8 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - ZoomClassActions shows pending and error states consistently in compact mode, plus meeting provisioning error detail when returned.
 - Navigation contract tests cover these improvements; the most recent CI run must pass before release.
 - **Still outstanding:** concurrency-safe Zoom host reservation, actual recording playback/delete/expiry tests, detailed finance/late-cancellation policy verification, notifications, parent/learner access security and complete mobile UX.
+
+## Further Phase 3/4 fixes
+- Correctly detect Supabase deletion failure when replacing trainer availability; **atomic replacement is still required** to prevent losing slots if the next insert fails.
+- Trainer workload statistics now pluralize students correctly, including highest load and running cohort summaries.
+- Added availability save regression contract assertion.
