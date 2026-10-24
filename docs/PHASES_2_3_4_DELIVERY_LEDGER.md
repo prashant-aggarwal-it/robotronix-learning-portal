@@ -105,3 +105,14 @@ Related tracking: GitHub issues #18, #20, #22; prior Zoom stabilization/security
 - [ ] Migration has **not** been executed on the shared Supabase project; the app and database upgrade should be rolled out together.
 - [ ] Previously activated records are not automatically backfilled, to avoid unsafe name-based matching.
 - [ ] Zoom provider lifecycle, recording files, full four-role access, end-to-end finance and mobile acceptance remain externally unverified.
+
+## Final non-intervention coding hardening — 24 October 2026
+- Migrated trainer availability save to **atomic-only** `replace_trainer_availability_v1`; eliminated the older non-atomic fallback entirely. This feature intentionally requires the additive migration before use.
+- Added read-only production upgrade verification to `database/03_verify/01_VERIFY_RELEASE.sql`.
+- Added durable activated student/enrollment IDs to schema, repository mappings, onboarding activation response and revisited onboarding navigation.
+- Added preflight migration detection *before learner creation*, plus persistence-failure reporting to prevent misleading duplicate activations.
+- Prepared a non-destructive existing-Supabase migration at `database/04_migrations/2026_10_24_PHASES_2_3_4_ADDITIVE.sql`.
+- Added manual secure-recording-stream renewal when media playback reports a failure.
+- Expanded offline source-contract Playwright tests; the live 4-role and third-party Zoom tests are intentionally left for the later user-run production test round.
+- **Release order:** DB backup → apply additive migration → read-only SQL verification → merge validated PR → Netlify production deploy → manual production QA. No full reset required.
+- Historic activated onboarding records are deliberately not guessed/backfilled from names; only future activations persist the IDs.
