@@ -149,3 +149,16 @@ test("Parent and Student calendar has upcoming classes and status differentiatio
  expect(source("app/parent/calendar/page.tsx")).toContain('<LearnerCalendar');
  expect(source("app/student/calendar/page.tsx")).toContain('<LearnerCalendar');
 });
+
+test("Historical payouts never report invented changed-field counts; pending changes stand out",()=>{
+ const review=source("components/finance/PayoutReview.tsx");
+ const admin=source("app/admin/trainers/[id]/page.tsx");
+ expect(review).toContain('useState<""|"approve"|"request_correction"|"reject">("")');
+ expect(review).toContain("Current approved (not historical)");
+ expect(review).toContain("Original change counts cannot be reconstructed reliably");
+ expect(review).toContain("financeChangeBadge");
+ expect(review).toContain("financeValueNew");
+ expect(review).toContain("aria-pressed={showFull}");
+ expect(admin).toContain("PAYOUT REVIEW HISTORY");
+ expect(admin).toContain("PAYOUT CHANGES REQUIRING REVIEW");
+});
