@@ -64,6 +64,7 @@ export default function OnboardingDetail(){
  const[primaryWhatsAppSame,setPrimaryWhatsAppSame]=useState(true);
  const[secondaryWhatsAppSame,setSecondaryWhatsAppSame]=useState(true);
  const[notice,setNotice]=useState<Notice>(null);
+ const[activationResult,setActivationResult]=useState<{studentId:string;enrollmentId:string;classesCreated?:number;schedulingWarning?:string}|null>(null);
  const[activeAction,setActiveAction]=useState<ActiveAction>(null);
  const[lastSavedAt,setLastSavedAt]=useState<string|undefined>();
  const[baseline,setBaseline]=useState("");
@@ -191,7 +192,9 @@ export default function OnboardingDetail(){
   const res=await activateOnboarding(id,{courseId,trainerId,enrollmentType:type,cohortId:type==="small_group"?cohortId:undefined,startDate,scheduleTimezone,scheduleRules,scheduleOverrideConfirmed:hasScheduleExceptions&&scheduleOverrideConfirmed,scheduleOverrideNote:hasScheduleExceptions&&scheduleOverrideConfirmed?"Admin confirmed schedule exception against parent preference and/or trainer availability during activation.":undefined,schedulingHorizon:type==="small_group"?"manual":schedulingHorizon,schedulingWeeks:schedulingHorizon==="weeks"?schedulingWeeks:undefined});
   setActiveAction(null);
   if(!res.ok){setNotice({type:"error",text:("error" in res?res.error:undefined)??"Unable to activate learner."});return;}
-  setNotice("schedulingWarning" in res&&res.schedulingWarning?{type:"error",text:res.schedulingWarning+" You can retry scheduling from enrollment management after resolving it."}:{type:"success",text:`Learner activated successfully.${"classesCreated" in res?` ${res.classesCreated} classes booked.`:""} Linked to the family account.`});await refresh();
+  const result={studentId:res.studentId!,enrollmentId:res.enrollmentId!,classesCreated:("classesCreated" in res?res.classesCreated:undefined),schedulingWarning:("schedulingWarning" in res?res.schedulingWarning:undefined)};
+  setActivationResult(result);
+  setNotice(result.schedulingWarning?{type:"error",text:result.schedulingWarning+" Open the enrollment to resolve scheduling."}:{type:"success",text:"Learner activated and linked to the family account."});await refresh();
  }
 
  const statusIndex=r.status==="active"?3:r.status==="setup_pending"?2:1;
@@ -201,6 +204,16 @@ export default function OnboardingDetail(){
   <AdminPageHeader eyebrow="ONBOARDING SETUP" title={r.childName} description={`${r.grade} · ${r.school} · ${timeZoneLabel(r.timezone)} · submitted ${new Date(r.submittedAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}`} actions={<Link href="/admin/onboarding" className="button ghost">Back to onboarding</Link>}/>
   <div className="cleanStepper" aria-label="Onboarding progress">{[{n:1,t:"New"},{n:2,t:"Setup pending"},{n:3,t:"Active"}].map((s,i)=><div className={`cleanStep ${statusIndex>s.n?"done":statusIndex===s.n?"current":""}`} key={s.n}><span>{statusIndex>s.n?"✓":s.n}</span><b>{s.t}</b>{i<2&&<i/>}</div>)}</div>
 
+  {activationResult&&<section className="panel" role="status" aria-label="Activation next steps" style={{marginTop:18}}>
+   <div className="eyebrow">NEXT STEPS · LEARNER ACTIVATED</div>
+   <h2>Learning setup is ready</h2>
+   <p>Student profile and course enrollment created. {activationResult.schedulingWarning?"Class booking needs attention.":activationResult.classesCreated!==undefined?`${activationResult.classesCreated} new class bookings created.`:"Classes are managed through the enrollment and schedule."} A Zoom meeting is not necessarily created when a class is scheduled.</p>
+   <div className="formActions" style={{display:"flex",flexWrap:"wrap",gap:10}}>
+    <Link className="button" href={`/admin/enrollments/${encodeURIComponent(activationResult.enrollmentId)}`}>Continue to enrollment →</Link>
+    <Link className="button secondary" href={`/admin/students/${encodeURIComponent(activationResult.studentId)}`}>View student profile</Link>
+    <Link className="button ghost" href="/admin/schedule">View schedule</Link>
+   </div>
+  </section>}
   <section className="onboardingSummaryCards">
    <div className={`panel onboardingSummaryCard familyDetailsCard ${editFamilyDetails?"editMode":""}`}><div className="panelHeader"><div><div className="eyebrow">FAMILY & CHILD</div><h2>Submitted information</h2><p>Compact parent-entered summary. Edit only when a correction is needed.</p></div><button type="button" className="button ghost smallButton" onClick={()=>setEditFamilyDetails(v=>!v)}>{editFamilyDetails?"Close edit":"Edit family details"}</button></div>
     {!editFamilyDetails?<div className="summaryDefinitionGrid"><Info a="Child" b={`${r.childName} · ${r.grade||"Grade not set"}`}/><Info a="Primary guardian" b={guardianView?`${guardianView.primary.name} · ${relationshipLabel(guardianView.primary.relationship)}`:"—"}/><Info a="Secondary guardian" b={guardianView?.secondary?`${guardianView.secondary.name} · ${relationshipLabel(guardianView.secondary.relationship)}`:"Not added"}/><Info a="Primary WhatsApp" b={r.primaryWhatsApp||"—"}/><Info a="Location" b={[r.city,r.state&&r.state.toLowerCase()!==r.city.toLowerCase()?r.state:null,r.country].filter(Boolean).join(", ")}/><Info a="Timezone" b={timeZoneLabel(r.timezone)}/><Info a="School" b={r.school||"—"}/></div>:<div className="compactEditGrid familyEditWorkspace">
