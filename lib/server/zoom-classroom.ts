@@ -126,6 +126,24 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
  const {data:existing,error:meetingError}=await db.from("zoom_meetings").select("*").eq("schedule_event_id",scheduleEventId).eq("purpose","class").maybeSingle();
  if(meetingError)throw new Error(meetingError.message);
 
+ // Reuse an existing meeting before allocating another host or creating a duplicate.
+ // Zoom PATCH responses do not contain join_url, so retrieve it from Zoom if the stored link is missing.
+ if(existing&&["scheduled","started"].includes(existing.status)&&(!existing.join_url||!/^https:\/\//i.test(existing.join_url))){
+  try{
+   const remote=await zoomApi(existing.host_account_id,`/meetings/${encodeURIComponent(existing.zoom_meeting_id)}`);
+   const joinUrl=typeof remote?.join_url==="string"&&/^https:\/\//i.test(remote.join_url)?remote.join_url:null;
+   if(joinUrl){
+    const {error:repairError}=await db.from("zoom_meetings").update({join_url:joinUrl,last_error:null,updated_at:new Date().toISOString()}).eq("id",existing.id);
+    if(repairError)throw new Error(repairError.message);
+    return {action:"repaired" as const,meetingId:existing.id,hostId:existing.host_account_id};
+   }
+   throw new Error("Zoom returned no valid joining URL for the existing meeting.");
+  }catch(repairError){
+   const reason=repairError instanceof Error?repairError.message:String(repairError);
+   await db.from("zoom_meetings").update({last_error:"Zoom joining link unavailable: "+reason,updated_at:new Date().toISOString()}).eq("id",existing.id);
+   throw new Error("Existing Zoom meeting needs attention: "+reason);
+  }
+ }
  const host=await chooseHost(db,start,end,existing?.host_account_id,existing?.id);
  const body={
   topic:`Robotronix Classroom · ${typed.title}`,
@@ -150,6 +168,10 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
  }
 
  const created=await zoomApi(host.id,"/users/me/meetings",{method:"POST",body:JSON.stringify(body)});
+ if(!created?.id||typeof created.join_url!=="string"||!/^https:\/\//i.test(created.join_url)){
+  if(created?.id)await deleteRemoteMeetingSafely(host.id,String(created.id)).catch(()=>{});
+  throw new Error("Zoom did not return a valid meeting ID and join URL. Classroom provisioning was not completed.");
+}
  if(existing){
   // Reserve the new host in the database before removing the original Zoom room.
   // The GiST exclusion constraint rejects overlapping concurrent reservations.
