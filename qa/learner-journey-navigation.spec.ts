@@ -29,9 +29,11 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  test("enrollment is class hub using existing idempotent generator",()=>{
   const enrollment=source("app/admin/enrollments/[id]/page.tsx");
   expect(enrollment).toContain("generateEnrollmentScheduleV2(record.id,\"full\")");
-  expect(enrollment).toContain("countedBookings");
+  expect(enrollment).toContain("allClassRecords");
+  expect(enrollment).toContain("showAllClasses?allClassRecords:futureBookings.slice(0,3)");
+  expect(enrollment).toContain("Show fewer classes");
   expect(enrollment).toContain("nextClass.id");
-  expect(enrollment).toContain("/admin/classes?enrollment=");
+  expect(enrollment).toContain("?enrollment=${encodeURIComponent(record.id)}");
  });
  test("each schedule calendar view opens consistent class details",()=>{
   const schedule=source("app/admin/schedule/page.tsx");
@@ -48,7 +50,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  });
  test("class editor is authoritative for Zoom, cancellation and enrollment return",()=>{
   const editor=source("components/operations/ClassRecordEditor.tsx");
-  for(const action of ["ZoomClassActions","cancelClassV2","rescheduleClassV2","saveClassAttendance","Open enrollment"])expect(editor).toContain(action);
+  for(const action of ["ZoomClassActions","cancelClassV2","rescheduleClassV2","saveClassAttendance","Back to enrollment"])expect(editor).toContain(action);
  });
  test("classes accept a filtered enrollment history route",()=>{
   const classes=source("app/admin/classes/page.tsx");
@@ -63,8 +65,9 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  });
  test("Zoom shows meeting pending or failures rather than empty controls",()=>{
   const zoom=source("components/ZoomClassActions.tsx");
-  expect(zoom).toContain("Zoom setup pending");
-  expect(zoom).toContain("Reconcile missing classes");
+  expect(zoom).toContain("Zoom setup required");
+  expect(zoom).toContain("reconcile missing meetings");
+  expect(zoom).toContain("Open Zoom Classroom");
   expect(zoom).toContain("data.meeting?.lastError");
   expect(zoom).toContain("!data.available&&reusableLink&&data.canJoin");
   expect(zoom).toContain("data.withinJoinWindow");
