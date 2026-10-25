@@ -68,6 +68,18 @@ test.describe("Phase 3 form quality release contracts",()=>{
   expect(text).toContain('existingActiveEntry&&!record?"Address Line 1":"Address Line 1 *"');
   expect(text).toContain('existingActiveEntry&&!record?"Postal / ZIP Code":"Postal / ZIP Code *"');
  });
+ test("required indicators align with conditional finance, trainer and review validation",()=>{
+  const finance=source("app/admin/finance/page.tsx");
+  for(const label of ["Student / enrollment *","Package name *","Agreed fee after discount *","Included sessions *","Student package *","Payment date *","Unique reference / receipt number *"])expect(finance).toContain(label);
+  const trainer=source("app/trainer/profile/page.tsx");
+  expect(trainer).toContain('>Mobile *<input');
+  expect(trainer).toContain('>Timezone *<input');
+  expect(trainer).toContain('>IFSC {draft.preferredPayoutMethod==="bank"?"*":""}<input');
+  expect(trainer).toContain('>UPI ID {draft.preferredPayoutMethod==="upi"?"*":""}<input');
+  expect(source("app/admin/zoom/page.tsx")).toContain("Meeting title *<input");
+  expect(source("app/parent/profile/page.tsx")).toContain('>Name *<input className="input" value={intro.introducedName}');
+  expect(source("components/progress/ProjectReviewWorkspace.tsx")).toContain("required to review/complete");
+ });
  test("canonical fresh-install schema contains P0/P1 audit and onboarding triggers",()=>{
   const schema=source("database/01_install/01_CREATE_SCHEMA.sql");
   expect(schema).toContain("onboarding_submission_admin_notification_trg");
