@@ -33,14 +33,14 @@ export default function EnrollmentDetail(){
 
 useLiveRefresh(["enrollments","cohorts","students","trainers","courses","schedule_events"],()=>{if(!editingRef.current&&!saving)return refresh()},`admin-enrollment-${id}`);
 useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
- const[zoomByClass,setZoomByClass]=useState<Record<string,{status:string;lastError?:string|null}>>({});
+ const[zoomByClass,setZoomByClass]=useState<Record<string,{status:string;lastError?:string|null;joinUrl?:string|null}>>({});
  useEffect(()=>{
   let active=true;
   adminApi("/api/zoom/overview").then(result=>{
     if(!active)return;
-    const map:Record<string,{status:string;lastError?:string|null}>={};
+    const map:Record<string,{status:string;lastError?:string|null;joinUrl?:string|null}>={};
     for(const meeting of result.meetings||[])if(meeting.purpose==="class"&&meeting.schedule_event_id)
-      map[meeting.schedule_event_id]={status:meeting.status,lastError:meeting.last_error};
+      map[meeting.schedule_event_id]={status:meeting.status,lastError:meeting.last_error,joinUrl:meeting.join_url};
     setZoomByClass(map);
   }).catch(()=>{if(active)setZoomByClass({})});
   return()=>{active=false};
@@ -102,7 +102,7 @@ if(!record.courseId||!record.trainerId||!record.startedAt){setMsg("Course, train
       <tbody>{(showAllClasses?allClassRecords:futureBookings.slice(0,3)).map(ev=><tr key={ev.id}>
        <td>{ev.date}</td><td>{enrollmentDisplayTime(ev.startTime)}–{enrollmentDisplayTime(ev.endTime)} {ev.timezone||IST_TIMEZONE}</td>
        <td>{displayLabel(ev.status)}</td>
-       <td><span className="softBadge">{["cancelled","rescheduled","blocked"].includes(ev.status)?"Not applicable":zoomByClass[ev.id]?.status==="error"||zoomByClass[ev.id]?.lastError?"Needs attention":zoomByClass[ev.id]?"Provisioned":"Not provisioned"}</span></td>
+       <td><span className="softBadge">{["cancelled","rescheduled","blocked"].includes(ev.status)?"Not applicable":zoomByClass[ev.id]?.status==="error"||zoomByClass[ev.id]?.lastError||zoomByClass[ev.id]&&!zoomByClass[ev.id].joinUrl?"Needs attention":zoomByClass[ev.id]?"Zoom ready":"Not provisioned"}</span></td>
        <td><Link className="tableAction" href={`/admin/classes/${encodeURIComponent(ev.id)}?enrollment=${encodeURIComponent(record.id)}`}>View class →</Link></td>
       </tr>)}</tbody></table>
     </div>
