@@ -26,7 +26,7 @@ export default function OnboardingAdmin(){
  const[q,setQ]=useState("");const[status,setStatus]=useState("all");const[source,setSource]=useState("all");
  const[sortKey,setSortKey]=useState<SortKey>("updated");const[sortDir,setSortDir]=useState<"asc"|"desc">("desc");
  const[page,setPage]=useState(1);const[pageSize,setPageSize]=useState(25);
- const filtersChanged=Boolean(q||status!=="all"||source!=="all"||sortKey!=="updated"||sortDir!=="desc");
+ const filtersChanged=Boolean(q||status!=="all"||source!=="all"||sortKey!=="updated"||sortDir!=="desc"||pageSize!==25);
  function resetFilters(){setQ("");setStatus("all");setSource("all");setSortKey("updated");setSortDir("desc");setPage(1);setPageSize(25)}
  async function reload(){setRows(await listOnboardingSubmissions())}
  useEffect(()=>{void reload()},[]);
