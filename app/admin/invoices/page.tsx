@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
+import {readableSaveError} from "@/lib/form-errors";
 import {GridSearch,GridReset} from "@/components/admin/GridFilterControls";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -31,13 +32,14 @@ function Workspace(){
  const[query,setQuery]=useState(""),[filter,setFilter]=useState<"all"|"needs_invoice"|"draft"|"outstanding"|"overdue"|"paid"|"attention">("all");
  const[selectedId,setSelectedId]=useState<string|null>(null);
 
- async function reload(){setError("");try{setData(await adminApi("/api/admin/invoices"))}catch(e){setError(e instanceof Error?e.message:String(e))}}
+ async function reload(){setError("");try{setData(await adminApi("/api/admin/invoices"))}catch(e){setError(readableSaveError(e))}}
  useEffect(()=>{void reload()},[]);
  useLiveRefresh(["student_invoices","student_fee_payments"],reload,"admin-invoices");
  async function act(body:any,success="Invoice action completed successfully."){
+  if(busy)return;
   setBusy(true);setError("");setNotice("");
   try{const r=await adminApi("/api/admin/invoices",{method:"POST",body:JSON.stringify(body)});setNotice(r.reused?"An invoice already existed for this fee package, so Robotronix reused it.":success);await reload()}
-  catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}
+  catch(e){setError(readableSaveError(e))}finally{setBusy(false)}
  }
  async function copy(value?:string|null){if(!value)return;try{await navigator.clipboard.writeText(value);setNotice("Payment link copied.");window.setTimeout(()=>setNotice(""),1800)}catch{setError("Unable to copy the payment link in this browser.")}}
 
