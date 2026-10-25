@@ -206,17 +206,17 @@ export default function OnboardingDetail(){
 
  async function activate(){
   if(busy)return;
-  const issues:FormIssue[]=[...validateDraftDates({childDob:r.childDob,startDate},todayIstDate())];
+  const issues:FormIssue[]=[...validateDraftDates({childDob:r!.childDob,startDate},todayIstDate())];
   if(!guardianView?.primary.name?.trim())issues.push({field:"primaryGuardian",message:"Enter the primary parent or guardian's name."});
   if(!guardianView?.primary.mobile||!validInternationalPhone(guardianView.primary.mobile))issues.push({field:"primaryGuardian",message:"Enter a valid primary guardian mobile number with country code."});
-  if(!r.primaryWhatsApp||!validInternationalPhone(r.primaryWhatsApp))issues.push({field:"primaryGuardian",message:"Enter a valid primary WhatsApp number with country code."});
+  if(!r!.primaryWhatsApp||!validInternationalPhone(r!.primaryWhatsApp))issues.push({field:"primaryGuardian",message:"Enter a valid primary WhatsApp number with country code."});
   if(guardianView?.secondary?.mobile&&!validInternationalPhone(guardianView.secondary.mobile))issues.push({field:"primaryGuardian",message:"Correct the secondary guardian's mobile number."});
-  if(r.alternateWhatsApp&&!validInternationalPhone(r.alternateWhatsApp))issues.push({field:"primaryGuardian",message:"Correct the alternate WhatsApp number."});
-  if(!r.childName?.trim())issues.push({field:"childProfile",message:"Enter the child's name."});
-  if(!r.childDob)issues.push({field:"childDob",message:"Enter the child's date of birth before activation."});
-  if(!r.grade)issues.push({field:"childProfile",message:"Select the child's grade or class."});
-  if(!r.school?.trim())issues.push({field:"childProfile",message:"Enter the child's school."});
-  if(!isValidTimeZone(r.timezone))issues.push({field:"childProfile",message:"Select a valid family timezone."});
+  if(r!.alternateWhatsApp&&!validInternationalPhone(r!.alternateWhatsApp))issues.push({field:"primaryGuardian",message:"Correct the alternate WhatsApp number."});
+  if(!r!.childName?.trim())issues.push({field:"childProfile",message:"Enter the child's name."});
+  if(!r!.childDob)issues.push({field:"childDob",message:"Enter the child's date of birth before activation."});
+  if(!r!.grade)issues.push({field:"childProfile",message:"Select the child's grade or class."});
+  if(!r!.school?.trim())issues.push({field:"childProfile",message:"Enter the child's school."});
+  if(!isValidTimeZone(r!.timezone))issues.push({field:"childProfile",message:"Select a valid family timezone."});
   if(!courseId)issues.push({field:"assignment",message:"Select a course."});
   if(!trainerId)issues.push({field:"assignment",message:"Assign a trainer."});
   if(type==="small_group"&&!cohortId)issues.push({field:"assignment",message:"Choose a cohort for group delivery."});
