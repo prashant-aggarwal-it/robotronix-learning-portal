@@ -5378,7 +5378,7 @@ grant execute on function public.replace_trainer_availability_v1(uuid,jsonb) to 
 
 -- P0/P1 audit-history coverage (fresh-install source of truth).
 -- Keep aligned with database/04_migrations/2026_10_25_P0_P1_AUDIT_COVERAGE.sql.
-DO $
+DO $$
 DECLARE t text;
 BEGIN
  FOREACH t IN ARRAY ARRAY['portal_access_requests','student_invoices','zoom_meetings','zoom_recordings'] LOOP
@@ -5390,4 +5390,4 @@ BEGIN
    EXECUTE format('CREATE TRIGGER %I AFTER INSERT OR UPDATE OR DELETE ON public.%I FOR EACH ROW EXECUTE FUNCTION public.audit_core_change()', 'audit_'||t,t);
   END IF;
  END LOOP;
-END $;
+END $$;
