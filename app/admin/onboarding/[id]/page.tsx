@@ -182,7 +182,7 @@ export default function OnboardingDetail(){
   if(busy)return;
   const issues=validateDraftDates({childDob:r?.childDob,startDate},todayIstDate());
   setFormIssues(issues);
-  if(issues.length){setNotice({type:"error",text:"Please review the highlighted date fields. Unsaved changes remain on this page."});return;}
+  if(issues.length){if(issues.some(issue=>issue.field==="childDob"))setEditFamilyDetails(true);setNotice({type:"error",text:"Please review the highlighted date fields. Unsaved changes remain on this page."});return;}
   if(preferredRangeError||scheduleRangeError){setNotice({type:"error",text:preferredRangeError||scheduleRangeError||"Invalid time range."});return;}
   if(startDate&&!validNewEnrollmentDate(startDate)&&r?.status!=="active"){setNotice({type:"error",text:"Enrollment start date cannot be earlier than today (IST)."});return;}
   if(!dirty){setNotice({type:"info",text:"No new changes to save."});return;}
