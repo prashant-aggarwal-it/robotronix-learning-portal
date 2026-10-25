@@ -21,7 +21,7 @@ import {displayLabel} from "@/lib/display";
 
 function enrollmentDisplayTime(value:string){const [hour,minute]=value.split(":").map(Number);return `${hour%12||12}:${String(minute).padStart(2,"0")} ${hour>=12?"PM":"AM"}`;}
 export default function EnrollmentDetail(){
- const{id}=useParams<{id:string}>();const[record,setRecord]=useState<EnrollmentAdminRecord|null|undefined>(undefined);const[students,setStudents]=useState<StudentAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[baseline,setBaseline]=useState("");const[editing,setEditing]=useState(false);const[lastSavedAt,setLastSavedAt]=useState<string|undefined>();const[msg,setMsg]=useState("");const[formIssues,setFormIssues]=useState<FormIssue[]>([]);const[saving,setSaving]=useState(false);const[bookings,setBookings]=useState<ScheduleEvent[]>([]);const[bookingStatus,setBookingStatus]=useState("");const[generating,setGenerating]=useState(false);const loadSeq=useRef(0);const editingRef=useRef(false);
+ const{id}=useParams<{id:string}>();const[record,setRecord]=useState<EnrollmentAdminRecord|null|undefined>(undefined);const[students,setStudents]=useState<StudentAdminRecord[]>([]);const[courses,setCourses]=useState<CourseAdminRecord[]>([]);const[trainers,setTrainers]=useState<TrainerAdminRecord[]>([]);const[cohorts,setCohorts]=useState<CohortAdminRecord[]>([]);const[baseline,setBaseline]=useState("");const[editing,setEditing]=useState(false);const[lastSavedAt,setLastSavedAt]=useState<string|undefined>();const[msg,setMsg]=useState("");const[formIssues,setFormIssues]=useState<FormIssue[]>([]);const[saving,setSaving]=useState(false);const[bookings,setBookings]=useState<ScheduleEvent[]>([]);const[bookingStatus,setBookingStatus]=useState("");const[generating,setGenerating]=useState(false);const[showAllClasses,setShowAllClasses]=useState(false);const loadSeq=useRef(0);const editingRef=useRef(false);
  async function refresh(force=false){
   const seq=++loadSeq.current;
   const[e,s,c,t,h,scheduled]=await Promise.all([getAdminEnrollment(id),listAdminStudents(),listAdminCourses(),listAdminTrainers(),listAdminCohorts(),listScheduleEvents()]);
@@ -48,6 +48,7 @@ useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
  const eligibleTrainers=useMemo(()=>trainers.filter(t=>t.recordStatus==="active"&&(!record?.courseId||t.courseIds.includes(record.courseId))),[trainers,record?.courseId]);const eligibleCohorts=useMemo(()=>cohorts.filter(c=>c.status==="active"&&c.courseId===record?.courseId&&c.trainerId===record?.trainerId&&(c.id===record?.cohortId||c.studentIds.length<c.capacity)),[cohorts,record?.courseId,record?.trainerId,record?.cohortId]);
  if(record===undefined)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="panel">Loading enrollment…</div></AppShell></RoleGuard>;if(!record)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="emptyState">Enrollment not found.</div></AppShell></RoleGuard>;
  const dirty=JSON.stringify(record)!==baseline;const student=students.find(s=>s.id===record.studentId);const course=courses.find(c=>c.id===record.courseId);const trainer=trainers.find(t=>t.id===record.trainerId);const cohort=record.cohortId?cohorts.find(c=>c.id===record.cohortId):undefined;
+ const allClassRecords=bookings.filter(b=>b.eventType==="class").sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime));
  const upcomingBookings=bookings.filter(b=>b.eventType==="class"&&!["cancelled","rescheduled","blocked","missed"].includes(b.status)).sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime));
  const now=new Date();
  const nextClass=upcomingBookings.find(e=>zonedRangeParts(e.date,e.startTime,e.endTime,e.timezone||IST_TIMEZONE,IST_TIMEZONE).endInstant.getTime()>=now.getTime());
@@ -91,15 +92,30 @@ if(!record.courseId||!record.trainerId||!record.startedAt){setMsg("Course, train
   <section className="panel" aria-label="Enrollment classes" style={{marginBottom:18}}>
    <div className="panelHeader"><div><div className="eyebrow">NEXT STEP · COURSE DELIVERY</div><h2>Your class schedule</h2><p>Review upcoming lessons, Zoom readiness and class outcomes. Open any class for full details.</p></div></div>
    <div className="financeSummaryGrid"><div><span>Total lessons</span><b>{expectedSessions||"Not set"}</b></div><div><span>Attended lessons</span><b>{expectedSessions?`${completedLessons}/${expectedSessions}`:completedLessons}</b></div><div><span>Upcoming scheduled lessons</span><b>{upcomingLessons}</b></div></div>
-   {nextClass?<div className="entityBoundaryNote"><b>Next class · {nextClass.title}</b><span>{nextClassIst?.startDate} · {nextClassIst?enrollmentDisplayTime(nextClassIst.startTime):""}–{nextClassIst?enrollmentDisplayTime(nextClassIst.endTime):""} IST · Learner/local {nextClass.date} {enrollmentDisplayTime(nextClass.startTime)} {nextClass.timezone||IST_TIMEZONE} · {displayLabel(nextClass.status)}</span><div className="row" style={{marginTop:12,flexWrap:"wrap"}}><ZoomClassActions scheduleEventId={nextClass.id} showAdminSetupLink/><Link href={`/admin/classes/${encodeURIComponent(nextClass.id)}`} className="button ghost">View next class →</Link></div></div>:<p className="fieldHint">There is no future class on the current schedule. Check the enrollment status and class bookings.</p>}
+   {nextClass?<div className="entityBoundaryNote"><b>Next class · {nextClass.title}</b><span>{nextClassIst?.startDate} · {nextClassIst?enrollmentDisplayTime(nextClassIst.startTime):""}–{nextClassIst?enrollmentDisplayTime(nextClassIst.endTime):""} IST · Learner/local {nextClass.date} {enrollmentDisplayTime(nextClass.startTime)} {nextClass.timezone||IST_TIMEZONE} · {displayLabel(nextClass.status)}</span><div className="row" style={{marginTop:12,flexWrap:"wrap"}}><ZoomClassActions scheduleEventId={nextClass.id} showAdminSetupLink/><Link href={`/admin/classes/${encodeURIComponent(nextClass.id)}?enrollment=${encodeURIComponent(record.id)}`} className="button ghost">View next class →</Link></div></div>:<p className="fieldHint">There is no future class on the current schedule. Check the enrollment status and class bookings.</p>}
    <div className="formActions" style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
     {record.enrollmentType==="one_to_one"&&record.status==="active"&&<details className="secondaryActions"><summary>Schedule actions</summary><div><button type="button" className="button ghost smallButton" disabled={generating||editing||dirty} onClick={generateMissingClasses}>{generating?"Checking…":"Check missing classes and Zoom"}</button></div></details>}
-    <Link className="button ghost" href={`/admin/classes?enrollment=${encodeURIComponent(record.id)}`}>View all classes →</Link>
+
    </div>
    {record.enrollmentType==="small_group"&&<p className="fieldHint">Cohort sessions are shared by all members. Generate class dates from the cohort workflow rather than once per learner.</p>}
    {bookingStatus&&<p role="status" className="infoBanner">{bookingStatus}</p>}
-   {futureBookings.length>0&&<div className="tableWrap professionalTable" style={{marginTop:12}}><table><thead><tr><th>Date</th><th>Time</th><th>Status</th><th>Zoom</th><th>Action</th></tr></thead><tbody>{futureBookings.slice(0,3).map(ev=><tr key={ev.id}><td>{ev.date}</td><td>{enrollmentDisplayTime(ev.startTime)}–{enrollmentDisplayTime(ev.endTime)} {ev.timezone||IST_TIMEZONE}</td><td>{displayLabel(ev.status)}</td><td><span className="softBadge">{zoomByClass[ev.id]?.status==="error"||zoomByClass[ev.id]?.lastError?"Needs attention":zoomByClass[ev.id]? "Provisioned":"Not provisioned"}</span></td><td><Link className="tableAction" href={`/admin/classes/${encodeURIComponent(ev.id)}`}>View class →</Link></td></tr>)}</tbody></table></div>}
-   {futureBookings.length>3&&<p className="fieldHint">Showing the next 3 classes. Select View all classes for the complete timetable and history.</p>}
+   {allClassRecords.length>0&&<>
+    <div className="tableWrap professionalTable" style={{marginTop:12}}>
+     <table><thead><tr><th>Date</th><th>Time</th><th>Status</th><th>Zoom</th><th>Action</th></tr></thead>
+      <tbody>{(showAllClasses?allClassRecords:futureBookings.slice(0,3)).map(ev=><tr key={ev.id}>
+       <td>{ev.date}</td><td>{enrollmentDisplayTime(ev.startTime)}–{enrollmentDisplayTime(ev.endTime)} {ev.timezone||IST_TIMEZONE}</td>
+       <td>{displayLabel(ev.status)}</td>
+       <td><span className="softBadge">{["cancelled","rescheduled","blocked"].includes(ev.status)?"Not applicable":zoomByClass[ev.id]?.status==="error"||zoomByClass[ev.id]?.lastError?"Needs attention":zoomByClass[ev.id]?"Provisioned":"Not provisioned"}</span></td>
+       <td><Link className="tableAction" href={`/admin/classes/${encodeURIComponent(ev.id)}?enrollment=${encodeURIComponent(record.id)}`}>View class →</Link></td>
+      </tr>)}</tbody></table>
+    </div>
+    {!showAllClasses&&futureBookings.length===0&&<p className="fieldHint">No future classes are scheduled. Expand the complete history to review previous class records.</p>}
+    {allClassRecords.length>3&&<div className="formActions" style={{justifyContent:"center",marginTop:12}}>
+     <button type="button" className="button ghost" aria-expanded={showAllClasses} onClick={()=>setShowAllClasses(value=>!value)}>
+      {showAllClasses?"Show fewer classes":`Show all ${allClassRecords.length} class records`} {showAllClasses?"↑":"↓"}
+     </button>
+    </div>}
+   </>}
   </section>
    <section aria-label="Enrollment overview" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:12,marginBottom:18}}>
     {[
