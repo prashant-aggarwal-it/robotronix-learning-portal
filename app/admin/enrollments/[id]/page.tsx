@@ -63,10 +63,7 @@ useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
   try{const result=await generateEnrollmentScheduleV2(record.id,"full");
    if(!result.ok)setBookingStatus("Unable to generate classes: "+result.error);
    else{
-    let zoomMessage="";
-    try{const zoom=await adminApi("/api/zoom/reconcile-classes",{method:"POST",body:JSON.stringify({enrollmentId:record.id})});zoomMessage=" · Zoom: "+(zoom.created||0)+" prepared, "+(zoom.failed||0)+" need attention.";}
-    catch(error){zoomMessage=" · Zoom setup pending: "+(error instanceof Error?error.message:String(error));}
-    setBookingStatus("Schedule checked: "+result.created+" new bookings; "+result.total+" course occurrences accounted for."+zoomMessage);
+    setBookingStatus("Schedule checked: "+result.created+" new bookings; "+result.total+" course occurrences accounted for."+(result.zoomWarning?" "+result.zoomWarning:" Zoom meeting setup checked."));
     await refresh(true);
    }
   }catch(error){setBookingStatus(error instanceof Error?error.message:String(error))}
