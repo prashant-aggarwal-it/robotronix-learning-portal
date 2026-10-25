@@ -880,3 +880,28 @@ begin
  end if;
 end $$;
 select 'PHASES_2_3_4_MIGRATION_GATES' as section,'PASS' as result;
+
+-- Recent P0/P1 audit requirements are part of the canonical fresh-install schema.
+-- This verification is read-only and must pass without running any additive patch.
+do $$
+declare item text;
+begin
+ foreach item in array array['portal_access_requests','student_invoices','zoom_meetings','zoom_recordings'] loop
+  if to_regclass('public.'||item) is null then
+   raise exception 'Missing audited table %',item;
+  end if;
+  if not exists (
+    select 1 from pg_trigger trg
+    join pg_class cls on cls.oid=trg.tgrelid
+    join pg_namespace ns on ns.oid=cls.relnamespace
+    where ns.nspname='public' and cls.relname=item
+      and trg.tgname='audit_'||item and not trg.tgisinternal and trg.tgenabled<>'D'
+  ) then raise exception 'Canonical P0/P1 audit trigger missing: %',item; end if;
+ end loop;
+ if not exists(
+  select 1 from pg_trigger
+  where tgname='onboarding_submission_admin_notification_trg'
+    and tgrelid='public.onboarding_submissions'::regclass and not tgisinternal and tgenabled<>'D'
+ ) then raise exception 'Onboarding admin notification trigger missing'; end if;
+end $$;
+select 'CONSOLIDATED_AUDIT_COVERAGE_GATE' as section,'PASS' as result;
