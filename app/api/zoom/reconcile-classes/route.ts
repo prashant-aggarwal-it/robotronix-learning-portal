@@ -27,11 +27,13 @@ export async function POST(request:NextRequest){
    if(linked.has(event.id))return false;
    try{return zonedLocalToUtc(event.date,event.start_time,event.timezone||"Asia/Kolkata").getTime()>=Date.now()-15*60_000}catch{return false}
   });
+  // Bound each repair request to avoid platform timeouts when a full course is scheduled.
+  const batch=eligible.slice(0,5);
   let created=0,skipped=0;
   const failures:Array<{eventId:string;reason:string}>=[];
   // Sequential scheduling honours current host reservations. Database exclusion constraints
   // remain the final guard against competing provisioning requests.
-  for(const event of eligible){
+  for(const event of batch){
    try{
     const result=await syncZoomForScheduleEvent(auth.admin,event.id,auth.actorId);
     if(result.action==="created")created++;
@@ -40,6 +42,6 @@ export async function POST(request:NextRequest){
     failures.push({eventId:event.id,reason:error instanceof Error?error.message:String(error)});
    }
   }
-  return NextResponse.json({ok:true,created,skipped,failed:failures.length,failures,scanned:(events||[]).length,eligible:eligible.length},{headers:{"Cache-Control":"no-store"}});
+  return NextResponse.json({ok:true,created,skipped,failed:failures.length,failures,scanned:(events||[]).length,eligible:eligible.length,processed:batch.length,remaining:Math.max(0,eligible.length-batch.length)},{headers:{"Cache-Control":"no-store"}});
  }catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:500});}
 }
