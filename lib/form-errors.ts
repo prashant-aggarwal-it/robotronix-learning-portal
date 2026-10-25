@@ -8,6 +8,12 @@ export function readableSaveError(error:unknown):string{
  if(/check constraint|23514/i.test(value))return "One or more fields contain an unsupported value. Review the marked fields.";
  if(/permission denied|row.level.security|42501|not authorised|not authorized/i.test(value))return "Your account does not have permission to save this record. Contact an administrator.";
  if(/duplicate key|23505/i.test(value))return "A record with these details already exists. Review duplicates before retrying.";
+ if(/trainer.*(unavailable|availability|busy|conflict)|schedule.*(overlap|conflict)|overlap.*(booking|class)|no available host|host.*capacity/i.test(value))return "The selected trainer, classroom host or time slot is unavailable. Check availability and choose another slot.";
+ if(/invalid.*(time|date|duration)|time.*(range|after start|before end)/i.test(value))return "The selected date, time or duration is invalid. Review the schedule and try again.";
+ if(/already.*(enrolled|enrollment|scheduled|linked)|active.*enrollment.*exists/i.test(value))return "This learner already has an existing active assignment. Review the existing enrollment or schedule before creating another.";
+ if(/payment.*(locked|paid|finalized)|payroll.*(locked|finalized)|cannot.*edit.*paid/i.test(value))return "This payment or payroll period is finalized. Request an authorized correction instead of editing it.";
+ if(/missing.*(course|trainer|cohort|student|learner|enrollment)|must.*(select|choose).*?(course|trainer|cohort|student)/i.test(value))return "A required learner, course, trainer or cohort selection is missing. Complete the relevant selection and retry.";
+
  if(/failed to fetch|network|timeout|fetch failed/i.test(value))return "Unable to reach the server. Your changes are still on screen; check your connection and try again.";
  if(/no matching onboarding record|record was not updated/i.test(value))return "This record was not updated. Refresh the page and check that you still have access.";
  return "Unable to save. Your changes remain on screen. Retry or contact an administrator if the problem continues.";
