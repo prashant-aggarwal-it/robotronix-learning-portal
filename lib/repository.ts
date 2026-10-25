@@ -9,6 +9,7 @@ import type {
   SessionUpdateInput, StudentAdminRecord, TrainerAdminRecord, TrainerFinanceRecord, TrainerSummary, UserRole, DeliveryCenterRecord, LearningObservationRecord, TrainerFeedbackRecord, LearnerProjectRecord, EnrollmentHoldRecord, ProgressAlertActionRecord, ProgressAlertState, LearnerProgressRow, ProgressAlertRecord, ClassAttendanceRecord, WeeklyScheduleSlot, ReminderPolicy, TrainerCompensationPlan, TrainerEarningRecord, TrainerPayoutRecord, CorrectionRequestRecord, PortalAuditRecord, ParentCommunityProfile, FamilyIntroductionRecord, TrainerFinanceChangeRequest
 } from "./types";
 import { getSupabaseBrowserClient } from "./supabase/browser";
+import {adminApi} from "./admin-api-client";
 import { buildLearnerProgressRows, buildProgressAlerts } from "./progress-engine";
 import { emitNotification } from "./communication-repository";
 import { IST_TIMEZONE, shortTimeZoneLabel, zonedLocalToUtc, zonedParts, zonedRangeParts } from "./timezones";
@@ -629,7 +630,7 @@ export async function activateOnboarding(id:string,assignment:{courseId:string;t
   if(assignment.enrollmentType==="one_to_one"&&assignment.schedulingHorizon!=="manual"&&enrollment.id){
    const booking=await generateEnrollmentScheduleV2(enrollment.id,assignment.schedulingHorizon??"full",assignment.schedulingWeeks);
    if(!booking.ok)return{ok:true,studentId:created.id,enrollmentId:enrollment.id,schedulingWarning:"Learner activated, but future classes were NOT booked: "+booking.error};
-   return{ok:true,studentId:created.id,enrollmentId:enrollment.id,classesCreated:booking.created};
+   return{ok:true,studentId:created.id,enrollmentId:enrollment.id,classesCreated:booking.created,...(booking.zoomWarning?{schedulingWarning:booking.zoomWarning}:{})};
   }
   return{ok:true,studentId:created.id,enrollmentId:enrollment.id};
 }
