@@ -166,3 +166,17 @@ test("Historical payouts never report invented changed-field counts; pending cha
  expect(admin).toContain("PAYOUT REVIEW HISTORY");
  expect(admin).toContain("PAYOUT CHANGES REQUIRING REVIEW");
 });
+
+test("Cross-role class navigation keeps the learner calendar and trainer history in context",()=>{
+ const calendar=source("components/calendar/LearnerCalendar.tsx");
+ const parent=source("app/parent/calendar/page.tsx");
+ const student=source("app/student/calendar/page.tsx");
+ const trainer=source("app/trainer/classes/page.tsx");
+ const classEditor=source("components/operations/ClassRecordEditor.tsx");
+ expect(parent).toContain('<LearnerCalendar events={scoped} role="parent"');
+ expect(student).toContain('<LearnerCalendar events={scoped} role="student"');
+ for(const marker of ["showAllUpcoming","showHistory","Class history","Show all ${upcoming.length} upcoming classes","setShowHistory(true);selectDate(e.date)"])expect(calendar).toContain(marker);
+ expect(trainer).toContain("['all','All classes']");
+ expect(trainer).toContain('view==="history"');
+ expect(classEditor).toContain('role==="admin"?"/admin/classes":"/trainer/classes"');
+});
