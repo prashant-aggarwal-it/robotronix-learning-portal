@@ -16,13 +16,20 @@ export async function POST(request:NextRequest){
   const {data:existing,error:meetingError}=await auth.admin.from("zoom_meetings")
    .select("schedule_event_id,join_url,status").eq("purpose","class").not("schedule_event_id","is",null);
   if(meetingError)throw new Error(meetingError.message);
+  const [offlineEnrollments,offlineCohorts]=await Promise.all([
+   auth.admin.from("enrollments").select("id").eq("delivery_channel","offline"),
+   auth.admin.from("cohorts").select("id").eq("delivery_channel","offline")
+  ]);
+  if(offlineEnrollments.error||offlineCohorts.error)throw new Error(offlineEnrollments.error?.message||offlineCohorts.error?.message);
+  const offlineEnrollmentIds=new Set((offlineEnrollments.data||[]).map(row=>row.id));
+  const offlineCohortIds=new Set((offlineCohorts.data||[]).map(row=>row.id));
   const linked=new Map((existing||[]).map(row=>[row.schedule_event_id,row]));
   // Scan in date order, across pages. The first 200 entries may already be provisioned.
   const batch:Array<{id:string;date:string;start_time:string;timezone:string|null}>=[];
   let scanned=0,eligibleCount=0,morePages=true;
   for(let page=0;morePages&&page<25;page++){
    let query=auth.admin.from("schedule_events")
-    .select("id,date,start_time,timezone")
+    .select("id,date,start_time,timezone,enrollment_id,cohort_id")
     .eq("event_type","class").in("status",["scheduled","tentative","makeup"])
     .order("date",{ascending:true}).order("start_time",{ascending:true}).order("id",{ascending:true})
     .range(page*200,page*200+199);
@@ -32,6 +39,7 @@ export async function POST(request:NextRequest){
    const rows=events||[];
    scanned+=rows.length;
    for(const event of rows){
+    if((event.enrollment_id&&offlineEnrollmentIds.has(event.enrollment_id))||(event.cohort_id&&offlineCohortIds.has(event.cohort_id)))continue;
     const meeting=linked.get(event.id);
     if(meeting&&meeting.join_url&&/^https:\/\//i.test(meeting.join_url)&&!["cancelled","error"].includes(meeting.status))continue;
     try{
