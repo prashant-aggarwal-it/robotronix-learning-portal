@@ -1,3 +1,13 @@
+## QA branch consolidation status — 25 October 2026
+
+The **canonical fresh database source** remains `database/01_install/01_CREATE_SCHEMA.sql` plus `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql`, combined by `npm run db:build-fresh-install`. It already includes the recent Phase 2–4 enrollment-linkage columns, atomic trainer-availability RPC, four P0/P1 audit-history triggers (portal access, student invoices, Zoom meetings, Zoom recordings), and the onboarding Admin-notification trigger. Run the generated fresh installer only on a deliberately empty database and then `03_verify/01_VERIFY_RELEASE.sql`.
+
+**Do not apply `database/04_migrations/*` after a fresh install.** Those versioned, idempotent files are *only* for incrementally upgrading an older existing installation without resetting it. They are not missing pieces of the canonical schema. New onboarding Save Draft error handling, optional-date normalization and field validation are **application changes**, with no database DDL needed: `onboarding_submissions.child_dob` and `start_date` are already nullable date columns. Blank dates are now converted to SQL NULL at the repository boundary.
+
+**Reset is a separate future operation, not performed in this QA round.** First capture backups and verify which Auth identities, enrollments, finance/payroll, Zoom secrets and communications need to survive. Run the combined installer on disposable DEV and verify the P0/P1 audit gates, notification trigger, RLS and role workflows before considering any production reset. Never use the DEV reset script on a live database.
+
+---
+
 ## Existing prelaunch Supabase project — Phases 2–4 update (no reset)
 
 **Do not run the fresh-install script or reset the existing project.** The fresh-install script is intended for a *new, empty* Supabase project. It is not a migration and will not safely reconcile a database containing students, Zoom credentials or Finance data.
