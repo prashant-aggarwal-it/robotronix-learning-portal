@@ -180,3 +180,31 @@ test("Cross-role class navigation keeps the learner calendar and trainer history
  expect(trainer).toContain('view==="history"');
  expect(classEditor).toContain('role==="admin"?"/admin/classes":"/trainer/classes"');
 });
+
+
+test("Zoom scheduling repairs missing join URLs and performs bounded automatic retry",()=>{
+ const zoom=source("lib/server/zoom-classroom.ts");
+ const reconciliation=source("app/api/zoom/reconcile-classes/route.ts");
+ const cron=source("app/api/zoom/auto-reconcile/route.ts");
+ const job=source("netlify/functions/zoom-auto-reconcile.mts");
+ const config=source("netlify.toml");
+ const repository=source("lib/repository.ts");
+ const classroom=source("app/api/zoom/classroom/[scheduleEventId]/route.ts");
+ const enrollment=source("app/admin/enrollments/[id]/page.tsx");
+ expect(zoom).toContain('action:"repaired" as const');
+ expect(zoom).toContain("join_url:joinUrl");
+ expect(zoom).toContain("Zoom did not return a valid meeting ID and join URL");
+ expect(reconciliation).toContain(".range(page*200,page*200+199)");
+ expect(reconciliation).toContain("eligibleCount");
+ expect(reconciliation).toContain("batch.length<5");
+ expect(reconciliation).toContain("linked.get(event.id)");
+ expect(cron).toContain('["scheduled","makeup"]');
+ expect(cron).toContain("x-robotronix-cron-secret");
+ expect(cron).toContain(".slice(0,3)");
+ expect(job).toContain("/api/zoom/auto-reconcile");
+ expect(config).toContain('[functions."zoom-auto-reconcile"]');
+ expect(repository).toContain('adminApi("/api/zoom/reconcile-classes"');
+ expect(repository).toContain("zoomWarning");
+ expect(classroom).toContain("meeting.join_url");
+ expect(enrollment).toContain('"Zoom ready"');
+});
