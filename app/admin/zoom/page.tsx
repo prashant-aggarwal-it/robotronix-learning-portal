@@ -38,9 +38,9 @@ function Workspace(){
   setBusy(true);setError("");setNotice("");
   try{
    const x=await adminApi("/api/zoom/reconcile-classes",{method:"POST"});
-   setNotice(`Classroom reconciliation: ${x.created||0} created, ${x.skipped||0} skipped, ${x.failed||0} need review. ${x.failed?"See error details below.":""}`);
-   if(x.failures?.length)setError(x.failures.slice(0,5).map((f:{eventId:string;reason:string})=>f.eventId+": "+f.reason).join(" · "));
    await load();
+   setNotice(`Zoom reconciliation: ${x.created||0} created, ${x.skipped||0} skipped, ${x.failed||0} failed in this batch.${x.remaining?` ${x.remaining} additional eligible classes remain; run again to continue.`:""}`);
+   if(x.failures?.length)setError(x.failures.slice(0,5).map((f:{eventId:string;reason:string})=>f.eventId+": "+f.reason).join(" · "));
   }catch(e){setError(readableSaveError(e))}
   finally{setBusy(false)}
  }
