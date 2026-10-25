@@ -569,13 +569,26 @@ export async function createMakeupClassV2(eventId:string,date:string,startTime:s
  return error?{ok:false,error:error.message}:{ok:true,id:String(data)};
 }
 
-export async function generateEnrollmentScheduleV2(enrollmentId:string,horizon:"full"|"weeks"|"manual"="full",weeks?:number):Promise<{ok:true;created:number;total:number}|{ok:false;error:string}>{
+export async function generateEnrollmentScheduleV2(enrollmentId:string,horizon:"full"|"weeks"|"manual"="full",weeks?:number):Promise<{ok:true;created:number;total:number;zoomWarning?:string}|{ok:false;error:string}>{
  if(horizon==="manual")return{ok:true,created:0,total:0};
  const supabase=getSupabaseBrowserClient();
  if(!supabase)return{ok:false,error:"Automatic class booking requires an installed database."};
  const {data,error}=await supabase.rpc("generate_enrollment_schedule_v2",{p_enrollment_id:enrollmentId,p_horizon:horizon,p_weeks:horizon==="weeks"?weeks:null});
  if(error)return{ok:false,error:error.message};
- return{ok:true,created:Number(data?.created??0),total:Number(data?.total??0)};
+ const result={ok:true as const,created:Number(data?.created??0),total:Number(data?.total??0),zoomWarning:undefined as string|undefined};
+ // The database RPC creates class bookings; the Zoom meeting is a separate external resource.
+ // Reconcile immediately after booking, preserving the enrollment even when Zoom is unavailable.
+ try{
+  let remaining=0;
+  for(let attempt=0;attempt<4;attempt++){
+   const batch=await adminApi("/api/zoom/reconcile-classes",{method:"POST",body:JSON.stringify({enrollmentId})});
+   remaining=Number(batch.remaining||0);
+   if(batch.failed)result.zoomWarning=`Zoom setup needs attention for ${batch.failed} class(es). Check Zoom Classroom reconciliation details.`;
+   if(!remaining||batch.processed===0||batch.failed)break;
+  }
+  if(remaining)result.zoomWarning=`Zoom provisioning is incomplete. ${remaining} additional class(es) need checking in Zoom Classroom.`;
+ }catch(error){result.zoomWarning="Classes were booked, but Zoom setup needs attention: "+(error instanceof Error?error.message:String(error));}
+ return result;
 }
 
 export async function activateOnboarding(id:string,assignment:{courseId:string;trainerId:string;enrollmentType:"one_to_one"|"small_group";cohortId?:string;startDate?:string;scheduleTimezone?:string;scheduleRules?:WeeklyScheduleSlot[];scheduleOverrideConfirmed?:boolean;scheduleOverrideNote?:string;schedulingHorizon?:"full"|"weeks"|"manual";schedulingWeeks?:number}){
