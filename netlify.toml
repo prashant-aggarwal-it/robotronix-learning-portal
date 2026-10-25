@@ -7,3 +7,7 @@
 
 [functions."zoom-retention"]
   schedule = "15 2 * * *"
+
+# Retry missing future class Zoom meetings in small batches.
+[functions."zoom-auto-reconcile"]
+  schedule = "10 * * * *"
