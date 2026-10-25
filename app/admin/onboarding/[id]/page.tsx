@@ -79,7 +79,7 @@ export default function OnboardingDetail(){
  const[cohortId,setCohortId]=useState("");
  const[scheduleTimezone,setScheduleTimezone]=useState(IST_TIMEZONE);
  const[scheduleRules,setScheduleRules]=useState<WeeklyScheduleSlot[]>([]);
- const[startDate,setStartDate]=useState(todayIstDate());
+ const[startDate,setStartDate]=useState("");
  const[schedulingHorizon,setSchedulingHorizon]=useState<SchedulingHorizon>("full");
  const[schedulingWeeks,setSchedulingWeeks]=useState(4);
  const[existingClasses,setExistingClasses]=useState<ScheduleEvent[]>([]);
@@ -100,7 +100,7 @@ export default function OnboardingDetail(){
   const nextTrainerId=a.assignedTrainerId??"";
   const nextType=a.enrollmentType??"one_to_one";
   const nextCohortId=a.cohortId??"";
-  const nextStartDate=a.startDate??todayIstDate();
+  const nextStartDate=a.startDate??"";
   const existingCohort=h.find(x=>x.id===nextCohortId);
   const course=c.find(x=>x.id===nextCourseId);
   const preferred=suggestedScheduleFromPreferences(a.preferredTimeWindows,course?.sessionDuration??60);
@@ -130,7 +130,7 @@ export default function OnboardingDetail(){
  const parentTimingNote=useMemo(()=>preferredTimingNote(r?.preferredTimeWindows),[r?.preferredTimeWindows]);
  const parentWindowDisplays=useMemo(()=>parentWindows.map(window=>preferredWindowAdminDisplay(window,r?.timezone||IST_TIMEZONE,startDate)),[parentWindows,r?.timezone,startDate]);
  const selectedCourse=useMemo(()=>courses.find(c=>c.id===courseId),[courses,courseId]);
- const schedulePreview=useMemo(()=>{try{return{items:previewCourseSchedule({startDate,timezone:scheduleTimezone,rules:scheduleRules,horizon:schedulingHorizon,totalSessions:selectedCourse?.totalSessions??0,weeks:schedulingWeeks,trainerId,existingEvents:existingClasses}),error:""}}catch(error){return{items:[],error:error instanceof Error?error.message:"Unable to preview schedule."}}},[startDate,scheduleTimezone,scheduleRules,schedulingHorizon,schedulingWeeks,selectedCourse?.totalSessions,trainerId,existingClasses]);
+ const schedulePreview=useMemo(()=>{if(!startDate)return{items:[],error:"Choose a start date before generating class dates."};try{return{items:previewCourseSchedule({startDate,timezone:scheduleTimezone,rules:scheduleRules,horizon:schedulingHorizon,totalSessions:selectedCourse?.totalSessions??0,weeks:schedulingWeeks,trainerId,existingEvents:existingClasses}),error:""}}catch(error){return{items:[],error:error instanceof Error?error.message:"Unable to preview schedule."}}},[startDate,scheduleTimezone,scheduleRules,schedulingHorizon,schedulingWeeks,selectedCourse?.totalSessions,trainerId,existingClasses]);
  const scheduleMatches=useMemo(()=>r&&trainerId?matchPreferredWindows({windows:parentWindows,parentTimezone:r.timezone||IST_TIMEZONE,trainerId,startDate,availability,overrides:availabilityOverrides}):[],[r,trainerId,startDate,parentWindows,availability,availabilityOverrides]);
  const trainerAvailabilityConfigured=useMemo(()=>Boolean(
   trainerId&&(
