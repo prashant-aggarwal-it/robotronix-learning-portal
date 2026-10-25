@@ -16,7 +16,7 @@ export function LearnerCalendar({events,role}:{events:ScheduleEvent[];role:"pare
  const monthKey=key(cursor.year,cursor.month);
  const visible=events.filter(e=>!["cancelled","rescheduled"].includes(e.status));
  const byDate=useMemo(()=>new Map(cells.map(d=>[d,visible.filter(e=>e.date===d).sort((a,b)=>a.startTime.localeCompare(b.startTime))])),[cells,visible]);
- const selectedEvents=byDate.get(selected)||[];
+ const selectedEvents=events.filter(e=>e.date===selected&&(showHistory||!["cancelled","rescheduled"].includes(e.status))).sort((a,b)=>a.startTime.localeCompare(b.startTime));
  const weekDates=useMemo(()=>{const anchor=new Date(`${selected}T12:00:00Z`);const offset=(anchor.getUTCDay()+6)%7;anchor.setUTCDate(anchor.getUTCDate()-offset);return Array.from({length:7},(_,i)=>{const d=new Date(anchor);d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)})},[selected]);
  const history=events.filter(e=>e.eventType==="class"&&(e.status==="conducted"||e.status==="cancelled"||e.status==="rescheduled"||e.status==="missed")).sort((a,b)=>(b.date+b.startTime).localeCompare(a.date+a.startTime));
  const upcoming=visible.filter(e=>e.date>=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())&&e.status!=="conducted").sort((a,b)=>(a.date+a.startTime).localeCompare(b.date+b.startTime));
@@ -36,11 +36,11 @@ export function LearnerCalendar({events,role}:{events:ScheduleEvent[];role:"pare
    <div className="panelHeader"><div><div className="eyebrow">PAST & CHANGED SESSIONS</div><h2>Class history</h2><p>Review previous classes and schedule changes without leaving your calendar.</p></div>
    <button type="button" className="button ghost smallButton" aria-expanded={showHistory} onClick={()=>setShowHistory(v=>!v)}>{showHistory?"Hide history":`Show history (${history.length})`}</button></div>
    {showHistory&&<div className="tableWrap professionalTable"><table><thead><tr><th>Date</th><th>Class</th><th>Status</th><th>Action</th></tr></thead><tbody>
-    {history.map(e=><tr key={e.id}><td>{formatShortDate(e.date)}</td><td>{e.title}</td><td>{e.status.replaceAll("_"," ")}</td><td><button type="button" className="linkButton" onClick={()=>selectDate(e.date)}>View date →</button></td></tr>)}
+    {history.map(e=><tr key={e.id}><td>{formatShortDate(e.date)}</td><td>{e.title}</td><td>{e.status.replaceAll("_"," ")}</td><td><button type="button" className="linkButton" onClick={()=>{setShowHistory(true);selectDate(e.date)}}>View date →</button></td></tr>)}
    </tbody></table></div>}
   </section>}
   <section className="dataSection calendarDayDetail">
-   <div className="panelHeader"><div><div className="eyebrow">SELECTED DAY</div><h2>{formatShortDate(selected)}</h2><p>{selectedEvents.length?selectedEvents.length+" scheduled class"+(selectedEvents.length===1?"":"es"):"No class scheduled for this day."}</p></div></div>
+   <div className="panelHeader"><div><div className="eyebrow">SELECTED DAY</div><h2>{formatShortDate(selected)}</h2><p>{selectedEvents.length?selectedEvents.length+" class record"+(selectedEvents.length===1?"":"es"):"No class scheduled for this day."}</p></div></div>
    <div className="calendarEventList">{selectedEvents.map(e=><article className={`calendarEventCard status-${e.status}`} key={e.id}><div><span className="softBadge">{e.deliveryMode.replaceAll("_"," ")}</span><h3>{formatTime(e.startTime)}–{formatTime(e.endTime)} · {e.title}</h3><p>{e.timezone} · {e.status.replaceAll("_"," ")}</p></div><div className="calendarEventActions"><ZoomClassActions scheduleEventId={e.id} compact/><CalendarActions event={e} compact/></div></article>)}{!selectedEvents.length&&<div className="emptyState compact">Nothing scheduled. Your confirmed Robotronix classes will appear automatically.</div>}</div>
   </section>
  </div>;
