@@ -51,6 +51,23 @@ test.describe("Phase 3 form quality release contracts",()=>{
    expect(text).toContain("readableSaveError");
   }
  });
+ test("onboarding activation requirements are individually visible and navigable",()=>{
+  const text=source("app/admin/onboarding/[id]/page.tsx");
+  expect(text).toContain('label="School" required id="field-school"');
+  expect(text).toContain('label="Date of birth" required');
+  expect(text).toContain('label="Child name" required');
+  expect(text).toContain('field:"school",message:"Enter the child');
+  expect(text).toContain('["School",Boolean(r.school?.trim()),"school",true]');
+  expect(text).toContain('["Family timezone",isValidTimeZone(r.timezone),"childProfile",true]');
+  expect(text).toContain('Select any incomplete requirement to jump to the field');
+  expect(text).toContain('disabled={busy} onClick={activate}');
+ });
+ test("manual student entry reflects migration-specific required fields",()=>{
+  const text=source("components/admin/StudentForm.tsx");
+  expect(text).toContain('existingActiveEntry&&!record?"School":"School *"');
+  expect(text).toContain('existingActiveEntry&&!record?"Address Line 1":"Address Line 1 *"');
+  expect(text).toContain('existingActiveEntry&&!record?"Postal / ZIP Code":"Postal / ZIP Code *"');
+ });
  test("canonical fresh-install schema contains P0/P1 audit and onboarding triggers",()=>{
   const schema=source("database/01_install/01_CREATE_SCHEMA.sql");
   expect(schema).toContain("onboarding_submission_admin_notification_trg");
