@@ -55,7 +55,7 @@ function Workspace(){
  const now=Date.now();
  const dayKey=(date:Date)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(date);
  const todayKey=dayKey(new Date());
- const needsAttention=(m:Meeting)=>m.status==="error"||Boolean(m.last_error)||(!m.event?.id)||m.status==="cancelled";
+ const needsAttention=(m:Meeting)=>m.status==="error"||Boolean(m.last_error)||(!m.join_url&&m.purpose==="class")||(!m.event?.id)||m.status==="cancelled";
  const filteredClasses=classes.filter(m=>{
    const start=new Date(m.scheduled_start).getTime();
    const relevant=classView==="today"?dayKey(new Date(m.scheduled_start))===todayKey:classView==="upcoming"?start>=now:classView==="issues"?needsAttention(m):true;
