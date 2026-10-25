@@ -28,7 +28,7 @@ jobs:
       - name: Structural regression checks
         run: npm run check:release
       - name: Scheduling V2 preview tests
-        run: npx playwright test qa/scheduling-v2-preview.spec.ts qa/learner-journey-navigation.spec.ts qa/workbook-export.spec.ts qa/schedule-capacity.spec.ts --project=desktop-chromium --no-deps
+        run: npx playwright test qa/scheduling-v2-preview.spec.ts qa/learner-journey-navigation.spec.ts qa/workbook-export.spec.ts qa/schedule-capacity.spec.ts qa/form-error-validation.spec.ts --project=desktop-chromium --no-deps
       - name: Build
         run: npm run build
         env:
