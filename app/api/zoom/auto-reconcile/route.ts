@@ -19,16 +19,24 @@ export async function POST(request:NextRequest){
    .select("schedule_event_id,join_url,status,last_error,updated_at")
    .eq("purpose","class").not("schedule_event_id","is",null);
   if(meetingsError)throw new Error(meetingsError.message);
+  const [offlineEnrollments,offlineCohorts]=await Promise.all([
+   db.from("enrollments").select("id").eq("delivery_channel","offline"),
+   db.from("cohorts").select("id").eq("delivery_channel","offline")
+  ]);
+  if(offlineEnrollments.error||offlineCohorts.error)throw new Error(offlineEnrollments.error?.message||offlineCohorts.error?.message);
+  const offlineEnrollmentIds=new Set((offlineEnrollments.data||[]).map(row=>row.id));
+  const offlineCohortIds=new Set((offlineCohorts.data||[]).map(row=>row.id));
   const linked=new Map((meetings||[]).map(m=>[m.schedule_event_id,m]));
   const candidates:string[]=[];
   for(let page=0;page<15;page++){
    const {data:events,error}=await db.from("schedule_events")
-    .select("id,date,start_time,timezone")
+    .select("id,date,start_time,timezone,enrollment_id,cohort_id")
     .eq("event_type","class").in("status",["scheduled","makeup"])
     .order("date",{ascending:true}).order("start_time",{ascending:true}).order("id",{ascending:true})
     .range(page*200,page*200+199);
    if(error)throw new Error(error.message);
    for(const event of events||[]){
+    if((event.enrollment_id&&offlineEnrollmentIds.has(event.enrollment_id))||(event.cohort_id&&offlineCohortIds.has(event.cohort_id)))continue;
     const meeting=linked.get(event.id);
     if(meeting?.join_url&&/^https:\/\//i.test(meeting.join_url)&&!["cancelled","error"].includes(meeting.status))continue;
     // Back off on recently reported failures; avoid retry storms against Zoom.
