@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
+import {GridSearch,GridReset} from "@/components/admin/GridFilterControls";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
 import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
@@ -92,7 +93,7 @@ function Workspace(){
     <button className={filter==="paid"?"button":"button secondary"} onClick={()=>setFilter("paid")}>Paid · {counts.paid}</button>
     <button className={filter==="attention"?"button":"button secondary"} onClick={()=>setFilter("attention")}>Needs attention · {counts.attention}</button>
    </div>
-   <input className="input" style={{maxWidth:440,marginBottom:14}} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search invoice, parent, email, service or payment ID"/>
+   <div className="dataToolbar" style={{marginBottom:14}}><GridSearch value={query} onChange={setQuery} placeholder="Search invoice, parent, email, service or payment ID"/><GridReset changed={Boolean(query||filter!=="all")} onReset={()=>{setQuery("");setFilter("all")}}/></div>
 
    <div className="tableWrap professionalTable"><table><thead><tr><th>Invoice</th><th>Customer</th><th>Amount</th><th>Balance</th><th>Due</th><th>Status</th><th>Payment</th><th>Actions</th></tr></thead><tbody>
     {filtered.length?filtered.map(i=><tr key={i.id}>
