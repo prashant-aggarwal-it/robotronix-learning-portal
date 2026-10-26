@@ -4,7 +4,7 @@ import Link from "next/link";
 import {FormErrorSummary} from "@/components/admin/FormErrorSummary";
 import {readableSaveError,validateDraftDates,type FormIssue} from "@/lib/form-errors";
 import {useEffect,useMemo,useState} from "react";
-import {useParams,useRouter} from "next/navigation";
+import {useParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
 import {GradeSelect} from "@/components/GradeSelect";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -55,7 +55,6 @@ function signature(input:{record:OnboardingSubmission;courseId:string;trainerId:
 
 export default function OnboardingDetail(){
  const{id}=useParams<{id:string}>();
- const router=useRouter();
  const[r,setR]=useState<OnboardingSubmission|null|undefined>(undefined);
  const[loadError,setLoadError]=useState("");
  const[courses,setCourses]=useState<CourseAdminRecord[]>([]);
@@ -156,6 +155,20 @@ export default function OnboardingDetail(){
  const guardianView=useMemo(()=>r?guardiansFromRecord(r):null,[r]);
  const dirty=Boolean(r&&baseline&&currentSignature!==baseline);
  const busy=activeAction!==null;
+ const activated=r?.status==="active";
+ const activatedEnrollmentId=activationResult?.enrollmentId||r?.activatedEnrollmentId||"";
+ const activatedStudentId=activationResult?.studentId||r?.activatedStudentId||"";
+ const courseSummary=courses.find(x=>x.id===(r?.assignedCourseId||courseId));
+ const trainerSummary=trainers.find(x=>x.id===(r?.assignedTrainerId||trainerId));
+ const nextClass=existingClasses.filter(e=>e.eventType==="class"&&["scheduled","tentative","makeup"].includes(e.status)&&
+  (e.enrollmentId===activatedEnrollmentId||(r?.cohortId&&e.cohortId===r.cohortId))&&e.date>=todayIstDate())
+  .sort((a,b)=>(a.date+a.startTime).localeCompare(b.date+b.startTime))[0];
+ useEffect(()=>{
+  if(!dirty||activated)return;
+  const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};
+  window.addEventListener("beforeunload",warn);
+  return()=>window.removeEventListener("beforeunload",warn);
+ },[dirty,activated]);
 
  if(loadError)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="panel" role="alert"><h2>Unable to load onboarding</h2><p>{loadError}</p><button type="button" className="button" onClick={()=>void refresh()}>Retry</button></div></AppShell></RoleGuard>;
  if(r===undefined)return <RoleGuard allow={["admin"]}><AppShell role="admin"><div className="panel">Loading onboarding record…</div></AppShell></RoleGuard>;
@@ -251,22 +264,30 @@ export default function OnboardingDetail(){
  const savedLabel=lastSavedAt?new Date(lastSavedAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}):"";
 
  return <RoleGuard allow={["admin"]}><AppShell role="admin">
-  <AdminPageHeader eyebrow="ONBOARDING SETUP" title={r.childName} description={`${r.grade} · ${r.school} · ${timeZoneLabel(r.timezone)} · submitted ${new Date(r.submittedAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}`} actions={<Link href="/admin/onboarding" className="button ghost">Back to onboarding</Link>}/>
-  <div className="cleanStepper" aria-label="Onboarding progress">{[{n:1,t:"New"},{n:2,t:"Setup pending"},{n:3,t:"Active"}].map((s,i)=><div className={`cleanStep ${statusIndex>s.n?"done":statusIndex===s.n?"current":""}`} key={s.n}><span>{statusIndex>s.n?"✓":s.n}</span><b>{s.t}</b>{i<2&&<i/>}</div>)}</div>
-
-  {(activationResult||(r.status==="active"&&r.activatedStudentId&&r.activatedEnrollmentId))&&<section className="panel" role="status" aria-label="Activation next steps" style={{marginTop:18}}>
-   <div className="eyebrow">NEXT STEPS · LEARNER ACTIVATED</div>
-   <h2>Learning setup is ready</h2>
-   <p>Student profile and course enrollment created. {activationResult?.schedulingWarning?"Class booking needs attention.":activationResult?.classesCreated!==undefined?`${activationResult.classesCreated} new class bookings created.`:"Classes are managed through the enrollment and schedule."} A Zoom meeting is not necessarily created when a class is scheduled.</p>
-   <div className="formActions" style={{display:"flex",flexWrap:"wrap",gap:10}}>
-    <Link className="button" href={`/admin/enrollments/${encodeURIComponent(activationResult?.enrollmentId||r.activatedEnrollmentId||"")}`}>Continue to enrollment →</Link>
-    <Link className="button secondary" href={`/admin/students/${encodeURIComponent(activationResult?.studentId||r.activatedStudentId||"")}`}>View student profile</Link>
-    <Link className="button ghost" href="/admin/schedule">View schedule</Link>
-   </div>
-  </section>}
-  <section className="onboardingSummaryCards">
-   <div className={`panel onboardingSummaryCard familyDetailsCard ${editFamilyDetails?"editMode":""}`}><div className="panelHeader"><div><div className="eyebrow">FAMILY & CHILD</div><h2>Submitted information</h2><p>Compact parent-entered summary. Edit only when a correction is needed.</p></div><button type="button" className="button ghost smallButton" onClick={()=>setEditFamilyDetails(v=>!v)}>{editFamilyDetails?"Close edit":"Edit family details"}</button></div>
-    {!editFamilyDetails?<div className="summaryDefinitionGrid"><Info a="Child" b={`${r.childName} · ${r.grade||"Grade not set"}`}/><Info a="Primary guardian" b={guardianView?`${guardianView.primary.name} · ${relationshipLabel(guardianView.primary.relationship)}`:"—"}/><Info a="Secondary guardian" b={guardianView?.secondary?`${guardianView.secondary.name} · ${relationshipLabel(guardianView.secondary.relationship)}`:"Not added"}/><Info a="Primary WhatsApp" b={r.primaryWhatsApp||"—"}/><Info a="Location" b={[r.city,r.state&&r.state.toLowerCase()!==r.city.toLowerCase()?r.state:null,r.country].filter(Boolean).join(", ")}/><Info a="Timezone" b={timeZoneLabel(r.timezone)}/><Info a="School" b={r.school||"—"}/></div>:<div className="compactEditGrid familyEditWorkspace">
+  <AdminPageHeader eyebrow="ONBOARDING / LEARNER DETAILS" title={r.childName}
+ description={[r.grade||"Class not provided",[r.city,r.country].filter(Boolean).join(", "),timeZoneLabel(r.timezone),`Submitted ${new Date(r.submittedAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}`].filter(Boolean).join(" · ")}
+ actions={<Link href="/admin/onboarding" className="button ghost" onClick={event=>{if(dirty&&!window.confirm("Unsaved changes will be lost. Leave onboarding?"))event.preventDefault()}}>← Back to onboarding</Link>}/>
+ <div className="cleanStepper" aria-label="Onboarding progress">{[{n:1,t:"New"},{n:2,t:"Setup pending"},{n:3,t:"Active"}].map((s,i)=><div className={`cleanStep ${statusIndex>s.n?"done":statusIndex===s.n?"current":""}`} key={s.n}><span>{statusIndex>s.n?"✓":s.n}</span><b>{s.t}</b>{i<2&&<i/>}</div>)}</div>
+ {activated&&<section className="panel" aria-label="Learner enrollment summary" style={{marginTop:18}}>
+  <div className="panelHeader"><div><div className="eyebrow">ACTIVE LEARNER · ENROLLMENT</div><h2>Learner ready for classes</h2>
+   <p>The student profile and enrollment are active. Classes are managed through the enrollment. Zoom rooms are created shortly before class time.</p></div><span className="softBadge softGreen">✓ Active</span></div>
+  <div className="summaryDefinitionGrid" style={{marginBottom:16}}>
+   <Info a="Course" b={courseSummary?.title||"View enrollment for details"}/>
+   <Info a="Trainer" b={trainerSummary?.fullName||"View enrollment for details"}/>
+   <Info a="Delivery" b={r.enrollmentType==="small_group"?"Cohort":"1-to-1"}/>
+   <Info a="Start date" b={r.startDate||"Not provided"}/>
+   <Info a="Next scheduled class" b={nextClass?`${nextClass.date} · ${formatClock(nextClass.startTime)} (${shortTimeZoneLabel(nextClass.timezone||IST_TIMEZONE)})`:"No upcoming class found"}/>
+   <Info a="Family login" b={r.loginEmail||"Not linked"}/>
+  </div>
+  {!r.school?.trim()&&<div className="infoBanner" role="status" style={{marginBottom:12}}>School information is missing. Please correct it in the student profile.</div>}
+  <div className="formActions" style={{display:"flex",flexWrap:"wrap",gap:10}}>
+   {activatedEnrollmentId?<Link className="button" href={`/admin/enrollments/${encodeURIComponent(activatedEnrollmentId)}`}>View enrollment</Link>:<span className="fieldHint">Enrollment link unavailable.</span>}
+   {activatedStudentId&&<Link className="button secondary" href={`/admin/students/${encodeURIComponent(activatedStudentId)}`}>Student profile & corrections</Link>}
+  </div>
+ </section>}
+ <section className="onboardingSummaryCards">
+   <div className={`panel onboardingSummaryCard familyDetailsCard ${editFamilyDetails?"editMode":""}`}><div className="panelHeader"><div><div className="eyebrow">FAMILY & CONTACT</div><h2>Family details</h2><p>{activated?"Submitted details are read-only here. Make post-activation corrections in the student profile.":"Review and correct family information before activation."}</p></div>{!activated&&<button type="button" className="button ghost smallButton" onClick={()=>setEditFamilyDetails(v=>!v)}>{editFamilyDetails?"Hide editor":"Edit family details"}</button>}</div>
+    {!editFamilyDetails?<div className="summaryDefinitionGrid"><Info a="Child" b={`${r.childName} · ${r.grade||"Grade not set"}`}/><Info a="Primary guardian" b={guardianView?`${guardianView.primary.name} · ${relationshipLabel(guardianView.primary.relationship)}`:"—"}/><Info a="Secondary guardian" b={guardianView?.secondary?`${guardianView.secondary.name} · ${relationshipLabel(guardianView.secondary.relationship)}`:"Not added"}/><Info a="Primary WhatsApp" b={r.primaryWhatsApp||"—"}/><Info a="Location" b={[r.city,r.state&&r.state.toLowerCase()!==r.city.toLowerCase()?r.state:null,r.country].filter(Boolean).join(", ")}/><Info a="Timezone" b={timeZoneLabel(r.timezone)}/><Info a="School" b={r.school||"Not provided"}/></div>:<div className="compactEditGrid familyEditWorkspace">
       <div className="editSubsection"><div className="editSubsectionHead"><b>Parent / guardian details</b><span>Phone numbers are stored with international country codes.</span></div>
        <div id="field-primaryGuardian" tabIndex={-1} className="guardianContactCard primaryGuardianCard" style={formIssues.some(x=>x.field==="primaryGuardian")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}><div className="guardianCardHead"><b>Primary parent / guardian</b><span>Required</span></div><div className="guardianIdentityGrid"><Field label="Name" value={guardianView?.primary.name??""} onChange={v=>patchGuardian("primary","name",v)}/><div className="formGroup"><label>Relationship</label><select className="input" value={guardianView?.primary.relationship??"guardian"} onChange={e=>patchGuardian("primary","relationship",e.target.value)}>{guardianRelationshipOptions.map(x=><option value={x.value} key={x.value}>{x.label}</option>)}</select></div></div><PhoneField className="guardianPhoneFull" hint="" label="Mobile" value={guardianView?.primary.mobile??""} onChange={v=>patchGuardian("primary","mobile",v)} country={r.country}/><label className="sameAsContact"><input type="checkbox" checked={primaryWhatsAppSame} onChange={e=>togglePrimaryWhatsAppSame(e.target.checked)}/><span>WhatsApp same as mobile</span></label>{!primaryWhatsAppSame&&<PhoneField className="guardianPhoneFull" hint="" label="Primary WhatsApp" value={r.primaryWhatsApp} onChange={v=>patch("primaryWhatsApp",v)} country={r.country} required/>}</div>
        <div className="guardianContactCard secondaryGuardianCard"><div className="guardianCardHead"><b>Secondary parent / guardian</b><span>Optional</span></div><div className="guardianIdentityGrid"><Field label="Name" value={guardianView?.secondary?.name??""} onChange={v=>patchGuardian("secondary","name",v)}/><div className="formGroup"><label>Relationship</label><select className="input" value={guardianView?.secondary?.relationship??"guardian"} onChange={e=>patchGuardian("secondary","relationship",e.target.value)}>{guardianRelationshipOptions.map(x=><option value={x.value} key={x.value}>{x.label}</option>)}</select></div></div><PhoneField className="guardianPhoneFull" hint="" label="Mobile" value={guardianView?.secondary?.mobile??""} onChange={v=>patchGuardian("secondary","mobile",v)} country={r.country}/>{Boolean(guardianView?.secondary?.name||guardianView?.secondary?.mobile)&&<><label className="sameAsContact"><input type="checkbox" checked={secondaryWhatsAppSame} onChange={e=>toggleSecondaryWhatsAppSame(e.target.checked)}/><span>WhatsApp same as mobile</span></label>{!secondaryWhatsAppSame&&<PhoneField className="guardianPhoneFull" hint="" label="Secondary WhatsApp" value={r.alternateWhatsApp} onChange={v=>patch("alternateWhatsApp",v)} country={r.country}/>}</>}</div>
@@ -274,7 +295,7 @@ export default function OnboardingDetail(){
       <div id="field-childProfile" tabIndex={-1} className="editSubsection" style={formIssues.some(x=>x.field==="childProfile")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}><div className="editSubsectionHead"><b>Family & child details</b><span>Location and timezone are used for scheduling and time conversion.</span></div><div className="formGrid familyChildEditGrid"><CountryCityFields country={r.country} state={r.state||""} city={r.city} onCountryChange={v=>patch("country",v)} onStateChange={v=>patch("state",v)} onCityChange={v=>patch("city",v)} onTimeZoneSuggestion={v=>patch("timezone",v)}/><TimeZoneField className="fullSpan" value={r.timezone} onChange={v=>{patch("timezone",v);if(type==="one_to_one")setScheduleTimezone(IST_TIMEZONE)}} label="Family timezone" required autoMode locationLabel={[r.city,r.state].filter(Boolean).join(", ")}/><Field label="Child name" required value={r.childName} onChange={v=>patch("childName",v)}/><GradeSelect value={r.grade} onChange={v=>patch("grade",v)} required/><Field label="Date of birth" required value={r.childDob??""} onChange={v=>patch("childDob",v)} type="date" id="field-childDob" error={formIssues.find(x=>x.field==="childDob")?.message}/><div className="fullSpan"><Field label="School" required id="field-school" error={formIssues.find(x=>x.field==="school")?.message} value={r.school} onChange={v=>patch("school",v)}/></div></div></div>
      </div>}
    </div>
-   <div className="panel onboardingSummaryCard"><div className="panelHeader"><div><div className="eyebrow">LEARNING PROFILE</div><h2>Interests & starting point</h2><p>What the family told us about the learner.</p></div></div><div className="summaryDefinitionGrid"><Info a="Interests" b={r.interests.join(" · ")||"—"}/><Info a="Goal" b={r.goal||"—"}/><Info a="Coding experience" b={r.codingExperience||"—"}/><Info a="Robotics experience" b={r.roboticsExperience||"—"}/><Info a="Source" b={r.source||"—"}/>{(r.source==="Existing parent"||r.source==="Referred by an existing Robotronix parent")&&<Info a="Referring parent" b={r.referringParentName?.trim()||"Not provided"}/>}<Info a="Family login" b={r.loginEmail||"—"}/></div></div>
+   <div className="panel onboardingSummaryCard"><div className="panelHeader"><div><div className="eyebrow">LEARNING PROFILE</div><h2>Interests & starting point</h2><p>What the family told us about the learner.</p></div></div><div className="summaryDefinitionGrid"><Info a="Interests" b={r.interests.join(" · ")||"Not provided"}/><Info a="Goal" b={r.goal||"Not provided"}/><Info a="Coding experience" b={r.codingExperience||"Not provided"}/><Info a="Robotics experience" b={r.roboticsExperience||"Not provided"}/><Info a="Source" b={r.source||"Not provided"}/>{(r.source==="Existing parent"||r.source==="Referred by an existing Robotronix parent")&&<Info a="Referring parent" b={r.referringParentName?.trim()||"Not provided"}/>}{!activated&&<Info a="Family login" b={r.loginEmail||"Not linked"}/>}</div></div>
   </section>
 
   {r.status!=="active"?<section className="panel assignmentPanel"><div className="panelHeader"><div><div className="eyebrow">LEARNING SETUP</div><h2>Assign course, trainer and delivery</h2><p>Save a draft at any time. The exact recurring class slot should sit inside the family’s preferred availability wherever possible.</p></div></div>
@@ -321,7 +342,7 @@ export default function OnboardingDetail(){
    <div className={`saveStateBar ${dirty?"dirty":"clean"}`}><span>{dirty?"● Unsaved changes":activeAction==="draft"?"Saving…":lastSavedAt?`✓ Last saved at ${savedLabel}`:"✓ No unsaved changes"}</span><small>{dirty?"Save the setup before leaving this page.":"Draft schedule and assignment are preserved on reload."}</small></div>
    <FormErrorSummary issues={formIssues}/>{notice&&<div className={notice.type==="error"?"errorBanner":notice.type==="success"?"successBanner":"infoBanner"}>{notice.text}</div>}
    <div className="formActions stickyOnboardingActions"><div role="status" aria-live="polite" aria-atomic="true" style={{flex:"1 1 240px",minWidth:0}}>{notice?<span className={notice.type==="error"?"errorBanner":notice.type==="success"?"successBanner":"infoBanner"} style={{display:"inline-block",margin:0,padding:"8px 12px",fontSize:"0.9rem"}}>{notice.text}</span>:<span style={{fontSize:"0.85rem",color:"var(--text-muted, #64748b)"}}>{dirty?"● Unsaved changes":lastSavedAt?"✓ Draft saved":"No unsaved changes"}</span>}</div><button className="button ghost" disabled={busy||!dirty} onClick={saveDraft}>{activeAction==="draft"?"Saving draft…":dirty?"Save draft":"Draft saved"}</button><button className="button" disabled={busy} onClick={activate}>{activeAction==="activate"?"Activating…":"Activate learner"}</button></div>
-  </section>:<section className="successPanel familyActivationPanel"><div><span>✓</span><div><b>Learner active</b><p>The student and enrollment are active. {r.childName} is available inside the parent’s Family Account; a separate student login is optional, not required.</p><small>Family login: {r.loginEmail||"linked parent account"}</small></div></div><div className="row"><button className="button ghost" onClick={()=>router.push("/admin/students")}>Open Students</button><Link className="button" href="/admin/enrollments">Open Enrollments</Link></div></section>}
+  </section>:null}
  </AppShell></RoleGuard>;
 }
 
