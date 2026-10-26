@@ -6,7 +6,7 @@ import {logSystemEvent} from "@/lib/server/system-log";
 import {recordJobRun} from "@/lib/server/job-monitor";
 export const dynamic="force-dynamic";
 
-// Server-to-server retry: no browser credential, no new class records, max 3 Zoom API provisioning attempts.
+// JIT provisioning: server-authenticated; scan classes in the next 35 minutes, up to 12 per run.
 export async function POST(request:NextRequest){
  const expected=process.env.INTERNAL_CRON_SECRET?.trim();
  const supplied=request.headers.get("x-robotronix-cron-secret")?.trim();
@@ -43,16 +43,16 @@ export async function POST(request:NextRequest){
     const meeting=linked.get(event.id);
     if(meeting?.join_url&&/^https:\/\//i.test(meeting.join_url)&&!["cancelled","error"].includes(meeting.status))continue;
     // Back off on recently reported failures; avoid retry storms against Zoom.
-    if(meeting?.last_error&&meeting.updated_at&&Date.now()-new Date(meeting.updated_at).getTime()<2*60*60_000)continue;
+    if(meeting?.last_error&&meeting.updated_at&&Date.now()-new Date(meeting.updated_at).getTime()<5*60_000)continue;
     try{
-     if(zonedLocalToUtc(event.date,event.start_time,event.timezone||"Asia/Kolkata").getTime()>=Date.now()+15*60_000)candidates.push(event.id);
+     {const untilStart=zonedLocalToUtc(event.date,event.start_time,event.timezone||"Asia/Kolkata").getTime()-Date.now();if(untilStart>=-5*60_000&&untilStart<=35*60_000)candidates.push(event.id);}
     }catch{}
    }
    if((events||[]).length<200)break;
   }
   // Rotate the starting point so repeated failure of an unlinked class cannot starve later classes.
   const offset=candidates.length?Math.floor(Date.now()/3600000)%candidates.length:0;
-  const chosen=candidates.slice(offset).concat(candidates.slice(0,offset)).slice(0,3);
+  const chosen=candidates.slice(offset).concat(candidates.slice(0,offset)).slice(0,12);
   let created=0,repaired=0,skipped=0;
   const failures:Array<{eventId:string;reason:string}>=[];
   for(const eventId of chosen){
