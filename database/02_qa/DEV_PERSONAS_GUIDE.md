@@ -40,7 +40,7 @@ The Auth UUID must be the same as the profile ID. Profiles must be active.
 - New York Friday 9 AM class (IST evening) and Saturday 7:30 PM IST cohort.
 - No fake Zoom provider meetings, recordings, or live Zoom authorization.
 
-The synthetic dates are relative to execution day. The fixtures are **not** a substitute for end-to-end QA of Zoom, Razorpay test transactions, notifications, trainer payouts, row-level access, DST and cross-midnight scheduling.
+The synthetic dates are relative to execution day **in Asia/Kolkata**, matching the database enrollment start-date validation trigger (rather than session-dependent `CURRENT_DATE`). The fixtures are **not** a substitute for end-to-end QA of Zoom, Razorpay test transactions, notifications, trainer payouts, row-level access, DST and cross-midnight scheduling.
 
 ## Directory purpose
 
@@ -56,7 +56,7 @@ The synthetic dates are relative to execution day. The fixtures are **not** a su
 
 ## Execution
 
-Open the first file in VS Code, copy the entire SQL into **Supabase DEV → SQL Editor**, and execute it. On success, execute the second file and inspect PASS/FAIL rows. If either fails, stop and share the **first SQL error**. Do not disable RLS, permanently disable security triggers, reinstall the schema, or remove Auth users.
+Open the first file in VS Code, copy the entire SQL into **Supabase DEV → SQL Editor**, and execute it. On success, execute the second file and inspect PASS/FAIL rows. If either fails, stop and share the **first SQL error**. The main data script runs in a transaction, so an error before `COMMIT` rolls back its changes; there is no need to manually delete partially inserted fixture rows. Do not disable RLS, permanently disable security triggers, reinstall the schema, or remove Auth users.
 
 ## Important
 
