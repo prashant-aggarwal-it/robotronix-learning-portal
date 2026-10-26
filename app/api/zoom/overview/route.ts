@@ -88,7 +88,7 @@ export async function GET(request:NextRequest){
     .map(e=>{
      const reserve:any=reservationMap.get(e.id),meeting:any=existingMap.get(e.id);
      return {id:e.id,title:e.title,date:e.date,startTime:e.start_time,timezone:e.timezone,
-      hostReserved:reserve?.allocation_status==="reserved",
+      hostReserved:reserve?.allocation_status==="reserved"&&hosts.some((h:any)=>h.id===reserve.host_account_id&&h.status==="connected"&&h.enabled===true),
       hasZoomRoom:Boolean(meeting?.join_url&&meeting?.status!=="cancelled"&&meeting?.status!=="error"),
       needsAttention:reserve?.allocation_status!=="reserved"||Boolean(meeting?.status==="error"||meeting?.last_error)};
     });
