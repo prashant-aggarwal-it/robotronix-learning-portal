@@ -22,12 +22,12 @@ export default function SystemLogs(){
  }
  useEffect(()=>{void load()},[level]);
  return <RoleGuard allow={["admin"]}><AppShell role="admin"><section className="panel">
-  <div className="panelHeader"><div><h1>System Logs</h1><p>Recent operational errors and warnings. Sensitive customer, authentication and payout data is not displayed.</p></div><button className="button ghost" onClick={()=>void load()} disabled={busy}>{busy?"Loading…":"Refresh"}</button></div>
+  <div className="panelHeader"><div><h1>System Logs</h1><p>Recorded operational issues and significant job activity. Routine successful runs are intentionally omitted. Sensitive customer, authentication and payout data is not displayed.</p></div><button className="button ghost" onClick={()=>void load()} disabled={busy}>{busy?"Loading…":"Refresh"}</button></div>
   <div className="formGrid"><label>Severity<select className="input" value={level} onChange={e=>setLevel(e.target.value)}><option value="">All</option><option value="error">Error</option><option value="warning">Warning</option><option value="info">Information</option></select></label><label>Source or reference<input className="input" value={q} onChange={e=>setQ(e.target.value)} placeholder="Search source or reference ID"/></label></div>
   <button className="button secondary" onClick={()=>void load()} disabled={busy}>Search</button><GridReset changed={Boolean(level||q)} onReset={()=>{setLevel("");setQ("");void load("","")}}/>
   {error&&<div role="alert" className="errorBanner">{error}</div>}
   <div style={{overflowX:"auto",marginTop:16}}><table style={{width:"100%"}}><thead><tr><th>Time</th><th>Severity</th><th>Source / action</th><th>Safe description</th><th>Reference</th></tr></thead><tbody>
    {rows.map(r=><tr key={r.id}><td>{new Date(r.occurred_at).toLocaleString("en-IN")}</td><td>{r.level}</td><td>{r.source} / {r.action}</td><td>{r.safe_message}{r.error_code?" ("+r.error_code+")":""}</td><td><code>{r.reference_id}</code></td></tr>)}
-  </tbody></table>{!rows.length&&!busy&&!error&&<p>No matching recent events.</p>}</div>
+  </tbody></table>{!rows.length&&!busy&&!error&&<p>No recorded events match these filters. This does not confirm that all background jobs or integrations are healthy; check the relevant job execution logs for routine heartbeat information.</p>}</div>
  </section></AppShell></RoleGuard>;
 }
