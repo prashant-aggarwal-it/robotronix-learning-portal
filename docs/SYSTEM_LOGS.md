@@ -32,3 +32,27 @@ Admin > System Logs displays recent sanitized operational events. This differs f
 - Instrument additional Zoom, Razorpay, scheduling, onboarding and finance server routes with static error codes and safe reference IDs.
 - Add alerting/retention/correlation policy; test provider webhook retry and log-write outage handling.
 - Review safe-message allowlist, search query sanitization and usability under heavy log volume.
+
+
+## QA branch scheduled-job instrumentation (2026-10-26)
+
+Implemented on `fix/qa-onboarding-save-feedback-20261025`; **not deployed to production**:
+
+- `process-reminders`: structured Netlify console summary on each invocation, with `inserted`, duration and correlation reference. A sanitized `portal_system_logs` entry is saved for failures and when notifications are actually created. Zero-insert successful checks remain console-only to avoid 288 routine database rows per day.
+- `zoom-retention`: Netlify console summary with checked/deleted/failed counts and elapsed time. Recording-level failures and job failures are recorded as safe events through `logSystemEvent`, with reference IDs. Successful deletion batches generate an information event. No raw Zoom exception or provider response is returned to a caller by the API.
+- `zoom-auto-reconcile`: class provisioning failures, fatal job errors, and successful creation/repair batches are recorded as sanitized events. This job is **not yet** the agreed just-in-time Zoom design.
+- Admin empty-state clarifies that zero stored events does **not** prove all jobs are healthy.
+
+### Verification before merging
+
+1. Let GitHub release and security workflows complete successfully on the **exact latest commit**.
+2. Confirm DEV `portal_system_logs` exists and service-role insert permission works, and that the server points at the correct DEV Supabase project.
+3. On DEV only, execute a controlled failure and confirm one `error` row plus one console summary, with no leaked credentials, student details, or Zoom provider error text.
+4. Run a DEV reminder with an eligible test class and verify `inserted > 0` plus exactly the expected portal notifications; verify an idle execution writes only to the Netlify console.
+5. Check Zoom retention with no eligible recordings first. Do **not** force a production recording deletion for the sake of testing.
+6. Validate monitoring-write failures are nonfatal to the business operation.
+7. Verify trainer/parent/student cannot query Admin logs and refresh/search filters work.
+
+### Remaining production observability work
+
+This is an **incremental instrumentation release, not a completed monitoring platform**. We still need: comprehensive instrumentation of payment, enrollment, scheduling, onboarding and authentication workflows; persistent per-job health/heartbeat records and overdue-job detection; Admin alerts, retention enforcement, error aggregation, and automatic tests that exercise all failure paths. The existing scheduled functions use Netlify invocation logs for their idle-run heartbeat, not the Admin database. A separate availability monitor is needed to identify total Supabase outages.
