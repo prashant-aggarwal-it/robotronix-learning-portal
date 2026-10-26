@@ -10,17 +10,22 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   const onboarding=source("app/admin/onboarding/[id]/page.tsx");
   expect(repository).toContain("enrollmentId:enrollment.id");
   expect(repository).toContain("generateEnrollmentScheduleV2(enrollment.id");
-  expect(onboarding).toContain("Continue to enrollment");
+  expect(onboarding).toContain("View enrollment");
   expect(onboarding).toContain("activationResult?.enrollmentId");
+   expect(onboarding).toContain("activatedEnrollmentId");
   expect(onboarding).toContain("activationResult?.studentId");
-  expect(onboarding).toContain("booking needs attention");
+   expect(onboarding).toContain("Student profile & corrections");
+  expect(onboarding).toContain("result.schedulingWarning");
  });
  test("activated onboarding link fields exist in the canonical fresh schema",()=>{
   const repo=source("lib/repository.ts");
   const schema=readCanonicalSql();
   const onboarding=source("app/admin/onboarding/[id]/page.tsx");
   expect(repo).toContain("activatedStudentId:created.id,activatedEnrollmentId:enrollment.id");
-  expect(onboarding).toContain('r.status==="active"&&r.activatedStudentId&&r.activatedEnrollmentId');
+  expect(onboarding).toContain('r?.status==="active"');
+   expect(onboarding).toContain("activatedEnrollmentId");
+   expect(onboarding).not.toContain("Open Students");
+   expect(onboarding).not.toContain("Open Enrollments");
   for(const field of ["activated_student_id","activated_enrollment_id"]) {
     expect(schema).toContain(field);
   }
