@@ -98,5 +98,34 @@ drop trigger if exists zoom_class_reservation_sync_trg on public.schedule_events
 create trigger zoom_class_reservation_sync_trg
  after insert or update of date,start_time,end_time,timezone,event_type,status,enrollment_id,cohort_id,delivery_mode
  on public.schedule_events for each row execute function public.refresh_zoom_class_reservation_trigger();
+
+-- Prevent a Zoom API response arriving after a cancellation or reschedule from
+-- leaving an incorrect meeting row. The caller can delete an orphan remote room
+-- and let JIT reconciliation retry against the new event state.
+create or replace function public.guard_zoom_class_meeting_window()
+returns trigger language plpgsql security definer set search_path=public,pg_temp
+as $
+declare ev public.schedule_events%rowtype;v_start timestamptz;v_end timestamptz;
+begin
+ if new.purpose<>'class' or new.schedule_event_id is null or new.status<>'scheduled' then
+  return new;
+ end if;
+ select * into ev from public.schedule_events where id=new.schedule_event_id;
+ if not found or ev.event_type<>'class' or ev.status not in ('scheduled','tentative','makeup') then
+  raise exception 'Linked Zoom classroom is no longer scheduled';
+ end if;
+ v_start:=(ev.date+ev.start_time) at time zone coalesce(nullif(ev.timezone,''),'Asia/Kolkata');
+ v_end:=(ev.date+ev.end_time) at time zone coalesce(nullif(ev.timezone,''),'Asia/Kolkata');
+ if new.scheduled_start is distinct from v_start or
+    new.duration_minutes is distinct from round(extract(epoch from (v_end-v_start))/60)::integer then
+  raise exception 'Zoom classroom schedule changed during provisioning';
+ end if;
+ return new;
+end $;
+revoke all on function public.guard_zoom_class_meeting_window() from public,anon,authenticated;
+drop trigger if exists zoom_class_meeting_window_guard_trg on public.zoom_meetings;
+create trigger zoom_class_meeting_window_guard_trg
+ before insert or update of host_account_id,scheduled_start,duration_minutes,status
+ on public.zoom_meetings for each row execute function public.guard_zoom_class_meeting_window();
 commit;
 notify pgrst, 'reload schema';
