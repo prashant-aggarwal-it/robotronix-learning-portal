@@ -114,7 +114,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   const zoom=source("components/ZoomClassActions.tsx");
   expect(zoom).toContain("Zoom setup scheduled");
   expect(zoom).toContain("The Zoom room is set up automatically closer to class time");
-  expect(zoom).toContain("Open Zoom Classroom");
+  expect(zoom).toContain("Review Zoom Classroom");
   expect(zoom).toContain("data.meeting?.lastError");
   expect(zoom).toContain("!data.available&&reusableLink&&data.canJoin");
   expect(zoom).toContain("data.withinJoinWindow");
