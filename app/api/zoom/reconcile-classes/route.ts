@@ -43,9 +43,10 @@ export async function POST(request:NextRequest){
     const meeting=linked.get(event.id);
     if(meeting&&meeting.join_url&&/^https:\/\//i.test(meeting.join_url)&&!["cancelled","error"].includes(meeting.status))continue;
     try{
-     if(zonedLocalToUtc(event.date,event.start_time,event.timezone||"Asia/Kolkata").getTime()<Date.now()-15*60_000)continue;
+     const untilStart=zonedLocalToUtc(event.date,event.start_time,event.timezone||"Asia/Kolkata").getTime()-Date.now();
+     if(untilStart< -5*60_000||untilStart>35*60_000)continue;
      eligibleCount++;
-     if(batch.length<5)batch.push(event);
+     if(batch.length<12)batch.push(event);
     }catch{}
    }
    morePages=rows.length===200;
@@ -65,6 +66,6 @@ export async function POST(request:NextRequest){
     failures.push({eventId:event.id,reason:error instanceof Error?error.message:String(error)});
    }
   }
-  return NextResponse.json({ok:true,created,skipped,failed:failures.length,failures,scanned,eligible:eligibleCount,processed:batch.length,repaired,remaining:Math.max(0,eligibleCount-batch.length)},{headers:{"Cache-Control":"no-store"}});
+  return NextResponse.json({ok:failures.length===0,created,skipped,failed:failures.length,failures,scanned,eligible:eligibleCount,processed:batch.length,repaired,remaining:Math.max(0,eligibleCount-batch.length)},{headers:{"Cache-Control":"no-store"}});
  }catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:500});}
 }
