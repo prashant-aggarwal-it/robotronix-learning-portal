@@ -1,5 +1,6 @@
 import {test,expect} from "@playwright/test";
 import {readFileSync} from "node:fs";
+import {readCanonicalSql} from "../scripts/read-canonical-sql.mjs";
 import {resolve} from "node:path";
 import {readableSaveError} from "../lib/form-errors";
 
@@ -81,7 +82,7 @@ test.describe("Phase 3 form quality release contracts",()=>{
   expect(source("components/progress/ProjectReviewWorkspace.tsx")).toContain("required to review/complete");
  });
  test("canonical fresh-install schema contains P0/P1 audit and onboarding triggers",()=>{
-  const schema=source("database/01_install/01_CREATE_SCHEMA.sql");
+  const schema=readCanonicalSql();
   expect(schema).toContain("onboarding_submission_admin_notification_trg");
   for(const table of ["portal_access_requests","student_invoices","zoom_meetings","zoom_recordings"])expect(schema).toContain(table);
   expect(source("database/03_verify/01_VERIFY_RELEASE.sql")).toContain("CONSOLIDATED_AUDIT_COVERAGE_GATE");
