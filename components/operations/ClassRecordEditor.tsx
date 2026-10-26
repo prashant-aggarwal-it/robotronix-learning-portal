@@ -77,8 +77,8 @@ export function ClassRecordEditor({eventId,role}:{eventId:string;role:"admin"|"t
     <details className="classOutcomeDetails"><summary>More learning notes (optional)</summary>
      <div className="outcomeDetailGrid">
       <label>What went well<textarea className="input textarea" value={o.strength} onChange={x=>setObservations(v=>({...v,[e.studentId]:{...o,strength:x.target.value}}))} placeholder="One specific observation"/></label>
-      <label>Private note<textarea className="input textarea" value={o.internalNote} onChange={x=>setObservations(v=>({...v,[e.studentId]:{...o,internalNote:x.target.value}}))} placeholder="Visible only to Trainer / Admin"/></label>
-      <label className="span2">Edit parent update <span className="optionalLabel">optional</span><textarea className="input textarea" value={o.feedback} onChange={x=>setObservations(v=>({...v,[e.studentId]:{...o,feedback:x.target.value}}))} placeholder="Leave blank for a draft based on the topic and your selected learning outcome"/></label>
+      <label>Internal trainer / admin note<textarea className="input textarea" value={o.internalNote} onChange={x=>setObservations(v=>({...v,[e.studentId]:{...o,internalNote:x.target.value}}))} placeholder="Visible only to Trainer / Admin"/></label>
+      <label className="span2">Parent-visible progress note <span className="optionalLabel">optional</span><textarea className="input textarea" value={o.feedback} onChange={x=>setObservations(v=>({...v,[e.studentId]:{...o,feedback:x.target.value}}))} placeholder="Leave blank for a draft based on the topic and your selected learning outcome"/></label>
      </div>
     </details></>:<div className="missedClassNote">No learning assessment is created for an absent or excused learner.</div>}
   </div>
