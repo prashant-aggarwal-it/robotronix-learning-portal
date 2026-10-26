@@ -1,5 +1,5 @@
 import {NextRequest,NextResponse} from "next/server";
-import {syncZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
+import {syncZoomForScheduleEvent,cancelZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
 import {zoomServiceClient} from "@/lib/server/zoom";
 import {zonedLocalToUtc} from "@/lib/timezones";
 import {logSystemEvent} from "@/lib/server/system-log";
@@ -81,9 +81,50 @@ export async function POST(request:NextRequest){
     failures[failures.length-1]={eventId,reason:"Provisioning failed. Reference: "+reference};
    }
   }
+  // Repair host reservations for future classes whose preferred host was missing,
+  // disabled, or unavailable when the original course schedule was created.
+  let reservationsRecovered=0;
+  const {data:unallocated,error:allocationError}=await db.from("zoom_class_host_reservations")
+   .select("schedule_event_id").eq("allocation_status","unallocated")
+   .gte("ends_at",new Date().toISOString())
+   .order("updated_at",{ascending:true}).limit(10);
+  if(allocationError)throw new Error("Zoom reservation backlog query failed.");
+  for(const reservation of unallocated||[]){
+   const {data:allocation,error:allocationFailure}=await db.rpc("reserve_zoom_host_for_class",{p_event_id:reservation.schedule_event_id});
+   if(allocationFailure)throw new Error("Zoom reservation recovery RPC failed.");
+   if(allocation==="reserved")reservationsRecovered++;
+  }
+
+  // Recover cancellations not followed by the original application's Zoom API
+  // cleanup. Leave completed and currently started meetings untouched.
+  let cancelled=0;
+  const {data:activeMeetings,error:activeMeetingError}=await db.from("zoom_meetings")
+   .select("schedule_event_id").eq("purpose","class").eq("status","scheduled")
+   .gte("scheduled_start",new Date(Date.now()-24*60*60_000).toISOString())
+   .order("scheduled_start",{ascending:true}).limit(300);
+  if(activeMeetingError)throw new Error("Zoom cancellation reconciliation lookup failed.");
+  const activeIds=(activeMeetings||[]).map(m=>m.schedule_event_id).filter((id):id is string=>Boolean(id));
+  if(activeIds.length){
+   const {data:classStates,error:stateError}=await db.from("schedule_events")
+    .select("id,status,enrollment_id,cohort_id").in("id",activeIds);
+   if(stateError)throw new Error("Zoom cancellation state lookup failed.");
+   const invalid=(classStates||[]).filter(s=>
+    ["cancelled","rescheduled","blocked"].includes(s.status)
+    ||(s.enrollment_id&&offlineEnrollmentIds.has(s.enrollment_id))
+    ||(s.cohort_id&&offlineCohortIds.has(s.cohort_id))
+   ).slice(0,5);
+   for(const item of invalid){
+    try{await cancelZoomForScheduleEvent(db,item.id);cancelled++;}
+    catch{
+     failures.push({eventId:item.id,reason:"Unable to clean up cancelled classroom."});
+     await logSystemEvent({source:"zoom-auto-reconcile",action:"cancel-class",level:"error",
+      code:"ZOOM_CANCEL_RECONCILIATION_FAILED",message:"Zoom meeting cleanup after class cancellation failed."});
+    }
+   }
+  }
   if(created+repaired>0)await logSystemEvent({source:"zoom-auto-reconcile",action:"reconcile",level:"info",message:"Zoom reconciliation created "+created+" and repaired "+repaired+" meeting(s)."});
   await recordJobRun({jobName:"zoom-auto-reconcile",status:failures.length?"partial":"success",processed:chosen.length,succeeded:created+repaired,failed:failures.length,durationMs:Date.now()-runStarted});
-  return NextResponse.json({ok:failures.length===0,created,repaired,skipped,failed:failures.length,processed:chosen.length,remainingCandidates:Math.max(0,candidates.length-chosen.length),failures},{headers:{"Cache-Control":"no-store"}});
+  return NextResponse.json({ok:failures.length===0,created,repaired,skipped,cancelled,reservationsRecovered,failed:failures.length,processed:chosen.length,remainingCandidates:Math.max(0,candidates.length-chosen.length),failures},{headers:{"Cache-Control":"no-store"}});
  }catch(e){
   console.error("Zoom automatic reconciliation failed");
   const reference=await logSystemEvent({source:"zoom-auto-reconcile",action:"reconcile",level:"error",code:"ZOOM_RECONCILE_JOB_FAILED",message:"Automatic Zoom meeting reconciliation could not complete."});
