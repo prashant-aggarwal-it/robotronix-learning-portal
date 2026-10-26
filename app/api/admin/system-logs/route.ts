@@ -19,5 +19,6 @@ export async function GET(req:NextRequest){
  if(q)query=query.or(`source.ilike.%${q}%,action.ilike.%${q}%,reference_id.ilike.%${q}%`);
  const {data,error}=await query;
  if(error)return NextResponse.json({error:"Unable to read system logs"},{status:500});
- return NextResponse.json({rows:data||[]},{headers:{"Cache-Control":"no-store"}});
+ const {data:jobs,error:jobsError}=await admin.from("portal_job_runs").select("id,job_name,started_at,finished_at,status,processed,succeeded,failed,reference_id,error_code,duration_ms").order("started_at",{ascending:false}).limit(120);
+ return NextResponse.json({rows:data||[],jobs:jobsError?[]:jobs||[],jobHistoryAvailable:!jobsError},{headers:{"Cache-Control":"no-store"}});
 }
