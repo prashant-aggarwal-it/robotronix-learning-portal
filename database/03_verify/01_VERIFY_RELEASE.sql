@@ -905,3 +905,11 @@ begin
  ) then raise exception 'Onboarding admin notification trigger missing'; end if;
 end $$;
 select 'CONSOLIDATED_AUDIT_COVERAGE_GATE' as section,'PASS' as result;
+
+-- P0/P1 audit coverage verification (read only)
+-- Verification:
+SELECT c.relname AS table_name, t.tgname AS audit_trigger, t.tgenabled AS enabled
+FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+LEFT JOIN pg_trigger t ON t.tgrelid=c.oid AND t.tgname='audit_'||c.relname
+WHERE n.nspname='public' AND c.relname IN ('portal_access_requests','student_invoices','zoom_meetings','zoom_recordings')
+ORDER BY c.relname;
