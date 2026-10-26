@@ -73,6 +73,18 @@ WITH checks(name,ok) AS (
    'qa-trainer@robotronix.local','qa-trainer-2@robotronix.local',
    'qa-parent@robotronix.local','qa-parent-us@robotronix.local',
    'qa-student@robotronix.local','qa-student-us@robotronix.local'))),
+ ('Three onboarding states',(
+  SELECT count(DISTINCT status)=3 FROM public.onboarding_submissions
+  WHERE id IN('91000000-0000-4000-8000-000000000011',
+  '91000000-0000-4000-8000-000000000012',
+  '91000000-0000-4000-8000-000000000013'))),
+ ('US billing package without fake paid invoice',(
+  SELECT count(*)=1 FROM public.student_fee_packages
+  WHERE id='b0000000-0000-4000-8000-000000000098'
+  AND currency='USD' AND amount=180.00)),
+ ('Trainer has Saturday evening availability',(
+  SELECT count(*)>=1 FROM public.trainer_availability WHERE trainer_id='a0000000-0000-4000-8000-000000000002'
+  AND day_of_week=6 AND start_time<='19:30' AND end_time>='20:30')),
  ('Two different trainers',(
   SELECT count(*)=2 FROM public.trainers WHERE id IN
   ('a0000000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000002'))),
