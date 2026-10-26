@@ -2,6 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {syncZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
 import {zoomServiceClient} from "@/lib/server/zoom";
 import {zonedLocalToUtc} from "@/lib/timezones";
+import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
 
 // Server-to-server retry: no browser credential, no new class records, max 3 Zoom API provisioning attempts.
@@ -61,12 +62,16 @@ export async function POST(request:NextRequest){
    }catch(e){
     const reason=e instanceof Error?e.message:String(e);
     failures.push({eventId,reason});
-    console.error("Zoom automatic classroom provisioning failed",eventId,reason);
+    console.error("Zoom automatic classroom provisioning failed",eventId);
+    const reference=await logSystemEvent({source:"zoom-auto-reconcile",action:"provision-meeting",level:"error",code:"ZOOM_RECONCILE_ITEM_FAILED",message:"Automatic Zoom meeting reconciliation failed for a class."});
+    failures[failures.length-1]={eventId,reason:"Provisioning failed. Reference: "+reference};
    }
   }
-  return NextResponse.json({ok:true,created,repaired,skipped,failed:failures.length,processed:chosen.length,remainingCandidates:Math.max(0,candidates.length-chosen.length),failures},{headers:{"Cache-Control":"no-store"}});
+  if(created+repaired>0)await logSystemEvent({source:"zoom-auto-reconcile",action:"reconcile",level:"info",message:"Zoom reconciliation created "+created+" and repaired "+repaired+" meeting(s)."});
+  return NextResponse.json({ok:failures.length===0,created,repaired,skipped,failed:failures.length,processed:chosen.length,remainingCandidates:Math.max(0,candidates.length-chosen.length),failures},{headers:{"Cache-Control":"no-store"}});
  }catch(e){
-  console.error("Zoom automatic reconciliation failed",e);
-  return NextResponse.json({ok:false,error:e instanceof Error?e.message:String(e)},{status:500});
+  console.error("Zoom automatic reconciliation failed");
+  const reference=await logSystemEvent({source:"zoom-auto-reconcile",action:"reconcile",level:"error",code:"ZOOM_RECONCILE_JOB_FAILED",message:"Automatic Zoom meeting reconciliation could not complete."});
+  return NextResponse.json({ok:false,error:"Automatic Zoom reconciliation failed.",reference},{status:500});
  }
 }
