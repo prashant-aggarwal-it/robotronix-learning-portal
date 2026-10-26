@@ -30,6 +30,21 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
     expect(schema).toContain(field);
   }
  });
+ test("learner progress distinguishes attendance from learning evidence across roles",()=>{
+  const workspace=source("components/progress/LearnerProgressWorkspace.tsx");
+  const cards=source("components/experience/ExperienceCards.tsx");
+  const parent=source("app/parent/page.tsx");
+  const learner=source("app/parent/learner/[studentId]/page.tsx");
+  const student=source("app/student/page.tsx");
+  expect(workspace).toContain("hasLearningEvidence");
+  expect(workspace).toContain("attendedCount");
+  expect(workspace).toContain("Not enough evidence");
+  expect(workspace).toContain('role==="admin"&&<Link');
+  expect(cards).toContain("learnerHasLearningEvidence(snapshot)");
+  expect(parent).toContain("learnerHasLearningEvidence(selected)");
+  expect(learner).toContain("learnerHasLearningEvidence(data)");
+  expect(student).toContain("learnerHasLearningEvidence(data)");
+ });
  test("learner lifecycle and portal linking use consistent role-specific presentation",()=>{
   const stage=source("lib/learner-lifecycle.ts");
   const studentProfile=source("app/admin/students/[id]/page.tsx");
