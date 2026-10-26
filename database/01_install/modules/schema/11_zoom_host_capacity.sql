@@ -56,6 +56,7 @@ begin
  v_end:=(ev.date+ev.end_time) at time zone coalesce(nullif(ev.timezone,''),'Asia/Kolkata');
  if v_end<=v_start then raise exception 'Invalid class window for Zoom reservation'; end if;
  -- Serialize all concurrent host allocations, including updates and bulk course creation.
+ -- Each reservation includes a five-minute host turnover buffer after its class.
  perform pg_advisory_xact_lock(3519,7);
  select host_account_id into v_old from public.zoom_class_host_reservations where schedule_event_id=p_event_id;
  select h.id into v_host
@@ -77,7 +78,7 @@ begin
    )
  order by case when h.id=v_old then 0 else 1 end,h.priority,h.connected_at,h.id limit 1;
  insert into public.zoom_class_host_reservations(schedule_event_id,host_account_id,starts_at,ends_at,allocation_status,updated_at)
- values(p_event_id,v_host,v_start,v_end,case when v_host is null then 'unallocated' else 'reserved' end,now())
+ values(p_event_id,v_host,v_start,v_end+interval '5 minutes',case when v_host is null then 'unallocated' else 'reserved' end,now())
  on conflict(schedule_event_id) do update set
   host_account_id=excluded.host_account_id,starts_at=excluded.starts_at,ends_at=excluded.ends_at,
   allocation_status=excluded.allocation_status,updated_at=now();
