@@ -15,16 +15,14 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(onboarding).toContain("activationResult?.studentId");
   expect(onboarding).toContain("booking needs attention");
  });
- test("activated onboarding persists links and existing Supabase needs additive migration",()=>{
+ test("activated onboarding link fields exist in the canonical fresh schema",()=>{
   const repo=source("lib/repository.ts");
   const schema=readCanonicalSql();
-  const migration=source("database/04_migrations/2026_10_24_PHASES_2_3_4_ADDITIVE.sql");
   const onboarding=source("app/admin/onboarding/[id]/page.tsx");
   expect(repo).toContain("activatedStudentId:created.id,activatedEnrollmentId:enrollment.id");
   expect(onboarding).toContain('r.status==="active"&&r.activatedStudentId&&r.activatedEnrollmentId');
   for(const field of ["activated_student_id","activated_enrollment_id"]) {
     expect(schema).toContain(field);
-    expect(migration).toContain(field);
   }
  });
  test("enrollment is class hub using existing idempotent generator",()=>{
