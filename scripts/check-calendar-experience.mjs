@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import {readCanonicalSql} from "./read-canonical-sql.mjs";
 const required=[
  "lib/calendar.ts",
  "components/calendar/CalendarActions.tsx",
@@ -7,7 +8,7 @@ const required=[
  "app/student/calendar/page.tsx",
  "app/api/calendar/subscription/route.ts",
  "app/api/calendar/trainer/[trainerId]/feed/route.ts",
- "database/01_install/01_CREATE_SCHEMA.sql"
+ "database/01_install/modules/schema/01_core_schema.sql"
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing calendar file: "+file);
 const actions=fs.readFileSync("components/calendar/CalendarActions.tsx","utf8");
