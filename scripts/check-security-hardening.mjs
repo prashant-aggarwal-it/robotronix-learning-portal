@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {readCanonicalSql} from './read-canonical-sql.mjs';
 
 const root=process.cwd();
 const read=(file)=>fs.readFileSync(path.join(root,file),'utf8');
 const problems=[];
 const must=(test,description)=>{if(!test)problems.push(description)};
-const schema=read('database/01_install/01_CREATE_SCHEMA.sql');
+const schema=readCanonicalSql();
 const config=read('next.config.ts');
 const adminApi=read('lib/server/admin-api.ts');
 const readFiles=(directory,results=[])=>{
