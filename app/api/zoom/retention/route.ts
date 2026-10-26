@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {zoomApi,zoomServiceClient} from "@/lib/server/zoom";
 import {logSystemEvent} from "@/lib/server/system-log";
+import {recordJobRun} from "@/lib/server/job-monitor";
 export const dynamic="force-dynamic";
 
 function authorised(request:NextRequest){
@@ -11,6 +12,7 @@ function authorised(request:NextRequest){
 
 export async function POST(request:NextRequest){
  if(!authorised(request))return NextResponse.json({ok:false,error:"Unauthorized."},{status:401});
+ const runStarted=Date.now();
  try{
   const db=zoomServiceClient(),now=new Date().toISOString();
   const {data,error}=await db.from("zoom_recordings")
@@ -35,9 +37,11 @@ export async function POST(request:NextRequest){
    }
   }
   if(deleted>0)await logSystemEvent({source:"zoom-retention",action:"cleanup",level:"info",message:"Expired Zoom recording cleanup moved "+deleted+" file(s) to trash."});
+  await recordJobRun({jobName:"zoom-retention",status:failed?"partial":"success",processed:(data||[]).length,succeeded:deleted,failed,durationMs:Date.now()-runStarted,referenceId:firstReference});
   return NextResponse.json({ok:failed===0,checked:(data||[]).length,deleted,failed,reference:firstReference,failures},{status:failed?207:200,headers:{"Cache-Control":"no-store"}});
  }catch{
   const reference=await logSystemEvent({source:"zoom-retention",action:"cleanup",level:"error",code:"RETENTION_JOB_FAILED",message:"Zoom recording retention job failed."});
+  await recordJobRun({jobName:"zoom-retention",status:"failed",failed:1,durationMs:Date.now()-runStarted,referenceId:reference,errorCode:"RETENTION_JOB_FAILED"});
   return NextResponse.json({ok:false,error:"Recording cleanup failed.",reference},{status:500,headers:{"Cache-Control":"no-store"}});
  }
 }
