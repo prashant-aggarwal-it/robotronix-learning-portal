@@ -297,6 +297,73 @@ VALUES
  'Score tracking','Nested conditions','reinforce')
 ON CONFLICT(id) DO UPDATE SET summary=excluded.summary,signal=excluded.signal,updated_at=now();
 
+
+-- Onboarding review workflow: new, setup pending, and activated/linked.
+-- These synthetic submissions also exercise Admin notification creation.
+INSERT INTO public.onboarding_submissions(
+ id,user_id,login_email,primary_guardian_name,primary_guardian_relationship,
+ city,state,country,timezone,child_name,grade,school,source,goal,
+ data_consent,status,assigned_course_id,assigned_trainer_id,
+ activated_student_id,activated_enrollment_id,enrollment_type,start_date,
+ draft_schedule_timezone,draft_schedule_rules)
+VALUES
+ ('91000000-0000-4000-8000-000000000011',
+ (SELECT id FROM auth.users WHERE lower(email)='qa-parent@robotronix.local'),
+ 'qa-parent@robotronix.local','QA Parent','mother',
+ 'Delhi','Delhi','India','Asia/Kolkata','Ishaan (New Onboarding)','Grade 5',
+ 'QA Delhi School','Website','Explore robotics',true,'new',
+ NULL,NULL,NULL,NULL,NULL,NULL,NULL,'[]'::jsonb),
+ ('91000000-0000-4000-8000-000000000012',
+ (SELECT id FROM auth.users WHERE lower(email)='qa-parent-us@robotronix.local'),
+ 'qa-parent-us@robotronix.local','Olivia Patel (QA)','mother',
+ 'New York','New York','United States','America/New_York',
+ 'Sophia (Setup Pending)','Grade 6','QA International School','Referral',
+ 'Learn coding fundamentals',true,'setup_pending',
+ 'c0000000-0000-4000-8000-000000000002',
+ 'a0000000-0000-4000-8000-000000000002',
+ NULL,NULL,'one_to_one',current_date+7,'America/New_York',
+ '[{"dayOfWeek":5,"startTime":"17:00","endTime":"18:00"}]'::jsonb),
+ ('91000000-0000-4000-8000-000000000013',
+ (SELECT id FROM auth.users WHERE lower(email)='qa-parent-us@robotronix.local'),
+ 'qa-parent-us@robotronix.local','Olivia Patel (QA)','mother',
+ 'New York','New York','United States','America/New_York',
+ 'Mia Patel (QA USA)','Grade 7','QA International School','Website',
+ 'Build a Python quiz',true,'active',
+ 'c0000000-0000-4000-8000-000000000002',
+ 'a0000000-0000-4000-8000-000000000002',
+ 'd0000000-0000-4000-8000-000000000002',
+ 'e0000000-0000-4000-8000-000000000002',
+ 'one_to_one',current_date,'America/New_York',
+ '[{"dayOfWeek":5,"startTime":"17:00","endTime":"18:00"}]'::jsonb)
+ON CONFLICT(id) DO UPDATE SET status=excluded.status,
+ assigned_course_id=excluded.assigned_course_id,
+ assigned_trainer_id=excluded.assigned_trainer_id,
+ activated_student_id=excluded.activated_student_id,
+ activated_enrollment_id=excluded.activated_enrollment_id,updated_at=now();
+
+-- Trainer availability: two different weekly patterns; overrides exercise
+-- exception rendering without creating real Zoom rooms.
+INSERT INTO public.trainer_availability(trainer_id,day_of_week,start_time,end_time,enabled)
+VALUES
+ ('a0000000-0000-4000-8000-000000000001',1,'15:00','19:00',true),
+ ('a0000000-0000-4000-8000-000000000002',5,'15:00','21:00',true),
+ ('a0000000-0000-4000-8000-000000000002',6,'10:00','14:00',true)
+ON CONFLICT(trainer_id,day_of_week,start_time,end_time) DO UPDATE SET enabled=true;
+
+-- Billing setup only: no payment success, provider invoice, webhook or payouts fabricated.
+-- The empty-invoice state remains meaningful and Admin can test package management.
+INSERT INTO public.student_fee_packages(
+ id,enrollment_id,name,scheme,currency,amount,sessions,start_date,end_date,installments)
+VALUES(
+ 'b0000000-0000-4000-8000-000000000098',
+ 'e0000000-0000-4000-8000-000000000002',
+ 'DEV US Python Fee Package','Custom','USD',180.00,12,current_date,
+ current_date+90,
+ jsonb_build_array(jsonb_build_object('amount',180.00,'due',current_date::text)))
+ON CONFLICT(id) DO UPDATE SET name=excluded.name,amount=excluded.amount,
+ currency=excluded.currency,start_date=excluded.start_date,
+ end_date=excluded.end_date,installments=excluded.installments;
+
 COMMIT;
 
 -- Read-only quick summary; for stronger checks run 03_VERIFY_DEV_PERSONAS.sql.
