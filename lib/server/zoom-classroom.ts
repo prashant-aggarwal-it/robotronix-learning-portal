@@ -1,4 +1,5 @@
 import type {SupabaseClient} from "@supabase/supabase-js";
+import {randomUUID} from "node:crypto";
 import {zonedLocalToUtc} from "@/lib/timezones";
 import {zoomApi} from "@/lib/server/zoom";
 
@@ -111,7 +112,7 @@ export async function cancelZoomForScheduleEvent(db:SupabaseClient,scheduleEvent
  return {action:"cancelled" as const,meetingId:meeting.id};
 }
 
-export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId:string,actorId?:string,options:{force?:boolean}={}){
+async function syncZoomForScheduleEventInternal(db:SupabaseClient,scheduleEventId:string,actorId?:string,options:{force?:boolean}={}){
  const {data:event,error:eventError}=await db.from("schedule_events")
   .select("id,trainer_id,course_id,enrollment_id,cohort_id,student_id,title,date,start_time,end_time,timezone,event_type,status")
   .eq("id",scheduleEventId).maybeSingle();
@@ -210,6 +211,24 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
   throw new Error(insertError.code==="23P01"?"The Zoom host became busy while scheduling. Please retry.":insertError.message);
  }
  return {action:"created" as const,meetingId:inserted.id,hostId:host.id};
+}
+
+
+/**
+ * One caller at a time may provision or repair a given classroom.
+ * The short-lived DB lease is held across Zoom API calls and released in finally.
+ * An expired lease is reclaimable after an interrupted invocation.
+ */
+export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId:string,actorId?:string,options:{force?:boolean}={}){
+ const token=randomUUID();
+ const {data:claimed,error}=await db.rpc("claim_zoom_class_provisioning",{p_event_id:scheduleEventId,p_token:token});
+ if(error)throw new Error("Zoom provisioning lock is unavailable. Apply the canonical Zoom JIT schema before enabling this release.");
+ if(!claimed)return {action:"busy" as const};
+ try{return await syncZoomForScheduleEventInternal(db,scheduleEventId,actorId,options);}
+ finally{
+  const {error:releaseError}=await db.rpc("release_zoom_class_provisioning",{p_event_id:scheduleEventId,p_token:token});
+  if(releaseError)console.error("[zoom-classroom] lease cleanup failed",scheduleEventId,releaseError.code||"unknown");
+ }
 }
 
 export async function classAccessForProfile(db:SupabaseClient,scheduleEventId:string,profile:{id:string;role:string}){
