@@ -48,6 +48,15 @@ function Workspace(){
   }catch(e){setError(readableSaveError(e))}
   finally{setBusy(false)}
  }
+ async function retryClassCapacity(id:string){
+  if(busy)return;setBusy(true);setError("");setNotice("");
+  try{
+   const result=await adminApi("/api/zoom/schedule/sync",{method:"POST",
+    body:JSON.stringify({scheduleEventId:id,action:"reserve"})});
+   await load();
+   setNotice(result.action==="reserved"?"Zoom host capacity reserved for this class.":"No connected Zoom host is free for this class time. Adjust the schedule or connect another host.");
+  }catch(e){setError(readableSaveError(e))}finally{setBusy(false)}
+ }
  async function syncZoom(){if(busy)return;setBusy(true);setError("");setNotice("");try{const x=await adminApi("/api/zoom/reconcile",{method:"POST"});setNotice(`Synced with Zoom · ${x.meetingsSynced||0} meetings · ${x.recordingsSynced||0} recording files${x.errors?` · ${x.errors} item(s) need review`:""}`);await load()}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
  useEffect(()=>{void load()},[]);
  useLiveRefresh(["zoom_meetings","zoom_recordings","zoom_host_accounts"],load,"admin-zoom");
@@ -122,7 +131,7 @@ function Workspace(){
     <div className="tableWrap"><table><thead><tr><th>Class</th><th>Scheduled date</th><th>Issue</th><th>Action</th></tr></thead><tbody>
      {readinessIssues.map(x=><tr key={x.id}><td>{x.title}</td><td>{x.date} · {x.startTime} ({x.timezone})</td>
       <td>{!x.hostReserved?"No connected host slot reserved":"Provisioned Zoom room needs review"}</td>
-      <td><a href={"/admin/classes/"+encodeURIComponent(x.id)}>Open class</a></td></tr>)}
+      <td><button className="button ghost" disabled={busy} onClick={()=>void retryClassCapacity(x.id)}>Retry capacity</button> <a href={"/admin/classes/"+encodeURIComponent(x.id)}>Open class</a></td></tr>)}
     </tbody></table></div>
    </details>
    <div className="row zoomClassFilters">
