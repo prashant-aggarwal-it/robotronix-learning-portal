@@ -17,7 +17,7 @@ import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
 import {WeeklyScheduleEditor} from "@/components/admin/WeeklyScheduleEditor";
 import {parsePreferredTimeWindows,preferredTimingNote,suggestedScheduleFromPreferences} from "@/lib/learner-options";
 import type {PreferredTimeWindow} from "@/lib/learner-options";
-import {activateOnboarding,getOnboardingSubmission,listAdminCohorts,listAdminCourses,listAdminTrainers,listTrainerAvailability,listAvailabilityOverrides,listScheduleEvents,updateOnboardingSubmission} from "@/lib/repository";
+import {activateOnboarding,getOnboardingSubmission,listAdminCohorts,listAdminCourses,listAdminTrainers,getAdminEnrollment,getAdminStudent,listTrainerAvailability,listAvailabilityOverrides,listScheduleEvents,updateOnboardingSubmission} from "@/lib/repository";
 import {IST_TIMEZONE,convertWeeklyScheduleSlots,dayNames,formatClock,formatWeeklySchedule,isValidTimeZone,nextIsoDateForWeekday,shortTimeZoneLabel,timeZoneLabel,zonedRangeParts} from "@/lib/timezones";
 import type {CohortAdminRecord,CourseAdminRecord,OnboardingSubmission,TrainerAdminRecord,TrainerAvailability,TrainerAvailabilityOverride,WeeklyScheduleSlot,ScheduleEvent} from "@/lib/types";
 import {matchPreferredWindows,validateFinalScheduleSlots} from "@/lib/availability-match";
@@ -81,6 +81,7 @@ export default function OnboardingDetail(){
  const[schedulingHorizon,setSchedulingHorizon]=useState<SchedulingHorizon>("full");
  const[schedulingWeeks,setSchedulingWeeks]=useState(4);
  const[existingClasses,setExistingClasses]=useState<ScheduleEvent[]>([]);
+ const[linkedState,setLinkedState]=useState<{student:boolean;enrollment:boolean;error?:string}|null>(null);
  const[previewBookingsLoaded,setPreviewBookingsLoaded]=useState(false);
  useEffect(()=>{let cancelled=false;listScheduleEvents().then(items=>{if(!cancelled){setExistingClasses(items);setPreviewBookingsLoaded(true)}}).catch(()=>{if(!cancelled)setPreviewBookingsLoaded(false)});return()=>{cancelled=true}},[]);
  const[scheduleOverrideConfirmed,setScheduleOverrideConfirmed]=useState(false);
@@ -121,6 +122,16 @@ export default function OnboardingDetail(){
   }
  }
  useEffect(()=>{void refresh()},[id]);
+ useEffect(()=>{
+  const studentId=r?.activatedStudentId||activationResult?.studentId;
+  const enrollmentId=r?.activatedEnrollmentId||activationResult?.enrollmentId;
+  if(r?.status!=="active"||!studentId||!enrollmentId){setLinkedState(null);return;}
+  let live=true;
+  Promise.all([getAdminStudent(studentId),getAdminEnrollment(enrollmentId)])
+   .then(([student,enrollment])=>{if(live)setLinkedState({student:Boolean(student),enrollment:Boolean(enrollment&&enrollment.studentId===studentId)})})
+   .catch(()=>{if(live)setLinkedState({student:false,enrollment:false,error:"Linked learner records could not be verified. Retry later."})});
+  return()=>{live=false};
+ },[r?.status,r?.activatedStudentId,r?.activatedEnrollmentId,activationResult?.studentId,activationResult?.enrollmentId]);
 
  const eligibleTrainers=useMemo(()=>trainers.filter(t=>t.recordStatus==="active"&&(!courseId||t.courseIds.includes(courseId))),[trainers,courseId]);
  const eligibleCohorts=useMemo(()=>cohorts.filter(c=>(isRunningCohort(c)||isUpcomingCohort(c))&&c.courseId===courseId&&c.trainerId===trainerId&&c.studentIds.length<c.capacity),[cohorts,courseId,trainerId]);
@@ -271,10 +282,12 @@ export default function OnboardingDetail(){
    <Info a="Next scheduled class" b={nextClass?`${nextClass.date} · ${formatClock(nextClass.startTime)} (${shortTimeZoneLabel(nextClass.timezone||IST_TIMEZONE)})`:"No upcoming class found"}/>
    <Info a="Family login" b={r.loginEmail||"Not linked"}/>
   </div>
+  {linkedState&&(!linkedState.student||!linkedState.enrollment)&&<div className="errorBanner" role="alert" style={{marginBottom:12}}>{linkedState.error||"The activated student or enrollment could not be found or does not match this onboarding record. Review the linked records before taking further action."}</div>}
   {!r.school?.trim()&&<div className="infoBanner" role="status" style={{marginBottom:12}}>School information is missing. Please correct it in the student profile.</div>}
+  {activationResult?.schedulingWarning&&<div className="infoBanner" role="status" style={{marginBottom:12}}>{activationResult.schedulingWarning}</div>}
   <div className="formActions" style={{display:"flex",flexWrap:"wrap",gap:10}}>
-   {activatedEnrollmentId?<Link className="button" href={`/admin/enrollments/${encodeURIComponent(activatedEnrollmentId)}`}>View enrollment</Link>:<span className="fieldHint">Enrollment link unavailable.</span>}
-   {activatedStudentId&&<Link className="button secondary" href={`/admin/students/${encodeURIComponent(activatedStudentId)}`}>Student profile & corrections</Link>}
+   {activatedEnrollmentId&&linkedState?.enrollment!==false?<Link className="button" href={`/admin/enrollments/${encodeURIComponent(activatedEnrollmentId)}`}>View enrollment</Link>:<span className="fieldHint">Enrollment link unavailable.</span>}
+   {activatedStudentId&&linkedState?.student!==false&&<Link className="button secondary" href={`/admin/students/${encodeURIComponent(activatedStudentId)}`}>Student profile & corrections</Link>}
   </div>
  </section>}
  <section className="onboardingSummaryCards">
