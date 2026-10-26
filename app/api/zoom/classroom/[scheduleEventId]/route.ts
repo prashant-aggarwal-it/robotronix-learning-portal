@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requirePortalUser} from "@/lib/server/portal-api";
-import {classAccessForProfile,classJoinWindow} from "@/lib/server/zoom-classroom";
+import {classAccessForProfile,classJoinWindow,syncZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
+import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
 
 export async function GET(request:NextRequest,{params}:{params:Promise<{scheduleEventId:string}>}){
@@ -9,11 +10,18 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{schedule
   const {scheduleEventId}=await params;
   const access=await classAccessForProfile(auth.admin,scheduleEventId,auth.profile);
   if(!access?.canJoin)return NextResponse.json({ok:false,error:"You do not have access to this classroom."},{status:403});
+  const window=classJoinWindow(access.event,auth.profile.role);
+  // When the trainer opens the classroom near start, recover an unprovisioned room.
+  // This does not grant a learner host access or create far-future meetings.
+  if(window.allowed&&access.canHost&&["scheduled","makeup"].includes(access.event.status)){
+   try{await syncZoomForScheduleEvent(auth.admin,scheduleEventId);}catch{
+    await logSystemEvent({source:"zoom-classroom",action:"readiness",level:"warning",code:"JIT_CLASSROOM_RETRY_FAILED",message:"Classroom meeting was unavailable during a trainer readiness check."});
+   }
+  }
   const {data:meeting,error}=await auth.admin.from("zoom_meetings")
    .select("id,status,scheduled_start,duration_minutes,recording_enabled,recording_status,learner_recording_visible,last_error,join_url")
    .eq("schedule_event_id",scheduleEventId).eq("purpose","class").maybeSingle();
   if(error)throw new Error(error.message);
-  const window=classJoinWindow(access.event,auth.profile.role);
   let recordingId:string|null=null;
   if(meeting?.id&&meeting.recording_status==="ready"){
    const {data:recording}=await auth.admin.from("zoom_recordings").select("id,learner_visible,status")
