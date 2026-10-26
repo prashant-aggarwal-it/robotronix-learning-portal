@@ -35,6 +35,11 @@ export function LearnerProgressWorkspace({studentId,role}:{studentId:string;role
  const eventById=useMemo(()=>new Map(events.map(e=>[e.id,e])),[events]);
  const attendanceHistory=[...scopedAttendance].sort((a,b)=>(eventById.get(b.scheduleEventId)?.date??"").localeCompare(eventById.get(a.scheduleEventId)?.date??""));
  const activeHold=scopedHolds.find(h=>h.status==="active");
+ const latestObservation=[...scopedObservations].sort((a,b)=>(eventById.get(b.scheduleEventId)?.date??"").localeCompare(eventById.get(a.scheduleEventId)?.date??""))[0];
+ const latestFeedback=[...scopedFeedback].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0];
+ const hasLearningEvidence=Boolean(latestObservation||latestFeedback);
+ const attendedCount=scopedAttendance.filter(a=>a.status==="attended"||a.status==="late").length;
+ const unresolvedAlerts=scopedAlerts.filter(a=>a.status==="open"||a.status==="reviewed");
  if(loading)return <div className="panel">Loading learner progress…</div>;if(!student)return <div className="emptyState">Learner profile not found.</div>;if(!allowed)return <div className="emptyState"><h2>Access unavailable</h2><p>This learner is not assigned to your trainer account.</p></div>;if(!enrollment)return <div className="emptyState"><h2>No enrollment found</h2><p>Progress tracking begins after the learner is enrolled in a course.</p></div>;
  async function addProject(){if(busyAction)return;const issues:FormIssue[]=[];
 if(!projectDraft.title.trim())issues.push({field:"projectTitle",message:"Enter a project title."});
