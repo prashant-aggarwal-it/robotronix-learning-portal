@@ -1,5 +1,6 @@
 import {readFileSync,existsSync} from "node:fs";
-const read=(p)=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
+import {readCanonicalSql} from "./read-canonical-sql.mjs";
+const read=(p)=>p==="database/01_install/01_CREATE_SCHEMA.sql"?readCanonicalSql():readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const checks={
  "app/admin/trainers/[id]/page.tsx":["PayoutReview","reviewTrainerFinanceRequest"],
  "components/finance/PayoutReview.tsx":["Approved on file","proposed change","request_correction","Reveal sensitive values"],
