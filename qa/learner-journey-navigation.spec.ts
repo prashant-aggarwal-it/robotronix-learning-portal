@@ -199,7 +199,8 @@ test("Zoom scheduling repairs missing join URLs and performs bounded automatic r
  expect(reconciliation).toContain("linked.get(event.id)");
  expect(cron).toContain('["scheduled","makeup"]');
  expect(cron).toContain("x-robotronix-cron-secret");
- expect(cron).toContain(".slice(0,3)");
+ expect(cron).toContain(".slice(0,12)");
+ expect(cron).toContain("35*60_000");
  expect(job).toContain("/api/zoom/auto-reconcile");
  expect(config).toContain('[functions."zoom-auto-reconcile"]');
  expect(repository).toContain('adminApi("/api/zoom/reconcile-classes"');
