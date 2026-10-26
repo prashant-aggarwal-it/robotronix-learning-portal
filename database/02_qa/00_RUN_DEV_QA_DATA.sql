@@ -3,6 +3,9 @@
 -- Requires all eight existing Auth users and correct active public.profiles roles.
 -- Does NOT create, delete, alter or elevate profiles; no Auth passwords, RLS or triggers changed.
 -- All business fixture changes are atomic. Never run on PROD.
+-- IMPORTANT: All QA dates use the same IST calendar date as the enrollment
+-- start-date validation trigger. CURRENT_DATE depends on the SQL session
+-- timezone and can be one day behind IST near midnight.
 
 BEGIN;
 
@@ -151,7 +154,7 @@ values (
   'qa-trainer@robotronix.local',
   'Delhi',
   'QA Robotics Trainer',
-  current_date,
+  ((now() AT TIME ZONE 'Asia/Kolkata')::date),
   array['Robotics','STEM','Coding'],
   'active',
   true,
@@ -204,7 +207,7 @@ values (
   'd0000000-0000-4000-8000-000000000001',
   (select id from auth.users where email='qa-student@robotronix.local' limit 1),
   'QA Student',
-  current_date - interval '12 years',
+  ((now() AT TIME ZONE 'Asia/Kolkata')::date) - interval '12 years',
   'Grade 6',
   'Robotronix QA School',
   'Delhi',
@@ -398,7 +401,7 @@ values (
   null,
   'd0000000-0000-4000-8000-000000000001',
   'QA Robotics Class — Completed',
-  current_date - 1,
+  ((now() AT TIME ZONE 'Asia/Kolkata')::date) - 1,
   '16:00',
   '17:00',
   'Asia/Kolkata',
@@ -445,7 +448,7 @@ values (
   'e0000000-0000-4000-8000-000000000001',
   'd0000000-0000-4000-8000-000000000001',
   'a0000000-0000-4000-8000-000000000001',
-  current_date - 1,
+  ((now() AT TIME ZONE 'Asia/Kolkata')::date) - 1,
   'attended',
   'got_it',
   'steady',
@@ -477,7 +480,7 @@ values (
   null,
   'd0000000-0000-4000-8000-000000000001',
   'QA Robotics Class — Upcoming',
-  current_date + 1,
+  ((now() AT TIME ZONE 'Asia/Kolkata')::date) + 1,
   '16:00',
   '17:00',
   'Asia/Kolkata',
@@ -489,7 +492,7 @@ values (
   'admin'
 )
 on conflict (id) do update set
-  date = current_date + 1,
+  date = ((now() AT TIME ZONE 'Asia/Kolkata')::date) + 1,
   status = 'scheduled',
   updated_at = now();
 
@@ -556,7 +559,7 @@ INSERT INTO public.trainers(
  record_status,login_linked,country,state,timezone)
 SELECT 'a0000000-0000-4000-8000-000000000002',u.id,
  'Meera Iyer (QA Trainer)','',u.email,'Bengaluru','Robotics and Python Trainer',
- current_date-120,ARRAY['Python','Scratch','Robotics'],'active',true,
+ ((now() AT TIME ZONE 'Asia/Kolkata')::date)-120,ARRAY['Python','Scratch','Robotics'],'active',true,
  'India','Karnataka','Asia/Kolkata'
 FROM auth.users u WHERE lower(u.email)='qa-trainer-2@robotronix.local'
 ON CONFLICT(id) DO UPDATE SET profile_id=excluded.profile_id,full_name=excluded.full_name,
@@ -582,18 +585,18 @@ INSERT INTO public.students(
 VALUES
  ('d0000000-0000-4000-8000-000000000002',
   (SELECT id FROM auth.users WHERE lower(email)='qa-student-us@robotronix.local'),
-  'Mia Patel (QA USA)',(current_date-interval '12 years')::date,'Grade 7','QA International School',
+  'Mia Patel (QA USA)',(((now() AT TIME ZONE 'Asia/Kolkata')::date)-interval '12 years')::date,'Grade 7','QA International School',
   'New York','New York','United States','America/New_York',
   ARRAY['Friday'],'09:00-10:00',ARRAY['Python','AI'],'Beginner','Website','active'),
  ('d0000000-0000-4000-8000-000000000003',NULL,'Aarav Sharma (QA India)',
-  (current_date-interval '11 years')::date,'Grade 6','QA Delhi School','Delhi','Delhi','India',
+  (((now() AT TIME ZONE 'Asia/Kolkata')::date)-interval '11 years')::date,'Grade 6','QA Delhi School','Delhi','Delhi','India',
   'Asia/Kolkata',ARRAY['Monday'],'17:00-19:00',ARRAY['Robotics'],'Beginner','Instagram','active'),
  ('d0000000-0000-4000-8000-000000000004',NULL,'Noah Patel (QA USA)',
-  (current_date-interval '9 years')::date,'Grade 4','QA Elementary School','New York','New York',
+  (((now() AT TIME ZONE 'Asia/Kolkata')::date)-interval '9 years')::date,'Grade 4','QA Elementary School','New York','New York',
   'United States','America/New_York',ARRAY['Saturday'],'10:00-12:00',
   ARRAY['Robotics'],'Beginner','Parent referral','active'),
  ('d0000000-0000-4000-8000-000000000005',NULL,'Anaya Sharma (QA Cohort)',
-  (current_date-interval '10 years')::date,'Grade 5','QA Delhi School','Delhi','Delhi','India',
+  (((now() AT TIME ZONE 'Asia/Kolkata')::date)-interval '10 years')::date,'Grade 5','QA Delhi School','Delhi','Delhi','India',
   'Asia/Kolkata',ARRAY['Saturday'],'19:00-21:00',ARRAY['Coding','Robotics'],'Beginner','School','active')
 ON CONFLICT(id) DO UPDATE SET profile_id=excluded.profile_id,full_name=excluded.full_name,
  grade=excluded.grade,city=excluded.city,state=excluded.state,country=excluded.country,
@@ -635,7 +638,7 @@ INSERT INTO public.cohorts(id,name,code,course_id,trainer_id,capacity,status,
  started_at,days_of_week,start_time,end_time,cohort_label,schedule_timezone,schedule_rules,schedule_text)
 VALUES('c1000000-0000-4000-8000-000000000001','QA Saturday Robotics Cohort',
  'QA-COHORT-DEV-01','c0000000-0000-4000-8000-000000000001',
- 'a0000000-0000-4000-8000-000000000002',6,'active',current_date-7,
+ 'a0000000-0000-4000-8000-000000000002',6,'active',((now() AT TIME ZONE 'Asia/Kolkata')::date)-7,
  ARRAY[6],'19:30','20:30','A','Asia/Kolkata',
  '[{"dayOfWeek":6,"startTime":"19:30","endTime":"20:30"}]'::jsonb,'Saturday 7:30 PM IST (10 AM EDT / 9 AM EST)')
 ON CONFLICT(id) DO UPDATE SET status='active',trainer_id=excluded.trainer_id,updated_at=now();
@@ -649,21 +652,21 @@ INSERT INTO public.enrollments(
 VALUES
  ('e0000000-0000-4000-8000-000000000002','d0000000-0000-4000-8000-000000000002',
  'c0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000002',
- 'one_to_one',NULL,'active',current_date,'America/New_York',
+ 'one_to_one',NULL,'active',((now() AT TIME ZONE 'Asia/Kolkata')::date),'America/New_York',
  '[{"dayOfWeek":5,"startTime":"09:00","endTime":"10:00"}]'::jsonb,'online','recurring',NULL,NULL,NULL),
  ('e0000000-0000-4000-8000-000000000003','d0000000-0000-4000-8000-000000000003',
  'c0000000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000001',
- 'one_to_one',NULL,'on_hold',current_date,'Asia/Kolkata',
+ 'one_to_one',NULL,'on_hold',((now() AT TIME ZONE 'Asia/Kolkata')::date),'Asia/Kolkata',
  '[{"dayOfWeek":1,"startTime":"17:00","endTime":"18:00"}]'::jsonb,
- 'online','recurring','exams',current_date,current_date+10),
+ 'online','recurring','exams',((now() AT TIME ZONE 'Asia/Kolkata')::date),((now() AT TIME ZONE 'Asia/Kolkata')::date)+10),
  ('e0000000-0000-4000-8000-000000000004','d0000000-0000-4000-8000-000000000004',
  'c0000000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000002',
- 'small_group','c1000000-0000-4000-8000-000000000001','active',current_date,
+ 'small_group','c1000000-0000-4000-8000-000000000001','active',((now() AT TIME ZONE 'Asia/Kolkata')::date),
  'Asia/Kolkata','[{"dayOfWeek":6,"startTime":"19:30","endTime":"20:30"}]'::jsonb,
  'online','recurring',NULL,NULL,NULL),
  ('e0000000-0000-4000-8000-000000000005','d0000000-0000-4000-8000-000000000005',
  'c0000000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000002',
- 'small_group','c1000000-0000-4000-8000-000000000001','active',current_date,
+ 'small_group','c1000000-0000-4000-8000-000000000001','active',((now() AT TIME ZONE 'Asia/Kolkata')::date),
  'Asia/Kolkata','[{"dayOfWeek":6,"startTime":"19:30","endTime":"20:30"}]'::jsonb,
  'online','recurring',NULL,NULL,NULL)
 ON CONFLICT(id) DO UPDATE SET status=excluded.status,trainer_id=excluded.trainer_id,
@@ -672,7 +675,7 @@ ON CONFLICT(id) DO UPDATE SET status=excluded.status,trainer_id=excluded.trainer
 
 INSERT INTO public.enrollment_holds(id,enrollment_id,student_id,reason,start_date,end_date,status,note)
 VALUES('a1000000-0000-4000-8000-000000000001','e0000000-0000-4000-8000-000000000003',
-'d0000000-0000-4000-8000-000000000003','exams',current_date,current_date+10,'active',
+'d0000000-0000-4000-8000-000000000003','exams',((now() AT TIME ZONE 'Asia/Kolkata')::date),((now() AT TIME ZONE 'Asia/Kolkata')::date)+10,'active',
 'DEV QA: temporary exam pause, no class hours should accrue')
 ON CONFLICT(id) DO UPDATE SET start_date=excluded.start_date,end_date=excluded.end_date,
  status='active',note=excluded.note;
@@ -695,29 +698,29 @@ VALUES
  ('f0000000-0000-4000-8000-000000000011',
  'a0000000-0000-4000-8000-000000000002','c0000000-0000-4000-8000-000000000002',
  'e0000000-0000-4000-8000-000000000002',NULL,'d0000000-0000-4000-8000-000000000002',
- 'QA Python Quiz',current_date-((extract(dow from current_date)::int+2)%7)-7,'09:00','10:00','America/New_York','class','one_to_one','conducted',
+ 'QA Python Quiz',((now() AT TIME ZONE 'Asia/Kolkata')::date)-((extract(dow from ((now() AT TIME ZONE 'Asia/Kolkata')::date))::int+2)%7)-7,'09:00','10:00','America/New_York','class','one_to_one','conducted',
  'Synthetic teaching record','regular','admin','Python conditionals and quiz scoring','Quiz game',
  ARRAY['Conditionals','Debugging']),
  ('f0000000-0000-4000-8000-000000000012',
  'a0000000-0000-4000-8000-000000000002','c0000000-0000-4000-8000-000000000002',
  'e0000000-0000-4000-8000-000000000002',NULL,'d0000000-0000-4000-8000-000000000002',
- 'QA Python Next Class',current_date+((5-extract(dow from current_date)::int+7)%7)+7,'09:00','10:00','America/New_York','class','one_to_one','scheduled',
+ 'QA Python Next Class',((now() AT TIME ZONE 'Asia/Kolkata')::date)+((5-extract(dow from ((now() AT TIME ZONE 'Asia/Kolkata')::date))::int+7)%7)+7,'09:00','10:00','America/New_York','class','one_to_one','scheduled',
  'No Zoom room expected until JIT window','regular','admin','','',ARRAY[]::text[]),
  ('f0000000-0000-4000-8000-000000000013',
  'a0000000-0000-4000-8000-000000000002','c0000000-0000-4000-8000-000000000001',
  NULL,'c1000000-0000-4000-8000-000000000001',NULL,
- 'QA Cohort Sensor Challenge',current_date-((extract(dow from current_date)::int+1)%7)-7,'19:30','20:30','Asia/Kolkata','class','small_group',
+ 'QA Cohort Sensor Challenge',((now() AT TIME ZONE 'Asia/Kolkata')::date)-((extract(dow from ((now() AT TIME ZONE 'Asia/Kolkata')::date))::int+1)%7)-7,'19:30','20:30','Asia/Kolkata','class','small_group',
  'conducted','Two cohort members, mixed attendance','regular','admin',
  'Sensor readings and conditional logic','Sensor challenge',ARRAY['Sensors','Conditional logic']),
  ('f0000000-0000-4000-8000-000000000014',
  'a0000000-0000-4000-8000-000000000002','c0000000-0000-4000-8000-000000000001',
  NULL,'c1000000-0000-4000-8000-000000000001',NULL,
- 'QA Cohort Upcoming',current_date+((6-extract(dow from current_date)::int+7)%7)+7,'19:30','20:30','Asia/Kolkata','class','small_group',
+ 'QA Cohort Upcoming',((now() AT TIME ZONE 'Asia/Kolkata')::date)+((6-extract(dow from ((now() AT TIME ZONE 'Asia/Kolkata')::date))::int+7)%7)+7,'19:30','20:30','Asia/Kolkata','class','small_group',
  'scheduled','Mixed timezones, learner local presentation','regular','admin','', '',ARRAY[]::text[]),
  ('f0000000-0000-4000-8000-000000000015',
  'a0000000-0000-4000-8000-000000000001','c0000000-0000-4000-8000-000000000001',
  'e0000000-0000-4000-8000-000000000003',NULL,'d0000000-0000-4000-8000-000000000003',
- 'QA Exam Hold Class',current_date+2,'17:00','18:00','Asia/Kolkata','class','one_to_one',
+ 'QA Exam Hold Class',((now() AT TIME ZONE 'Asia/Kolkata')::date)+2,'17:00','18:00','Asia/Kolkata','class','one_to_one',
  'cancelled','Paused for exams; ensure no earnings','regular','admin','', '',ARRAY[]::text[])
 ON CONFLICT(id) DO UPDATE SET date=excluded.date,status=excluded.status,
  session_topic=excluded.session_topic,notes=excluded.notes,updated_at=now();
@@ -756,11 +759,11 @@ VALUES
  ('d1000000-0000-4000-8000-000000000001',
  'd0000000-0000-4000-8000-000000000002','e0000000-0000-4000-8000-000000000002',
  'c0000000-0000-4000-8000-000000000002','Python Quiz Game','guided','submitted',
- ARRAY['Python','Conditionals'],current_date-9,'Awaiting trainer review'),
+ ARRAY['Python','Conditionals'],((now() AT TIME ZONE 'Asia/Kolkata')::date)-9,'Awaiting trainer review'),
  ('d1000000-0000-4000-8000-000000000002',
  'd0000000-0000-4000-8000-000000000004','e0000000-0000-4000-8000-000000000004',
  'c0000000-0000-4000-8000-000000000001','Sensor Alarm','guided','completed',
- ARRAY['Electronics','Sensors'],current_date-14,'Built and tested the sensor alarm')
+ ARRAY['Electronics','Sensors'],((now() AT TIME ZONE 'Asia/Kolkata')::date)-14,'Built and tested the sensor alarm')
 ON CONFLICT(id) DO UPDATE SET status=excluded.status,trainer_feedback=excluded.trainer_feedback,
  updated_at=now();
 
@@ -798,7 +801,7 @@ VALUES
  'Learn coding fundamentals',true,'setup_pending',
  'c0000000-0000-4000-8000-000000000002',
  'a0000000-0000-4000-8000-000000000002',
- NULL,NULL,'one_to_one',current_date+7,'America/New_York',
+ NULL,NULL,'one_to_one',((now() AT TIME ZONE 'Asia/Kolkata')::date)+7,'America/New_York',
  '[{"dayOfWeek":5,"startTime":"09:00","endTime":"10:00"}]'::jsonb),
  ('91000000-0000-4000-8000-000000000013',
  (SELECT id FROM auth.users WHERE lower(email)='qa-parent-us@robotronix.local'),
@@ -810,7 +813,7 @@ VALUES
  'a0000000-0000-4000-8000-000000000002',
  'd0000000-0000-4000-8000-000000000002',
  'e0000000-0000-4000-8000-000000000002',
- 'one_to_one',current_date,'America/New_York',
+ 'one_to_one',((now() AT TIME ZONE 'Asia/Kolkata')::date),'America/New_York',
  '[{"dayOfWeek":5,"startTime":"09:00","endTime":"10:00"}]'::jsonb)
 ON CONFLICT(id) DO UPDATE SET status=excluded.status,
  assigned_course_id=excluded.assigned_course_id,
@@ -834,9 +837,9 @@ INSERT INTO public.student_fee_packages(
 VALUES(
  'b0000000-0000-4000-8000-000000000098',
  'e0000000-0000-4000-8000-000000000002',
- 'DEV US Python Fee Package','Custom','USD',180.00,12,current_date,
- current_date+90,
- jsonb_build_array(jsonb_build_object('amount',180.00,'due',current_date::text)))
+ 'DEV US Python Fee Package','Custom','USD',180.00,12,((now() AT TIME ZONE 'Asia/Kolkata')::date),
+ ((now() AT TIME ZONE 'Asia/Kolkata')::date)+90,
+ jsonb_build_array(jsonb_build_object('amount',180.00,'due',((now() AT TIME ZONE 'Asia/Kolkata')::date)::text)))
 ON CONFLICT(id) DO UPDATE SET name=excluded.name,amount=excluded.amount,
  currency=excluded.currency,start_date=excluded.start_date,
  end_date=excluded.end_date,installments=excluded.installments;
