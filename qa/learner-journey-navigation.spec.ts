@@ -61,6 +61,16 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(parent).toContain("awaiting activation");
   expect(trainer).toContain("after Admin activates their enrollment");
  });
+ test("billing link scrolls after enrollment detail loads",()=>{
+  const profile=source("app/admin/students/[id]/page.tsx");
+  const enrollment=source("app/admin/enrollments/[id]/page.tsx");
+  const invoice=source("components/finance/EnrollmentInvoicePanel.tsx");
+  expect(profile).toContain("#billing-invoice");
+  expect(invoice).toContain('id="billing-invoice"');
+  expect(enrollment).toContain("window.location.hash");
+  expect(enrollment).toContain("scrollIntoView");
+  expect(enrollment).toContain('window.addEventListener("hashchange",focusLinkedSection)');
+ });
  test("enrollment is class hub using existing idempotent generator",()=>{
   const enrollment=source("app/admin/enrollments/[id]/page.tsx");
   expect(enrollment).toContain("generateEnrollmentScheduleV2(record.id,\"full\")");
