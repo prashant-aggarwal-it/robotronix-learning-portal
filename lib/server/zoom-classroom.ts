@@ -46,7 +46,12 @@ async function loadHosts(db:SupabaseClient){
  return (data||[]) as HostRow[];
 }
 
-async function hostAvailable(db:SupabaseClient,hostId:string,start:Date,end:Date,excludeMeetingId?:string){
+async function hostAvailable(db:SupabaseClient,hostId:string,start:Date,end:Date,excludeMeetingId?:string,excludeEventId?:string){
+ const {data:reservations,error:reservationError}=await db.from("zoom_class_host_reservations")
+  .select("schedule_event_id").eq("host_account_id",hostId).eq("allocation_status","reserved")
+  .lt("starts_at",end.toISOString()).gt("ends_at",start.toISOString());
+ if(reservationError)throw new Error("Zoom host reservations are unavailable.");
+ if((reservations||[]).some((r:any)=>r.schedule_event_id!==excludeEventId))return false;
  const from=new Date(start.getTime()-12*60*60*1000).toISOString();
  const to=new Date(end.getTime()+12*60*60*1000).toISOString();
  let query=db.from("zoom_meetings").select("id,scheduled_start,duration_minutes,status")
@@ -62,13 +67,15 @@ async function hostAvailable(db:SupabaseClient,hostId:string,start:Date,end:Date
  });
 }
 
-async function chooseHost(db:SupabaseClient,start:Date,end:Date,preferredHostId?:string,excludeMeetingId?:string){
+async function chooseHost(db:SupabaseClient,start:Date,end:Date,preferredHostId?:string,excludeMeetingId?:string,requiredEventId?:string){
  const hosts=await loadHosts(db);
  if(!hosts.length)throw new Error("No enabled Zoom host account is connected. Connect or enable a Zoom account first.");
  if(preferredHostId){
   const preferred=hosts.find(h=>h.id===preferredHostId);
-  if(preferred&&await hostAvailable(db,preferred.id,start,end,excludeMeetingId))return preferred;
+  if(preferred&&await hostAvailable(db,preferred.id,start,end,excludeMeetingId,requiredEventId))return preferred;
+  if(requiredEventId)throw new Error("The reserved Zoom host is unavailable for this class. Review host capacity.");
  }
+ if(requiredEventId)throw new Error("No Zoom host reservation is assigned to this class.");
  for(const host of hosts){
   if(await hostAvailable(db,host.id,start,end,excludeMeetingId))return host;
  }
@@ -150,7 +157,15 @@ async function syncZoomForScheduleEventInternal(db:SupabaseClient,scheduleEventI
    throw new Error("Existing Zoom meeting needs attention: "+reason);
   }
  }
- const host=await chooseHost(db,start,end,existing?.host_account_id,existing?.id);
+ const {error:capacityError}=await db.rpc("reserve_zoom_host_for_class",{p_event_id:scheduleEventId});
+ if(capacityError)throw new Error("Zoom host capacity reservation could not be refreshed.");
+ const {data:reservation,error:reservationReadError}=await db.from("zoom_class_host_reservations")
+  .select("host_account_id,allocation_status").eq("schedule_event_id",scheduleEventId).maybeSingle();
+ if(reservationReadError)throw new Error("Zoom host reservation lookup failed.");
+ if(!reservation?.host_account_id||reservation.allocation_status!=="reserved"){
+  throw new Error("No connected Zoom host is available for this class window. Admin must resolve the capacity conflict.");
+ }
+ const host=await chooseHost(db,start,end,reservation.host_account_id,existing?.id,scheduleEventId);
  const body={
   topic:`Robotronix Classroom · ${typed.title}`,
   type:2,
