@@ -1,7 +1,8 @@
 // Static guardrails for P2/P3 coverage. Runs without DEV credentials.
 // Not a substitute for authenticated Supabase Realtime, RLS or Playwright tests.
 import {readFileSync} from "node:fs";
-const read=(p)=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
+import {readCanonicalSql} from "./read-canonical-sql.mjs";
+const read=(p)=>p==="__CANONICAL_SCHEMA__"?readCanonicalSql():readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const required={
  "hooks/useLiveRefresh.ts":["postgres_changes","visibilitychange","setInterval","removeChannel","navigator.onLine"],
  "components/NotificationBell.tsx":["subscribeNotifications","visibilitychange","setInterval"],
@@ -18,7 +19,7 @@ const required={
  "app/trainer/page.tsx":["useLiveRefresh","schedule_events"],
  "app/admin/alerts/page.tsx":["useLiveRefresh","schedule_events"],
  "app/parent/learner/[studentId]/page.tsx":["useLiveRefresh","class_attendance"],
- "database/01_install/01_CREATE_SCHEMA.sql":["supabase_realtime","trainer_finance_change_requests","portal_notifications","communication_messages"]
+ "__CANONICAL_SCHEMA__":["supabase_realtime","trainer_finance_change_requests","portal_notifications","communication_messages"]
 };
 let failures=0;
 for(const [file,terms] of Object.entries(required)){
