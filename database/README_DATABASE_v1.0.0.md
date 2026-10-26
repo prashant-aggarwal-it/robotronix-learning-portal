@@ -1,86 +1,54 @@
-## QA branch consolidation status — 25 October 2026
+# Robotronix database — authoritative SQL layout (QA branch)
 
-The **canonical fresh database source** remains `database/01_install/01_CREATE_SCHEMA.sql` plus `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql`, combined by `npm run db:build-fresh-install`. It already includes the recent Phase 2–4 enrollment-linkage columns, atomic trainer-availability RPC, four P0/P1 audit-history triggers (portal access, student invoices, Zoom meetings, Zoom recordings), and the onboarding Admin-notification trigger. Run the generated fresh installer only on a deliberately empty database and then `03_verify/01_VERIFY_RELEASE.sql`.
+**Updated 26 October 2026.** The old 300 KB `01_CREATE_SCHEMA.sql` and 60 KB `02_INSERT_MASTER_REFERENCE_DATA.sql` monoliths have been retired. **Do not follow older instructions that reference those files.**
 
-**Do not apply `database/04_migrations/*` after a fresh install.** Those versioned, idempotent files are *only* for incrementally upgrading an older existing installation without resetting it. They are not missing pieces of the canonical schema. New onboarding Save Draft error handling, optional-date normalization and field validation are **application changes**, with no database DDL needed: `onboarding_submissions.child_dob` and `start_date` are already nullable date columns. Blank dates are now converted to SQL NULL at the repository boundary.
+## One canonical fresh-install source, arranged by functionality
 
-**Reset is a separate future operation, not performed in this QA round.** First capture backups and verify which Auth identities, enrollments, finance/payroll, Zoom secrets and communications need to survive. Run the combined installer on disposable DEV and verify the P0/P1 audit gates, notification trigger, RLS and role workflows before considering any production reset. Never use the DEV reset script on a live database.
+All active installation SQL resides under `database/01_install/modules/`, with sequential numbered modules:
 
----
+| SQL folder | Purpose |
+| --- | --- |
+| `schema/01_core_schema.sql` | Base schema, foundational relationships and initial RLS |
+| `schema/02_scheduling_operations.sql` | Scheduling and operational extensions |
+| `schema/03_academic_delivery_finance.sql` | Learning/delivery, progress and financial rules |
+| `schema/04_billing_razorpay.sql` | Invoices, billing, payment integrations |
+| `schema/05_roles_notifications_payroll.sql` | Users, onboarding, messages and trainer pay |
+| `schema/06_zoom_calendar_demo.sql` | Zoom, demo and calendar capabilities |
+| `schema/07_notifications_security_and_lifecycle.sql` | Additional lifecycle and security consolidation |
+| `schema/08_operational_logging.sql` | Job history, RLS and retention for operational logging |
+| `schema/09_operational_audit_coverage.sql` | Final P0/P1 operational audit triggers |
+| `reference/01_geo_time_currency.sql` | Countries, currencies, timezone reference |
+| `reference/02_app_settings_and_locations.sql` | Behaviour settings and location dataset |
+| `reference/03_academic_reference.sql` | Academic levels and course mappings |
+| `reference/04_course_catalogue.sql` | Production course reference/catalogue |
 
-## Existing prelaunch Supabase project — Phases 2–4 update (no reset)
+All feature modules are **ordered**, not individually runnable independent migrations. The historical SQL was split losslessly at major section boundaries to preserve transaction and dependency ordering. Some modules therefore contain related historical cross-feature statements; safely relocating every statement by object ownership requires a separate dependency-graph migration review.
 
-**Do not run the fresh-install script or reset the existing project.** The fresh-install script is intended for a *new, empty* Supabase project. It is not a migration and will not safely reconcile a database containing students, Zoom credentials or Finance data.
+## Fresh-install procedure (EMPTY Supabase project only)
 
-For an existing prelaunch project using the consolidated schema, first back up the database and then apply exactly:
-`database/04_migrations/2026_10_24_PHASES_2_3_4_ADDITIVE.sql`
+1. Run `npm ci`.
+2. Run `npm run db:build-fresh-install`. This checks modules and generates one `database/generated/ROBOTRONIX_FRESH_INSTALL.sql`.
+3. Execute the complete generated SQL **once** in a new empty Supabase project.
+4. Bootstrap the first Admin identity only if required with `database/01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql`, after reviewing the file.
+5. Run the read-only `database/03_verify/01_VERIFY_RELEASE.sql`; then application build and DEV role/workflow QA.
 
-This migration only adds two nullable onboarding foreign keys and creates/replaces the atomic trainer availability RPC. It is safe to rerun after a failure. It does not reset any learner, trainer, Zoom, schedule or invoice records.
+**Never run the fresh installer in an existing or production Supabase project.** It is not a data-preserving migration.
 
-After applying the migration, run the read-only:
-`database/03_verify/01_VERIFY_RELEASE.sql`
+## Other SQL, grouped by purpose
 
-The portal's onboarding activation will intentionally refuse new activation until the migration is present, so it cannot create a second learner after a half-installed upgrade. Existing activated onboarding rows predate the new linkage columns; historic links are not backfilled automatically because guessing student matches by names would be unsafe.
+- `database/02_qa/`: QA seed/cleanup and production-security test fixture scripts. Never use these on real production data without an explicitly approved test plan.
+- `database/03_verify/01_VERIFY_RELEASE.sql`: single read-only release verification script.
+- `database/99_dev_tools/`: development-only reset. Never run in production.
+- `database/archive/legacy/`: historical SQL, retained for traceability only. No active installation dependency.
+- There are **no active 04_migrations or hotfix SQL patch files** in the QA release tree.
 
-**Only use a full reset** if you explicitly decide to discard every operational record and have taken backups of required data, Auth identities and secrets.
+For upgrading a populated existing database, first take a backup and prepare a separately approved, **data-preserving** change plan. Archived SQL describes earlier prelaunch upgrades, but is **not** a generic safe migration instruction for every production schema state.
 
----
+## Release rules
 
-# Robotronix — Single-source fresh Supabase database installation
+1. DEV: run the generated installer on disposable empty DEV and confirm database triggers, RLS, parent/trainer access, notification behaviour, payroll, Zoom, payment operations, and logs.
+2. Review the exact Git commit and GitHub Actions results.
+3. Do not merge, deploy or modify production until separate approval.
+4. Keep secrets out of repository SQL and logs.
 
-**Target:** NEW, EMPTY Supabase project only, for the consolidated release candidate. Database SQL is consolidated; this is not a claim that the new database or frontend has passed tests.
-
-## Production SQL: one generated execution, one read-only verification
-
-From the repository root, run `npm run db:build-fresh-install`. This validates
-the canonical sources and produces **one** file:
-`database/generated/ROBOTRONIX_FRESH_INSTALL.sql` (gitignored). Copy and run
-the **entire generated file once** in the SQL Editor of a **new, empty**
-Supabase project. It contains the schema followed by reference/config data,
-in that order; do not also run the two source files separately.
-
-Then run the read-only `database/03_verify/01_VERIFY_RELEASE.sql` to confirm
-the installation. The first-admin bootstrap remains an optional, separately
-reviewed identity action after the actual Auth user exists.
-
-### Canonical sources (used by the generator)
-
-1. **01_INSTALL_SCHEMA:** `database/01_install/01_CREATE_SCHEMA.sql` This includes all P1 notifications, P2/P3 Realtime publication, finance cutoff and payout snapshots, system logs/RLS, passwordless provisioning and retention functions. Former scripts 04–09 were integrated and removed.
-2. **02_REFERENCE_DATA:** `database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql` This creates/loads countries, currencies, academic levels, courses and configuration.
-3. **03_ADMIN_BOOTSTRAP (conditional):** Set up Google/SMTP Auth, create/sign in with the actual intended Admin email to establish an `auth.users` identity, then edit and run `database/01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql` **only if an Admin profile needs to be bootstrapped**. Replace the literal `ADMIN_EMAIL_HERE`. Never run this unedited or in a project with a verified existing Admin without reviewing the effect.
-
-Then run the **read-only check** `database/03_verify/01_VERIFY_RELEASE.sql`. It is not an installation/migration step. Capture results and address all errors.
-
-## Production rules
-- **Do not run** `database/02_qa/01_QA_SEED.sql`, `02_QA_CLEANUP.sql`, anything in `99_dev_tools`, historical/archive SQL, or the read-only **existing database preflight** as an installation script.
-- A NEW Supabase project has its own URL, publishable/anon key, service role key, Google OAuth/SMTP configuration, redirect URLs, Realtime, RLS, tables and Auth users. None of the old project's data, existing parent accounts, trainers, payments, Zoom host secrets, encrypted access tokens or history automatically transfers.
-- **Fresh Production = empty operational data.** Before replacing an existing live project, decide whether historical learners, attendance, enrollments, finance/payroll, invoices, communication and identities must be migrated. If so, do not cut over to an empty DB until migration and reconciliation are designed and verified. Preserve the old production instance and backups.
-- Environment variables in Netlify, the portal URL/OAuth callbacks, Zoom host connections and Razorpay/webhook endpoints must be reconfigured and verified separately. Do not copy secrets into GitHub.
-- The old database remains untouched by GitHub commits. Nothing is applied merely by downloading this branch.
-- A new Production DB should be used only **after the same consolidated installer and application have passed on a disposable fresh DEV DB**. Verify Google + email OTP, Trainer/Parent RLS, role workflows, Zoom and Razorpay, and the portal build.
-- Do not merge/deploy this Draft release solely on the basis of a combined SQL file.
-
-## Developer QA
-Run `npm ci`, `npm run check:release`, `npm run build`, and configured Playwright QA against DEV. QA fixture scripts are intentionally kept separate. Keep SQL verification results and role-test evidence together with the exact Git commit.
-
-## Consolidation verification (21 October 2026)
-- The former `03_verify/02_POST_INSTALL_PAYROLL_POLICY_FIX.sql` and `03_verify/03_POST_INSTALL_AVAILABILITY_NOTIFICATIONS.sql` have been **removed** from the release branch as redundant existing-database patches.
-- Their required logic is included in `01_install/01_CREATE_SCHEMA.sql`: scheduled-duration trainer payroll calculation, supported 15-minute actual teaching durations, and Admin notifications for trainer availability changes.
-- `03_verify/01_VERIFY_RELEASE.sql` is the **only** verification SQL and is read-only.
-- The release check rejects additional post-install verification SQL files, hotfix directories, or unexpected installer SQL. Historical archived QA seed scripts are not part of fresh installation and must never be run on production.
-- GitHub release checks validate file structure, source code, and the application build; actual SQL execution and role workflows still require a separate DEV database.
-
-## SQL inventory
-- `01_install/01_CREATE_SCHEMA.sql`: the ONE canonical schema installer.
-- `01_install/02_INSERT_MASTER_REFERENCE_DATA.sql`: the ONE canonical reference/config seed.
-- `01_install/03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql`: optional privileged Admin bootstrap template.
-- `03_verify/01_VERIFY_RELEASE.sql`: read-only schema verification.
-- `02_qa/*`: developer fixtures only; never for Production.
-- `99_dev_tools/*`: destructive DEV tools only; never for Production.
-
-Two historical production-sanity seed/cleanup scripts were removed because no
-current code or release workflow references them. The archived permanent QA
-seed remains solely as input to `scripts/generate-permanent-qa-seed.mjs`;
-it is **not** part of the install sequence.
-
-**Historical incremental scripts 04–09 were deleted from this release branch after verifying their exact content is already included exactly once inside 01_CREATE_SCHEMA.sql.** The Git history retains them if they are ever needed to inspect an older installation; they should not be executed as part of this fresh install.
+See `docs/DATABASE_MIGRATION_ORDER.md`, `docs/SYSTEM_LOGS.md`, and `docs/CONSOLIDATED_RELEASE_QA_HANDOVER.md`.
