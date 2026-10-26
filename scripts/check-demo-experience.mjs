@@ -1,7 +1,8 @@
 import fs from "node:fs";
+import {readCanonicalSql} from "./read-canonical-sql.mjs";
 
 const required=[
- "database/01_install/01_CREATE_SCHEMA.sql",
+ "database/01_install/modules/schema/01_core_schema.sql",
  "app/api/admin/demos/route.ts",
  "app/api/demos/trainer/route.ts",
  "app/api/demo/[token]/route.ts",
@@ -14,7 +15,7 @@ const required=[
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing Demo Experience file: "+file);
 
-const migration=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
+const migration=readCanonicalSql();
 for(const marker of ["demo_leads","demo_sessions","demo_session_participants","demo_guest_requests","guest_token_hash","purpose in ('class','poc','general','demo')"])if(!migration.includes(marker))throw new Error("Demo migration missing: "+marker);
 
 const trainerApi=fs.readFileSync("app/api/demos/trainer/route.ts","utf8");
