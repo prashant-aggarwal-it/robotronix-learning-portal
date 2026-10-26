@@ -13,7 +13,8 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{schedule
   const window=classJoinWindow(access.event,auth.profile.role);
   // When the trainer opens the classroom near start, recover an unprovisioned room.
   // This does not grant a learner host access or create far-future meetings.
-  if(window.allowed&&access.canHost&&["scheduled","makeup"].includes(access.event.status)){
+  const {data:readyCheck}=await auth.admin.from("zoom_meetings").select("id,join_url,status").eq("schedule_event_id",scheduleEventId).eq("purpose","class").maybeSingle();
+  if(window.allowed&&access.canHost&&["scheduled","makeup"].includes(access.event.status)&&(!readyCheck||!readyCheck.join_url||readyCheck.status==="error")){
    try{await syncZoomForScheduleEvent(auth.admin,scheduleEventId);}catch{
     await logSystemEvent({source:"zoom-classroom",action:"readiness",level:"warning",code:"JIT_CLASSROOM_RETRY_FAILED",message:"Classroom meeting was unavailable during a trainer readiness check."});
    }
