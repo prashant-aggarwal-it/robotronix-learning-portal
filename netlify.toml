@@ -8,6 +8,6 @@
 [functions."zoom-retention"]
   schedule = "15 2 * * *"
 
-# Retry missing future class Zoom meetings in small batches.
+# Just-in-time Zoom classroom provisioning and bounded retry every five minutes.
 [functions."zoom-auto-reconcile"]
-  schedule = "10 * * * *"
+  schedule = "*/5 * * * *"
