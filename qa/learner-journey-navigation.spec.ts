@@ -41,6 +41,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(editor).toContain("Internal trainer / admin note");
   expect(editor).toContain("Parent-visible progress note");
   expect(cards).toContain("observation.feedback");
+  expect(source("app/trainer/page.tsx")).toContain("Class wrap-up pending");
  });
  test("learner progress distinguishes attendance from learning evidence across roles",()=>{
   const workspace=source("components/progress/LearnerProgressWorkspace.tsx");
