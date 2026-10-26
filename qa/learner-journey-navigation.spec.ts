@@ -30,6 +30,20 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
     expect(schema).toContain(field);
   }
  });
+ test("onboarding handoff is linked across Admin, Parent and Trainer",()=>{
+  const onboarding=source("app/admin/onboarding/[id]/page.tsx");
+  const student=source("app/admin/students/[id]/page.tsx");
+  const enrollment=source("app/admin/enrollments/[id]/page.tsx");
+  const parent=source("app/parent/page.tsx");
+  const trainer=source("app/trainer/page.tsx");
+  expect(onboarding).toContain("getAdminEnrollment(enrollmentId)");
+  expect(onboarding).toContain("getAdminStudent(studentId)");
+  expect(onboarding).toContain("linkedState?.enrollment!==false");
+  expect(student).toContain("item.activatedStudentId===id");
+  expect(enrollment).toContain("item.activatedEnrollmentId===id");
+  expect(parent).toContain("awaiting activation");
+  expect(trainer).toContain("after Admin activates their enrollment");
+ });
  test("enrollment is class hub using existing idempotent generator",()=>{
   const enrollment=source("app/admin/enrollments/[id]/page.tsx");
   expect(enrollment).toContain("generateEnrollmentScheduleV2(record.id,\"full\")");
