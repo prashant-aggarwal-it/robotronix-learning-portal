@@ -75,7 +75,9 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   const enrollment=source("app/admin/enrollments/[id]/page.tsx");
   expect(enrollment).toContain("generateEnrollmentScheduleV2(record.id,\"full\")");
   expect(enrollment).toContain("allClassRecords");
-  expect(enrollment).toContain("showAllClasses?allClassRecords:futureBookings.slice(0,3)");
+  expect(enrollment).toContain("showAllClasses?visibleClassRecords:visibleClassRecords.slice(0,3)");
+   expect(enrollment).toContain("Estimated not yet arranged");
+   expect(enrollment).toContain("Class filters");
   expect(enrollment).toContain("Show fewer classes");
   expect(enrollment).toContain("nextClass.id");
   expect(enrollment).toContain("?enrollment=${encodeURIComponent(record.id)}");
@@ -110,7 +112,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  });
  test("Zoom shows meeting pending or failures rather than empty controls",()=>{
   const zoom=source("components/ZoomClassActions.tsx");
-  expect(zoom).toContain("Zoom setup required");
+  expect(zoom).toContain("Zoom setup scheduled");
   expect(zoom).toContain("reconcile missing meetings");
   expect(zoom).toContain("Open Zoom Classroom");
   expect(zoom).toContain("data.meeting?.lastError");
