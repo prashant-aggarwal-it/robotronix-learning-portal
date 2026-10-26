@@ -10,8 +10,13 @@ export default async () => {
   return Response.json({ok:false,reference,error:"Reminder service configuration unavailable."},{status:500});
  }
  const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+ async function jobRun(status,inserted=0,code=null){
+  const {error}=await client.from("portal_job_runs").insert({job_name:"process-reminders",status,started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,processed:inserted,succeeded:status==="success"?inserted:0,failed:status==="failed"?1:0,reference_id:reference,error_code:code});
+  if(error)console.error("[process-reminders] run history unavailable",reference,error.code||"unknown");
+ }
  async function failure(code){
   console.error("[process-reminders]",JSON.stringify({status:"failed",code,reference,duration_ms:Date.now()-started}));
+  await jobRun("failed",0,code);
   const {error}=await client.from("portal_system_logs").insert({reference_id:reference,source:"background-job",action:"process-reminders",level:"error",error_code:code,safe_message:"Automated class reminder processing failed."});
   if(error)console.error("[process-reminders] monitoring write failed",reference,error.code||"unknown");
   return Response.json({ok:false,reference,error:"Reminder processing failed."},{status:500});
@@ -21,6 +26,7 @@ export default async () => {
   if(error||!data||data.ok!==true)return await failure("REMINDER_RPC_FAILED");
   const inserted=Number(data.inserted)||0;
   console.info("[process-reminders]",JSON.stringify({status:"success",reference,inserted,duration_ms:Date.now()-started}));
+  await jobRun("success",inserted);
   if(inserted>0){
    const {error:logError}=await client.from("portal_system_logs").insert({reference_id:reference,source:"background-job",action:"process-reminders",level:"info",error_code:null,safe_message:"Class reminder job created "+inserted+" portal notification(s)."});
    if(logError)console.error("[process-reminders] monitoring write failed",reference,logError.code||"unknown");
