@@ -19,3 +19,8 @@ export function familyLearningStage(snapshot:LearnerExperienceSnapshot):string{
  if((snapshot.learner.hoursCompleted??0)>0||snapshot.learner.sessionsCompleted>0)return "In progress";
  return snapshot.nextClass?"Ready for first class":"Awaiting first class";
 }
+
+/** Attendance alone is not evidence of understanding or skill mastery. */
+export function learnerHasLearningEvidence(snapshot:LearnerExperienceSnapshot):boolean{
+ return snapshot.observations.length>0||snapshot.feedback.length>0;
+}
