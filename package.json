@@ -64,7 +64,8 @@
     "check:security": "node scripts/check-security-hardening.mjs",
     "qa:security-dev": "playwright test qa/security-dev-authorization.spec.ts --project=desktop-chromium --no-deps",
     "qa:security-dev-http": "playwright test qa/security-dev-http.spec.ts --project=desktop-chromium --no-deps",
-    "qa:security-dev-all": "npm run qa:security-dev && npm run qa:security-dev-http"
+    "qa:security-dev-all": "npm run qa:security-dev && npm run qa:security-dev-http",
+    "check:zoom-jit": "node scripts/check-zoom-jit.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
