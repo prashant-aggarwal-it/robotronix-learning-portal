@@ -17,9 +17,12 @@ export async function POST(request:NextRequest){
   const {data:hosts,error:hostError}=await db.from("zoom_host_accounts")
    .select("id").eq("status","connected").eq("enabled",true).limit(1);
   if(hostError)throw new Error(hostError.message);
-  if(!hosts?.length){await recordJobRun({jobName:"zoom-auto-reconcile",status:"success",durationMs:Date.now()-runStarted});return NextResponse.json({ok:true,created:0,repaired:0,skipped:0,reason:"No connected host."});}
+  if(!hosts?.length){
+   await recordJobRun({jobName:"zoom-auto-reconcile",status:"failed",failed:1,durationMs:Date.now()-runStarted,errorCode:"ZOOM_HOST_POOL_EMPTY"});
+   return NextResponse.json({ok:false,created:0,repaired:0,failed:1,error:"No connected Zoom host is available."},{status:503});
+  }
   const {data:meetings,error:meetingsError}=await db.from("zoom_meetings")
-   .select("schedule_event_id,join_url,status,last_error,updated_at")
+   .select("schedule_event_id,join_url,status,last_error,updated_at,scheduled_start")
    .eq("purpose","class").not("schedule_event_id","is",null);
   if(meetingsError)throw new Error(meetingsError.message);
   const [offlineEnrollments,offlineCohorts]=await Promise.all([
@@ -31,21 +34,30 @@ export async function POST(request:NextRequest){
   const offlineCohortIds=new Set((offlineCohorts.data||[]).map(row=>row.id));
   const linked=new Map((meetings||[]).map(m=>[m.schedule_event_id,m]));
   const candidates:string[]=[];
+  const fromDate=new Date(Date.now()-48*60*60_000).toISOString().slice(0,10);
+  const toDate=new Date(Date.now()+48*60*60_000).toISOString().slice(0,10);
   for(let page=0;page<15;page++){
    const {data:events,error}=await db.from("schedule_events")
     .select("id,date,start_time,timezone,enrollment_id,cohort_id")
     .eq("event_type","class").in("status",["scheduled","makeup"])
+    .gte("date",fromDate).lte("date",toDate)
     .order("date",{ascending:true}).order("start_time",{ascending:true}).order("id",{ascending:true})
     .range(page*200,page*200+199);
    if(error)throw new Error(error.message);
    for(const event of events||[]){
     if((event.enrollment_id&&offlineEnrollmentIds.has(event.enrollment_id))||(event.cohort_id&&offlineCohortIds.has(event.cohort_id)))continue;
     const meeting=linked.get(event.id);
-    if(meeting?.join_url&&/^https:\/\//i.test(meeting.join_url)&&!["cancelled","error"].includes(meeting.status))continue;
-    // Back off on recently reported failures; avoid retry storms against Zoom.
+    // Back off after a failed repair or provisioning attempt, without hiding
+    // timestamp mismatches caused by a reschedule.
     if(meeting?.last_error&&meeting.updated_at&&Date.now()-new Date(meeting.updated_at).getTime()<5*60_000)continue;
     try{
-     {const untilStart=zonedLocalToUtc(event.date,event.start_time,event.timezone||"Asia/Kolkata").getTime()-Date.now();if(untilStart>=-5*60_000&&untilStart<=35*60_000)candidates.push(event.id);}
+     const expectedStart=zonedLocalToUtc(event.date,event.start_time,event.timezone||"Asia/Kolkata").getTime();
+     const untilStart=expectedStart-Date.now();
+     if(untilStart< -5*60_000||untilStart>35*60_000)continue;
+     const ready=Boolean(meeting?.join_url&&/^https:\/\//i.test(meeting.join_url)&&!["cancelled","error"].includes(meeting.status));
+     const matchesTime=Math.abs(new Date(meeting?.scheduled_start||0).getTime()-expectedStart)<60_000;
+     if(ready&&matchesTime)continue;
+     candidates.push(event.id);
     }catch{}
    }
    if((events||[]).length<200)break;
