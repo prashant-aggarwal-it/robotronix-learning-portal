@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {readCanonicalSql} from './read-canonical-sql.mjs';
 
 const root=process.cwd();
-const schema=fs.readFileSync(path.join(root,'database','01_install','01_CREATE_SCHEMA.sql'),'utf8');
+const schema=readCanonicalSql();
 const repo=fs.readFileSync(path.join(root,'lib','communication-repository.ts'),'utf8');
 const required=[
   "recipient_role='trainer' and trainer_id=public.current_trainer_id()",
