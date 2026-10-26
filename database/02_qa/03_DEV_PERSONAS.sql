@@ -117,7 +117,7 @@ VALUES
   ARRAY['Robotics'],'Beginner','Parent referral','active'),
  ('d0000000-0000-4000-8000-000000000005',NULL,'Anaya Sharma (QA Cohort)',
   current_date-interval '10 years','Grade 5','QA Delhi School','Delhi','Delhi','India',
-  'Asia/Kolkata',ARRAY['Saturday'],'11:00-13:00',ARRAY['Coding','Robotics'],'Beginner','School','active')
+  'Asia/Kolkata',ARRAY['Saturday'],'19:00-21:00',ARRAY['Coding','Robotics'],'Beginner','School','active')
 ON CONFLICT(id) DO UPDATE SET profile_id=excluded.profile_id,full_name=excluded.full_name,
  grade=excluded.grade,city=excluded.city,state=excluded.state,country=excluded.country,
  timezone=excluded.timezone,record_status='active',updated_at=now();
@@ -159,8 +159,8 @@ INSERT INTO public.cohorts(id,name,code,course_id,trainer_id,capacity,status,
 VALUES('c1000000-0000-4000-8000-000000000001','QA Saturday Robotics Cohort',
  'QA-COHORT-DEV-01','c0000000-0000-4000-8000-000000000001',
  'a0000000-0000-4000-8000-000000000002',6,'active',current_date-7,
- ARRAY[6],'11:00','12:00','A','Asia/Kolkata',
- '[{"dayOfWeek":6,"startTime":"11:00","endTime":"12:00"}]'::jsonb,'Saturday 11 AM IST')
+ ARRAY[6],'19:30','20:30','A','Asia/Kolkata',
+ '[{"dayOfWeek":6,"startTime":"19:30","endTime":"20:30"}]'::jsonb,'Saturday 7:30 PM IST (10 AM EDT / 9 AM EST)')
 ON CONFLICT(id) DO UPDATE SET status='active',trainer_id=excluded.trainer_id,updated_at=now();
 
 -- 1:1 India hold; 1:1 US active; 2-person India/US cohort.
@@ -182,12 +182,12 @@ VALUES
  ('e0000000-0000-4000-8000-000000000004','d0000000-0000-4000-8000-000000000004',
  'c0000000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000002',
  'small_group','c1000000-0000-4000-8000-000000000001','active',current_date,
- 'Asia/Kolkata','[{"dayOfWeek":6,"startTime":"11:00","endTime":"12:00"}]'::jsonb,
+ 'Asia/Kolkata','[{"dayOfWeek":6,"startTime":"19:30","endTime":"20:30"}]'::jsonb,
  'online','recurring',NULL,NULL,NULL),
  ('e0000000-0000-4000-8000-000000000005','d0000000-0000-4000-8000-000000000005',
  'c0000000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000002',
  'small_group','c1000000-0000-4000-8000-000000000001','active',current_date,
- 'Asia/Kolkata','[{"dayOfWeek":6,"startTime":"11:00","endTime":"12:00"}]'::jsonb,
+ 'Asia/Kolkata','[{"dayOfWeek":6,"startTime":"19:30","endTime":"20:30"}]'::jsonb,
  'online','recurring',NULL,NULL,NULL)
 ON CONFLICT(id) DO UPDATE SET status=excluded.status,trainer_id=excluded.trainer_id,
  schedule_timezone=excluded.schedule_timezone,hold_reason=excluded.hold_reason,
@@ -229,13 +229,13 @@ VALUES
  ('f0000000-0000-4000-8000-000000000013',
  'a0000000-0000-4000-8000-000000000002','c0000000-0000-4000-8000-000000000001',
  NULL,'c1000000-0000-4000-8000-000000000001',NULL,
- 'QA Cohort Sensor Challenge',current_date-7,'11:00','12:00','Asia/Kolkata','class','small_group',
+ 'QA Cohort Sensor Challenge',current_date-7,'19:30','20:30','Asia/Kolkata','class','small_group',
  'conducted','Two cohort members, mixed attendance','regular','admin',
  'Sensor readings and conditional logic','Sensor challenge',ARRAY['Sensors','Conditional logic']),
  ('f0000000-0000-4000-8000-000000000014',
  'a0000000-0000-4000-8000-000000000002','c0000000-0000-4000-8000-000000000001',
  NULL,'c1000000-0000-4000-8000-000000000001',NULL,
- 'QA Cohort Upcoming',current_date+7,'11:00','12:00','Asia/Kolkata','class','small_group',
+ 'QA Cohort Upcoming',current_date+7,'19:30','20:30','Asia/Kolkata','class','small_group',
  'scheduled','Mixed timezones, learner local presentation','regular','admin','', '',ARRAY[]::text[]),
  ('f0000000-0000-4000-8000-000000000015',
  'a0000000-0000-4000-8000-000000000001','c0000000-0000-4000-8000-000000000001',
@@ -347,7 +347,7 @@ INSERT INTO public.trainer_availability(trainer_id,day_of_week,start_time,end_ti
 VALUES
  ('a0000000-0000-4000-8000-000000000001',1,'15:00','19:00',true),
  ('a0000000-0000-4000-8000-000000000002',5,'15:00','21:00',true),
- ('a0000000-0000-4000-8000-000000000002',6,'10:00','14:00',true)
+ ('a0000000-0000-4000-8000-000000000002',6,'18:00','22:00',true)
 ON CONFLICT(trainer_id,day_of_week,start_time,end_time) DO UPDATE SET enabled=true;
 
 -- Billing setup only: no payment success, provider invoice, webhook or payouts fabricated.
