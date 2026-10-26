@@ -36,8 +36,8 @@ const must=[
   'replace_trainer_availability_v1',
   'onboarding_submission_admin_notification_trg',
   'grant usage on schema public to authenticated',
-  'audit_portal_access_requests',
-  'audit_zoom_recordings',
+  'audit_core_change()',
+  "'portal_access_requests','student_invoices','zoom_meetings','zoom_recordings'",
   'portal_job_runs',
 ];
 for(const marker of must){if(!schema.includes(marker))throw new Error(`Fresh schema missing consolidated marker: ${marker}`)}
