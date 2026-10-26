@@ -1,3 +1,9 @@
+-- WARNING: LEGACY FOUR-ACCOUNT QA CLEANUP ONLY.
+-- DO NOT USE THIS FILE to remove the new 8-account DEV persona dataset.
+-- It only covers the original baseline IDs and may leave dependent extended records.
+-- It is retained for automated release checks and the original QA flow.
+-- Never run on Production or on a DEV database containing real customer data.
+
 -- Robotronix™ Learning Portal — Production v1.0.0
 -- DEVELOPMENT/QA ONLY.
 
