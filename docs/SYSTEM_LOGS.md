@@ -56,3 +56,11 @@ Implemented on `fix/qa-onboarding-save-feedback-20261025`; **not deployed to pro
 ### Remaining production observability work
 
 This is an **incremental instrumentation release, not a completed monitoring platform**. We still need: comprehensive instrumentation of payment, enrollment, scheduling, onboarding and authentication workflows; persistent per-job health/heartbeat records and overdue-job detection; Admin alerts, retention enforcement, error aggregation, and automatic tests that exercise all failure paths. The existing scheduled functions use Netlify invocation logs for their idle-run heartbeat, not the Admin database. A separate availability monitor is needed to identify total Supabase outages.
+
+## Consolidated feature SQL and background-job history (2026-10-26)
+
+Canonical SQL for this feature is `database/05_features/operational_logging.sql`. Existing-database rollout: back up DEV, run this one additive module in DEV SQL Editor, validate job read/write privileges, and only then consider a separately approved production rollout. Do not run the fresh installer against an existing database. The fresh installer script includes the feature module as PART 3 after schema and master reference data, so definitions do not need to be copied into scattered SQL patches.
+
+`portal_job_runs` records success, partial or failed outcomes per scheduled invocation, with counts, elapsed time and reference ID. Admin UI reads the latest execution per job; history is not yet an independent uptime check. Enabled row-level security permits only active Admins via `is_admin()`; browser clients have no write permissions. Service role writes the records. All job log writes are best effort, so a temporary monitoring failure should not make successful class operations fail. `purge_old_portal_job_runs(30)` is available for a later approved retention job; no automated cleanup is deployed by this change.
+
+Current coverage: reminder processing and Zoom retention/reconciliation. **Not completed by this commit**: every enrollment, payment, user-session or browser workflow; an externally independent downtime detector; scheduled health notifications and automatic incident resolution. Do not classify these as verified without DEV tests.
