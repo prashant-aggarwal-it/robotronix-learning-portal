@@ -1,5 +1,6 @@
 import {test,expect} from "@playwright/test";
 import {readFileSync} from "node:fs";
+import {readCanonicalSql} from "../scripts/read-canonical-sql.mjs";
 
 const source=(path:string)=>readFileSync(path,"utf8");
 
@@ -16,7 +17,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  });
  test("activated onboarding persists links and existing Supabase needs additive migration",()=>{
   const repo=source("lib/repository.ts");
-  const schema=source("database/01_install/01_CREATE_SCHEMA.sql");
+  const schema=readCanonicalSql();
   const migration=source("database/04_migrations/2026_10_24_PHASES_2_3_4_ADDITIVE.sql");
   const onboarding=source("app/admin/onboarding/[id]/page.tsx");
   expect(repo).toContain("activatedStudentId:created.id,activatedEnrollmentId:enrollment.id");
@@ -74,7 +75,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(zoom).not.toContain("if(reusableLink)return");
  });
  test("availability requires an authorized atomic transaction",()=>{
-  const sql=source("database/01_install/01_CREATE_SCHEMA.sql");
+  const sql=readCanonicalSql();
   const repo=source("lib/repository.ts");
   expect(sql).toContain("function public.replace_trainer_availability_v1");
   expect(sql).toContain("pg_advisory_xact_lock");
@@ -98,7 +99,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(admin).toContain("Learner recording access updated.");
  });
  test("Zoom host overlap and remote meeting cleanup remain wired",()=>{
-  const schema=source("database/01_install/01_CREATE_SCHEMA.sql");
+  const schema=readCanonicalSql();
   const classroom=source("lib/server/zoom-classroom.ts");
   expect(schema).toContain("zoom_host_active_meeting_no_overlap");
   expect(schema).toContain("exclude using gist");
