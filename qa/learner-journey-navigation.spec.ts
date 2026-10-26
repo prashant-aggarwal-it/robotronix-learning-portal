@@ -30,6 +30,23 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
     expect(schema).toContain(field);
   }
  });
+ test("learner lifecycle and portal linking use consistent role-specific presentation",()=>{
+  const stage=source("lib/learner-lifecycle.ts");
+  const studentProfile=source("app/admin/students/[id]/page.tsx");
+  const parent=source("app/parent/page.tsx");
+  const student=source("app/student/page.tsx");
+  const trainer=source("app/trainer/page.tsx");
+  const accessApi=source("app/api/admin/portal-access/route.ts");
+  const accessUi=source("components/admin/PortalAccessPanel.tsx");
+  expect(stage).toContain("enrollmentLearningLabel");
+  expect(stage).toContain("familyLearningStage");
+  expect(studentProfile).toContain("enrollmentLearningLabel(current,todayIstDate())");
+  expect(parent).toContain("familyLearningStage(selected)");
+  expect(student).toContain("familyLearningStage(data)");
+  expect(trainer).toContain("zonedRangeParts(e.date");
+  expect(accessApi).toContain('linked&&(type==="student"');
+  expect(accessUi).toContain("Family account linked");
+ });
  test("onboarding handoff is linked across Admin, Parent and Trainer",()=>{
   const onboarding=source("app/admin/onboarding/[id]/page.tsx");
   const student=source("app/admin/students/[id]/page.tsx");
