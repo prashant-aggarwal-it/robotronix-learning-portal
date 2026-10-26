@@ -133,7 +133,7 @@ function Workspace(){
       <td>{!x.hostReserved?"No connected host slot reserved":"Provisioned Zoom room needs review"}</td>
       <td><button className="button ghost" disabled={busy} onClick={()=>void retryClassCapacity(x.id)}>Retry capacity</button> <a href={"/admin/classes/"+encodeURIComponent(x.id)}>Open class</a></td></tr>)}
     </tbody></table></div>
-   </details>
+   </details>}
    <div className="row zoomClassFilters">
     <label>View <select className="input" value={classView} onChange={e=>{setClassView(e.target.value as typeof classView);setClassPage(1)}}>
      <option value="today">Today</option><option value="upcoming">Upcoming</option><option value="issues">Needs attention</option><option value="all">All provisioned</option>
