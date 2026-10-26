@@ -32,7 +32,7 @@ export default function ParentPage(){
    return <>
    <section className="familyHero parentPulseHero">
     <div className="familyHeroCopy">
-      <div className="parentIdentity"><span className="childAvatar heroAvatar">{selected.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><div><span className="experienceLabel">{firstName.toUpperCase()}’S LEARNING PULSE</span><div className={`parentStatusChip ${status.tone}`}><i/>{status.label}</div></div></div>
+      <div className="parentIdentity"><span className="childAvatar heroAvatar">{selected.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><div><span className="experienceLabel">{firstName.toUpperCase()}’S LEARNING PULSE</span><div className={`parentStatusChip ${status.tone}`}><i/>{noLessonsYet?stage:status.label}</div></div></div>
       <h1>{noLessonsYet?`${firstName}’s learning journey is ${stage==="Ready for first class"?"ready to begin":"being prepared"}.`:selected.learner.status==="on_track"?`${firstName} is building good momentum.`:selected.learner.status==="reinforce"?`${firstName} is strengthening key concepts.`:`${firstName} has extra mentor focus right now.`}</h1>
       <p>{selected.courseTitle} · {selected.enrollmentType==="one_to_one"?"1-to-1 learning":"Cohort learning"} with mentor {selected.trainerName}</p>
       <div className="parentHeroMetrics"><div><b>{flexible?selected.learner.sessionsCompleted:`${selected.learner.progress}%`}</b><span>{flexible?"Sessions attended":"Course journey"}</span></div><div><b>{selected.learner.attendance}%</b><span>Attendance</span></div><div><b>{completedProjects}</b><span>Projects completed</span></div></div>
