@@ -3,6 +3,7 @@ import {syncZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
 import {zoomServiceClient} from "@/lib/server/zoom";
 import {zonedLocalToUtc} from "@/lib/timezones";
 import {logSystemEvent} from "@/lib/server/system-log";
+import {recordJobRun} from "@/lib/server/job-monitor";
 export const dynamic="force-dynamic";
 
 // Server-to-server retry: no browser credential, no new class records, max 3 Zoom API provisioning attempts.
@@ -10,12 +11,13 @@ export async function POST(request:NextRequest){
  const expected=process.env.INTERNAL_CRON_SECRET?.trim();
  const supplied=request.headers.get("x-robotronix-cron-secret")?.trim();
  if(!expected||supplied!==expected)return NextResponse.json({ok:false,error:"Unauthorized."},{status:401});
+ const runStarted=Date.now();
  try{
   const db=zoomServiceClient();
   const {data:hosts,error:hostError}=await db.from("zoom_host_accounts")
    .select("id").eq("status","connected").eq("enabled",true).limit(1);
   if(hostError)throw new Error(hostError.message);
-  if(!hosts?.length)return NextResponse.json({ok:true,created:0,repaired:0,skipped:0,reason:"No connected host."});
+  if(!hosts?.length){await recordJobRun({jobName:"zoom-auto-reconcile",status:"success",durationMs:Date.now()-runStarted});return NextResponse.json({ok:true,created:0,repaired:0,skipped:0,reason:"No connected host."});}
   const {data:meetings,error:meetingsError}=await db.from("zoom_meetings")
    .select("schedule_event_id,join_url,status,last_error,updated_at")
    .eq("purpose","class").not("schedule_event_id","is",null);
@@ -68,10 +70,12 @@ export async function POST(request:NextRequest){
    }
   }
   if(created+repaired>0)await logSystemEvent({source:"zoom-auto-reconcile",action:"reconcile",level:"info",message:"Zoom reconciliation created "+created+" and repaired "+repaired+" meeting(s)."});
+  await recordJobRun({jobName:"zoom-auto-reconcile",status:failures.length?"partial":"success",processed:chosen.length,succeeded:created+repaired,failed:failures.length,durationMs:Date.now()-runStarted});
   return NextResponse.json({ok:failures.length===0,created,repaired,skipped,failed:failures.length,processed:chosen.length,remainingCandidates:Math.max(0,candidates.length-chosen.length),failures},{headers:{"Cache-Control":"no-store"}});
  }catch(e){
   console.error("Zoom automatic reconciliation failed");
   const reference=await logSystemEvent({source:"zoom-auto-reconcile",action:"reconcile",level:"error",code:"ZOOM_RECONCILE_JOB_FAILED",message:"Automatic Zoom meeting reconciliation could not complete."});
+  await recordJobRun({jobName:"zoom-auto-reconcile",status:"failed",failed:1,durationMs:Date.now()-runStarted,referenceId:reference,errorCode:"ZOOM_RECONCILE_JOB_FAILED"});
   return NextResponse.json({ok:false,error:"Automatic Zoom reconciliation failed.",reference},{status:500});
  }
 }
