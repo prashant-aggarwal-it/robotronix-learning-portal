@@ -9,8 +9,8 @@ const required=[
   'lib/repository.ts',
   'lib/supabase/browser.ts',
   'database/99_dev_tools/00_DEV_ONLY_RESET_PUBLIC_SCHEMA.sql',
-  'database/01_install/01_CREATE_SCHEMA.sql',
-  'database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql',
+  'database/01_install/modules/schema/01_core_schema.sql',
+  'database/01_install/modules/reference/01_geo_time_currency.sql',
   'database/03_verify/01_VERIFY_RELEASE.sql',
   '.env.example',
   'netlify.toml'
