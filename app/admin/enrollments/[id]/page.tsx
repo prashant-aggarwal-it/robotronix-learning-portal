@@ -33,6 +33,21 @@ export default function EnrollmentDetail(){
 
 useLiveRefresh(["enrollments","cohorts","students","trainers","courses","schedule_events"],()=>{if(!editingRef.current&&!saving)return refresh()},`admin-enrollment-${id}`);
 useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
+ // The enrollment detail is loaded asynchronously. Scroll to the requested
+ // panel only after it is rendered; browsers may miss the initial hash jump.
+ useEffect(()=>{
+  if(!record?.id)return;
+  function focusLinkedSection(){
+   const sectionId=decodeURIComponent(window.location.hash.slice(1));
+   if(!sectionId)return;
+   const target=document.getElementById(sectionId);
+   if(target)target.scrollIntoView({block:"start",behavior:"instant"});
+  }
+  const frame=window.requestAnimationFrame(focusLinkedSection);
+  const fallback=window.setTimeout(focusLinkedSection,120);
+  window.addEventListener("hashchange",focusLinkedSection);
+  return()=>{window.cancelAnimationFrame(frame);window.clearTimeout(fallback);window.removeEventListener("hashchange",focusLinkedSection)};
+ },[record?.id]);
  const[zoomByClass,setZoomByClass]=useState<Record<string,{status:string;lastError?:string|null;joinUrl?:string|null}>>({});
  useEffect(()=>{
   let active=true;
