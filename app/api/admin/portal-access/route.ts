@@ -64,7 +64,7 @@ async function lookupStatus(admin:any,type:Target,id:string){
  const profile=target.profileId?(await admin.from("profiles").select("active").eq("id",target.profileId).maybeSingle()).data:null;
  const auth=target.profileId?(await admin.auth.admin.getUserById(target.profileId)).data.user:null;
  const linked=Boolean(target.profileId&&profile?.active!==false);
- const status=profile?.active===false||request?.status==="disabled"?"disabled":linked&&Boolean(auth?.last_sign_in_at)?"portal_ready":request?.status==="provisioned"?"awaiting_first_login":request?.status==="invited"?"invite_sent":linked?"awaiting_first_login":"not_linked";
+ const status=profile?.active===false||request?.status==="disabled"?"disabled":linked&&(type==="student"||Boolean(auth?.last_sign_in_at))?"portal_ready":request?.status==="provisioned"?"awaiting_first_login":request?.status==="invited"?"invite_sent":linked?"awaiting_first_login":"not_linked";
  if(status==="portal_ready"&&["invited","provisioned"].includes(request?.status||""))await admin.from("portal_access_requests").update({status:"linked",updated_at:new Date().toISOString()}).eq("target_type",type).eq("target_id",id);
  return{status,email:target.email||request?.login_email||"",lastLoginAt:auth?.last_sign_in_at||null,invitedAt:request?.invited_at||null,linked,archived:target.archived};
 }
