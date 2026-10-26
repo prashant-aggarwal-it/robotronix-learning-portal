@@ -78,7 +78,7 @@ WITH checks(name,ok) AS (
   WHERE id IN('91000000-0000-4000-8000-000000000011',
   '91000000-0000-4000-8000-000000000012',
   '91000000-0000-4000-8000-000000000013'))),
- ('US billing package without fake paid invoice',(
+ ('US billing package configured',(
   SELECT count(*)=1 FROM public.student_fee_packages
   WHERE id='b0000000-0000-4000-8000-000000000098'
   AND currency='USD' AND amount=180.00)),
