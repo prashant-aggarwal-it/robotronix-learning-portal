@@ -17,6 +17,8 @@ All active installation SQL resides under `database/01_install/modules/`, with s
 | `schema/07_notifications_security_and_lifecycle.sql` | Additional lifecycle and security consolidation |
 | `schema/08_operational_logging.sql` | Job history, RLS and retention for operational logging |
 | `schema/09_operational_audit_coverage.sql` | Final P0/P1 operational audit triggers |
+| `schema/10_zoom_jit_provisioning.sql` | Atomic Zoom class provisioning locks |
+| `schema/11_zoom_host_capacity.sql` | Reservation ledger, overlapping-host guard and booking trigger |
 | `reference/01_geo_time_currency.sql` | Countries, currencies, timezone reference |
 | `reference/02_app_settings_and_locations.sql` | Behaviour settings and location dataset |
 | `reference/03_academic_reference.sql` | Academic levels and course mappings |
