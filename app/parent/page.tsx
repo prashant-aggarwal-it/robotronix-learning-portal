@@ -8,6 +8,7 @@ import {FeedbackCard,NextClassCard,ParentActionCard,ProjectSpotlight,learningSta
 import {ParentDelightHub} from "@/components/experience/ParentDelightHub";
 import {getParentLearnerExperiences,getCurrentParentSetupState} from "@/lib/repository";
 import type {LearnerExperienceSnapshot} from "@/lib/types";
+import {familyLearningStage} from "@/lib/learner-lifecycle";
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 export default function ParentPage(){
@@ -21,6 +22,8 @@ export default function ParentPage(){
   {children===undefined?<div className="experienceLoading">Loading your family learning space…</div>:!children.length?<div className="experienceEmpty premiumEmpty"><div className="experienceEmptyIcon">◎</div>{(setup?.submitted||0)>0?<><h2>Your family setup has been submitted</h2><p>We’re reviewing your learner details. Once an enrollment is activated, classes, progress, projects and mentor updates will appear here automatically.</p><div className="row"><span className="statusBadge status-planned">{setup?.pending?"Awaiting Admin activation":"Setup submitted"}</span><Link className="button ghost" href="/onboarding">+ Add another child</Link></div></>:<><h2>Set up your child’s learning profile</h2><p>Add your child’s details, learning interests and preferred class timings. You can add more than one child to the same family account.</p><Link className="button" href="/onboarding">Start Family Setup</Link></>}</div>:selected&&(()=>{
    const firstName=selected.learner.name.split(" ")[0];
    const status=learningStatusCopy(selected.learner.status);
+   const stage=familyLearningStage(selected);
+   const noLessonsYet=selected.learner.sessionsCompleted===0&&(selected.learner.hoursCompleted??0)===0;
    const attendedRecent=selected.recentClasses.filter(x=>x.attendance==="attended"||x.attendance==="late").length;
    const completedProjects=selected.projects.filter(p=>p.status==="completed").length;
    const latestProject=selected.projects[0];
@@ -30,10 +33,10 @@ export default function ParentPage(){
    <section className="familyHero parentPulseHero">
     <div className="familyHeroCopy">
       <div className="parentIdentity"><span className="childAvatar heroAvatar">{selected.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><div><span className="experienceLabel">{firstName.toUpperCase()}’S LEARNING PULSE</span><div className={`parentStatusChip ${status.tone}`}><i/>{status.label}</div></div></div>
-      <h1>{selected.learner.status==="on_track"?`${firstName} is building good momentum.`:selected.learner.status==="reinforce"?`${firstName} is strengthening key concepts.`:`${firstName} has extra mentor focus right now.`}</h1>
+      <h1>{noLessonsYet?`${firstName}’s learning journey is ${stage==="Ready for first class"?"ready to begin":"being prepared"}.`:selected.learner.status==="on_track"?`${firstName} is building good momentum.`:selected.learner.status==="reinforce"?`${firstName} is strengthening key concepts.`:`${firstName} has extra mentor focus right now.`}</h1>
       <p>{selected.courseTitle} · {selected.enrollmentType==="one_to_one"?"1-to-1 learning":"Cohort learning"} with mentor {selected.trainerName}</p>
       <div className="parentHeroMetrics"><div><b>{flexible?selected.learner.sessionsCompleted:`${selected.learner.progress}%`}</b><span>{flexible?"Sessions attended":"Course journey"}</span></div><div><b>{selected.learner.attendance}%</b><span>Attendance</span></div><div><b>{completedProjects}</b><span>Projects completed</span></div></div>
-      <div className="parentMilestone"><span>Latest momentum</span><b>{milestone}</b></div>
+      <div className="parentMilestone"><span>Latest momentum</span><b>{noLessonsYet?(selected.nextClass?"Your first class is scheduled. View its details below.":"Your first class will appear after scheduling."):milestone}</b></div>
     </div>
     <div className="familySwitcher"><div className="familySwitcherHead"><span>Viewing learner</span><small>{children.length>1?`${children.length} learners linked`:"Family account"}</small></div><div className="childSwitchRow">{children.map(child=><button key={child.learner.id} className={`childSwitch ${selected.learner.id===child.learner.id?"active":""}`} onClick={()=>setSelectedId(child.learner.id)}><span className="childAvatar">{child.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><span><b>{child.learner.name}</b><small>{child.learner.grade} · {child.courseTitle}</small></span><span className="childSwitchArrow">→</span></button>)}</div><Link className="familyLearnerLink" href={`/parent/learner/${selected.learner.id}`}>Open {firstName}’s learner view →</Link><Link className="familyLearnerLink addLearnerLink" href="/onboarding">+ Add another child</Link></div>
    </section>
