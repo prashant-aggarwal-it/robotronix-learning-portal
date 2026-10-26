@@ -495,6 +495,11 @@ on conflict (id) do update set
 
 
 -- PART B: EXTENDED INDIA/OVERSEAS BUSINESS DATA
+-- qa-admin-2: existing active admin profile (no separate admin business table).
+-- qa-trainer-2: creates Meera Iyer trainer row.
+-- qa-parent-us: creates Olivia Patel parent row and links children.
+-- qa-student-us: creates Mia Patel student row linked to Auth.
+-- Other child records intentionally have no personal Auth login.
 DO $guard$
 DECLARE missing text;
 BEGIN
@@ -518,13 +523,12 @@ BEGIN
  OR NOT EXISTS (SELECT 1 FROM public.trainers WHERE id='a0000000-0000-4000-8000-000000000001')
  OR NOT EXISTS (SELECT 1 FROM public.parents WHERE id='b0000000-0000-4000-8000-000000000001')
  THEN
-  RAISE EXCEPTION 'Run database/02_qa/01_QA_SEED.sql first, after creating its four Auth users.';
+  RAISE EXCEPTION 'Baseline DEV fixtures missing within consolidated setup. Stop and share the first SQL error; do not run legacy QA seed separately.';
  END IF;
 END $guard$;
 
 -- 2 accounts for each role, including original baseline fixtures.
--- Bypass the privilege-protection trigger only inside this explicit admin seed.
--- Auth and role mappings were checked; no profile writes in this script.
+-- Auth and role mappings were checked; no profile writes or security trigger changes in this script.
 
 
 -- An additional active Python course; all required course fields are cloned
