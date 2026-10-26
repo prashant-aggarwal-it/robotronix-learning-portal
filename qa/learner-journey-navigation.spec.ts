@@ -195,7 +195,7 @@ test("Zoom scheduling repairs missing join URLs and performs bounded automatic r
  expect(zoom).toContain("Zoom did not return a valid meeting ID and join URL");
  expect(reconciliation).toContain(".range(page*200,page*200+199)");
  expect(reconciliation).toContain("eligibleCount");
- expect(reconciliation).toContain("batch.length<5");
+ expect(reconciliation).toContain("batch.length<12");
  expect(reconciliation).toContain("linked.get(event.id)");
  expect(cron).toContain('["scheduled","makeup"]');
  expect(cron).toContain("x-robotronix-cron-secret");
