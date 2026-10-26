@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { LearnerExperienceSnapshot, LearningStatus, ScheduleEvent } from "@/lib/types";
 import {shortTimeZoneLabel} from "@/lib/timezones";
 import {displayLabel} from "@/lib/display";
+import {learnerHasLearningEvidence} from "@/lib/learner-lifecycle";
 import {ZoomClassActions} from "@/components/ZoomClassActions";
 import {CalendarActions} from "@/components/calendar/CalendarActions";
 
@@ -47,6 +48,7 @@ export function NextClassCard({event,trainer}:{event?:ScheduleEvent;trainer:stri
 
 export function ParentActionCard({snapshot}:{snapshot:LearnerExperienceSnapshot}){
   const status=learningStatusCopy(snapshot.learner.status);
+  if(!snapshot.activeHold&&!learnerHasLearningEvidence(snapshot))return <div className="experienceCard parentActionCard"><div className="experienceCardBody"><span className="experienceLabel">LEARNING OBSERVATIONS</span><h3>Learning evidence coming soon</h3><p>Attendance and completed teaching hours are tracked separately. Your mentor’s learning observations and feedback will appear after they are recorded.</p></div></div>;
   if(snapshot.activeHold) return <div className="experienceCard parentActionCard hold"><div className="experienceIcon">Ⅱ</div><div className="experienceCardBody"><span className="experienceLabel">CURRENT STATUS</span><h3>Learning is temporarily paused</h3><p>{snapshot.activeHold.reason.charAt(0).toUpperCase()+snapshot.activeHold.reason.slice(1)} hold{snapshot.activeHold.endDate?` until ${formatShortDate(snapshot.activeHold.endDate)}`:""}. Completed course hours stay protected until classes resume.</p></div></div>;
   return <div className={`experienceCard parentActionCard ${status.tone}`}><div className="experienceIcon">{snapshot.learner.status==="on_track"?"✓":"↗"}</div><div className="experienceCardBody"><span className="experienceLabel">LEARNING PULSE</span><h3>{status.title}</h3><p>{status.body}</p></div></div>
 }
