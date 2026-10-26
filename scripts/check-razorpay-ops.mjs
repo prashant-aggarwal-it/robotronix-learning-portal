@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import {readCanonicalSql} from "./read-canonical-sql.mjs";
 
 const required=[
  "app/api/admin/invoices/route.ts",
@@ -7,7 +8,7 @@ const required=[
  "lib/server/razorpay-invoices.ts",
  "app/admin/invoices/page.tsx",
  "components/finance/EnrollmentInvoicePanel.tsx",
- "database/01_install/01_CREATE_SCHEMA.sql"
+ "database/01_install/modules/schema/01_core_schema.sql"
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing Razorpay operations file: "+file);
 
@@ -23,7 +24,7 @@ const ui=fs.readFileSync("app/admin/invoices/page.tsx","utf8");
 for(const marker of ["Razorpay Billing","Needs attention","Copy Link","Sync","Overdue"]){
  if(!ui.includes(marker))throw new Error("Razorpay billing UI is missing: "+marker);
 }
-const schema=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
+const schema=readCanonicalSql();
 for(const marker of ["razorpay_webhook_events","last_synced_at","sync_error","student_invoices_fee_package_unique"]){
  if(!schema.includes(marker))throw new Error("Fresh schema is missing Razorpay hardening: "+marker);
 }
