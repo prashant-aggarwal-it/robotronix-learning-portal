@@ -14,6 +14,8 @@ One generated install file, made from ordered functional SQL modules:
 - `07_notifications_security_and_lifecycle.sql` — lifecycle, security and subsequent consolidated changes
 - `08_operational_logging.sql` — operational job monitoring, RLS and retention
 - `09_operational_audit_coverage.sql` — P0/P1 operational audit triggers
+- `10_zoom_jit_provisioning.sql` — atomic class meeting provisioning leases
+- `11_zoom_host_capacity.sql` — advance host-capacity reservations and booking trigger
 
 `database/01_install/modules/reference/`
 - `01_geo_time_currency.sql` — geography, timezones and currencies
