@@ -111,7 +111,7 @@ export async function cancelZoomForScheduleEvent(db:SupabaseClient,scheduleEvent
  return {action:"cancelled" as const,meetingId:meeting.id};
 }
 
-export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId:string,actorId?:string){
+export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId:string,actorId?:string,options:{force?:boolean}={}){
  const {data:event,error:eventError}=await db.from("schedule_events")
   .select("id,trainer_id,course_id,enrollment_id,cohort_id,student_id,title,date,start_time,end_time,timezone,event_type,status")
   .eq("id",scheduleEventId).maybeSingle();
@@ -125,6 +125,11 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
  const {start,end,duration}=classWindow(typed);
  const {data:existing,error:meetingError}=await db.from("zoom_meetings").select("*").eq("schedule_event_id",scheduleEventId).eq("purpose","class").maybeSingle();
  if(meetingError)throw new Error(meetingError.message);
+ // The course schedule can be generated months ahead; only provision a room near class time.
+ // Existing rooms are still synchronized for reschedules, and cancelled events handled above.
+ const untilStart=start.getTime()-Date.now();
+ if(!options.force&&!existing&&untilStart>35*60_000)return {action:"deferred" as const};
+ if(!options.force&&!existing&&untilStart< -15*60_000)return {action:"expired" as const};
 
  // Reuse an existing meeting before allocating another host or creating a duplicate.
  // Zoom PATCH responses do not contain join_url, so retrieve it from Zoom if the stored link is missing.
