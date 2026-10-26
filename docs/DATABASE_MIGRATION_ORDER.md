@@ -13,6 +13,7 @@ One generated install file, made from ordered functional SQL modules:
 - `06_zoom_calendar_demo.sql` — Zoom, calendar subscriptions and demos
 - `07_notifications_security_and_lifecycle.sql` — lifecycle, security and subsequent consolidated changes
 - `08_operational_logging.sql` — operational job monitoring, RLS and retention
+- `09_operational_audit_coverage.sql` — P0/P1 operational audit triggers
 
 `database/01_install/modules/reference/`
 - `01_geo_time_currency.sql` — geography, timezones and currencies
