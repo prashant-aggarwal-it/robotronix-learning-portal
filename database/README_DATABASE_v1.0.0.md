@@ -1,6 +1,6 @@
 # Robotronix database — authoritative SQL layout (QA branch)
 
-**Updated 26 October 2026.** The old 300 KB `01_CREATE_SCHEMA.sql` and 60 KB `02_INSERT_MASTER_REFERENCE_DATA.sql` monoliths have been retired. **Do not follow older instructions that reference those files.**
+**Updated 27 October 2026.** The old 300 KB `01_CREATE_SCHEMA.sql` and 60 KB `02_INSERT_MASTER_REFERENCE_DATA.sql` monoliths have been retired. **Do not follow older instructions that reference those files.**
 
 ## One canonical fresh-install source, arranged by functionality
 
@@ -38,7 +38,10 @@ All feature modules are **ordered**, not individually runnable independent migra
 
 ## Other SQL, grouped by purpose
 
-- `database/02_qa/`: QA seed/cleanup and production-security test fixture scripts. Never use these on real production data without an explicitly approved test plan.
+- `database/02_qa/00_RUN_DEV_QA_DATA.sql` + `01_VERIFY_DEV_QA.sql`: **current one-run eight-user DEV QA setup**. Requires existing Auth users and profiles. Does not alter profiles or privilege triggers.
+- `database/02_qa/01_QA_SEED.sql` + `02_QA_CLEANUP.sql`: retained legacy four-account QA fixtures required by release checks; **do not use cleanup against extended DEV personas**.
+- `database/security_qa/`: separate production-security fixture scripts and README; only for separately authorized security testing.
+- `database/archive/legacy/03_DEV_PERSONAS_V1.sql` and `04_VERIFY_DEV_PERSONAS_V1.sql`: superseded two-step DEV fixture scripts, retained for traceability; do not run.
 - `database/03_verify/01_VERIFY_RELEASE.sql`: single read-only release verification script.
 - `database/99_dev_tools/`: development-only reset. Never run in production.
 - `database/archive/legacy/`: historical SQL, retained for traceability only. No active installation dependency.
