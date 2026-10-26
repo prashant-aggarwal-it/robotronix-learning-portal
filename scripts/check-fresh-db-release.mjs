@@ -36,6 +36,9 @@ const must=[
   'replace_trainer_availability_v1',
   'onboarding_submission_admin_notification_trg',
   'grant usage on schema public to authenticated',
+  'audit_portal_access_requests',
+  'audit_zoom_recordings',
+  'portal_job_runs',
 ];
 for(const marker of must){if(!schema.includes(marker))throw new Error(`Fresh schema missing consolidated marker: ${marker}`)}
 
@@ -58,7 +61,7 @@ for(const file of ['database/03_verify/01_VERIFY_RELEASE.sql','database/02_qa/01
 const verificationFiles=fs.readdirSync(path.join(root,'database/03_verify'));
 const unexpectedVerificationSql=verificationFiles.filter(name=>name.endsWith('.sql') && name!=='01_VERIFY_RELEASE.sql');
 if(unexpectedVerificationSql.length)throw new Error('Extra SQL scripts found in 03_verify: '+unexpectedVerificationSql.join(', '));
-for(const directory of ['database/04_hotfixes','database/migrations','supabase/migrations']){
+for(const directory of ['database/04_hotfixes','database/04_migrations','database/05_features','database/migrations','supabase/migrations']){
  if(fs.existsSync(path.join(root,directory)))throw new Error('Incremental SQL patch directory must not ship in the release: '+directory);
 }
 for(const name of fs.readdirSync(path.join(root,'database/01_install'))){
