@@ -105,7 +105,7 @@ create trigger zoom_class_reservation_sync_trg
 -- and let JIT reconciliation retry against the new event state.
 create or replace function public.guard_zoom_class_meeting_window()
 returns trigger language plpgsql security definer set search_path=public,pg_temp
-as $
+as $$
 declare ev public.schedule_events%rowtype;v_start timestamptz;v_end timestamptz;
 begin
  if new.purpose<>'class' or new.schedule_event_id is null or new.status<>'scheduled' then
@@ -122,7 +122,7 @@ begin
   raise exception 'Zoom classroom schedule changed during provisioning';
  end if;
  return new;
-end $;
+end $$;
 revoke all on function public.guard_zoom_class_meeting_window() from public,anon,authenticated;
 drop trigger if exists zoom_class_meeting_window_guard_trg on public.zoom_meetings;
 create trigger zoom_class_meeting_window_guard_trg
