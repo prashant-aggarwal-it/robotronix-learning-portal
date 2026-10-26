@@ -30,6 +30,18 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
     expect(schema).toContain(field);
   }
  });
+ test("quick class wrap-up asks for trainer-confirmed evidence once and shows parent draft",()=>{
+  const editor=source("components/operations/ClassRecordEditor.tsx");
+  const cards=source("components/experience/ExperienceCards.tsx");
+  expect(editor).toContain("QUICK CLASS WRAP-UP");
+  expect(editor).toContain("confirmedOutcomes");
+  expect(editor).toContain("sessionMeta.sessionTopic.trim()");
+  expect(editor).toContain("parentUpdateDraft");
+  expect(editor).toContain("Parent update preview");
+  expect(editor).toContain("Internal trainer / admin note");
+  expect(editor).toContain("Parent-visible progress note");
+  expect(cards).toContain("observation.feedback");
+ });
  test("learner progress distinguishes attendance from learning evidence across roles",()=>{
   const workspace=source("components/progress/LearnerProgressWorkspace.tsx");
   const cards=source("components/experience/ExperienceCards.tsx");
