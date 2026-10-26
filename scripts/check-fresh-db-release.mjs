@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root=process.cwd();
 const modulesDir=path.join(root,'database/01_install/modules');
-const sqlModules=(kind)=>fs.readdirSync(path.join(modulesDir,kind)).filter(name=>/^\\d\\d_[a-z0-9_]+\\.sql$/.test(name)).sort().map(name=>fs.readFileSync(path.join(modulesDir,kind,name),'utf8')).join('');
+const sqlModules=(kind)=>fs.readdirSync(path.join(modulesDir,kind)).filter(name=>/^\d\d_[a-z0-9_]+\.sql$/.test(name)).sort().map(name=>fs.readFileSync(path.join(modulesDir,kind,name),'utf8')).join('');
 const schema=sqlModules('schema');
 const reference=sqlModules('reference');
 if(!schema||!reference)throw new Error('Missing canonical SQL modules.');
