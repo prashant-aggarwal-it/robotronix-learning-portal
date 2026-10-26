@@ -4,7 +4,7 @@ begin;
 create extension if not exists btree_gist;
 create table if not exists public.zoom_class_host_reservations(
  schedule_event_id uuid primary key references public.schedule_events(id) on delete cascade,
- host_account_id uuid references public.zoom_host_accounts(id) on delete set null,
+ host_account_id uuid references public.zoom_host_accounts(id) on delete restrict,
  starts_at timestamptz not null,
  ends_at timestamptz not null,
  allocation_status text not null check(allocation_status in ('reserved','unallocated')),
