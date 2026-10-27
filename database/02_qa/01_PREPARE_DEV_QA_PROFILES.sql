@@ -1,3 +1,7 @@
+-- STEP B2 OF DEV SETUP: Run AFTER installing schema and creating all 8 Auth accounts.
+-- This creates only public.profiles; next run 02_RUN_DEV_QA_DATA.sql.
+-- Do not run on PROD. Read database/02_qa/README.md.
+
 -- ROBOTRONIX DEV QA ONLY: CREATE/REPAIR 8 ROLE PROFILES
 -- Run ONLY in your dedicated DEV Supabase project, as database owner, AFTER
 -- creating the 8 confirmed identities in Authentication -> Users.

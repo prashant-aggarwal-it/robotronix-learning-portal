@@ -53,8 +53,12 @@ const enrollmentStartGuard=schema.match(/create or replace function public\.enfo
 if(!enrollmentStartGuard.includes("coalesce(new.migration_type, 'native') <> 'active_existing'")){
   throw new Error('Fresh schema enrollment start-date guard does not permit historical dates for active_existing migrations.');
 }
-if(fs.existsSync(path.join(root,'database/04_hotfixes')))throw new Error('Fresh release must not contain database/04_hotfixes.');
-for(const file of ['database/03_verify/01_VERIFY_RELEASE.sql','database/02_qa/01_QA_SEED.sql','database/02_qa/02_QA_CLEANUP.sql']){
+if(fs.existsSync(path.join(root,'database/archive')))throw new Error('Archived SQL must not ship in canonical release.');
+const qaSql=fs.readdirSync(path.join(root,'database/02_qa')).filter(name=>name.endsWith('.sql')).sort();
+const expectedQaSql=['01_PREPARE_DEV_QA_PROFILES.sql','02_RUN_DEV_QA_DATA.sql','03_VERIFY_DEV_QA.sql'];
+if(JSON.stringify(qaSql)!==JSON.stringify(expectedQaSql))throw new Error('Unexpected DEV QA SQL files: '+qaSql.join(', '));
+if(fs.existsSync(path.join(root,'database/04_hotfixes'))throw new Error('Fresh release must not contain database/04_hotfixes.');
+for(const file of ['database/03_verify/01_VERIFY_RELEASE.sql','database/02_qa/01_PREPARE_DEV_QA_PROFILES.sql','database/02_qa/02_RUN_DEV_QA_DATA.sql','database/02_qa/03_VERIFY_DEV_QA.sql']){
   if(!fs.existsSync(path.join(root,file)))throw new Error(`Missing required release database file: ${file}`);
 }
 // Consolidated releases must never require separate post-install SQL patches.

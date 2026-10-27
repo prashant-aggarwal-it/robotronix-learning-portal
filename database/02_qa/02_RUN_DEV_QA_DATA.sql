@@ -1,3 +1,7 @@
+-- STEP B3 OF DEV SETUP: Run AFTER 01_PREPARE_DEV_QA_PROFILES.sql
+-- (or after confirming all 8 active profiles already exist).
+-- Next run 03_VERIFY_DEV_QA.sql. DEV ONLY; no real customer data.
+
 -- ROBOTRONIX DEV QA: SINGLE DATASET SCRIPT (8 pre-created Auth users + profiles)
 -- Run ONCE in a dedicated DEV database AFTER the fresh schema/reference install.
 -- Requires all eight existing Auth users and correct active public.profiles roles.
@@ -847,7 +851,7 @@ ON CONFLICT(id) DO UPDATE SET name=excluded.name,amount=excluded.amount,
 
 COMMIT;
 
--- Verification summary; run 01_VERIFY_DEV_QA.sql for all checks.
+-- Verification summary; run 03_VERIFY_DEV_QA.sql for all checks.
 SELECT 'DEV QA DATA COMMITTED' AS status,
  (SELECT count(*) FROM public.students WHERE id::text LIKE 'd0000000-0000-4000-8000-00000000000%') AS qa_students,
  (SELECT count(*) FROM public.enrollments WHERE id::text LIKE 'e0000000-0000-4000-8000-00000000000%') AS qa_enrollments;

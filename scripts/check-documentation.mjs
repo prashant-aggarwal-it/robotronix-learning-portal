@@ -15,7 +15,7 @@ function collect(directory) {
   }
 }
 collect(path.join(root, 'docs'));
-files.push('database/README_DATABASE_v1.0.0.md');
+files.push('database/README.md');
 
 const errors = [];
 for (const file of files) {

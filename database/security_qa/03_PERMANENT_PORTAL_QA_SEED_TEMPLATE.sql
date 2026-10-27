@@ -1,14 +1,27 @@
--- Robotronix™ Learning Portal — Production v1.0.0
--- DEVELOPMENT/QA ONLY. Never run against Production.
+-- CONTROLLED PERMANENT QA TEMPLATE. DO NOT EXECUTE DIRECTLY.
+-- Generate the local fixture through npm run qa:prod-permanent:generate-sql.
+-- NOT part of DEV database setup; requires explicit authorization.
+-- ============================================================================
+-- Robotronix™ Learning Portal — PERMANENT PRODUCTION QA SEED
+-- Dedicated deterministic fixtures for post-deployment validation only.
+-- Uses the same fixed record IDs/labels as automated QA so the existing Playwright
+-- suites can validate production safely against synthetic data.
+-- Prerequisite: run `npm run sanity:create-users` with SANITY_* credentials first.
+-- Do NOT run temporary sanity cleanup: permanent synthetic fixtures are retained.
+-- These are dedicated synthetic QA records; keep isolated from real customers.
+-- ============================================================================
 
--- Robotronix Learning Portal — optional automated QA seed
--- NOT production business data. Run only in a dedicated QA/staging project or a controlled pre-release database.
+-- Robotronix™ Learning Portal — Production v1.0.0
+-- PERMANENT PRODUCTION QA FIXTURES. Dedicated synthetic data for controlled post-deploy sanity only.
+
+-- Robotronix Learning Portal — production QA seed
+-- NOT business data. May be run on a fresh/controlled production database only for dedicated post-deploy sanity, then clean it completely.
 --
 -- Prerequisite: create these four Supabase Auth email/password users first:
---   qa-admin@robotronix.local
---   qa-trainer@robotronix.local
---   qa-parent@robotronix.local
---   qa-student@robotronix.local
+--   portal-qa-admin@robotronix.local
+--   portal-qa-trainer@robotronix.local
+--   portal-qa-parent@robotronix.local
+--   portal-qa-student@robotronix.local
 --
 -- Auth UUIDs are resolved by email, so this file is portable across Supabase projects.
 -- Safe to re-run for the fixed QA domain IDs used by Playwright.
@@ -17,31 +30,31 @@ begin;
 
 do $$
 begin
-  if not exists(select 1 from auth.users where email='qa-admin@robotronix.local') then raise exception 'Create qa-admin@robotronix.local in Supabase Auth first'; end if;
-  if not exists(select 1 from auth.users where email='qa-trainer@robotronix.local') then raise exception 'Create qa-trainer@robotronix.local in Supabase Auth first'; end if;
-  if not exists(select 1 from auth.users where email='qa-parent@robotronix.local') then raise exception 'Create qa-parent@robotronix.local in Supabase Auth first'; end if;
-  if not exists(select 1 from auth.users where email='qa-student@robotronix.local') then raise exception 'Create qa-student@robotronix.local in Supabase Auth first'; end if;
+  if not exists(select 1 from auth.users where email='portal-qa-admin@robotronix.local') then raise exception 'Create portal-qa-admin@robotronix.local in Supabase Auth first'; end if;
+  if not exists(select 1 from auth.users where email='portal-qa-trainer@robotronix.local') then raise exception 'Create portal-qa-trainer@robotronix.local in Supabase Auth first'; end if;
+  if not exists(select 1 from auth.users where email='portal-qa-parent@robotronix.local') then raise exception 'Create portal-qa-parent@robotronix.local in Supabase Auth first'; end if;
+  if not exists(select 1 from auth.users where email='portal-qa-student@robotronix.local') then raise exception 'Create portal-qa-student@robotronix.local in Supabase Auth first'; end if;
 end
 $$;
 
 alter table public.profiles disable trigger protect_profile_privileges_trg;
 
 insert into public.profiles (id, full_name, role, active)
-select id,'QA Admin','admin',true from auth.users where email='qa-admin@robotronix.local'
+select id,'QA Admin','admin',true from auth.users where email='portal-qa-admin@robotronix.local'
 on conflict (id) do update set full_name=excluded.full_name,role=excluded.role,active=true,updated_at=now();
 insert into public.profiles (id, full_name, role, active)
-select id,'QA Trainer','trainer',true from auth.users where email='qa-trainer@robotronix.local'
+select id,'QA Trainer','trainer',true from auth.users where email='portal-qa-trainer@robotronix.local'
 on conflict (id) do update set full_name=excluded.full_name,role=excluded.role,active=true,updated_at=now();
 insert into public.profiles (id, full_name, role, active)
-select id,'QA Parent','parent',true from auth.users where email='qa-parent@robotronix.local'
+select id,'QA Parent','parent',true from auth.users where email='portal-qa-parent@robotronix.local'
 on conflict (id) do update set full_name=excluded.full_name,role=excluded.role,active=true,updated_at=now();
 insert into public.profiles (id, full_name, role, active)
-select id,'QA Student','student',true from auth.users where email='qa-student@robotronix.local'
+select id,'QA Student','student',true from auth.users where email='portal-qa-student@robotronix.local'
 on conflict (id) do update set full_name=excluded.full_name,role=excluded.role,active=true,updated_at=now();
 
 alter table public.profiles enable trigger protect_profile_privileges_trg;
 
--- Fail fast if any QA Auth UUID is not mapped to the same public.profiles UUID/role.
+-- Fail fast if any Permanent production QA Auth UUID is not mapped to the same public.profiles UUID/role.
 do $$
 declare
   bad_count integer;
@@ -49,10 +62,10 @@ begin
   select count(*) into bad_count
   from (
     values
-      ('qa-admin@robotronix.local','admin'),
-      ('qa-trainer@robotronix.local','trainer'),
-      ('qa-parent@robotronix.local','parent'),
-      ('qa-student@robotronix.local','student')
+      ('portal-qa-admin@robotronix.local','admin'),
+      ('portal-qa-trainer@robotronix.local','trainer'),
+      ('portal-qa-parent@robotronix.local','parent'),
+      ('portal-qa-student@robotronix.local','student')
   ) as expected(email, role)
   left join auth.users u on lower(u.email)=expected.email
   left join public.profiles p on p.id=u.id
@@ -63,7 +76,7 @@ begin
      or p.active is distinct from true;
 
   if bad_count <> 0 then
-    raise exception 'QA Auth/Profile mapping verification failed for % account(s). Delete/recreate QA Auth users, then rerun this seed.', bad_count;
+    raise exception 'Permanent production QA Auth/Profile mapping verification failed for % account(s). Delete/recreate Permanent production QA Auth users, then rerun this seed.', bad_count;
   end if;
 end $$;
 
@@ -78,15 +91,15 @@ select
 from auth.users u
 left join public.profiles p on p.id=u.id
 where lower(u.email) in (
-  'qa-admin@robotronix.local',
-  'qa-trainer@robotronix.local',
-  'qa-parent@robotronix.local',
-  'qa-student@robotronix.local'
+  'portal-qa-admin@robotronix.local',
+  'portal-qa-trainer@robotronix.local',
+  'portal-qa-parent@robotronix.local',
+  'portal-qa-student@robotronix.local'
 )
 order by lower(u.email);
 
 -- ============================================================
--- 2) QA COURSE
+-- 2) PERMANENT PRODUCTION QA COURSE
 -- ============================================================
 
 insert into public.courses (
@@ -114,7 +127,7 @@ values (
   array['1-to-1','Cohort'],
   'Block + Electronics',
   array['Robotics','Sensors','Programming'],
-  'QA-only course used for automated portal testing.',
+  'Dedicated sanity course used for automated portal testing.',
   array['Build simple mechanisms','Understand sensors','Practice computational thinking'],
   array['Sensor challenge','Mini robot build'],
   'Session observations + project check',
@@ -136,7 +149,7 @@ on conflict (id) do update set
   updated_at = now();
 
 -- ============================================================
--- 3) QA TRAINER
+-- 3) PERMANENT PRODUCTION QA TRAINER
 -- ============================================================
 
 insert into public.trainers (
@@ -147,10 +160,10 @@ insert into public.trainers (
 )
 values (
   'a0000000-0000-4000-8000-000000000001',
-  (select id from auth.users where email='qa-trainer@robotronix.local' limit 1),
+  (select id from auth.users where email='portal-qa-trainer@robotronix.local' limit 1),
   'QA Trainer',
   '+919999999001',
-  'qa-trainer@robotronix.local',
+  'portal-qa-trainer@robotronix.local',
   'Delhi',
   'QA Robotics Trainer',
   current_date,
@@ -177,7 +190,7 @@ values (
 on conflict (trainer_id, course_id) do nothing;
 
 -- ============================================================
--- 4) QA PARENT
+-- 4) PERMANENT PRODUCTION QA PARENT
 -- ============================================================
 
 insert into public.parents (
@@ -185,7 +198,7 @@ insert into public.parents (
 )
 values (
   'b0000000-0000-4000-8000-000000000001',
-  (select id from auth.users where email='qa-parent@robotronix.local' limit 1),
+  (select id from auth.users where email='portal-qa-parent@robotronix.local' limit 1),
   '+919999999002'
 )
 on conflict (id) do update set
@@ -193,7 +206,7 @@ on conflict (id) do update set
   primary_phone = excluded.primary_phone;
 
 -- ============================================================
--- 5) QA STUDENT
+-- 5) PERMANENT PRODUCTION QA STUDENT
 -- ============================================================
 
 insert into public.students (
@@ -204,7 +217,7 @@ insert into public.students (
 )
 values (
   'd0000000-0000-4000-8000-000000000001',
-  (select id from auth.users where email='qa-student@robotronix.local' limit 1),
+  (select id from auth.users where email='portal-qa-student@robotronix.local' limit 1),
   'QA Student',
   current_date - interval '12 years',
   'Grade 6',
@@ -257,7 +270,7 @@ values (
   '', '',
   'mother',
   '+919999999002', '',
-  'qa-parent@robotronix.local',
+  'portal-qa-parent@robotronix.local',
   'QA Parent',
   'mother',
   '+919999999002',
@@ -265,7 +278,7 @@ values (
   null,
   '',
   'QA Parent',
-  'qa-parent@robotronix.local',
+  'portal-qa-parent@robotronix.local',
   '+919999999002',
   'QA Test Address',
   '',
@@ -330,7 +343,7 @@ values (
   'one_to_one',
   null,
   'active',
-  (now() AT TIME ZONE 'Asia/Kolkata')::date,
+  current_date,
   'Asia/Kolkata',
   '[
     {"dayOfWeek": 1, "startTime": "16:00", "endTime": "17:00"},
@@ -359,20 +372,20 @@ values
   (
     'trainer',
     'a0000000-0000-4000-8000-000000000001',
-    'qa-trainer@robotronix.local',
+    'portal-qa-trainer@robotronix.local',
     'linked',
     now(),
     now(),
-    (select id from auth.users where email='qa-admin@robotronix.local' limit 1)
+    (select id from auth.users where email='portal-qa-admin@robotronix.local' limit 1)
   ),
   (
     'student',
     'd0000000-0000-4000-8000-000000000001',
-    'qa-student@robotronix.local',
+    'portal-qa-student@robotronix.local',
     'linked',
     now(),
     now(),
-    (select id from auth.users where email='qa-admin@robotronix.local' limit 1)
+    (select id from auth.users where email='portal-qa-admin@robotronix.local' limit 1)
   )
 on conflict (target_type, target_id) do update set
   login_email = excluded.login_email,
@@ -453,7 +466,7 @@ values (
   'steady',
   'optional',
   'QA session record',
-  (select id from auth.users where email='qa-admin@robotronix.local' limit 1)
+  (select id from auth.users where email='portal-qa-admin@robotronix.local' limit 1)
 )
 on conflict (id) do update set
   attendance = 'attended',
@@ -504,10 +517,10 @@ commit;
 select 'profiles' as item, count(*) as qa_rows
 from public.profiles
 where id in (
-  (select id from auth.users where email='qa-admin@robotronix.local' limit 1),
-  (select id from auth.users where email='qa-trainer@robotronix.local' limit 1),
-  (select id from auth.users where email='qa-parent@robotronix.local' limit 1),
-  (select id from auth.users where email='qa-student@robotronix.local' limit 1)
+  (select id from auth.users where email='portal-qa-admin@robotronix.local' limit 1),
+  (select id from auth.users where email='portal-qa-trainer@robotronix.local' limit 1),
+  (select id from auth.users where email='portal-qa-parent@robotronix.local' limit 1),
+  (select id from auth.users where email='portal-qa-student@robotronix.local' limit 1)
 )
 union all
 select 'trainer', count(*) from public.trainers
@@ -553,7 +566,7 @@ SET
   same_as_primary_guardian = true,
   same_as_primary_address = false,
   billing_name = 'QA Parent - SANITY Razorpay',
-  billing_email = 'qa-parent@robotronix.local',
+  billing_email = 'portal-qa-parent@robotronix.local',
   billing_phone = '+971501234567',
   billing_address_line1 = 'QA Test Address',
   billing_address_line2 = '',

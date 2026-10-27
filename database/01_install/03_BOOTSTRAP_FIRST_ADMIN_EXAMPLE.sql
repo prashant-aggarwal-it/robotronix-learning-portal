@@ -1,3 +1,7 @@
+-- OPTIONAL FIRST REAL ADMIN BOOTSTRAP (NOT PART OF THE EIGHT-USER DEV QA SETUP).
+-- Use only with explicit authorization after creating the real Admin Auth account.
+-- See database/01_install/README.md. Never run unchanged with placeholder email.
+
 -- Robotronix Learning Portal — bootstrap the first administrator
 -- Run only after the administrator has signed in once so an auth.users row exists.
 -- Replace the email below with the real administrator's login email.

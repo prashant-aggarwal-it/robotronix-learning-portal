@@ -1,3 +1,7 @@
+-- STEP A4: READ-ONLY schema verification. Run AFTER the fresh generated installer
+-- and BEFORE creating the eight DEV QA profiles and synthetic business data.
+-- Never use this file as a schema installer. See database/README.md.
+
 -- Robotronix™ Learning Portal — Production v1.0.0
 -- Generated consolidated release file. Fresh-install oriented; historical patch files are intentionally omitted.
 

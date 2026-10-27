@@ -1,5 +1,9 @@
+-- STEP B4 OF DEV SETUP: READ ONLY; run AFTER 02_RUN_DEV_QA_DATA.sql.
+-- Inspect all result sets; all required assertions should say PASS.
+-- See database/02_qa/README.md.
+
 -- ROBOTRONIX DEV PERSONAS: READ-ONLY VERIFICATION
--- Run after 01_QA_SEED.sql and 03_DEV_PERSONAS.sql.
+-- Run after 02_RUN_DEV_QA_DATA.sql (all eight Auth users and profiles pre-created).
 -- Output provides PASS / FAIL (not merely raw audit trigger status).
 WITH expected_users(email,role) AS (
  VALUES
