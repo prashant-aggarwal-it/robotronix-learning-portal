@@ -1417,3 +1417,31 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .portalAccessPanel .fieldHint{display:block;max-width:580px;line-height:1.5}
 .portalAccessPanel .portalAccessActions{margin-top:12px}
 @media(max-width:600px){.trainerOverviewGrid .attentionRow{align-items:flex-start;flex-wrap:wrap}.trainerOverviewGrid .attentionRow>b{margin-left:auto}.portalAccessPanel{padding:18px}}
+
+
+/* Onboarding availability layout: keep nested editor responsive without changing other scheduling screens. */
+.assignmentWorkspace,.assignmentWorkspace>*,.schedulingAssistColumn,.parentAvailabilitySetupEditor,.parentAvailabilitySetupEditor .structuredAvailabilityEditor,.parentAvailabilitySetupEditor .timingDayCard{min-width:0}
+.parentAvailabilitySetupEditor .schedulingAssistHead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.parentAvailabilitySetupEditor .schedulingAssistHead>div{flex:1 1 240px;min-width:0}
+.parentAvailabilitySetupEditor .schedulingAssistHead>.button{flex:0 0 auto;white-space:nowrap}
+.parentAvailabilitySummary{margin-top:12px;display:grid;gap:9px}
+.parentAvailabilitySummary>small{font-size:12px;color:#65738b}
+.parentAvailabilityChips{display:flex;flex-wrap:wrap;gap:7px}
+.parentAvailabilityChips span{padding:8px 10px;border-radius:9px;background:#f0f8f5;border:1px solid #d8eee5;color:#18765d;font-size:12px;font-weight:700}
+.parentAvailabilityEmpty{display:grid;gap:4px;padding:13px 14px;border:1px dashed #d6ddeb;border-radius:12px;background:#fff}
+.parentAvailabilityEmpty b{font-size:13px;color:#26344b}.parentAvailabilityEmpty span{font-size:12px;color:#738098}
+.parentAvailabilitySetupEditor .structuredAvailabilityMeta{min-width:0;overflow-wrap:anywhere}
+.parentAvailabilitySetupEditor .timingDayCard{padding:12px}
+.parentAvailabilitySetupEditor .timingDayHead{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.parentAvailabilitySetupEditor .timingDayActions{gap:12px}
+.parentAvailabilitySetupEditor .timingWindowRow{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr) auto;align-items:end;gap:8px;padding:9px 0}
+.parentAvailabilitySetupEditor .timeField{min-width:0}
+.parentAvailabilitySetupEditor .timeField .input{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.parentAvailabilitySetupEditor .timingWindowRow>.indiaTimePreview,.parentAvailabilitySetupEditor .timingWindowRow>.overnightHint,.parentAvailabilitySetupEditor .timingWindowRow>.timingValidationMessages{grid-column:1/-1}
+.parentAvailabilitySetupEditor .timingWindowRow>.iconButton{grid-column:4;grid-row:1;align-self:end}
+.parentAvailabilitySetupEditor .timeArrow{padding:0 0 14px;font-size:13px;align-self:end}
+.parentAvailabilitySetupEditor .timingAddDay{max-width:100%;white-space:normal}
+.parentAvailabilitySetupEditor .copyTimingPanel{min-width:0}
+.parentAvailabilitySetupEditor .copyDayChoices{gap:6px}
+.stickyOnboardingActions{margin-bottom:14px}
+@media(max-width:600px){.parentAvailabilitySetupEditor .timingWindowRow{grid-template-columns:minmax(0,1fr) 10px minmax(0,1fr) 34px!important;gap:5px}.parentAvailabilitySetupEditor .timeArrow{display:block}.parentAvailabilitySetupEditor .timingWindowRow .timeField{grid-column:auto}.parentAvailabilitySetupEditor .timingWindowRow>.iconButton{grid-column:4;grid-row:1}.parentAvailabilitySetupEditor .timingDayActions{width:100%}}
