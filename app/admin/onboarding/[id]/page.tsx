@@ -70,6 +70,8 @@ export default function OnboardingDetail(){
  const[formIssues,setFormIssues]=useState<FormIssue[]>([]);
  const[activationResult,setActivationResult]=useState<{studentId:string;enrollmentId:string;classesCreated?:number;schedulingWarning?:string}|null>(null);
  const[activeAction,setActiveAction]=useState<ActiveAction>(null);
+ const[scrollAfterActivation,setScrollAfterActivation]=useState(false);
+ useEffect(()=>{if(!scrollAfterActivation||r?.status!=="active")return;setScrollAfterActivation(false);window.requestAnimationFrame(()=>document.getElementById("learner-activation-summary")?.scrollIntoView({behavior:"smooth",block:"start"}))},[scrollAfterActivation,r?.status]);
  const[lastSavedAt,setLastSavedAt]=useState<string|undefined>();
  const[baseline,setBaseline]=useState("");
  const[courseId,setCourseId]=useState("");
@@ -261,7 +263,7 @@ export default function OnboardingDetail(){
   setActiveAction(null);
   const result={studentId:("studentId" in res?res.studentId:"")??"",enrollmentId:("enrollmentId" in res?res.enrollmentId:"")??"",classesCreated:("classesCreated" in res?res.classesCreated:undefined),schedulingWarning:("schedulingWarning" in res?res.schedulingWarning:undefined)};
   setActivationResult(result);
-  setNotice(result.schedulingWarning?{type:"error",text:result.schedulingWarning}:{type:"success",text:"Learner activated successfully. Zoom classrooms will be provisioned near class time."});await refresh();
+  setNotice(result.schedulingWarning?{type:"error",text:result.schedulingWarning}:{type:"success",text:"Learner activated successfully. Zoom classrooms will be provisioned near class time."});setScrollAfterActivation(true);await refresh();
  }
 
  const statusIndex=r.status==="active"?3:r.status==="setup_pending"?2:1;
@@ -272,7 +274,7 @@ export default function OnboardingDetail(){
  description={[r.grade||"Class not provided",[r.city,r.country].filter(Boolean).join(", "),timeZoneLabel(r.timezone),`Submitted ${new Date(r.submittedAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}`].filter(Boolean).join(" · ")}
  actions={<Link href="/admin/onboarding" className="button ghost" onClick={event=>{if(dirty&&!window.confirm("Unsaved changes will be lost. Leave onboarding?"))event.preventDefault()}}>← Back to onboarding</Link>}/>
  <div className="cleanStepper" aria-label="Onboarding progress">{[{n:1,t:"New"},{n:2,t:"Setup pending"},{n:3,t:"Active"}].map((s,i)=><div className={`cleanStep ${statusIndex>s.n?"done":statusIndex===s.n?"current":""}`} key={s.n}><span>{statusIndex>s.n?"✓":s.n}</span><b>{s.t}</b>{i<2&&<i/>}</div>)}</div>
- {activated&&<section className="panel" aria-label="Learner enrollment summary" style={{marginTop:18}}>
+ {activated&&<section id="learner-activation-summary" className="panel" aria-label="Learner enrollment summary" style={{marginTop:18,scrollMarginTop:110}}>
   <div className="panelHeader"><div><div className="eyebrow">ACTIVE LEARNER · ENROLLMENT</div><h2>Learner ready for classes</h2>
    <p>The student profile and enrollment are active. Classes are managed through the enrollment. Zoom rooms are created shortly before class time.</p></div><span className="softBadge softGreen">✓ Active</span></div>
   <div className="summaryDefinitionGrid" style={{marginBottom:16}}>
@@ -283,7 +285,7 @@ export default function OnboardingDetail(){
    <Info a="Next scheduled class" b={nextClass?`${nextClass.date} · ${formatClock(nextClass.startTime)} (${shortTimeZoneLabel(nextClass.timezone||IST_TIMEZONE)})`:"No upcoming class found"}/>
    <Info a="Family login" b={r.loginEmail||"Not linked"}/>
   </div>
-  {linkedState&&(!linkedState.student||!linkedState.enrollment)&&<div className="errorBanner" role="alert" style={{marginBottom:12}}>{linkedState.error||"The activated student or enrollment could not be found or does not match this onboarding record. Review the linked records before taking further action."}</div>}
+  {(!activatedStudentId||!activatedEnrollmentId)&&<div className="errorBanner" role="alert" style={{marginBottom:12}}>Activation is marked Active, but its student or enrollment reference is missing. Verify the linked records before proceeding.</div>}{linkedState&&(!linkedState.student||!linkedState.enrollment)&&<div className="errorBanner" role="alert" style={{marginBottom:12}}>{linkedState.error||"The activated student or enrollment could not be found or does not match this onboarding record. Review the linked records before taking further action."}</div>}
   {!r.school?.trim()&&<div className="infoBanner" role="status" style={{marginBottom:12}}>School information is missing. Please correct it in the student profile.</div>}
   {activationResult?.schedulingWarning&&<div className="infoBanner" role="status" style={{marginBottom:12}}>{activationResult.schedulingWarning}</div>}
   <div className="formActions" style={{display:"flex",flexWrap:"wrap",gap:10}}>
