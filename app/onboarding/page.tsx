@@ -95,6 +95,7 @@ function OnboardingPageContent(){
  function set(k:string,v:any){setForm(f=>({...f,[k]:v}));setErrors(e=>{const n={...e};delete n[k];return n})}
  function toggle(v:string){setForm(f=>({...f,interests:f.interests.includes(v)?f.interests.filter(x=>x!==v):[...f.interests,v]}));setErrors(e=>({...e,interests:""}))}
  function addDay(day:string){
+   setErrors(current=>({...current,preferredTimeWindows:""}));
    setSlots(current=>current.some(s=>s.day===day)?current:[...current,{day,start:"17:00",end:"19:00"}]);
  }
  function addTime(day:string){setSlots(x=>[...x,{day,start:"17:00",end:"19:00"}])}
@@ -141,6 +142,7 @@ function OnboardingPageContent(){
    if(!form.school.trim())e.school="School is required.";
   }else{
    if(!form.interests.length)e.interests="Select at least one interest.";
+   if(!slots.length)e.preferredTimeWindows="Please select at least one preferred day and time window.";
    if(!form.source)e.source="Please tell us how you heard about Robotronix™.";
    if(!form.dataConsent)e.dataConsent="Parent / guardian consent is required.";
   }
@@ -162,7 +164,7 @@ function OnboardingPageContent(){
  }
  async function submit(){
   if(!validate(2))return;
-  if(slots.some(s=>!s.day||!s.start||!s.end||timeRangeError(s.start,s.end,s.endsNextDay,12*60))||slots.some((a,i)=>slots.some((b,j)=>j>i&&preferredWindowsOverlap(slotWindow(a),slotWindow(b))))){setErrors({submit:"Please enter valid, non-overlapping time windows. Overnight windows are allowed and are checked against the following day."});return;}
+  if(slots.some(s=>!s.day||!s.start||!s.end||timeRangeError(s.start,s.end,s.endsNextDay,12*60))||slots.some((a,i)=>slots.some((b,j)=>j>i&&preferredWindowsOverlap(slotWindow(a),slotWindow(b))))){setErrors({submit:"Please enter valid, non-overlapping time windows. Overnight windows are allowed and are checked against the following day."});window.requestAnimationFrame(()=>document.getElementById("preferred-time-windows")?.scrollIntoView({behavior:"smooth",block:"center"}));return;}
   const longWindow=slots.find(s=>s.endsNextDay&&preferredWindowDurationMinutes(s.start,s.end)>12*60);
   if(longWindow&&!window.confirm(`${longWindow.day} ${formatClock(longWindow.start)}–${formatClock(longWindow.end)} spans more than 12 hours and ends the next day. Is that intentional?`))return;
   setSaving(true);
@@ -212,7 +214,8 @@ function OnboardingPageContent(){
       {(form.source==="Existing parent"||form.source==="Referred by an existing Robotronix parent")&&<div className="formGroup"><label htmlFor="referringParentName">Referring parent’s name <span className="optionalLabel">Optional</span></label><input id="referringParentName" className="input" type="text" maxLength={120} autoComplete="off" placeholder="Name of the parent who recommended us" value={form.referringParentName} onChange={e=>set("referringParentName",e.target.value)}/><small className="fieldHint">Only enter their name if you know it. No account details are shared.</small></div>}
     </div></section>
 
-    <section className="preferenceSection timingPreferenceSection"><div className="preferenceSectionHead timingSectionHead"><div><span>3</span><div><h3>Preferred class timing windows</h3><p>When could classes work? Enter broad availability windows — the final recurring class time is confirmed later.</p></div></div></div>
+    <section id="preferred-time-windows" className={`preferenceSection timingPreferenceSection ${errors.preferredTimeWindows?"invalid":""}`} aria-invalid={Boolean(errors.preferredTimeWindows)}><div className="preferenceSectionHead timingSectionHead"><div><span>3</span><div><h3>Preferred class timing windows *</h3><p>When could classes work? Enter broad availability windows — the final recurring class time is confirmed later.</p></div></div></div>
+      {errors.preferredTimeWindows&&<div className="fieldError" role="alert">{errors.preferredTimeWindows}</div>}
       <div className="timingTimezoneRow"><TimeZoneField value={form.timezone} onChange={v=>set("timezone",v)} label="Your timezone" required error={errors.timezone} autoMode locationLabel={[form.city,form.state].filter(Boolean).join(", ")} hint={`Enter timings in your local timezone. We also show the India-time reference for Robotronix™.`}/><div className="timezoneReference"><span>Timing reference</span><b>{form.timezone===IST_TIMEZONE?"India time (IST)":"Your local time"}</b><small>{form.timezone===IST_TIMEZONE?"No conversion is needed.":"India-time reference is shown below each window for Robotronix™."}</small></div></div>
       <div className="dayPickerPanel"><div className="dayPickerHead"><b>Choose the days that work</b><small>Select any days in any order. The same choices remain available when adding more days.</small></div><div className="dayPickerOptions">{classDays.map(day=><button type="button" key={day} aria-pressed={slots.some(s=>s.day===day)} className={`dayChoice ${slots.some(s=>s.day===day)?"chosen":""}`} onClick={()=>slots.some(s=>s.day===day)?setSlots(rows=>rows.filter(x=>x.day!==day)):addDay(day)}>{day.slice(0,3)}</button>)}</div></div><div className="timingDayList">
         {groupedDays.map(day=><div className="timingDayCard" key={day}><div className="timingDayHead"><div><span>{day}</span><small>{shortTimeZoneLabel(form.timezone)} local time</small></div><div className="timingDayActions"><button type="button" className="textButton" onClick={()=>addTime(day)}>+ Add another time</button><button type="button" className="textButton" onClick={()=>openCopy(day)}>Copy to…</button></div></div>
