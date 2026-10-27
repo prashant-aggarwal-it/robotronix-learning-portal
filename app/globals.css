@@ -1445,3 +1445,19 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .parentAvailabilitySetupEditor .copyDayChoices{gap:6px}
 .stickyOnboardingActions{margin-bottom:14px}
 @media(max-width:600px){.parentAvailabilitySetupEditor .timingWindowRow{grid-template-columns:minmax(0,1fr) 10px minmax(0,1fr) 34px!important;gap:5px}.parentAvailabilitySetupEditor .timeArrow{display:block}.parentAvailabilitySetupEditor .timingWindowRow .timeField{grid-column:auto}.parentAvailabilitySetupEditor .timingWindowRow>.iconButton{grid-column:4;grid-row:1}.parentAvailabilitySetupEditor .timingDayActions{width:100%}}
+
+/* Onboarding learning setup: assignment spans full width; availability and matching use equal columns. */
+.assignmentPanel .assignmentWorkspace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.assignmentPanel .assignmentSetupCard{grid-column:1/-1;min-width:0}
+.assignmentPanel .assignmentFields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.assignmentPanel .assignmentContextGrid{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:12px}
+.assignmentPanel .schedulingAssistColumn{display:contents}
+.assignmentPanel .parentAvailabilitySetupEditor,.assignmentPanel .preferenceAssist.schedulingAssist,.assignmentPanel .cohortSetupHint{min-width:0;align-self:start;border:1px solid #e8e9f1;border-radius:16px;background:#fbfbfd;padding:15px}
+.assignmentPanel .preferenceAssist.schedulingAssist{display:grid;gap:12px;margin-top:0;height:auto}
+.assignmentPanel .scheduleMatchSummary{display:flex;gap:8px;flex-wrap:wrap;margin:0}
+.assignmentPanel .scheduleMatchSummary span{flex:1 1 100px;text-align:center}
+.assignmentPanel .assignmentFields .formGroup{min-width:0}
+.assignmentPanel .assignmentFields input,.assignmentPanel .assignmentFields select{width:100%;min-width:0}
+@media(max-width:1100px){.assignmentPanel .assignmentFields{grid-template-columns:repeat(2,minmax(0,1fr))}.assignmentPanel .assignmentContextGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.assignmentPanel .assignmentWorkspace{grid-template-columns:minmax(0,1fr)}.assignmentPanel .assignmentSetupCard{grid-column:1}.assignmentPanel .assignmentFields{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:500px){.assignmentPanel .assignmentContextGrid{grid-template-columns:minmax(0,1fr)}}
