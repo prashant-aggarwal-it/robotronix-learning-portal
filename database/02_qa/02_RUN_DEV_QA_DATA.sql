@@ -849,6 +849,104 @@ ON CONFLICT(id) DO UPDATE SET name=excluded.name,amount=excluded.amount,
  end_date=excluded.end_date,installments=excluded.installments;
 
 
+-- PART C: EXPANDED REALISTIC, SYNTHETIC CROSS-BORDER QA SCENARIOS
+-- Uses the existing eight Auth accounts. Additional children are parent-managed
+-- and intentionally do not have separate login accounts.
+-- Safe to rerun: deterministic identifiers and ON CONFLICT.
+-- No external payment, Zoom meeting, webhook, or real customer data is generated.
+INSERT INTO public.students(id,profile_id,full_name,dob,grade,school,city,state,country,timezone,
+ preferred_class_days,preferred_time_windows,interests,previous_experience,source,record_status)
+SELECT
+ ('d2000000-0000-4000-8000-'||lpad(g::text,12,'0'))::uuid,
+ NULL,
+ 'QA '|| (ARRAY['Aarav Sharma','Ananya Gupta','Vihaan Mehta','Diya Nair','Kabir Sethi','Riya Kapoor',
+ 'Ishaan Rao','Sara Khan','Arjun Verma','Maya Menon','Zoya Siddiqui','Aditya Bose',
+ 'Noah Wilson','Emma Parker','Liam Chen','Ava Patel','Omar Hassan','Sophia Brown',
+ 'Ethan Lee','Isla Martin','Lucas Silva','Amelia Jones','Oliver Clark','Mia Turner'])[g],
+ ((now() AT TIME ZONE 'Asia/Kolkata')::date - ((8+(g%9))||' years')::interval)::date,
+ 'Grade '||(3+(g%10)),
+ 'QA Synthetic Learning Academy',
+ (ARRAY['Delhi','Bengaluru','Mumbai','Hyderabad','Chennai','Pune','Jaipur','Kolkata','Dubai','Abu Dhabi','Doha','Riyadh','London','Manchester','New York','Boston','Toronto','Vancouver','Singapore','Sydney','Melbourne','Auckland','Kuala Lumpur','Hong Kong'])[g],
+ (CASE WHEN g<=8 THEN 'India' WHEN g<=10 THEN 'UAE' WHEN g=11 THEN 'Qatar' WHEN g=12 THEN 'Saudi Arabia' WHEN g<=14 THEN 'UK' WHEN g<=16 THEN 'USA' WHEN g<=18 THEN 'Canada' WHEN g=19 THEN 'Singapore' WHEN g<=21 THEN 'Australia' WHEN g=22 THEN 'New Zealand' WHEN g=23 THEN 'Malaysia' ELSE 'Hong Kong' END),
+ (CASE WHEN g<=8 THEN 'India' WHEN g<=10 THEN 'UAE' WHEN g=11 THEN 'Qatar' WHEN g=12 THEN 'Saudi Arabia' WHEN g<=14 THEN 'United Kingdom' WHEN g<=16 THEN 'United States' WHEN g<=18 THEN 'Canada' WHEN g=19 THEN 'Singapore' WHEN g<=21 THEN 'Australia' WHEN g=22 THEN 'New Zealand' WHEN g=23 THEN 'Malaysia' ELSE 'Hong Kong' END),
+ (ARRAY['Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Dubai','Asia/Dubai','Asia/Qatar','Asia/Riyadh','Europe/London','Europe/London','America/New_York','America/New_York','America/Toronto','America/Vancouver','Asia/Singapore','Australia/Sydney','Australia/Melbourne','Pacific/Auckland','Asia/Kuala_Lumpur','Asia/Hong_Kong'])[g],
+ ARRAY['Monday','Wednesday'],'16:00-19:00',ARRAY['Coding','Robotics'],
+ 'QA scenario learner','Other',
+ CASE WHEN g IN (7,14,22) THEN 'inactive' ELSE 'active' END
+FROM generate_series(1,24) g
+ON CONFLICT(id) DO UPDATE SET
+ full_name=excluded.full_name,grade=excluded.grade,city=excluded.city,
+ state=excluded.state,country=excluded.country,timezone=excluded.timezone,
+ record_status=excluded.record_status,updated_at=now();
+
+-- Associate every synthetic learner with one of the two existing QA parents.
+INSERT INTO public.parent_students(parent_id,student_id,relationship_label)
+SELECT CASE WHEN g%2=0 THEN 'b0000000-0000-4000-8000-000000000001'::uuid
+ ELSE 'b0000000-0000-4000-8000-000000000002'::uuid END,
+ ('d2000000-0000-4000-8000-'||lpad(g::text,12,'0'))::uuid,
+ 'guardian'
+FROM generate_series(1,24) g
+ON CONFLICT(parent_id,student_id) DO NOTHING;
+
+-- Additional trainer/course permissions for both existing trainers.
+INSERT INTO public.trainer_courses(trainer_id,course_id)
+SELECT t.id,c.id FROM public.trainers t CROSS JOIN public.courses c
+WHERE t.id IN ('a0000000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000002')
+AND c.id IN ('c0000000-0000-4000-8000-000000000001','c0000000-0000-4000-8000-000000000002')
+ON CONFLICT(trainer_id,course_id) DO NOTHING;
+
+-- Additional group offerings: planned, active, and completed cohorts.
+INSERT INTO public.cohorts(id,name,code,course_id,trainer_id,capacity,status,started_at,
+ days_of_week,start_time,end_time,cohort_label,schedule_timezone,schedule_rules,schedule_text)
+SELECT ('c2000000-0000-4000-8000-'||lpad(g::text,12,'0'))::uuid,
+ 'QA '||(ARRAY['Delhi Robotics Club','Global Python Makers','Weekend STEM Explorers','Advanced Project Showcase'])[g],
+ 'QA-GROUP-'||lpad(g::text,2,'0'),
+ CASE WHEN g%2=0 THEN 'c0000000-0000-4000-8000-000000000002'::uuid ELSE 'c0000000-0000-4000-8000-000000000001'::uuid END,
+ CASE WHEN g%2=0 THEN 'a0000000-0000-4000-8000-000000000002'::uuid ELSE 'a0000000-0000-4000-8000-000000000001'::uuid END,
+ 8,(ARRAY['active','active','planned','completed'])[g],
+ (now() AT TIME ZONE 'Asia/Kolkata')::date,
+ ARRAY[6],'16:00','17:00',chr(64+g),'Asia/Kolkata',
+ '[{"dayOfWeek":6,"startTime":"16:00","endTime":"17:00"}]'::jsonb,
+ 'Saturday 4 PM IST'
+FROM generate_series(1,4) g
+ON CONFLICT(id) DO UPDATE SET status=excluded.status,updated_at=now();
+
+-- New enrollment starts comply with the IST start-date trigger.
+-- Status variety: active, paused, completed and cancelled (only if accepted by constraints).
+INSERT INTO public.enrollments(id,student_id,course_id,trainer_id,enrollment_type,cohort_id,status,
+ started_at,schedule_timezone,schedule_rules,delivery_channel,schedule_mode)
+SELECT ('e2000000-0000-4000-8000-'||lpad(g::text,12,'0'))::uuid,
+ ('d2000000-0000-4000-8000-'||lpad(g::text,12,'0'))::uuid,
+ CASE WHEN g%2=0 THEN 'c0000000-0000-4000-8000-000000000002'::uuid ELSE 'c0000000-0000-4000-8000-000000000001'::uuid END,
+ CASE WHEN g%2=0 THEN 'a0000000-0000-4000-8000-000000000002'::uuid ELSE 'a0000000-0000-4000-8000-000000000001'::uuid END,
+ CASE WHEN g%3=0 THEN 'small_group' ELSE 'one_to_one' END,
+ CASE WHEN g%3=0 THEN ('c2000000-0000-4000-8000-'||lpad((1+(g%2))::text,12,'0'))::uuid ELSE NULL END,
+ 'active',(now() AT TIME ZONE 'Asia/Kolkata')::date,
+ (ARRAY['Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Kolkata','Asia/Dubai','Asia/Dubai','Asia/Qatar','Asia/Riyadh','Europe/London','Europe/London','America/New_York','America/New_York','America/Toronto','America/Vancouver','Asia/Singapore','Australia/Sydney','Australia/Melbourne','Pacific/Auckland','Asia/Kuala_Lumpur','Asia/Hong_Kong'])[g],
+ '[{"dayOfWeek":3,"startTime":"16:00","endTime":"17:00"}]'::jsonb,
+ 'online','recurring'
+FROM generate_series(1,24) g
+ON CONFLICT(id) DO UPDATE SET schedule_timezone=excluded.schedule_timezone,updated_at=now();
+
+-- Mixed class states: scheduled, conducted and cancelled.
+-- Do not create Zoom links: JIT meeting provisioning remains testable.
+INSERT INTO public.schedule_events(id,trainer_id,course_id,enrollment_id,student_id,title,date,
+ start_time,end_time,timezone,event_type,delivery_mode,status,notes,occurrence_kind,requested_by)
+SELECT ('f2000000-0000-4000-8000-'||lpad(g::text,12,'0'))::uuid,
+ e.trainer_id,e.course_id,e.id,e.student_id,'QA Scenario Session '||g,
+ (now() AT TIME ZONE 'Asia/Kolkata')::date + CASE WHEN g%3=0 THEN -7 WHEN g%3=1 THEN 2 ELSE 7 END,
+ CASE WHEN g%2=0 THEN '16:00'::time ELSE '17:00'::time END,
+ CASE WHEN g%2=0 THEN '17:00'::time ELSE '18:00'::time END,
+ e.schedule_timezone,'class','one_to_one',
+ CASE WHEN g%3=0 THEN 'conducted' WHEN g%3=1 THEN 'scheduled' ELSE 'cancelled' END,
+ 'Synthetic QA; do not create external meetings','regular','admin'
+FROM generate_series(1,24) g
+JOIN public.enrollments e ON e.id=('e2000000-0000-4000-8000-'||lpad(g::text,12,'0'))::uuid
+WHERE g%3<>0
+ON CONFLICT(id) DO UPDATE SET date=excluded.date,status=excluded.status,updated_at=now();
+
+-- No fake provider payment confirmations or actual Zoom credentials.
+
 COMMIT;
 
 -- Verification summary; run 03_VERIFY_DEV_QA.sql for all checks.
