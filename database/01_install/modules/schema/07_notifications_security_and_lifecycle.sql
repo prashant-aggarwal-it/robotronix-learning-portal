@@ -557,6 +557,7 @@ begin
  -- Lock the trainer while building the class plan to serialize generator runs
  -- across enrollments for the same trainer.
  perform 1 from public.trainers where id=v_en.trainer_id for update;
+ perform set_config('robotronix.bulk_schedule_notifications','on',true);
  v_limit:=case when p_horizon='weeks' then p_weeks*7 else 1461 end;
  for v_day in select (v_en.started_at+n)::date from generate_series(0,v_limit-1) as n loop
   for v_slot in select value from jsonb_array_elements(v_en.schedule_rules) as value
@@ -621,6 +622,7 @@ begin
  if p_horizon='full' and v_n<v_total then
   raise exception 'Unable to generate all % classes; only % fit',v_total,v_n;
  end if;
+ perform set_config('robotronix.bulk_schedule_notifications','off',true);
  if v_created>0 then
   insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
   values('parent',v_en.student_id,v_en.trainer_id,'course_schedule_generated','info',
@@ -1066,6 +1068,7 @@ begin
  v_total:=course.total_sessions;
  if v_total not between 1 and 500 then raise exception 'Unsupported session count'; end if;
  perform 1 from public.trainers where id=c.trainer_id for update;
+ perform set_config('robotronix.bulk_schedule_notifications','on',true);
  v_limit:=case when p_horizon='weeks' then p_weeks*7 else 1461 end;
  for v_day in select (c.started_at+x)::date from generate_series(0,v_limit-1) as x loop
   for v_slot in select value from jsonb_array_elements(c.schedule_rules) as value
@@ -1116,6 +1119,7 @@ begin
   exit when v_count>=v_total;
  end loop;
  if p_horizon='full' and v_count<v_total then raise exception 'Not enough cohort slots for entire course'; end if;
+ perform set_config('robotronix.bulk_schedule_notifications','off',true);
  if v_created>0 then
   insert into public.portal_notifications(recipient_role,trainer_id,type,priority,title,message,href)
   values('trainer',c.trainer_id,'cohort_schedule_generated','info',
