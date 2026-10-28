@@ -9,8 +9,8 @@ const reference=sqlModules('reference');
 if(!schema||!reference)throw new Error('Missing canonical SQL modules.');
 
 // Reject malformed single-dollar PL/pgSQL delimiters before execution.
-if (/\bdo\s+\$(?!\$)/i.test(schema) || /\bas\s+\$(?!\$)/i.test(schema) || /\bend\s+\$;/i.test(schema)) {
-  throw new Error('Fresh schema has an invalid PL/pgSQL dollar delimiter (expected double dollars).');
+if (/\bdo\s+\$(?:\s|;)/i.test(schema) || /\bas\s+\$(?:\s|;)/i.test(schema) || /\bend\s+\$;/i.test(schema)) {
+  throw new Error('Fresh schema has an invalid bare-dollar PL/pgSQL delimiter.');
 }
 
 const must=[
