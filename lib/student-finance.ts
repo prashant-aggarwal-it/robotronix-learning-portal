@@ -7,8 +7,9 @@ export function packageSummary(p:FeePackage,payments:FeePayment[],attendance:Cla
  const receipts=payments.filter(x=>x.package_id===p.id&&x.payment_date<=asOf);
  const collected=receipts.reduce((s,x)=>s+(x.kind==="refund"?-1:1)*cents(x.amount),0)/100;
  const ids=new Set(attendance.filter(a=>a.enrollmentId===p.enrollment_id&&["attended","late"].includes(a.status)).map(a=>a.scheduleEventId));
- const completed=events.filter(e=>ids.has(e.id)&&e.status==="conducted"&&e.date>=p.start_date&&e.date<=p.end_date&&e.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id)).slice(0,p.sessions??undefined);
- const earnedCents=(n:number)=>p.sessions?Math.round(cents(p.amount)*Math.min(p.sessions,n)/p.sessions):0;
+ const eligible=events.filter(e=>ids.has(e.id)&&e.status==="conducted"&&e.date>=p.start_date&&e.date<=p.end_date&&e.date<=asOf).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+ const completed=p.sessions===null?eligible:eligible.slice(0,p.sessions);
+ const earnedCents=(n:number)=>p.billing_model==="session_package"&&p.sessions?Math.round(cents(p.amount)*Math.min(p.sessions,n)/p.sessions):0;
  const completedTotal=(p.sessions?Math.min(p.sessions,Math.max(0,openingSessions)+completed.length):Math.max(0,openingSessions)+completed.length);
  const earned=earnedCents(completedTotal)/100;
  const periodEarned=month?(earnedCents(completed.filter(e=>e.date.slice(0,7)<=month).length)-earnedCents(completed.filter(e=>e.date.slice(0,7)<month).length))/100:earned;
