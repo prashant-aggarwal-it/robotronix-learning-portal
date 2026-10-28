@@ -1,6 +1,6 @@
 import type {ClassAttendanceRecord, ScheduleEvent, TrainerEarningRecord} from "./types";
 export interface FeePackage {id:string; enrollment_id:string; name:string; scheme:string; currency:string; amount:number; sessions:number|null; billing_model?:'session_package'|'monthly'|'per_class'|'fixed_course'|'open_ended'|'custom'; start_date:string; end_date:string; installments:{due:string;amount:number}[]; source?:"portal"|"migration"; notes?:string; created_at?:string}
-export interface FeePayment {id:string; package_id:string; amount:number; payment_date:string; method:string; reference:string; kind:"payment"|"refund"; source?:"portal"|"migration"; created_at?:string}
+export interface FeePayment {id:string; package_id:string; amount:number; payment_date:string; method:string; reference:string; kind:"payment"|"refund"; source?:"portal"|"migration"; receipt_number?:string|null; collector_name?:string; collection_location?:string; recorded_by?:string|null; created_at?:string}
 export const cents=(n:number)=>Math.round(n*100);
 export const money=(n:number,c="INR")=>new Intl.NumberFormat("en-IN",{style:"currency",currency:c}).format(n);
 export function packageSummary(p:FeePackage,payments:FeePayment[],attendance:ClassAttendanceRecord[],events:ScheduleEvent[],asOf:string,month="",openingSessions=0){
