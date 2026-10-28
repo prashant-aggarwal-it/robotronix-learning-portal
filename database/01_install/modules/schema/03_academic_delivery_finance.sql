@@ -484,6 +484,8 @@ create table if not exists public.student_family_receipts (
 alter table public.student_fee_payments add column if not exists family_receipt_id uuid references public.student_family_receipts(id) on delete restrict;
 create index if not exists student_fee_payments_family_receipt_idx on public.student_fee_payments(family_receipt_id);
 alter table public.student_family_receipts enable row level security;
+-- RLS governs which family's records are visible; table GRANT enables authenticated API SELECT.
+grant select on table public.student_family_receipts to authenticated;
 drop policy if exists family_receipts_admin_read on public.student_family_receipts;
 create policy family_receipts_admin_read on public.student_family_receipts for select to authenticated using(public.is_admin());
 drop policy if exists family_receipts_parent_read on public.student_family_receipts;
