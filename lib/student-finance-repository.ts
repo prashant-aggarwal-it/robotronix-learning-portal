@@ -1,6 +1,6 @@
 "use client";
 import {getSupabaseBrowserClient} from "./supabase/browser";
-import {FeePackage,FeePayment,validatePackage} from "./student-finance";
+import {FeePackage,FeePayment,validatePackage,currencyUnits} from "./student-finance";
 const key="robotronix-finance-v1.8";
 type Ledger={packages:FeePackage[];payments:FeePayment[]};
 export async function loadFeeLedger():Promise<Ledger>{
@@ -36,7 +36,7 @@ export async function reviseUnbilledFeePackage(p:FeePackage){
  if(error||!data)throw Error(error?.message||"Unable to update the billing agreement.");
 }
 
-export async function addFeePayment(p:FeePayment){const ledger=await loadFeeLedger();const pkg=ledger.packages.find(x=>x.id===p.package_id);if(!pkg||!Number.isFinite(p.amount)||p.amount<=0||!p.payment_date||!p.reference.trim())throw Error("Select a package and enter a positive amount, date and unique reference.");
+export async function addFeePayment(p:FeePayment){const ledger=await loadFeeLedger();const pkg=ledger.packages.find(x=>x.id===p.package_id);if(!pkg||!Number.isFinite(p.amount)||p.amount<=0||Math.abs(p.amount-Math.round(p.amount*currencyUnits(pkg.currency))/currencyUnits(pkg.currency))>0.0000001||!p.payment_date||!p.reference.trim())throw Error("Select a package and enter a positive amount, date and unique reference.");
  if(ledger.payments.some(x=>x.package_id===p.package_id&&x.reference===p.reference))throw Error("That payment reference already exists for this package.");
  if(p.payment_date>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()))throw Error("Payment date cannot be in the future.");
  const net=ledger.payments.filter(x=>x.package_id===p.package_id).reduce((s,x)=>s+(x.kind==="refund"?-x.amount:x.amount),0);if(p.kind==="refund"&&p.amount>net+.001)throw Error("Refund exceeds net payments received.");
