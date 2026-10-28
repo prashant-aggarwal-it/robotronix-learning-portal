@@ -1807,3 +1807,46 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
  .workspaceShell .trainerPremiumMetrics .trainerActionCard>p{min-height:0}
 }
 @media(max-width:390px){.workspaceShell .trainerPremiumMetrics{grid-template-columns:1fr}}
+
+
+/* Trainer teaching command centre: compact, purposeful and consistent with Admin AI Flow. */
+.trainerCommandHero{align-items:center}
+.trainerCommandHero .button{position:relative;z-index:2;white-space:nowrap}
+.workspaceShell .trainerCommandMetrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+.trainerCommandNotice{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 0 18px;padding:16px 20px;border:1px solid #d7e9f2;border-radius:16px;background:#f2faff}
+.trainerCommandNotice b{font-size:14px;color:#173a55}
+.trainerCommandNotice p{margin:4px 0 0;font-size:13px;color:#617b91;line-height:1.5}
+.trainerCommandNotice a{white-space:nowrap}
+.trainerCommandColumns{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start;gap:16px;margin:4px 0 18px}
+.trainerCommandColumns>.experienceCard{min-width:0;padding:20px;border-color:#deebf5;box-shadow:0 9px 28px rgba(23,75,125,.05)}
+.trainerCommandSectionTitle{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:16px}
+.trainerCommandSectionTitle h2,.trainerCommandCohorts h2{font-size:21px;font-weight:700;line-height:1.25;color:#173a55;margin:5px 0}
+.trainerCommandSectionTitle p{font-size:13px;color:#627b92;margin:4px 0}
+.trainerCommandSectionTitle .experienceLabel,.trainerCommandCohorts .experienceLabel{font-size:12px;letter-spacing:.055em;color:#087f9d;font-weight:700}
+.trainerCommandSectionTitle .textLink{white-space:nowrap;font-size:13px;color:#077b9a;font-weight:700}
+.trainerCommandList{display:grid;gap:7px}
+.trainerCommandLine{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:13px;min-width:0;padding:12px;border:1px solid #e3edf4;background:#fbfdff;border-radius:12px;text-decoration:none}
+.trainerCommandLine:hover{border-color:#9bcddb;background:#f2fafe}
+.trainerCommandLine>span:nth-child(2){min-width:0;display:grid;gap:4px}
+.trainerCommandLine b{font-size:14px;font-weight:650;color:#173a55}
+.trainerCommandLine small{font-size:12px;color:#687f95;line-height:1.45}
+.trainerCommandLine strong{font-size:12px;color:#087f9e;white-space:nowrap}
+.trainerCommandTime{background:#e6f6fb;border-radius:9px;padding:8px 10px;font-size:12px;color:#08718e;font-weight:700;white-space:nowrap}
+.trainerCommandTaskIcon{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:#fff4de;color:#a86d0b;font-weight:800}
+.trainerCommandEmpty{padding:20px;border-radius:13px;border:1px dashed #d2e2ec;background:#f7fbfd}
+.trainerCommandEmpty b{font-size:14px;color:#1c4b69}
+.trainerCommandEmpty p{font-size:13px;line-height:1.55;color:#687e92;margin:5px 0 0}
+.trainerCommandAllClear{background:#f0fbf7;border-color:#ceeade}
+.trainerCommandNext{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:13px;padding:11px 12px;border-radius:12px;background:#f0f9fc}
+.trainerCommandNext span{font-size:11px;color:#647e91;font-weight:700}
+.trainerCommandNext b{font-size:13px;color:#214e6c}
+.trainerCommandNext a{font-size:13px;font-weight:700;color:#087f9e}
+.trainerCommandMore{font-size:12px;color:#667d90;margin:8px 0 0}
+.trainerCommandLearning{margin:18px 0 22px}
+.trainerCommandLearning .experienceSectionHead h2{font-size:21px;color:#173a55}
+.trainerCommandLearning .experienceSectionHead p{font-size:13px;color:#667d92}
+.trainerCommandLearning>.textLink{display:inline-block;margin-top:12px}
+.trainerCommandCohorts{max-width:100%}
+@media(max-width:1050px){.trainerCommandColumns{grid-template-columns:1fr}}
+@media(max-width:760px){.trainerCommandColumns>.experienceCard{padding:16px}.trainerCommandNotice{align-items:start;flex-direction:column}.trainerCommandLine{grid-template-columns:auto minmax(0,1fr)}.trainerCommandLine strong{grid-column:2}.trainerCommandSectionTitle{flex-wrap:wrap}}
+@media(max-width:520px){.workspaceShell .trainerCommandMetrics{grid-template-columns:1fr}.trainerCommandHero{align-items:start}.trainerCommandTime{padding:7px 8px}}
