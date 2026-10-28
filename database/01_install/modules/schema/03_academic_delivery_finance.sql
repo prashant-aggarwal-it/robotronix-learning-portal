@@ -424,9 +424,12 @@ alter table public.student_fee_packages drop constraint if exists student_fee_pa
 alter table public.student_fee_packages add column if not exists billing_model text not null default 'session_package';
 alter table public.student_fee_packages drop constraint if exists student_fee_packages_billing_model_check;
 alter table public.student_fee_packages add constraint student_fee_packages_billing_model_check check(billing_model in ('session_package','monthly','per_class','fixed_course','open_ended','custom'));
+alter table public.student_fee_packages drop constraint if exists student_fee_packages_optional_sessions_check;
 alter table public.student_fee_packages add constraint student_fee_packages_optional_sessions_check check(sessions is null or sessions>0);
 alter table public.student_fee_packages drop constraint if exists student_fee_packages_scheme_check;
 alter table public.student_fee_packages add constraint student_fee_packages_scheme_check check(scheme in ('Monthly','2 Months','Full Course','Custom','Per 8 Classes','Per X Classes','Per Class','Open Ended'));
+alter table public.student_fee_packages drop constraint if exists student_fee_packages_currency_check;
+alter table public.student_fee_packages add constraint student_fee_packages_currency_check check(currency in ('INR','AED','SAR','QAR','OMR','KWD','BHD','USD','EUR','GBP','SGD','HKD','MYR','AUD','NZD','CAD'));
 drop policy if exists fees_parent_read on public.student_fee_packages;
 create policy fees_parent_read on public.student_fee_packages for select to authenticated using(
  exists(select 1 from public.enrollments e join public.parent_students ps on ps.student_id=e.student_id join public.parents pa on pa.id=ps.parent_id where e.id=enrollment_id and pa.profile_id=(select auth.uid()))
