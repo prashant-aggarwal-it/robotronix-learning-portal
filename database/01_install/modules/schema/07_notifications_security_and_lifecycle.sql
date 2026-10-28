@@ -626,7 +626,7 @@ begin
  if v_created>0 then
   insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
   values('parent',v_en.student_id,v_en.trainer_id,'course_schedule_generated','info',
-    'Course classes scheduled',v_created::text||' new class dates were booked. View the learning timetable.','/parent'),
+    'Your class schedule is ready',v_created::text||' '||v_course.title||' class dates were booked. View the complete timetable.','/parent/calendar'),
    ('trainer',v_en.student_id,v_en.trainer_id,'course_schedule_generated','info',
     'Course classes scheduled',v_created::text||' future classes added to your timetable.','/trainer/classes');
  end if;
@@ -1126,7 +1126,7 @@ begin
      'Batch classes scheduled',v_created::text||' shared cohort classes were added.','/trainer/classes');
   insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href)
   select 'parent',en.student_id,c.trainer_id,'cohort_schedule_generated','info',
-     'Batch timetable updated',v_created::text||' new shared batch classes were scheduled.','/parent'
+     'Your batch schedule is ready',v_created::text||' '||course.title||' cohort classes were scheduled. View the complete timetable.','/parent/calendar'
    from public.enrollments en where en.cohort_id=c.id and en.status in ('active','on_hold');
  end if;
  return jsonb_build_object('created',v_created,'total',v_count);
