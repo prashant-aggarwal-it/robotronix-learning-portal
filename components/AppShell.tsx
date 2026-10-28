@@ -99,7 +99,7 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
             <Link href="/onboarding" className="parentPortalAddLearner">+ Add learner</Link>
             <ThemeSwitcher/>
             <NotificationBell role="parent"/>
-            <SignOutButton label="Sign out"/>
+            <SignOutButton className="button ghost smallButton parentPortalSignOut" label="Sign out"/>
           </div>
         </div>
         <nav className="parentPortalNavigation" aria-label="Family portal pages">
