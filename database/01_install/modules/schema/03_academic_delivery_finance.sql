@@ -417,6 +417,25 @@ on public.student_fee_payments
 for insert to authenticated
 with check(public.is_admin());
 
+
+-- Configurable commercial agreement: session limit is applicable only to session packages.
+alter table public.student_fee_packages alter column sessions drop not null;
+alter table public.student_fee_packages drop constraint if exists student_fee_packages_sessions_check;
+alter table public.student_fee_packages add column if not exists billing_model text not null default 'session_package';
+alter table public.student_fee_packages drop constraint if exists student_fee_packages_billing_model_check;
+alter table public.student_fee_packages add constraint student_fee_packages_billing_model_check check(billing_model in ('session_package','monthly','per_class','fixed_course','open_ended','custom'));
+alter table public.student_fee_packages add constraint student_fee_packages_optional_sessions_check check(sessions is null or sessions>0);
+alter table public.student_fee_packages drop constraint if exists student_fee_packages_scheme_check;
+alter table public.student_fee_packages add constraint student_fee_packages_scheme_check check(scheme in ('Monthly','2 Months','Full Course','Custom','Per 8 Classes','Per X Classes','Per Class','Open Ended'));
+drop policy if exists fees_parent_read on public.student_fee_packages;
+create policy fees_parent_read on public.student_fee_packages for select to authenticated using(
+ exists(select 1 from public.enrollments e join public.parent_students ps on ps.student_id=e.student_id join public.parents pa on pa.id=ps.parent_id where e.id=enrollment_id and pa.profile_id=(select auth.uid()))
+);
+drop policy if exists payments_parent_read on public.student_fee_payments;
+create policy payments_parent_read on public.student_fee_payments for select to authenticated using(
+ exists(select 1 from public.student_fee_packages fp join public.enrollments e on e.id=fp.enrollment_id join public.parent_students ps on ps.student_id=e.student_id join public.parents pa on pa.id=ps.parent_id where fp.id=package_id and pa.profile_id=(select auth.uid()))
+);
+
 create or replace function public.validate_fee_package()
 returns trigger
 language plpgsql
