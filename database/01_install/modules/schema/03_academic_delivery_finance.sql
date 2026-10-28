@@ -455,6 +455,9 @@ drop policy if exists fees_parent_read on public.student_fee_packages;
 create policy fees_parent_read on public.student_fee_packages for select to authenticated using(
  exists(select 1 from public.enrollments e join public.parent_students ps on ps.student_id=e.student_id join public.parents pa on pa.id=ps.parent_id where e.id=enrollment_id and pa.profile_id=(select auth.uid()))
 );
+drop policy if exists fees_admin_update on public.student_fee_packages;
+create policy fees_admin_update on public.student_fee_packages for update to authenticated
+ using(public.is_admin()) with check(public.is_admin());
 drop policy if exists payments_parent_read on public.student_fee_payments;
 create policy payments_parent_read on public.student_fee_payments for select to authenticated using(
  exists(select 1 from public.student_fee_packages fp join public.enrollments e on e.id=fp.enrollment_id join public.parent_students ps on ps.student_id=e.student_id join public.parents pa on pa.id=ps.parent_id where fp.id=package_id and pa.profile_id=(select auth.uid()))
@@ -497,7 +500,7 @@ $$;
 
 drop trigger if exists fee_package_validate on public.student_fee_packages;
 create trigger fee_package_validate
-before insert on public.student_fee_packages
+before insert or update on public.student_fee_packages
 for each row execute function public.validate_fee_package();
 
 create or replace function public.validate_fee_refund()
