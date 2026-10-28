@@ -28,8 +28,8 @@ export default function ParentPage(){
       <div><span className="parentEyebrow">FAMILY DASHBOARD</span><h1>{firstName}'s learning hub</h1><p>{selected.courseTitle} · {selected.enrollmentType==="one_to_one"?"1-to-1 learning":"Cohort learning"} · Mentor {selected.trainerName}</p></div>
       <Link className="parentLinkButton" href="/parent/calendar">View calendar →</Link>
     </div>
-    <div className="parentLearnerStrip" aria-label="Choose learner">
-      <div className="parentLearnerChoices">{children.map(child=><button type="button" key={child.learner.id} className={`parentLearnerChoice ${selected.learner.id===child.learner.id?"selected":""}`} aria-pressed={selected.learner.id===child.learner.id} onClick={()=>setSelectedId(child.learner.id)}><span className="parentLearnerAvatar">{child.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><span><b>{child.learner.name}</b><small>{child.learner.grade}</small></span></button>)}</div>
+    <div id="my-children" className="parentLearnerStrip" aria-label="My children">
+      <div className="parentLearnerChoices">{children.map(child=><div className={`parentLearnerChoice ${selected.learner.id===child.learner.id?"selected":""}`} key={child.learner.id}><button type="button" className="parentLearnerSelect" aria-pressed={selected.learner.id===child.learner.id} aria-label={`View dashboard for ${child.learner.name}`} onClick={()=>setSelectedId(child.learner.id)}><span className="parentLearnerAvatar">{child.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><span><b>{child.learner.name}</b><small>{child.learner.grade}</small></span></button><Link className="parentLearnerJourneyLink" href={`/parent/learner/${child.learner.id}`} aria-label={`Open ${child.learner.name}'s learning journey`}>Open learning journey →</Link></div>)}</div>
       <Link href="/onboarding" className="parentLinkButton">+ Add another child</Link>
     </div>
     <div className="parentPriorityGrid">
