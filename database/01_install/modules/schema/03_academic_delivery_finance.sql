@@ -550,12 +550,50 @@ begin
     'FAMILY-'||v_receipt.id::text||'-'||v_package_id::text,'payment',
     trim(p_collector_name),trim(p_location),v_receipt.id);
  end loop;
+ insert into public.portal_notifications(
+  recipient_role,recipient_profile_id,type,priority,title,message,href,dedupe_key)
+ select 'parent',pa.profile_id,'family_payment_received','info','Family payment received',
+   'Received '||p_currency||' '||to_char(p_amount,'FM999999990.999')
+   ||' for your family. View the receipt and allocations.',
+   '/parent/billing','family-payment:'||v_receipt.id::text
+ from public.parents pa where pa.id=p_parent_id
+ on conflict (dedupe_key) where dedupe_key is not null do nothing;
  return jsonb_build_object('receipt_id',v_receipt.id,'receipt_number',v_receipt.receipt_number,'allocated',v_total);
 end $family_payment$;
 revoke all on function public.record_family_payment_v1(uuid,text,numeric,date,text,text,jsonb,text,text) from public,anon;
 grant execute on function public.record_family_payment_v1(uuid,text,numeric,date,text,text,jsonb,text,text) to authenticated;
 
 -- Commercial terms become immutable once any money or invoice is associated.
+
+-- Notify each linked parent when a direct payment/refund is verified by the ledger.
+-- Grouped family receipts are notified once from the atomic allocation RPC.
+create or replace function public.notify_parent_fee_payment()
+returns trigger language plpgsql security definer set search_path=public as $fee_notice$
+begin
+ if new.family_receipt_id is not null then return new; end if;
+ insert into public.portal_notifications(
+  recipient_role,recipient_profile_id,student_id,type,priority,title,message,href,dedupe_key)
+ select 'parent',pa.profile_id,en.student_id,
+  case when new.kind='refund' then 'payment_refunded' else 'payment_received' end,'info',
+  case when new.kind='refund' then 'Refund recorded' else 'Payment received' end,
+  (case when new.kind='refund' then 'Refund: ' else 'Received: ' end)
+   ||fp.currency||' '||to_char(new.amount,'FM999999990.999')
+   ||' · '||fp.name||'. View your payment history.',
+  '/parent/billing',
+  'fee-payment:'||new.id::text||':parent:'||pa.id::text
+ from public.student_fee_packages fp
+ join public.enrollments en on en.id=fp.enrollment_id
+ join public.parent_students ps on ps.student_id=en.student_id
+ join public.parents pa on pa.id=ps.parent_id
+ where fp.id=new.package_id
+ on conflict (dedupe_key) where dedupe_key is not null do nothing;
+ return new;
+end $fee_notice$;
+revoke all on function public.notify_parent_fee_payment() from public,anon,authenticated;
+drop trigger if exists notify_parent_fee_payment_trg on public.student_fee_payments;
+create trigger notify_parent_fee_payment_trg after insert on public.student_fee_payments
+ for each row execute function public.notify_parent_fee_payment();
+
 create or replace function public.prevent_billed_fee_agreement_edits()
 returns trigger language plpgsql security definer set search_path=public as $fee_lock$
 begin
