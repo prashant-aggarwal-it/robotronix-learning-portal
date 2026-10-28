@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useEffect,useRef} from "react";
+import {useEffect,useRef,useState} from "react";
 import { usePathname } from "next/navigation";
 import { ModeBadge } from "./ModeBadge";
 import { NotificationBell } from "./NotificationBell";
@@ -53,6 +53,9 @@ function isActive(path:string, href:string){
 export function AppShell({ role, children }: { role: UserRole; children: React.ReactNode }) {
   const pathname=usePathname();
   const sidebarRef=useRef<HTMLElement|null>(null);
+  const [sidebarCollapsed,setSidebarCollapsed]=useState(false);
+  useEffect(()=>{try{setSidebarCollapsed(localStorage.getItem("robotronix-admin-sidebar-collapsed")==="true")}catch{}},[]);
+  const toggleSidebar=()=>setSidebarCollapsed(previous=>{const next=!previous;try{localStorage.setItem("robotronix-admin-sidebar-collapsed",String(next))}catch{}return next});
   useEffect(()=>{
     const nav=sidebarRef.current;
     if(!nav)return;
@@ -77,14 +80,15 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
   const workspace=role==="admin"||role==="trainer";
   if(workspace){
     let lastGroup="";
-    return <div className="workspaceShell">
+    return <div className={`workspaceShell ${role==="admin"&&sidebarCollapsed?"adminSidebarCollapsed":""}`}>
       <aside className="workspaceSidebar">
         <Link href={`/${role}`} className="sidebarBrand" aria-label="Robotronix Learning Portal"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
         <div className="portalName">Learning Portal <span>{role==="admin"?"Admin":"Trainer"}</span></div>
+        {role==="admin"&&<button type="button" className="adminSidebarToggle" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed?"Expand admin navigation":"Collapse admin navigation"} title={sidebarCollapsed?"Expand navigation":"Collapse navigation"}>{sidebarCollapsed?"›":"‹"}<span>{sidebarCollapsed?"":"Collapse menu"}</span></button>}
         <nav className="sidebarNav" ref={sidebarRef}>{navByRole[role].map(item=>{
           const showGroup=role==="admin"&&item.group&&item.group!==lastGroup;
           if(showGroup)lastGroup=item.group!;
-          return <div key={item.href}>{showGroup&&<div className="navGroupLabel">{item.group}</div>}<Link className={isActive(pathname,item.href)?"active":""} href={item.href}><span className="navIndicator"/>{item.label}</Link></div>
+          return <div key={item.href}>{showGroup&&<div className="navGroupLabel">{item.group}</div>}<Link className={isActive(pathname,item.href)?"active":""} href={item.href} title={role==="admin"&&sidebarCollapsed?item.label:undefined} aria-label={item.label}><span className="navIndicator"/><span className="navItemText">{item.label}</span></Link></div>
         })}</nav>
         <div className="sidebarFooter"><div className="roleBadge"><span className="statusDot"/> {role==="admin"?"Administrator":"Trainer account"}</div><SignOutButton className="sidebarSignout" label="Sign out"/></div>
       </aside>
