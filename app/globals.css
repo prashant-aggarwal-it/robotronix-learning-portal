@@ -1689,3 +1689,20 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
  .adminCommandActivity .adminCommandActivityRow{grid-template-columns:67px minmax(0,1fr);gap:7px}
  .adminCommandActivityRow .adminClassView{grid-column:2;justify-self:start}
 }
+
+/* Admin navigation: recognisable icons instead of status dots in collapsed rail. */
+.sidebarNav .adminSidebarIcon{width:18px;height:18px;flex:0 0 18px;color:#7185a2;transition:color .15s ease}
+.sidebarNav a:hover .adminSidebarIcon{color:#0c8cb5}
+.sidebarNav a.active .adminSidebarIcon{color:#fff}
+.adminSidebarToggle{width:max-content;min-height:36px;gap:7px;color:#326782;background:#f1f9fc;border-color:#d6e8f0}
+.adminSidebarToggle:hover{color:#075e7d;background:#e7f6fc}
+.adminSidebarCollapsed .sidebarNav .adminSidebarIcon{display:block;width:20px;height:20px;flex-basis:20px;color:#708eaa}
+.adminSidebarCollapsed .sidebarNav a:hover .adminSidebarIcon{color:#087ba8}
+.adminSidebarCollapsed .sidebarNav a.active .adminSidebarIcon{color:#fff}
+.adminSidebarCollapsed .sidebarNav a{border-radius:12px;min-height:43px;padding:10px;display:flex;align-items:center;justify-content:center}
+.adminSidebarCollapsed .sidebarNav .adminSidebarGroupStart:not(:first-child){border-top:1px solid #e3ebf4;margin-top:9px;padding-top:9px}
+.adminSidebarCollapsed .sidebarBrand{justify-content:center;overflow:hidden}
+.adminSidebarCollapsed .sidebarBrand img{width:42px;height:36px;max-width:none;object-fit:cover;object-position:left center}
+.adminSidebarCollapsed .adminSidebarToggle{color:#256986;background:#e9f6fa;border-color:#d4e6ed}
+.adminSidebarCollapsed .adminSidebarToggle:hover{background:#d8f0f7}
+@media(max-width:760px){.adminSidebarCollapsed .sidebarNav .adminSidebarGroupStart:not(:first-child){border:0;margin:0;padding:0}.adminSidebarCollapsed .sidebarNav .adminSidebarIcon{width:18px;height:18px;flex-basis:18px}}
