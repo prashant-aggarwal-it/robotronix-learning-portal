@@ -1581,3 +1581,27 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
  .parentPortalNavigation{display:none}
 }
 @media(max-width:410px){.parentPortalHeaderActions .themeSwitcher{display:none}}
+
+/* Parent billing: balanced setup state and quieter transactional navigation */
+.parentBillingCurrentLearner{display:flex;align-items:center;gap:11px;margin:12px 0 14px;color:#163651}
+.parentBillingCurrentLearner>span:last-child{display:grid;gap:3px}
+.parentBillingCurrentLearner strong{font-size:14px}
+.parentBillingCurrentLearner small{font-size:12px;color:#6a7f92}
+.parentBillingLearnerAvatar{height:40px;width:40px;display:grid;place-items:center;border-radius:13px;background:#dbf5f5;color:#087d8e;font-size:12px;font-weight:850}
+.parentBillingTabs{gap:7px;margin:10px 0 17px}
+.parentBillingTabs button{padding:9px 14px;font-size:13px;min-height:40px}
+.parentBillingEmpty{display:grid;grid-template-columns:64px minmax(0,1fr);gap:20px;align-items:start;padding:28px;background:linear-gradient(115deg,#ffffff,#f6fbff);border:1px solid #dceaf4;border-radius:20px;box-shadow:0 8px 24px rgba(29,77,134,.04)}
+.parentBillingEmptyIcon{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;color:#0c7d94;font-size:29px;font-weight:850;background:linear-gradient(135deg,#e1f6fd,#e3f9f1)}
+.parentBillingEmptyContent{min-width:0}
+.parentBillingEmpty h2{margin:8px 0;font-size:clamp(21px,2.2vw,28px);line-height:1.25;color:#15324e}
+.parentBillingEmptyContent>p{font-size:14px;color:#61768b;line-height:1.65;max-width:760px}
+.parentBillingEmptyDetails{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.parentBillingEmptyDetails>div{display:grid;gap:5px;padding:12px 14px;border-radius:12px;border:1px solid #dcebf3;background:#f5fbfd;min-width:0}
+.parentBillingEmptyDetails span{font-size:12px;color:#70839a}
+.parentBillingEmptyDetails strong{font-size:13px;overflow-wrap:anywhere;color:#193957}
+.parentBillingOutlineButton{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:9px 14px;margin:2px 8px 2px 0;border:1px solid #bee0ed;border-radius:11px;background:#fff;color:#096886;font-size:13px;font-weight:750;text-decoration:none;cursor:pointer}
+.parentBillingOutlineButton:hover{background:#eaf8ff;border-color:#5ab4d5}
+.parentBillingHint{color:#7e5c23!important;background:#fff9e9;border:1px solid #f6e4bb;border-radius:11px;padding:11px 13px;font-size:13px;line-height:1.5}
+.parentBillingDisclaimer{font-size:11px;max-width:960px;margin:15px 0 0;color:#788b9d;line-height:1.5}
+.parentBillingDisclaimer a{color:#126d99;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:650px){.parentBillingEmpty{padding:18px;grid-template-columns:1fr;gap:10px}.parentBillingEmptyIcon{width:47px;height:47px;font-size:23px}.parentBillingEmptyDetails{grid-template-columns:1fr}.parentBillingTabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.parentBillingTabs button{white-space:nowrap}}
