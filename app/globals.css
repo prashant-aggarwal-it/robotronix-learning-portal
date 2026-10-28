@@ -1501,3 +1501,12 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .parentQuietEmpty{font-size:14px;color:#65758a;margin:8px 0}
 @media(max-width:950px){.parentPriorityGrid,.parentLearningCards,.parentSupportRow{grid-template-columns:1fr}}
 @media(max-width:640px){.parentRefresh,.parentLearnerStrip{align-items:stretch;flex-direction:column}.parentRefresh{margin-top:8px}.parentPrimaryClass .nextClassCard{flex-direction:column}.parentPrimaryClass .nextClassAccent{display:flex;align-items:center;gap:8px}.parentJourneySummary{padding:16px}.parentLearnerStrip{padding:12px}.parentSummaryTitle{flex-wrap:wrap}}
+
+/* Parent family dashboard: child selection and direct journey link are separate actions. */
+.parentLearnerChoice{cursor:default;flex-wrap:wrap;gap:10px}
+.parentLearnerSelect{display:flex;align-items:center;gap:9px;min-width:0;text-align:left;background:transparent;border:0;padding:3px;cursor:pointer;color:inherit;font:inherit}
+.parentLearnerSelect:focus-visible,.parentLearnerJourneyLink:focus-visible{outline:2px solid #1685e9;outline-offset:3px;border-radius:6px}
+.parentLearnerJourneyLink{color:#08779c;font-size:12px;font-weight:800;text-decoration:none;padding:7px 9px;border-radius:8px;background:#f0faff;white-space:nowrap}
+.parentLearnerJourneyLink:hover{background:#dff4fc;color:#075473}
+#my-children{scroll-margin-top:115px}
+@media(max-width:640px){.parentLearnerChoice{width:100%;justify-content:space-between}.parentLearnerJourneyLink{white-space:normal}}
