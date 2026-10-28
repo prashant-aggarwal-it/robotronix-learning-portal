@@ -5,6 +5,7 @@ import {AppShell} from "@/components/AppShell";
 import {SessionCycleProgress} from "@/components/SessionCycleProgress";
 import {RoleGuard} from "@/components/RoleGuard";
 import {FeedbackCard,NextClassCard,ParentActionCard,ProjectSpotlight} from "@/components/experience/ExperienceCards";
+import {ParentDelightHub} from "@/components/experience/ParentDelightHub";
 import {getParentLearnerExperiences,getCurrentParentSetupState} from "@/lib/repository";
 import type {LearnerExperienceSnapshot} from "@/lib/types";
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
@@ -50,6 +51,7 @@ export default function ParentPage(){
     </section>
     <section className="parentSupportRow"><ParentActionCard snapshot={selected}/><div className="parentSupportQuick"><span className="parentEyebrow">NEED HELP?</span><h3>Your family support space</h3><p>Ask about classes, schedules or your child's learning.</p><Link href="/parent/messages" className="parentLinkButton">Open messages →</Link></div></section>
     <section className="parentRecentHistory"><div className="parentSectionHeading"><span className="parentEyebrow">RECENT CLASSES</span><h2>Attendance at a glance</h2></div><div className="recentClassStrip">{selected.recentClasses.length?selected.recentClasses.map(item=><div className={`recentClass recent-${item.attendance}`} key={item.scheduleEventId}><span className={`attendanceDot ${item.attendance}`}/><div><b>{new Intl.DateTimeFormat("en-IN",{day:"numeric",month:"short"}).format(new Date(`${item.date}T12:00:00`))}</b><small>{item.attendance.charAt(0).toUpperCase()+item.attendance.slice(1)}</small></div></div>):<p className="parentQuietEmpty">Attendance history will appear after your child's first class.</p>}</div></section>
+    <details className="parentAdditionalServices"><summary>More family services · Reschedule, support and referrals</summary><ParentDelightHub snapshot={selected}/></details>
     </>})()}
   </div>
  </AppShell></RoleGuard>;
