@@ -1717,3 +1717,93 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .statusFilterTab.selected .statusFilterCount{background:#c9ecf4;color:#075c76}
 .statusFilterTab:focus-visible{outline:2px solid #059db6;outline-offset:2px}
 @media(max-width:580px){.statusFilterTabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}.statusFilterTab{flex-shrink:0;padding:8px 11px}}
+
+
+/* Trainer workspace — reuse the Admin command-centre visual hierarchy. */
+.workspaceShell .trainerPremiumHero{
+ background:linear-gradient(115deg,#fff 0%,#f6fbff 74%,#f0fafd 100%);
+ border:1px solid #dce9f4;
+ border-radius:22px;
+ box-shadow:0 10px 29px rgba(24,73,121,.05);
+ padding:20px 24px;
+ margin-bottom:14px;
+}
+.workspaceShell .trainerPremiumHero:after{background:rgba(17,161,196,.06)}
+.workspaceShell .trainerPremiumHero h1{
+ color:#17324d;font-size:clamp(27px,2.4vw,35px);font-weight:700;
+ line-height:1.18;letter-spacing:-.032em
+}
+.workspaceShell .trainerPremiumHero p{font-size:14px;line-height:1.5;color:#617991}
+.workspaceShell .trainerPremiumHero .experienceLabel{color:#087e9d;font-size:12px;letter-spacing:.07em;font-weight:700}
+.workspaceShell .trainerPremiumHero .trainerToday{
+ border-color:#d9eaf4;background:#fff;box-shadow:none;
+ min-width:132px;padding:12px 15px
+}
+.workspaceShell .trainerToday span{font-size:12px;color:#627890;font-weight:700}
+.workspaceShell .trainerToday b{font-size:29px;color:#173c55}
+.workspaceShell .trainerToday small{font-size:12px;color:#667f95}
+.workspaceShell .trainerPremiumMetrics{
+ grid-template-columns:repeat(5,minmax(0,1fr));
+ gap:12px;margin:16px 0 20px;
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard{
+ min-width:0;padding:16px 15px;gap:7px;
+ background:#fff;border:1px solid #dfebf5;
+ border-radius:18px;box-shadow:0 9px 25px rgba(28,81,128,.045);
+ border-left:3px solid #0ba7c9;
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard:after{background:rgba(17,151,202,.055)}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard.attention{
+ border-color:#edc98e;border-left-color:#d69a32;background:#fffaf3
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard>span{
+ font-size:12px;letter-spacing:.025em;font-weight:700;
+ color:#637a91;line-height:1.35
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard>b{
+ font-size:clamp(24px,2.2vw,31px);color:#193550;font-weight:700;line-height:1.15
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard>p{
+ font-size:13px;color:#667b90;line-height:1.45;margin:0;min-height:37px
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard>i{
+ color:#077d9c;font-size:13px;font-style:normal;font-weight:650
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard:hover{
+ transform:translateY(-1px);border-color:#a9d8e7;
+ box-shadow:0 14px 32px rgba(27,91,145,.09)
+}
+.workspaceShell .trainerPremiumWorkspace{gap:18px;align-items:start}
+.workspaceShell .trainerPremiumWorkspace .experienceSectionHead h2{
+ color:#193550;font-size:21px;font-weight:700;line-height:1.25
+}
+.workspaceShell .trainerPremiumWorkspace .experienceSectionHead p{
+ color:#667d92;font-size:14px;line-height:1.5
+}
+.workspaceShell .trainerPremiumWorkspace .experienceLabel{font-size:12px;font-weight:700;color:#0981a3;letter-spacing:.065em}
+.workspaceShell .trainerPremiumWorkspace .experienceCard{
+ border-color:#dce9f3;box-shadow:0 9px 25px rgba(25,78,126,.045)
+}
+.workspaceShell .trainerPremiumWorkspace .experienceCard h3{font-size:19px;font-weight:700;line-height:1.3;color:#193550}
+.workspaceShell .trainerPremiumWorkspace .experienceCard p,
+.workspaceShell .trainerPremiumWorkspace .experienceCard small{font-size:13px;line-height:1.5;color:#667e95}
+.workspaceShell .trainerPremiumWorkspace .textLink{color:#087f9e;font-size:13px;font-weight:700}
+.workspaceShell .trainerPremiumLearnerTable{border-color:#dce8f2;box-shadow:0 9px 24px rgba(27,83,128,.045)}
+.workspaceShell .trainerPremiumLearnerTable .trainerLearnerHead{
+ background:#f5f9fc;color:#58718a;font-size:12px;font-weight:700
+}
+.workspaceShell .trainerPremiumLearnerTable .trainerLearnerRow b{font-size:14px;font-weight:600;color:#193550}
+.workspaceShell .trainerPremiumLearnerTable .trainerLearnerRow small{font-size:13px;color:#647a90}
+.workspaceShell .trainerPremiumLearnerTable .trainerLearnerRow:hover{background:#f2fafe}
+.workspaceShell .trainerPremiumWorkspace .experienceEmpty{background:#f6fafd;border-color:#dfebf3}
+.workspaceShell .trainerPremiumWorkspace .experienceEmpty p{font-size:14px;color:#647b90}
+.workspaceShell .trainerPremiumWorkspace .priorityQueue a:hover{background:#f2fafe}
+@media(max-width:1250px){.workspaceShell .trainerPremiumMetrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:950px){.workspaceShell .trainerPremiumMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ .workspaceShell .trainerPremiumHero{padding:17px;gap:12px;flex-wrap:wrap}
+ .workspaceShell .trainerPremiumMetrics{grid-template-columns:1fr 1fr;gap:8px}
+ .workspaceShell .trainerPremiumMetrics .trainerActionCard{padding:12px;min-height:135px}
+ .workspaceShell .trainerPremiumMetrics .trainerActionCard>p{min-height:0}
+}
+@media(max-width:390px){.workspaceShell .trainerPremiumMetrics{grid-template-columns:1fr}}
