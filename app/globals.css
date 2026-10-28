@@ -1706,3 +1706,14 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .adminSidebarCollapsed .adminSidebarToggle{color:#256986;background:#e9f6fa;border-color:#d4e6ed}
 .adminSidebarCollapsed .adminSidebarToggle:hover{background:#d8f0f7}
 @media(max-width:760px){.adminSidebarCollapsed .sidebarNav .adminSidebarGroupStart:not(:first-child){border:0;margin:0;padding:0}.adminSidebarCollapsed .sidebarNav .adminSidebarIcon{width:18px;height:18px;flex-basis:18px}}
+
+
+/* Reusable compact status filters — keep counts and actions on one accessible row. */
+.statusFilterTabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.statusFilterTab{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 14px;white-space:nowrap;border:1px solid #dce6f0;border-radius:12px;background:#fff;color:#46617e;font-size:13px;font-weight:650;line-height:1.35;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.statusFilterTab:hover{border-color:#8ccad7;background:#f1fbfd;color:#096b86}
+.statusFilterTab.selected{border-color:#27a9c1;background:#e6f7fb;color:#075e7b;box-shadow:inset 0 -2px 0 #0bb4c5}
+.statusFilterCount{min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;border-radius:999px;background:#edf2f7;color:#536a82;font-size:12px;font-weight:750}
+.statusFilterTab.selected .statusFilterCount{background:#c9ecf4;color:#075c76}
+.statusFilterTab:focus-visible{outline:2px solid #059db6;outline-offset:2px}
+@media(max-width:580px){.statusFilterTabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}.statusFilterTab{flex-shrink:0;padding:8px 11px}}
