@@ -515,6 +515,12 @@ DROP POLICY IF EXISTS invoices_admin_read ON public.student_invoices;
 CREATE POLICY invoices_admin_read ON public.student_invoices
 FOR SELECT TO authenticated USING(public.is_admin());
 
+drop policy if exists invoices_parent_read on public.student_invoices;
+create policy invoices_parent_read on public.student_invoices for select to authenticated using(
+ status not in ('draft','reviewed') and exists(
+ select 1 from public.parent_students ps join public.parents pa on pa.id=ps.parent_id
+ where ps.student_id=student_invoices.student_id and pa.profile_id=(select auth.uid()))
+);
 -- Server/service-role API performs invoice insert/update actions.
 
 COMMIT;
