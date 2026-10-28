@@ -6,6 +6,7 @@ import {SessionCycleProgress} from "@/components/SessionCycleProgress";
 import {RoleGuard} from "@/components/RoleGuard";
 import {FeedbackCard,NextClassCard,ParentActionCard,ProjectSpotlight} from "@/components/experience/ExperienceCards";
 import {ParentDelightHub} from "@/components/experience/ParentDelightHub";
+import {familyLearningStage,learnerHasLearningEvidence} from "@/lib/learner-lifecycle";
 import {getParentLearnerExperiences,getCurrentParentSetupState} from "@/lib/repository";
 import type {LearnerExperienceSnapshot} from "@/lib/types";
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
@@ -22,11 +23,13 @@ export default function ParentPage(){
   {children===undefined?<div className="experienceLoading">Loading your family learning space…</div>:!children.length?<div className="experienceEmpty premiumEmpty"><div className="experienceEmptyIcon">◎</div>{(setup?.submitted||0)>0?<><h2>Your family setup has been submitted</h2><p>We’re reviewing your learner details. Once an enrollment is activated, classes, progress, projects and mentor updates will appear here automatically.</p><div className="row"><span className="statusBadge status-planned">{setup?.pending?"Awaiting Admin activation":"Setup submitted"}</span><Link className="button ghost" href="/onboarding">+ Add another child</Link></div></>:<><h2>Set up your child’s learning profile</h2><p>Add your child’s details, learning interests and preferred class timings. You can add more than one child to the same family account.</p><Link className="button" href="/onboarding">Start Family Setup</Link></>}</div>:selected&&(()=>{
    const firstName=selected.learner.name.split(" ")[0];
    const noLessonsYet=selected.learner.sessionsCompleted===0&&(selected.learner.hoursCompleted??0)===0;
+   const learningStage=familyLearningStage(selected);
+   const hasEvidence=learnerHasLearningEvidence(selected);
    const completedProjects=selected.projects.filter(p=>p.status==="completed").length;
    const flexible=!(Number(selected.learner.plannedHours)>0);
    return <>
     <div className="parentRefresh">
-      <div><span className="parentEyebrow">FAMILY DASHBOARD</span><h1>{firstName}'s learning hub</h1><p>{selected.courseTitle} · {selected.enrollmentType==="one_to_one"?"1-to-1 learning":"Cohort learning"} · Mentor {selected.trainerName}</p></div>
+      <div><span className="parentEyebrow">FAMILY DASHBOARD · {learningStage}</span><h1>{firstName}'s learning hub</h1><p>{selected.courseTitle} · {selected.enrollmentType==="one_to_one"?"1-to-1 learning":"Cohort learning"} · Mentor {selected.trainerName}</p></div>
       <Link className="parentLinkButton" href="/parent/calendar">View calendar →</Link>
     </div>
     <div id="my-children" className="parentLearnerStrip" aria-label="My children">
@@ -46,7 +49,7 @@ export default function ParentPage(){
       </section>
     </div>
     <section className="parentLearningNow">
-      <div className="parentSectionHeading"><span className="parentEyebrow">YOUR CHILD'S LEARNING</span><h2>{noLessonsYet?"An exciting start is ahead":"What has been happening"}</h2><p>{noLessonsYet?"Once classes begin, you'll see meaningful updates here rather than empty progress cards.":"Follow mentor feedback, class learning and practical projects in one place."}</p></div>
+      <div className="parentSectionHeading"><span className="parentEyebrow">YOUR CHILD'S LEARNING</span><h2>{noLessonsYet?"An exciting start is ahead":"What has been happening"}</h2><p>{!hasEvidence?(noLessonsYet?"Once classes begin, you’ll see meaningful updates here.":"Classes have started. Mentor learning evidence will appear after class feedback is published."):"Follow mentor feedback, class learning and practical projects in one place."}</p></div>
       <div className="parentLearningCards"><FeedbackCard snapshot={selected}/><ProjectSpotlight snapshot={selected} href={`/parent/learner/${selected.learner.id}`}/></div>
     </section>
     <section className="parentSupportRow"><ParentActionCard snapshot={selected}/><div className="parentSupportQuick"><span className="parentEyebrow">NEED HELP?</span><h3>Your family support space</h3><p>Ask about classes, schedules or your child's learning.</p><Link href="/parent/messages" className="parentLinkButton">Open messages →</Link></div></section>
