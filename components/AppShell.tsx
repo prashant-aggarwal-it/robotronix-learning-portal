@@ -92,15 +92,28 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
   }
   return <>
     <div className="shell experienceShell">
-      <header className="topbar experienceTopbar">
+      {role==="parent"?<header className="topbar experienceTopbar parentPortalHeader">
+        <div className="parentPortalHeaderTop">
+          <Link href="/parent" className="brandLogo" aria-label="Robotronix Family Dashboard"><img src="/brand/robotronix-horizontal.png" alt="Robotronix Future Ready Skills" /></Link>
+          <div className="parentPortalHeaderActions">
+            <Link href="/onboarding" className="parentPortalAddLearner">+ Add learner</Link>
+            <ThemeSwitcher/>
+            <NotificationBell role="parent"/>
+            <SignOutButton label="Sign out"/>
+          </div>
+        </div>
+        <nav className="parentPortalNavigation" aria-label="Family portal pages">
+          {navByRole.parent.filter(item=>item.href!=="/onboarding"&&item.href!=="/parent/notifications").map(({label,href})=><Link className={isActive(pathname,href)?"active":""} href={href} key={href} aria-current={isActive(pathname,href)?"page":undefined}>{label}</Link>)}
+        </nav>
+      </header>:<header className="topbar experienceTopbar">
         <Link href={`/${role}`} className="brandLogo" aria-label="Robotronix Learning Portal"><img src="/brand/robotronix-horizontal.png" alt="Robotronix Future Ready Skills" /></Link>
         <nav className="nav">{navByRole[role].map(({label,href}) => <Link className={isActive(pathname,href)?"active":""} href={href} key={href}>{label}</Link>)}</nav>
-        <div className="experienceAccount"><ThemeSwitcher/><NotificationBell role={role}/><span>{role==="parent"?"Family account":"Learner account"}</span><SignOutButton label="Sign out"/></div>
-      </header>
+        <div className="experienceAccount"><ThemeSwitcher/><NotificationBell role={role}/><span>Learner account</span><SignOutButton label="Sign out"/></div>
+      </header>}
       {children}
       <div className="footer">Robotronix™ Learning Portal · Learning progress, projects and mentor feedback in one place</div>
     </div>
-    <nav className="mobileExperienceNav">{navByRole[role].map(({label,href})=><Link className={isActive(pathname,href)?"active":""} href={href} key={href}>{label}</Link>)}</nav>
+    <nav className="mobileExperienceNav">{navByRole[role].filter(item=>role!=="parent"||!["/onboarding","/parent/notifications"].includes(item.href)).map(({label,href})=><Link className={isActive(pathname,href)?"active":""} href={href} key={href}>{label}</Link>)}</nav>
     <ModeBadge />
   </>;
 }
