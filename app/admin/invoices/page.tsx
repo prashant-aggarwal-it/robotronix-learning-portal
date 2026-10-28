@@ -10,7 +10,7 @@ import {displayLabel} from "@/lib/display";
 import {exportWorkbook} from "@/lib/export-workbook";
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
-type Candidate={packageId:string;packageName:string;currency:string;amount:number;sessions:number;studentName:string;courseTitle:string;courseCode:string;customer:{name:string;email:string;phone:string;line1:string;line2:string;city:string;state:string;postal:string;country:string};addressComplete:boolean;international:boolean};
+type Candidate={packageId:string;packageName:string;currency:string;amount:number;sessions:number|null;studentName:string;courseTitle:string;courseCode:string;customer:{name:string;email:string;phone:string;line1:string;line2:string;city:string;state:string;postal:string;country:string};addressComplete:boolean;international:boolean};
 type Invoice={
  id:string;invoice_number:string;internal_reference:string;status:string;currency:string;amount:number;amount_due:number;amount_paid:number;
  customer_name:string;customer_email?:string;customer_phone?:string;service_name:string;issue_date:string;due_date:string;paid_at?:string|null;
