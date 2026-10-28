@@ -10,6 +10,32 @@ export async function loadFeeLedger():Promise<Ledger>{
  return {packages:p.data as FeePackage[],payments:r.data as FeePayment[]};
 }
 export async function addFeePackage(p:FeePackage){const ledger=await loadFeeLedger();validatePackage(p,ledger.packages);const db=getSupabaseBrowserClient();if(db){const {error}=await db.from("student_fee_packages").insert(p);if(error)throw Error(error.message);}else{ledger.packages.push(p);localStorage.setItem(key,JSON.stringify(ledger));}}
+/**
+ * An agreement may be revised only before any payment or invoice exists.
+ * Subsequent terms must be represented as a new renewal/adjustment record.
+ */
+export async function reviseUnbilledFeePackage(p:FeePackage){
+ const ledger=await loadFeeLedger();
+ const original=ledger.packages.find(row=>row.id===p.id);
+ if(!original)throw Error("Package could not be found.");
+ if(ledger.payments.some(row=>row.package_id===p.id))throw Error("This package already has payments. Create a new renewal or documented adjustment instead of changing the original terms.");
+ validatePackage(p,ledger.packages.filter(row=>row.id!==p.id));
+ const db=getSupabaseBrowserClient();
+ if(!db){
+  ledger.packages=ledger.packages.map(row=>row.id===p.id?p:row);
+  localStorage.setItem(key,JSON.stringify(ledger));return;
+ }
+ const {data:invoices,error:invError}=await db.from("student_invoices").select("id").eq("fee_package_id",p.id).limit(1);
+ if(invError)throw Error(invError.message);
+ if(invoices?.length)throw Error("An invoice already exists for this package. Amendments must be handled through a new documented transaction.");
+ const {data,error}=await db.from("student_fee_packages").update({
+  name:p.name,scheme:p.scheme,currency:p.currency,amount:p.amount,
+  sessions:p.sessions,billing_model:p.billing_model??"session_package",charge_absences:Boolean(p.charge_absences),
+  start_date:p.start_date,end_date:p.end_date,installments:p.installments,notes:p.notes||""
+ }).eq("id",p.id).select("id").single();
+ if(error||!data)throw Error(error?.message||"Unable to update the billing agreement.");
+}
+
 export async function addFeePayment(p:FeePayment){const ledger=await loadFeeLedger();const pkg=ledger.packages.find(x=>x.id===p.package_id);if(!pkg||!Number.isFinite(p.amount)||p.amount<=0||!p.payment_date||!p.reference.trim())throw Error("Select a package and enter a positive amount, date and unique reference.");
  if(ledger.payments.some(x=>x.package_id===p.package_id&&x.reference===p.reference))throw Error("That payment reference already exists for this package.");
  if(p.payment_date>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()))throw Error("Payment date cannot be in the future.");
