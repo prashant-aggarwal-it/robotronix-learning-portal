@@ -439,6 +439,8 @@ with check(public.is_admin());
 
 -- Configurable commercial agreement: session limit is applicable only to session packages.
 alter table public.student_fee_packages alter column sessions drop not null;
+alter table public.student_fee_packages add column if not exists charge_absences boolean not null default false;
+
 alter table public.student_fee_packages drop constraint if exists student_fee_packages_sessions_check;
 alter table public.student_fee_packages add column if not exists billing_model text not null default 'session_package';
 alter table public.student_fee_packages drop constraint if exists student_fee_packages_billing_model_check;
@@ -467,6 +469,7 @@ declare
   total numeric;
   invalid_count integer;
 begin
+  if new.billing_model='per_class' and new.installments='[]'::jsonb then return new; end if;
   if jsonb_typeof(new.installments) <> 'array'
      or jsonb_array_length(new.installments) = 0
   then
