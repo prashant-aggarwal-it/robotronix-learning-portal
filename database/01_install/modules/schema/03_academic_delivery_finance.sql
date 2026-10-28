@@ -438,6 +438,8 @@ with check(public.is_admin());
 
 
 -- Configurable commercial agreement: session limit is applicable only to session packages.
+alter table public.student_fee_packages alter column amount type numeric(14,3);
+alter table public.student_fee_payments alter column amount type numeric(14,3);
 alter table public.student_fee_packages alter column sessions drop not null;
 alter table public.student_fee_packages add column if not exists charge_absences boolean not null default false;
 
