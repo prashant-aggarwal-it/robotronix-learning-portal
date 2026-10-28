@@ -1629,3 +1629,63 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
  .parentPortalNavigation{display:none}
  .parentPortalHeaderActions .notificationBell{margin:3px 8px 3px 0}
 }
+
+/* Admin command centre: same AI Flow clarity as family-facing pages. */
+.adminCommandKpis .adminKpiLink{min-width:0;display:block;border-radius:19px;text-decoration:none}
+.adminCommandKpis .adminKpiLink:focus-visible{outline:3px solid #008fb4;outline-offset:3px}
+.adminCommandKpis .adminKpiLink:hover .kpiCard{border-color:#a7dce9;box-shadow:0 12px 31px rgba(15,100,151,.12);transform:translateY(-1px)}
+.adminCommandKpis .kpiCard{height:100%;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.adminCommandKpis .kpiCard:before{background:linear-gradient(180deg,#0c8fcb,#12bcbe)}
+.adminCommandKpis .kpiCard.tone-amber:before{background:#e6a341}
+.adminCommandKpis .kpiCard:after{background:rgba(14,152,198,.045)}
+.adminCommandKpis .kpiTop{color:#57728a}
+.adminCommandKpis .kpiValue{color:#16334f}
+.adminCommandKpis .kpiDetail{white-space:normal;overflow:visible;text-overflow:clip}
+.adminCommandGrid{align-items:start}
+.adminCommandPanel{min-width:0;border-color:#dce9f4;background:#fff;box-shadow:0 9px 26px rgba(27,74,123,.05);padding:19px 20px}
+.adminCommandPanel .panelHeader{align-items:center}
+.adminCommandPanel .panelHeader h2{font-size:21px;color:#173a55}
+.adminCommandPanel .eyebrow,.adminCommandPanel .textLink{color:#117da0}
+.adminCommandActivity .adminCommandActivityRow{grid-template-columns:76px minmax(0,1fr) auto;border-radius:11px;padding:11px 7px;text-decoration:none}
+.adminCommandActivityRow:hover{background:#f2faff}
+.adminCommandActivityRow .activityTime{background:#e8f5fc;color:#056c99}
+.adminCommandActivityRow>div:nth-child(2){min-width:0}
+.adminCommandActivityRow>div:nth-child(2) b{font-size:13px;color:#223d57}
+.adminCommandActivityRow>div:nth-child(2) span{font-size:12px;color:#687f94}
+.adminClassView{font-size:12px!important;color:#087b9c!important;font-weight:750;white-space:nowrap}
+.adminCommandEmpty{padding:14px 12px;border-radius:13px;background:#f5fbff}
+.adminCommandEmpty b{font-size:14px;color:#23445d}
+.adminCommandEmpty p{font-size:13px;color:#6b8092;line-height:1.4}
+.adminCommandActions a{display:grid;grid-template-columns:12px minmax(0,1fr) 18px;align-items:center;gap:11px;padding:13px 8px;border-radius:10px}
+.adminCommandActions a:hover{background:#f1faff}
+.adminCommandActions a>span:nth-child(2){display:grid;gap:5px;min-width:0;margin:0}
+.adminCommandActions a b{font-size:13px;color:#1c3a52}
+.adminCommandActions a small{font-size:12px;color:#70849a}
+.adminAttentionDot{width:9px;height:9px;border-radius:50%;background:#e9aa48}
+.adminAttentionDot.adminAttentionInfo{background:#11a2c0}
+.adminCommandActions .adminAttentionArrow{font-size:18px;color:#107999;text-align:right;margin:0}
+.adminAllClear{padding:18px 12px;background:#ecf9f5;border-radius:12px;color:#16765d;font-weight:700;font-size:13px}
+.adminSidebarToggle{display:flex;align-items:center;gap:8px;margin:4px 8px 3px;padding:8px 10px;border:1px solid rgba(129,177,214,.22);border-radius:10px;color:#b2d8e6;background:rgba(23,154,190,.07);font-size:12px;font-weight:650;cursor:pointer}
+.adminSidebarToggle:hover{background:rgba(23,154,190,.16)}
+.adminSidebarToggle:focus-visible{outline:2px solid #29cae9;outline-offset:2px}
+.workspaceShell.adminSidebarCollapsed{grid-template-columns:74px minmax(0,1fr)}
+.adminSidebarCollapsed .workspaceSidebar{padding-left:8px;padding-right:8px}
+.adminSidebarCollapsed .sidebarBrand{padding:8px;min-height:50px}
+.adminSidebarCollapsed .sidebarBrand img{width:100%;object-fit:cover;object-position:left center}
+.adminSidebarCollapsed .portalName,.adminSidebarCollapsed .navGroupLabel,.adminSidebarCollapsed .sidebarFooter,.adminSidebarCollapsed .navItemText,.adminSidebarCollapsed .adminSidebarToggle span{display:none}
+.adminSidebarCollapsed .sidebarNav a{justify-content:center;padding:12px 6px;min-height:40px}
+.adminSidebarCollapsed .navIndicator{width:10px;height:10px}
+.adminSidebarCollapsed .adminSidebarToggle{justify-content:center;padding:8px;margin:9px 4px}
+.adminSidebarCollapsed .sidebarNav{scrollbar-width:thin}
+@media(max-width:760px){
+ .workspaceShell.adminSidebarCollapsed{display:block}
+ .adminSidebarCollapsed .workspaceSidebar{padding:10px 12px}
+ .adminSidebarCollapsed .sidebarBrand img{object-fit:contain;width:100%}
+ .adminSidebarCollapsed .navItemText{display:inline}
+ .adminSidebarCollapsed .sidebarNav a{padding:10px 11px;gap:10px}
+ .adminSidebarCollapsed .sidebarFooter{display:none}
+ .adminSidebarToggle{display:none}
+ .adminCommandPanel{padding:15px}
+ .adminCommandActivity .adminCommandActivityRow{grid-template-columns:67px minmax(0,1fr);gap:7px}
+ .adminCommandActivityRow .adminClassView{grid-column:2;justify-self:start}
+}
