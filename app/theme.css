@@ -98,3 +98,103 @@
 @media(prefers-reduced-motion:reduce){
  [data-portal-theme="ai-flow"] :is(.card,.panel,.button,.kpiCard,.experienceCard){transition:none!important}
 }
+
+
+/* Parent dashboard AI Flow palette: luminous, modern, and consistent with the admin theme. */
+[data-portal-theme="ai-flow"] .parentDashboardVibrant{
+ position:relative;isolation:isolate;
+ padding:10px 12px 30px;
+ border-radius:26px;
+ background:
+ radial-gradient(ellipse at 8% 0%,rgba(45,110,255,.105),transparent 38%),
+ radial-gradient(ellipse at 94% 6%,rgba(0,199,217,.17),transparent 37%),
+ linear-gradient(160deg,#f8fbff 5%,#f0f7ff 48%,#f9fcff);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRefresh{padding:12px 6px 4px}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRefresh h1{
+ color:#102447;font-size:clamp(28px,3.1vw,42px);letter-spacing:-.037em;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentEyebrow{
+ color:#245cf2;font-size:11px;letter-spacing:.105em;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRefresh p{color:#526c88;font-size:14px}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant :is(.parentLearnerStrip,.parentPrimaryClass,.parentJourneySummary,.parentRecentHistory,.parentLearningCards>.experienceCard,.parentSupportRow>.experienceCard,.parentSupportQuick){
+ border:1px solid #dce8f8;
+ background:#fff;
+ box-shadow:0 10px 26px rgba(32,80,144,.065);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearnerStrip{
+ background:linear-gradient(110deg,#fff 0%,#f5fbff 65%,#edfbfa);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearnerChoice.selected{
+ background:linear-gradient(135deg,#eaf4ff,#e5fbf8);
+ border-color:#1b8ee4;box-shadow:inset 0 0 0 1px rgba(27,142,228,.26);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearnerAvatar{
+ background:#d9f2fa;color:#055f90;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLinkButton{
+ background:#fff;color:#1754a5;border-color:#cbdff6;
+ box-shadow:0 5px 13px rgba(19,78,162,.055);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLinkButton:hover{
+ background:#edf8ff;border-color:#42a3e7;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass{
+ background:linear-gradient(140deg,#f1f9ff,#fff 55%);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .nextClassCard{
+ background:transparent;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .nextClassAccent{
+ background:linear-gradient(170deg,#315bf4 0%,#1787dc 51%,#00b9cd 100%);
+ color:#fff;box-shadow:5px 0 25px rgba(33,109,222,.10);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .experienceCardBody{
+ padding:26px 28px;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .experienceLabel{color:#255ff2}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass h3{color:#102b4d}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .calendarActions{gap:9px;margin-top:14px}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .calendarActions :is(a,button){
+ flex:0 1 auto;width:auto;max-width:100%;
+ border-radius:11px;padding:10px 14px;font-size:13px;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .calendarActions .button.secondary{
+ background:#e8f2ff;color:#154a98;border:1px solid #bfd7fb;box-shadow:none;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentJourneySummary{
+ background:linear-gradient(145deg,#fff 45%,#f0fcfb);
+ border-top:4px solid #15bad0;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentJourneySummary .parentBigProgress strong{
+ color:#135ff0;font-size:44px;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentJourneySummary .parentQuickStats>div{
+ background:linear-gradient(135deg,#f3f8ff,#eaf8ff);border:1px solid #d9eafb;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentJourneySummary .parentQuickStats>div:last-child{
+ background:linear-gradient(135deg,#edfbf6,#e8f8fa);border-color:#d1eee9;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearningNow .parentSectionHeading h2,
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRecentHistory .parentSectionHeading h2{color:#102d4c}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearningCards>.experienceCard:first-child{
+ background:linear-gradient(160deg,#fff,#f5f9ff);
+ border-top:3px solid #4f7ef9;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearningCards>.experienceCard:last-child{
+ background:linear-gradient(160deg,#fff,#f1fcf9);
+ border-top:3px solid #13b7a5;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentSupportQuick{
+ background:linear-gradient(135deg,#eef8ff,#f3fcfc);
+ border-color:#cfe7f5;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRecentHistory{
+ background:#fff;border-top:3px solid #a2d9f7;
+}
+@media(max-width:640px){
+ [data-portal-theme="ai-flow"] .parentDashboardVibrant{padding:6px 6px 22px;border-radius:17px}
+ [data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .experienceCardBody{padding:18px}
+ [data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .calendarActions :is(a,button){flex:1 1 160px}
+}
