@@ -125,3 +125,101 @@ button,input,select,textarea {font-family:inherit}
  .professionalTable .cellSub{font-size:var(--rx-text-sm)!important}
  .workspaceShell .sidebarNav a{font-size:var(--rx-text-base)}
 }
+
+/* Admin onboarding detail: consistent readable hierarchy without altering logic. */
+.onboardingSummaryCards .summaryDefinitionGrid>div{
+ align-items:start;
+ column-gap:14px;
+ padding-block:11px;
+}
+.onboardingSummaryCards .summaryDefinitionGrid>div>span{
+ font-size:var(--rx-text-base);
+ font-weight:var(--rx-weight-normal);
+ line-height:var(--rx-leading-normal);
+ color:var(--rx-text-secondary);
+}
+.onboardingSummaryCards .summaryDefinitionGrid>div>b{
+ font-size:var(--rx-text-base);
+ font-weight:var(--rx-weight-semibold);
+ line-height:var(--rx-leading-normal);
+ color:var(--rx-text-primary);
+}
+.onboardingSummaryCards .panelHeader h2,
+.assignmentPanel>.panelHeader h2{
+ font-size:var(--rx-text-xl);
+ font-weight:var(--rx-weight-strong);
+ line-height:var(--rx-leading-tight);
+}
+.onboardingSummaryCards .panelHeader p,
+.assignmentPanel>.panelHeader p{
+ font-size:var(--rx-text-base);
+ font-weight:var(--rx-weight-normal);
+ line-height:var(--rx-leading-relaxed);
+ color:var(--rx-text-secondary);
+}
+.onboardingSummaryCards .eyebrow,
+.assignmentPanel .eyebrow,
+.assignmentPanel .subsectionHeader>span,
+.assignmentPanel .experienceLabel{
+ font-size:var(--rx-text-xs);
+ font-weight:var(--rx-weight-strong);
+ line-height:var(--rx-leading-normal);
+ letter-spacing:.06em;
+}
+.assignmentPanel .subsectionHeader>b,
+.assignmentPanel .schedulingAssistHead>b{
+ font-size:var(--rx-text-lg);
+ font-weight:var(--rx-weight-semibold);
+ line-height:var(--rx-leading-tight);
+}
+.assignmentPanel .subsectionHeader>small,
+.assignmentPanel .schedulingAssistHead>small,
+.assignmentPanel .fieldHint{
+ font-size:var(--rx-text-base);
+ font-weight:var(--rx-weight-normal);
+ line-height:var(--rx-leading-relaxed);
+ color:var(--rx-text-secondary);
+}
+.assignmentPanel .formGroup>label{
+ font-size:var(--rx-text-sm);
+ font-weight:var(--rx-weight-semibold);
+ line-height:var(--rx-leading-normal);
+}
+.assignmentPanel .formGroup>.input,
+.assignmentPanel .formGroup>select,
+.assignmentPanel .formGroup>input{
+ font-size:var(--rx-text-md);
+ font-weight:var(--rx-weight-normal);
+ line-height:var(--rx-leading-normal);
+}
+.assignmentPanel .assignmentContextGrid span,
+.assignmentPanel .finalPlanSnapshot span{
+ font-size:var(--rx-text-xs);
+ font-weight:var(--rx-weight-semibold);
+ line-height:var(--rx-leading-normal);
+}
+.assignmentPanel .assignmentContextGrid b,
+.assignmentPanel .finalPlanSnapshot b{
+ font-size:var(--rx-text-base);
+ font-weight:var(--rx-weight-semibold);
+ line-height:var(--rx-leading-normal);
+}
+.assignmentPanel .finalScheduleSection .subsectionHeader>b{
+ font-size:var(--rx-text-lg);
+ font-weight:var(--rx-weight-semibold);
+}
+.assignmentPanel .stickyOnboardingActions .button{
+ font-size:var(--rx-text-base);
+ font-weight:var(--rx-weight-semibold);
+}
+/* Prevent the schedule hint below Start date from forcing blank height under other fields. */
+.assignmentPanel .assignmentFields{align-items:start}
+.assignmentPanel .assignmentFields>.formGroup{align-self:start}
+.assignmentPanel .assignmentContextGrid{margin-top:10px}
+@media(max-width:760px){
+ .onboardingSummaryCards .summaryDefinitionGrid>div{
+  column-gap:10px;
+  padding-block:10px;
+ }
+ .assignmentPanel .subsectionHeader>b{font-size:var(--rx-text-lg)}
+}
