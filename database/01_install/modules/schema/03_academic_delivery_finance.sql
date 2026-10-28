@@ -555,6 +555,28 @@ end $family_payment$;
 revoke all on function public.record_family_payment_v1(uuid,text,numeric,date,text,text,jsonb,text,text) from public,anon;
 grant execute on function public.record_family_payment_v1(uuid,text,numeric,date,text,text,jsonb,text,text) to authenticated;
 
+-- Commercial terms become immutable once any money or invoice is associated.
+create or replace function public.prevent_billed_fee_agreement_edits()
+returns trigger language plpgsql security definer set search_path=public as $fee_lock$
+begin
+ if new.enrollment_id is distinct from old.enrollment_id then
+  raise exception 'Enrollment on an existing billing agreement cannot be changed';
+ end if;
+ if exists(select 1 from public.student_fee_payments x where x.package_id=old.id) then
+  raise exception 'This billing agreement already has payment history. Create a renewal or adjustment';
+ end if;
+ if to_regclass('public.student_invoices') is not null and exists(
+  select 1 from public.student_invoices i where i.fee_package_id=old.id
+ ) then
+  raise exception 'This billing agreement has an invoice. Create a renewal or adjustment';
+ end if;
+ return new;
+end $fee_lock$;
+revoke all on function public.prevent_billed_fee_agreement_edits() from public,anon,authenticated;
+drop trigger if exists prevent_billed_fee_agreement_edits_trg on public.student_fee_packages;
+create trigger prevent_billed_fee_agreement_edits_trg before update on public.student_fee_packages
+for each row execute function public.prevent_billed_fee_agreement_edits();
+
 create or replace function public.validate_fee_package()
 returns trigger
 language plpgsql
