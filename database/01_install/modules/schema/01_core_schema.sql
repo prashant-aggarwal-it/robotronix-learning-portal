@@ -794,6 +794,7 @@ create trigger communication_message_after_insert after insert on public.communi
 create or replace function public.notify_schedule_change() returns trigger language plpgsql security definer set search_path=public as $$
 declare event_type text; title_text text; msg text;
 begin
+  if tg_op='INSERT' and current_setting('robotronix.bulk_schedule_notifications',true)='on' then return new; end if;
   if tg_op='INSERT' then event_type:='class_scheduled'; title_text:='Class scheduled'; msg:='A learning session has been scheduled.';
   elsif new.status='cancelled' and old.status is distinct from new.status then event_type:='class_cancelled'; title_text:='Class cancelled'; msg:='A scheduled learning session has been cancelled.';
   elsif new.status='rescheduled' or new.date is distinct from old.date or new.start_time is distinct from old.start_time then event_type:='class_rescheduled'; title_text:='Class schedule updated'; msg:='A learning session has a revised date or time.';
