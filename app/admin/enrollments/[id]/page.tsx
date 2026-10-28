@@ -8,6 +8,7 @@ import {readableSaveError,type FormIssue} from "@/lib/form-errors";
 import {useParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
+import {StatusFilterTabs} from "@/components/StatusFilterTabs";
 import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
 import {WeeklyScheduleEditor} from "@/components/admin/WeeklyScheduleEditor";
 import {OfflineLocationField} from "@/components/admin/OfflineLocationField";
@@ -73,6 +74,13 @@ useEffect(()=>{editingRef.current=false;refresh(true)},[id]);
  const upcomingLessons=futureBookings.filter(e=>["scheduled","tentative","makeup"].includes(e.status)).length;
  const missingCoverage=expectedSessions?Math.max(0,expectedSessions-completedLessons-upcomingLessons):0;
  const visibleClassRecords=allClassRecords.filter(e=>classFilter==="all"||classFilter==="completed"?classFilter==="all"||e.status==="conducted":classFilter==="cancelled"?["cancelled","rescheduled","missed"].includes(e.status):futureBookings.some(next=>next.id===e.id));
+ const classFilterCounts={
+  upcoming:futureBookings.length,
+  completed:allClassRecords.filter(e=>e.status==="conducted").length,
+  cancelled:allClassRecords.filter(e=>["cancelled","rescheduled","missed"].includes(e.status)).length,
+  all:allClassRecords.length
+ };
+ const formatClassDate=(date:string)=>new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}).format(new Date(date+"T12:00:00Z"));
  async function generateMissingClasses(){
   if(!record||record.enrollmentType!=="one_to_one"||generating)return;
   setGenerating(true);setBookingStatus("");
@@ -113,11 +121,11 @@ if(!record.courseId||!record.trainerId||!record.startedAt){setMsg("Course, train
    </div>
    {record.enrollmentType==="small_group"&&<p className="fieldHint">Cohort sessions are shared by all members. Generate class dates from the cohort workflow rather than once per learner.</p>}
    {bookingStatus&&<p role="status" className="infoBanner">{bookingStatus}</p>}
-   {allClassRecords.length>0&&<><div className="row" role="group" aria-label="Class filters" style={{gap:8,flexWrap:"wrap",marginTop:12}}>{(["upcoming","completed","cancelled","all"] as const).map(filter=><button type="button" key={filter} aria-pressed={classFilter===filter} className={`button smallButton ${classFilter===filter?"":"ghost"}`} onClick={()=>{setClassFilter(filter);setShowAllClasses(false)}}>{filter.charAt(0).toUpperCase()+filter.slice(1)}</button>)}</div>
+   {allClassRecords.length>0&&<><StatusFilterTabs label="Filter enrollment classes" items={([{value:"upcoming",label:"Upcoming",count:classFilterCounts.upcoming},{value:"completed",label:"Completed",count:classFilterCounts.completed},{value:"cancelled",label:"Cancelled",count:classFilterCounts.cancelled},{value:"all",label:"All",count:classFilterCounts.all}] as const)} value={classFilter} onChange={filter=>{setClassFilter(filter);setShowAllClasses(false)}}/>
     <div className="tableWrap professionalTable" style={{marginTop:12}}>
      <table><thead><tr><th>Date</th><th>Time</th><th>Status</th><th>Zoom</th><th>Action</th></tr></thead>
       <tbody>{(showAllClasses?visibleClassRecords:visibleClassRecords.slice(0,3)).map(ev=><tr key={ev.id}>
-       <td>{zonedRangeParts(ev.date,ev.startTime,ev.endTime,ev.timezone||IST_TIMEZONE,IST_TIMEZONE).startDate}</td><td>{enrollmentDisplayTime(zonedRangeParts(ev.date,ev.startTime,ev.endTime,ev.timezone||IST_TIMEZONE,IST_TIMEZONE).startTime)} IST<div className="cellSub">{ev.date} · {enrollmentDisplayTime(ev.startTime)} {ev.timezone||IST_TIMEZONE}</div></td>
+       <td>{formatClassDate(zonedRangeParts(ev.date,ev.startTime,ev.endTime,ev.timezone||IST_TIMEZONE,IST_TIMEZONE).startDate)}</td><td>{enrollmentDisplayTime(zonedRangeParts(ev.date,ev.startTime,ev.endTime,ev.timezone||IST_TIMEZONE,IST_TIMEZONE).startTime)} IST<div className="cellSub">{ev.date} · {enrollmentDisplayTime(ev.startTime)} {ev.timezone||IST_TIMEZONE}</div></td>
        <td>{displayLabel(ev.status)}</td>
        <td><span className="softBadge">{["cancelled","rescheduled","blocked"].includes(ev.status)?"Not applicable":zoomByClass[ev.id]?.status==="error"||zoomByClass[ev.id]?.lastError||zoomByClass[ev.id]&&!zoomByClass[ev.id].joinUrl?"Needs attention":zoomByClass[ev.id]?"Zoom ready":"Auto-setup pending"}</span></td>
        <td><Link className="tableAction" href={`/admin/classes/${encodeURIComponent(ev.id)}?enrollment=${encodeURIComponent(record.id)}`}>View class →</Link></td>
