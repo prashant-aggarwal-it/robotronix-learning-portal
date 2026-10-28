@@ -397,13 +397,13 @@ alter table public.student_fee_payments add column if not exists collection_loca
 alter table public.student_fee_payments add column if not exists recorded_by uuid default auth.uid();
 create sequence if not exists public.student_fee_receipt_sequence;
 create or replace function public.assign_student_fee_receipt_number()
-returns trigger language plpgsql security definer set search_path=public as $
+returns trigger language plpgsql security definer set search_path=public as $receipt$
 begin
  if new.kind='payment' and new.receipt_number is null then
   new.receipt_number:='RTX-R-'||to_char(current_date,'YYYY')||'-'||lpad(nextval('public.student_fee_receipt_sequence')::text,6,'0');
  end if;
  return new;
-end $;
+end $receipt$;
 revoke all on function public.assign_student_fee_receipt_number() from public,anon,authenticated;
 drop trigger if exists assign_student_fee_receipt_number_trg on public.student_fee_payments;
 create trigger assign_student_fee_receipt_number_trg before insert on public.student_fee_payments
