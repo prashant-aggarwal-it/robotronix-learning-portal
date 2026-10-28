@@ -71,7 +71,12 @@ test.describe("Phase 3 form quality release contracts",()=>{
  });
  test("required indicators align with conditional finance, trainer and review validation",()=>{
   const finance=source("app/admin/finance/page.tsx");
-  for(const label of ["Student / enrollment *","Package name *","Agreed fee after discount *","Included sessions *","Student package *","Payment date *","Unique reference / receipt number *"])expect(finance).toContain(label);
+  for(const label of ["Student / enrollment *","Package name *","Student package *","Payment date *","Unique transaction reference"])expect(finance).toContain(label);
+  expect(finance).toContain('billingModel==="per_class"?"Rate per delivered class *":"Agreed fee / amount *"');
+  expect(finance).toContain('billingModel==="session_package"?"* (suggested 8)":"(optional)"');
+  expect(finance).toContain('required={paymentMethod!=="Cash"}');
+  expect(finance).toContain('name="collector" required');
+  expect(finance).toContain('billing_model:billingModel');
   const trainer=source("app/trainer/profile/page.tsx");
   expect(trainer).toContain('>Mobile *<input');
   expect(trainer).toContain('>Timezone *<input');
