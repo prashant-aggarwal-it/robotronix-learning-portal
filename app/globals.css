@@ -1547,3 +1547,37 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .parentAdditionalServices[open]>summary{border-bottom:1px solid #dcebf3}
 .parentAdditionalServices>.delightHub{margin:0;padding:16px;background:#fff}
 @media(max-width:640px){.parentAdditionalServices>summary{font-size:14px;padding:15px}}
+
+/* Parent portal header: intentional two-row desktop navigation, no orphaned links. */
+.parentPortalHeader{display:flex!important;flex-direction:column;align-items:stretch!important;gap:0!important;padding:0!important;overflow:visible}
+.parentPortalHeaderTop{display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0;padding:14px 20px}
+.parentPortalHeaderTop .brandLogo{flex:0 0 auto;min-width:0}
+.parentPortalHeaderTop .brandLogo img{width:210px;max-width:100%;height:auto;object-fit:contain}
+.parentPortalHeaderActions{display:flex;align-items:center;justify-content:flex-end;gap:11px;min-width:0;flex-wrap:nowrap}
+.parentPortalHeaderActions>.button,.parentPortalHeaderActions .button{white-space:nowrap}
+.parentPortalHeaderActions .themeSwitcher{flex:0 0 auto}
+.parentPortalAddLearner{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap;min-height:40px;padding:9px 14px;border-radius:11px;border:1px solid #cae8ed;background:#ebfbfa;color:#086878;font-size:13px;font-weight:750}
+.parentPortalAddLearner:hover{background:#d9f5f3;border-color:#64c6cc}
+.parentPortalNavigation{display:flex;align-items:center;gap:4px;min-width:0;max-width:100%;padding:3px 14px 12px;overflow-x:auto;scrollbar-width:thin;border-top:1px solid #edf1f7;white-space:nowrap}
+.parentPortalNavigation a{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border-radius:10px;padding:11px 15px;font-size:14px;line-height:1.25;font-weight:650;color:#4d647f;text-decoration:none}
+.parentPortalNavigation a:hover{background:#eff7fc;color:#145b86}
+.parentPortalNavigation a.active{background:#e7f5ff;color:#086b99;font-weight:800;box-shadow:inset 0 -2px 0 #0ea5bf}
+.parentPortalHeaderActions .button{font-size:13px}
+.parentPortalHeaderActions .notificationBell{flex-shrink:0}
+[data-portal-theme="ai-flow"] .parentPortalHeader{background:rgba(255,255,255,.97);border-color:#e1eaf4;box-shadow:0 10px 30px rgba(24,71,123,.07)}
+[data-portal-theme="ai-flow"] .parentPortalNavigation a.active{background:#e9f6fe;color:#085f91;box-shadow:inset 0 -3px 0 #15b4cb}
+@media(max-width:1000px){
+ .parentPortalHeaderTop{padding:12px 14px}
+ .parentPortalHeaderTop .brandLogo img{width:170px}
+ .parentPortalHeaderActions{gap:7px}
+ .parentPortalNavigation a{padding:10px 12px;font-size:13px}
+}
+@media(max-width:760px){
+ .parentPortalHeaderTop{padding:10px 12px}
+ .parentPortalHeaderTop .brandLogo img{width:145px;max-width:38vw;height:auto}
+ .parentPortalHeaderActions{gap:7px}
+ .parentPortalHeaderActions .button{display:none}
+ .parentPortalAddLearner{font-size:12px;padding:8px 9px;min-height:36px}
+ .parentPortalNavigation{display:none}
+}
+@media(max-width:410px){.parentPortalHeaderActions .themeSwitcher{display:none}}
