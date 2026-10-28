@@ -1605,3 +1605,27 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .parentBillingDisclaimer{font-size:11px;max-width:960px;margin:15px 0 0;color:#788b9d;line-height:1.5}
 .parentBillingDisclaimer a{color:#126d99;text-decoration:underline;text-underline-offset:2px}
 @media(max-width:650px){.parentBillingEmpty{padding:18px;grid-template-columns:1fr;gap:10px}.parentBillingEmptyIcon{width:47px;height:47px;font-size:23px}.parentBillingEmptyDetails{grid-template-columns:1fr}.parentBillingTabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.parentBillingTabs button{white-space:nowrap}}
+
+
+/* Final Parent Portal header polish — compact rows, refined tabs and understated account actions. */
+.parentPortalHeaderTop{padding:11px 20px;gap:14px}
+.parentPortalHeaderTop .brandLogo img{width:200px}
+.parentPortalHeaderActions{gap:10px;padding-right:6px}
+.parentPortalNavigation{padding:4px 16px 9px;column-gap:8px}
+.parentPortalNavigation a{min-height:42px;padding:9px 8px;font-size:14px;font-weight:600}
+.parentPortalNavigation a.active{font-weight:700;box-shadow:inset 0 -2px 0 #0ea5bf}
+[data-portal-theme="ai-flow"] .parentPortalNavigation a.active{box-shadow:inset 0 -2px 0 #15b4cb}
+.parentPortalHeaderActions .parentPortalSignOut{background:transparent;color:#65778d;border-color:#e4ebf4;box-shadow:none;font-weight:600}
+.parentPortalHeaderActions .parentPortalSignOut:hover{background:#f4f8fc;color:#244c70;border-color:#cddbe9}
+.parentPortalHeaderActions .notificationBell{margin:3px 9px 3px 0;padding:9px 11px}
+.parentPortalHeaderActions .notificationBell i{right:-9px;top:-9px;border:2px solid #fff;min-width:23px;height:23px}
+@media(max-width:1000px) and (min-width:761px){
+ .parentPortalHeaderTop{padding:10px 14px}
+ .parentPortalNavigation{column-gap:4px;padding:4px 8px 9px}
+ .parentPortalNavigation a{font-size:13px;padding:9px 5px}
+}
+@media(max-width:760px){
+ .parentPortalHeaderTop{padding:9px 12px}
+ .parentPortalNavigation{display:none}
+ .parentPortalHeaderActions .notificationBell{margin:3px 8px 3px 0}
+}
