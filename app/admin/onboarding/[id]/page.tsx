@@ -221,7 +221,7 @@ export default function OnboardingDetail(){
   if(!result){setNotice({type:"error",text:"Unable to save setup. Your changes are still on screen; please retry."});return;}
   const savedAt=new Date().toISOString();
   const nextRecord={...r!,primaryContact:guardianView?.primary.relationship==="father"?"father" as const:guardianView?.primary.relationship==="mother"?"mother" as const:"guardian" as const,preferredClassDays:nextPreferredClassDays,status:r!.status,updatedAt:savedAt,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules};
-  setLastSavedAt(savedAt);setBaseline(signature({record:nextRecord,courseId,trainerId,type,cohortId,startDate,scheduleTimezone,scheduleRules}));setNotice({type:"success",text:"Draft saved successfully."});
+  setLastSavedAt(savedAt);setBaseline(signature({record:nextRecord,courseId,trainerId,type,cohortId,startDate,scheduleTimezone,scheduleRules}));setEditAvailability(false);setNotice({type:"success",text:"Draft saved successfully."});
   setR(nextRecord);
   } catch (error) {
    setNotice({type:"error",text:readableSaveError(error)});
