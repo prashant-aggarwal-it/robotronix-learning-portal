@@ -16,9 +16,9 @@ function billReceipt(payment:FeePayment,pkg:FeePackage,learner:string){
  const html='<html><head><title>Payment acknowledgement</title><style>body{font:15px Arial,sans-serif;max-width:720px;margin:45px auto;color:#17334e}h1{color:#006d96}table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #dae7ee;padding:12px 0}small{color:#60758b}</style></head><body><h1>Robotronix™</h1><h2>Payment acknowledgement</h2><p>This document summarises a payment recorded in the Robotronix learning ledger. Request an official tax invoice or numbered receipt from the billing team if needed.</p><table>'+[
  ["Learner",learner],["Package",pkg.name],["Amount",asMoney(payment.amount,pkg.currency)],["Type",payment.kind==="refund"?"Refund":"Payment received"],["Method",payment.method],["Received on",payment.payment_date],["Reference",payment.reference]
  ].map(([a,b])=>'<tr><td>'+safe(a)+'</td><td>'+safe(b)+'</td></tr>').join("")+'</table><p><small>Generated from recorded finance data. Verify discrepancies with Robotronix before relying on this acknowledgement.</small></p></body></html>';
- const win=window.open("","_blank","noopener,noreferrer,width=820,height=900");
+ const win=window.open("","_blank","width=820,height=900");
  if(!win)return;
- win.document.write(html);win.document.close();win.focus();win.print();
+ win.document.write(html);win.document.close();win.focus();win.addEventListener("load",()=>win.print());
 }
 
 export default function ParentBilling(){
