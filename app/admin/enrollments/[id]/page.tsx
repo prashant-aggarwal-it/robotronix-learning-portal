@@ -125,7 +125,7 @@ if(!record.courseId||!record.trainerId||!record.startedAt){setMsg("Course, train
     <div className="tableWrap professionalTable" style={{marginTop:12}}>
      <table><thead><tr><th>Date</th><th>Time</th><th>Status</th><th>Zoom</th><th>Action</th></tr></thead>
       <tbody>{(showAllClasses?visibleClassRecords:visibleClassRecords.slice(0,3)).map(ev=><tr key={ev.id}>
-       <td>{formatClassDate(zonedRangeParts(ev.date,ev.startTime,ev.endTime,ev.timezone||IST_TIMEZONE,IST_TIMEZONE).startDate)}</td><td>{enrollmentDisplayTime(zonedRangeParts(ev.date,ev.startTime,ev.endTime,ev.timezone||IST_TIMEZONE,IST_TIMEZONE).startTime)} IST<div className="cellSub">{ev.date} · {enrollmentDisplayTime(ev.startTime)} {ev.timezone||IST_TIMEZONE}</div></td>
+       <td>{formatClassDate(zonedRangeParts(ev.date,ev.startTime,ev.endTime,ev.timezone||IST_TIMEZONE,IST_TIMEZONE).startDate)}</td><td>{enrollmentDisplayTime(zonedRangeParts(ev.date,ev.startTime,ev.endTime,ev.timezone||IST_TIMEZONE,IST_TIMEZONE).startTime)} IST{(ev.timezone||IST_TIMEZONE)!==IST_TIMEZONE&&<div className="cellSub">Learner time: {formatClassDate(ev.date)} · {enrollmentDisplayTime(ev.startTime)} {ev.timezone}</div>}</td>
        <td>{displayLabel(ev.status)}</td>
        <td><span className="softBadge">{["cancelled","rescheduled","blocked"].includes(ev.status)?"Not applicable":zoomByClass[ev.id]?.status==="error"||zoomByClass[ev.id]?.lastError||zoomByClass[ev.id]&&!zoomByClass[ev.id].joinUrl?"Needs attention":zoomByClass[ev.id]?"Zoom ready":"Auto-setup pending"}</span></td>
        <td><Link className="tableAction" href={`/admin/classes/${encodeURIComponent(ev.id)}?enrollment=${encodeURIComponent(record.id)}`}>View class →</Link></td>
