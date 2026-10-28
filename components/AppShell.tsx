@@ -14,7 +14,7 @@ const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}
     {label:"Home",href:"/student"},{label:"My Calendar",href:"/student/calendar"},{label:"My Profile",href:"/student/profile"},{label:"My Course",href:"/student/course"},{label:"My Projects",href:"/student/portfolio"},{label:"Notifications",href:"/student/notifications"}
   ],
   parent: [
-    {label:"Family Dashboard",href:"/parent"},{label:"Calendar",href:"/parent/calendar"},{label:"Family Profile",href:"/parent/profile"},{label:"Learner View",href:"/parent/learner"},{label:"Messages",href:"/parent/messages"},{label:"Notifications",href:"/parent/notifications"},{label:"Add learner",href:"/onboarding"}
+    {label:"Family Dashboard",href:"/parent"},{label:"Calendar",href:"/parent/calendar"},{label:"Family Profile",href:"/parent/profile"},{label:"Messages",href:"/parent/messages"},{label:"Notifications",href:"/parent/notifications"},{label:"Add learner",href:"/onboarding"}
   ],
   trainer: [
     {label:"Home",href:"/trainer"},{label:"My Profile",href:"/trainer/profile"},{label:"Learner Progress",href:"/trainer/progress"},{label:"Demo Experience",href:"/trainer/demos"},{label:"My Classes",href:"/trainer/classes"},{label:"My Schedule",href:"/trainer/schedule"},{label:"My Courses",href:"/trainer/courses"},{label:"My Earnings",href:"/trainer/earnings"},{label:"Messages",href:"/trainer/messages"},{label:"Notifications",href:"/trainer/notifications"}
