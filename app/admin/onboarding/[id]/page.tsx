@@ -29,7 +29,7 @@ import {guardianRelationshipOptions,guardiansFromRecord,legacyFieldsFromGuardian
 import type {GuardianRelationship} from "@/lib/types";
 
 type Notice={type:"success"|"error"|"info";text:string}|null;
-type ActiveAction="draft"|"activate"|null;
+type ActiveAction="draft"|"ready"|"activate"|null;
 
 function preferredWindowAdminDisplay(window:PreferredTimeWindow,familyTimezone:string,referenceDate:string){
  const familyDate=nextIsoDateForWeekday(referenceDate,window.dayOfWeek);
@@ -204,24 +204,24 @@ export default function OnboardingDetail(){
  const contactsValid=Boolean(guardianView?.primary.name&&validInternationalPhone(guardianView.primary.mobile)&&validInternationalPhone(r.primaryWhatsApp)&&(!guardianView.secondary?.mobile||validInternationalPhone(guardianView.secondary.mobile))&&(!r.alternateWhatsApp||validInternationalPhone(r.alternateWhatsApp)));
  const ready=Boolean(guardianView?.primary.name&&contactsValid&&r.childName&&r.childDob&&r.grade&&r.school&&isValidTimeZone(r.timezone)&&courseId&&trainerId&&startDate&&isValidTimeZone(scheduleTimezone)&&scheduleRules.length&&(type==="one_to_one"||cohortId)&&!preferredRangeError&&!scheduleRangeError&&(!hasScheduleExceptions||scheduleOverrideConfirmed));
 
- async function saveDraft(){
+ async function saveSetup(targetStatus:"draft"|"setup_pending"){
   if(busy)return;
   const issues=validateDraftDates({childDob:r?.childDob,startDate},todayIstDate());
   setFormIssues(issues);
   if(issues.length){if(issues.some(issue=>issue.field==="childDob"))setEditFamilyDetails(true);setNotice({type:"error",text:"Please review the highlighted date fields. Unsaved changes remain on this page."});return;}
   if(preferredRangeError||scheduleRangeError){setNotice({type:"error",text:preferredRangeError||scheduleRangeError||"Invalid time range."});return;}
   if(startDate&&!validNewEnrollmentDate(startDate)&&r?.status!=="active"){setNotice({type:"error",text:"Enrollment start date cannot be earlier than today (IST)."});return;}
-  if(!dirty){setNotice({type:"info",text:"No new changes to save."});return;}
-  setNotice(null);setActiveAction("draft");
+  if(!dirty&&r!.status===targetStatus){setNotice({type:"info",text:"No new changes to save."});return;}
+  setNotice(null);setActiveAction(targetStatus==="draft"?"draft":"ready");
   const parsedDays=[...new Set(parsePreferredTimeWindows(r!.preferredTimeWindows).map(w=>w.day))];
   const nextPreferredClassDays=parsedDays.length?parsedDays:r!.preferredClassDays;
   try {
-  const result=await updateOnboardingSubmission(id,{motherName:r!.motherName,motherMobile:r!.motherMobile,fatherName:r!.fatherName,fatherMobile:r!.fatherMobile,primaryGuardianName:r!.primaryGuardianName,primaryGuardianRelationship:r!.primaryGuardianRelationship,primaryGuardianMobile:r!.primaryGuardianMobile,secondaryGuardianName:r!.secondaryGuardianName,secondaryGuardianRelationship:r!.secondaryGuardianRelationship,secondaryGuardianMobile:r!.secondaryGuardianMobile,primaryContact:guardianView?.primary.relationship==="father"?"father":guardianView?.primary.relationship==="mother"?"mother":"guardian",primaryWhatsApp:r!.primaryWhatsApp,alternateWhatsApp:r!.alternateWhatsApp,city:r!.city,country:r!.country,state:r!.state??"",timezone:r!.timezone,childName:r!.childName,childDob:r!.childDob,grade:r!.grade,school:r!.school,preferredClassDays:nextPreferredClassDays,preferredTimeWindows:r!.preferredTimeWindows,interests:r!.interests,goal:r!.goal,codingExperience:r!.codingExperience,roboticsExperience:r!.roboticsExperience,source:r!.source,referringParentName:(r!.source==="Existing parent"||r!.source==="Referred by an existing Robotronix parent")?(r!.referringParentName??"").trim():"",assignedCourseId:courseId||undefined,assignedTrainerId:trainerId||undefined,enrollmentType:type,cohortId:type==="small_group"?cohortId||undefined:undefined,startDate,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules,status:r!.status});
+  const result=await updateOnboardingSubmission(id,{motherName:r!.motherName,motherMobile:r!.motherMobile,fatherName:r!.fatherName,fatherMobile:r!.fatherMobile,primaryGuardianName:r!.primaryGuardianName,primaryGuardianRelationship:r!.primaryGuardianRelationship,primaryGuardianMobile:r!.primaryGuardianMobile,secondaryGuardianName:r!.secondaryGuardianName,secondaryGuardianRelationship:r!.secondaryGuardianRelationship,secondaryGuardianMobile:r!.secondaryGuardianMobile,primaryContact:guardianView?.primary.relationship==="father"?"father":guardianView?.primary.relationship==="mother"?"mother":"guardian",primaryWhatsApp:r!.primaryWhatsApp,alternateWhatsApp:r!.alternateWhatsApp,city:r!.city,country:r!.country,state:r!.state??"",timezone:r!.timezone,childName:r!.childName,childDob:r!.childDob,grade:r!.grade,school:r!.school,preferredClassDays:nextPreferredClassDays,preferredTimeWindows:r!.preferredTimeWindows,interests:r!.interests,goal:r!.goal,codingExperience:r!.codingExperience,roboticsExperience:r!.roboticsExperience,source:r!.source,referringParentName:(r!.source==="Existing parent"||r!.source==="Referred by an existing Robotronix parent")?(r!.referringParentName??"").trim():"",assignedCourseId:courseId||undefined,assignedTrainerId:trainerId||undefined,enrollmentType:type,cohortId:type==="small_group"?cohortId||undefined:undefined,startDate,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules,status:targetStatus});
   setActiveAction(null);
   if(!result){setNotice({type:"error",text:"Unable to save setup. Your changes are still on screen; please retry."});return;}
   const savedAt=new Date().toISOString();
-  const nextRecord={...r!,primaryContact:guardianView?.primary.relationship==="father"?"father" as const:guardianView?.primary.relationship==="mother"?"mother" as const:"guardian" as const,preferredClassDays:nextPreferredClassDays,status:r!.status,updatedAt:savedAt,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules};
-  setLastSavedAt(savedAt);setBaseline(signature({record:nextRecord,courseId,trainerId,type,cohortId,startDate,scheduleTimezone,scheduleRules}));setEditAvailability(false);setEditFamilyDetails(false);setNotice({type:"success",text:"Draft saved successfully."});
+  const nextRecord={...r!,primaryContact:guardianView?.primary.relationship==="father"?"father" as const:guardianView?.primary.relationship==="mother"?"mother" as const:"guardian" as const,preferredClassDays:nextPreferredClassDays,status:targetStatus,updatedAt:savedAt,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules};
+  setLastSavedAt(savedAt);setBaseline(signature({record:nextRecord,courseId,trainerId,type,cohortId,startDate,scheduleTimezone,scheduleRules}));setEditAvailability(false);setEditFamilyDetails(false);setNotice({type:"success",text:targetStatus==="draft"?"Draft saved successfully.":"Setup is ready. Review and select Activate learner when you are ready."});
   setR(nextRecord);
   } catch (error) {
    setNotice({type:"error",text:readableSaveError(error)});
@@ -230,8 +230,7 @@ export default function OnboardingDetail(){
   }
  }
 
- async function activate(){
-  if(busy)return;
+ function collectActivationIssues():FormIssue[]{
   const issues:FormIssue[]=[...validateDraftDates({childDob:r!.childDob,startDate},todayIstDate())];
   if(!guardianView?.primary.name?.trim())issues.push({field:"primaryGuardian",message:"Enter the primary parent or guardian's name."});
   if(!guardianView?.primary.mobile||!validInternationalPhone(guardianView.primary.mobile))issues.push({field:"primaryGuardian",message:"Enter a valid primary guardian mobile number with country code."});
@@ -251,6 +250,23 @@ export default function OnboardingDetail(){
   if(!scheduleRules.length)issues.push({field:"schedule",message:"Add at least one confirmed weekly class slot."});
   if(preferredRangeError||scheduleRangeError)issues.push({field:"schedule",message:preferredRangeError||scheduleRangeError||"Correct the weekly schedule."});
   if(hasScheduleExceptions&&!scheduleOverrideConfirmed)issues.push({field:"schedule",message:"Review the schedule warning and confirm the manual override."});
+  return issues;
+ }
+
+ async function markSetupReady(){
+  if(busy)return;
+  const issues=collectActivationIssues();
+  setFormIssues(issues);
+  if(issues.length){if(issues.some(x=>["primaryGuardian","childProfile","childDob"].includes(x.field)))setEditFamilyDetails(true);setNotice({type:"error",text:"Complete the highlighted requirements before marking setup ready. You can still save an incomplete draft."});return;}
+  if(!validNewEnrollmentDate(startDate)){setNotice({type:"error",text:"Enrollment start date cannot be earlier than today (IST)."});return;}
+  if(!ready){setNotice({type:"error",text:"Complete all items in the readiness checklist before marking setup ready."});return;}
+  await saveSetup("setup_pending");
+ }
+
+ async function activate(){
+  if(busy)return;
+  if(r!.status!=="setup_pending"||dirty){setNotice({type:"error",text:"First save the completed setup using Mark setup ready. Then activate the learner."});return;}
+  const issues=collectActivationIssues();
   setFormIssues(issues);
   if(issues.length){if(issues.some(x=>["primaryGuardian","childProfile","childDob"].includes(x.field)))setEditFamilyDetails(true);setNotice({type:"error",text:"Activation is not ready. Select a highlighted requirement to correct it; your changes remain on screen."});return;}
   if(preferredRangeError||scheduleRangeError){setNotice({type:"error",text:preferredRangeError||scheduleRangeError||"Invalid time range."});return;}
@@ -268,14 +284,14 @@ export default function OnboardingDetail(){
   setNotice(result.schedulingWarning?{type:"error",text:result.schedulingWarning}:{type:"success",text:"Learner activated successfully. Zoom classrooms will be provisioned near class time."});setScrollAfterActivation(true);await refresh();
  }
 
- const statusIndex=r.status==="active"?3:r.status==="setup_pending"?2:1;
+ const statusIndex=r.status==="active"?4:r.status==="setup_pending"?3:r.status==="draft"?2:1;
  const savedLabel=lastSavedAt?new Date(lastSavedAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}):"";
 
  return <RoleGuard allow={["admin"]}><AppShell role="admin">
   <AdminPageHeader eyebrow="ONBOARDING / LEARNER DETAILS" title={r.childName}
  description={[r.grade||"Class not provided",[r.city,r.country].filter(Boolean).join(", "),timeZoneLabel(r.timezone),`Submitted ${new Date(r.submittedAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}`].filter(Boolean).join(" · ")}
  actions={<Link href="/admin/onboarding" className="button ghost" onClick={event=>{if(dirty&&!window.confirm("Unsaved changes will be lost. Leave onboarding?"))event.preventDefault()}}>← Back to onboarding</Link>}/>
- <div className="cleanStepper" aria-label="Onboarding progress">{[{n:1,t:"New"},{n:2,t:"Setup pending"},{n:3,t:"Active"}].map((s,i)=><div className={`cleanStep ${statusIndex>s.n?"done":statusIndex===s.n?"current":""}`} key={s.n}><span>{statusIndex>s.n?"✓":s.n}</span><b>{s.t}</b>{i<2&&<i/>}</div>)}</div>
+ <div className="cleanStepper" aria-label="Onboarding progress">{[{n:1,t:"New"},{n:2,t:"Draft"},{n:3,t:"Setup pending"},{n:4,t:"Active"}].map((s,i)=><div className={`cleanStep ${statusIndex>s.n?"done":statusIndex===s.n?"current":""}`} key={s.n}><span>{statusIndex>s.n?"✓":s.n}</span><b>{s.t}</b>{i<3&&<i/>}</div>)}</div>
  {activated&&<section id="learner-activation-summary" className="panel" aria-label="Learner enrollment summary" style={{marginTop:18,scrollMarginTop:110}}>
   <div className="panelHeader"><div><div className="eyebrow">ACTIVE LEARNER · ENROLLMENT</div><h2>Learner ready for classes</h2>
    <p>The student profile and enrollment are active. Classes are managed through the enrollment. Zoom rooms are created shortly before class time.</p></div><span className="softBadge softGreen">✓ Active</span></div>
@@ -336,7 +352,7 @@ export default function OnboardingDetail(){
     </div>
     {type==="small_group"?<p className="fieldHint">Batch classes must be generated once per cohort, not for each learner. This preview does not create duplicate cohort bookings.</p>:schedulingHorizon==="manual"?<p className="fieldHint">No classes will be automatically booked at activation. After activation, use Admin → Schedule → + Schedule item to add regular, ad-hoc, makeup or extra classes for this enrollment.</p>:!startDate?(formIssues.some(issue=>issue.field==="startDate")?<div className="errorBanner">Select a course start date before generating class dates.</div>:<p className="fieldHint">Select a course start date above to preview class dates. No classes will be booked until activation.</p>):schedulePreview.error?<div className="errorBanner">{schedulePreview.error}</div>:<><p className="fieldHint"><b>{schedulePreview.items.length} class dates previewed</b> · {selectedCourse?.totalSessions??0} sessions in course · {schedulePreview.items.filter(x=>x.conflicts.length).length} flagged date(s). {previewBookingsLoaded?"Existing scheduled events included in conflict preview.":"Existing bookings could not be loaded; conflict checks are incomplete."} Actual booking conflicts must also be checked server-side.</p><div style={{maxHeight:220,overflowY:"auto"}}><table className="table"><thead><tr><th>#</th><th>Date</th><th>Time ({shortTimeZoneLabel(scheduleTimezone)})</th><th>Preview checks</th></tr></thead><tbody>{schedulePreview.items.map((slot,i)=><tr key={i}><td>{i+1}</td><td>{slot.date}</td><td>{formatClock(slot.startTime)} – {formatClock(slot.endTime)}</td><td>{slot.conflicts.length?slot.conflicts.join(", ") :previewBookingsLoaded?"No detected overlap":"Not fully checked"}</td></tr>)}</tbody></table></div></>}
    </div>
-   <div className="readinessCard"><div><b>Ready to activate</b><span>Select any incomplete requirement to jump to the field. Saving a draft does not require completing activation fields.</span></div><ul>{([
+   <div className="readinessCard"><div><b>Setup readiness</b><span>Complete these requirements, then select Mark setup ready. Save draft works even when setup is incomplete. Activation is a separate final action.</span></div><ul>{([
  ["Primary guardian name and contact",Boolean(guardianView?.primary.name&&contactsValid),"primaryGuardian",true],
  ["Child name",Boolean(r.childName?.trim()),"childProfile",true],
  ["Date of birth",Boolean(r.childDob),"childDob",true],
@@ -351,7 +367,7 @@ export default function OnboardingDetail(){
  ] as [string,boolean,string,boolean][]).map(([label,done,field,expand])=><li key={label} className={done?"ok":""}><button type="button" aria-label={done?label+" completed":"Complete "+label} onClick={()=>{if(expand)setEditFamilyDetails(true);window.setTimeout(()=>{const target=document.getElementById("field-"+field);target?.scrollIntoView({behavior:"smooth",block:"center"});target?.focus()},0)}} style={{all:"unset",cursor:"pointer",width:"100%",display:"flex",alignItems:"center",gap:8,listStyle:"none"}}><span aria-hidden="true" style={{flex:"0 0 16px",textAlign:"center",fontWeight:900,lineHeight:1}}>{done?"✓":"○"}</span><span>{label}{!done?" — required":""}</span></button></li>)}</ul></div>
    
    <FormErrorSummary issues={formIssues}/>{notice&&notice.type!=="success"&&<div className={notice.type==="error"?"errorBanner":"infoBanner"}>{notice.text}</div>}
-   <div className="formActions stickyOnboardingActions"><div role="status" aria-live="polite" aria-atomic="true" style={{flex:"1 1 240px",minWidth:0}}>{notice?.type==="success"?<span className="successBanner" style={{display:"inline-block",margin:0,padding:"8px 12px",fontSize:"0.9rem"}}>{notice.text}</span>:notice?<span style={{fontSize:"0.85rem",color:"var(--text-muted, #64748b)"}}>Review the message above.</span>:<span style={{fontSize:"0.85rem",color:"var(--text-muted, #64748b)"}}>{dirty?"● Unsaved changes":"No unsaved changes"}</span>}</div><button className="button ghost" disabled={busy||!dirty} onClick={saveDraft}>{activeAction==="draft"?"Saving draft…":dirty?"Save draft":"Save draft"}</button><button className="button" disabled={busy} onClick={activate}>{activeAction==="activate"?"Activating…":"Activate learner"}</button></div>
+   <div className="formActions stickyOnboardingActions"><div role="status" aria-live="polite" aria-atomic="true" style={{flex:"1 1 240px",minWidth:0}}>{notice?.type==="success"?<span className="successBanner" style={{display:"inline-block",margin:0,padding:"8px 12px",fontSize:"0.9rem"}}>{notice.text}</span>:notice?<span style={{fontSize:"0.85rem",color:"var(--text-muted, #64748b)"}}>Review the message above.</span>:<span style={{fontSize:"0.85rem",color:"var(--text-muted, #64748b)"}}>{dirty?"● Unsaved changes":"No unsaved changes"}</span>}</div><button type="button" className="button ghost" disabled={busy||(!dirty&&r.status==="draft")} onClick={()=>void saveSetup("draft")}>{activeAction==="draft"?"Saving draft…":"Save draft"}</button><button type="button" className="button secondary" disabled={busy||(r.status==="setup_pending"&&!dirty)} onClick={()=>void markSetupReady()}>{activeAction==="ready"?"Saving setup…":"Mark setup ready"}</button><button type="button" className="button" disabled={busy||r.status!=="setup_pending"||dirty} title={r.status!=="setup_pending"||dirty?"Mark the completed setup ready before activation.":undefined} onClick={()=>void activate()}>{activeAction==="activate"?"Activating…":"Activate learner"}</button></div>
   </section>:null}
  </AppShell></RoleGuard>;
 }
