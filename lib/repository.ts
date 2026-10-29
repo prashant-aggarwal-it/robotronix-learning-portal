@@ -921,8 +921,8 @@ export async function resolveAuditActorNames(ids:string[]):Promise<Record<string
 // ---------------- Role profile, community and trainer finance self-service ----------------
 export async function getCurrentTrainerRecord():Promise<TrainerAdminRecord|null>{
  const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.trainers.list()[0]??null;
- const{data:{user}}=await supabase.auth.getUser();if(!user)return null;
- const{data}=await supabase.from("trainers").select("*").eq("profile_id",user.id).maybeSingle();if(!data)return null;
+ const{data:{user},error:authError}=await supabase.auth.getUser();if(authError)throw new Error("Unable to verify trainer session.");if(!user)return null;
+ const{data,error:trainerError}=await supabase.from("trainers").select("*").eq("profile_id",user.id).maybeSingle();if(trainerError)throw new Error("Unable to read trainer record.");if(!data)return null;
  const{data:links}=await supabase.from("trainer_courses").select("course_id").eq("trainer_id",data.id);
  return{id:data.id,fullName:data.full_name??"",mobile:data.mobile??"",email:data.email??"",city:data.city??"",country:data.country??"India",state:data.state??"",timezone:data.timezone??IST_TIMEZONE,designation:data.designation??"Trainer",joiningDate:data.joining_date??"",specialties:data.specialties??[],courseIds:(links??[]).map((x:any)=>x.course_id),recordStatus:data.record_status??"active",loginLinked:Boolean(data.profile_id),portalAccessStatus:data.profile_id?"portal_ready":"not_linked",updatedAt:data.updated_at};
 }
