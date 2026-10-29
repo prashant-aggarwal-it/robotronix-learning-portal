@@ -263,6 +263,8 @@ export default function OnboardingDetail(){
   setActiveAction(null);
   const result={studentId:("studentId" in res?res.studentId:"")??"",enrollmentId:("enrollmentId" in res?res.enrollmentId:"")??"",classesCreated:("classesCreated" in res?res.classesCreated:undefined),schedulingWarning:("schedulingWarning" in res?res.schedulingWarning:undefined)};
   setActivationResult(result);
+  setEditFamilyDetails(false);
+  setEditAvailability(false);
   setNotice(result.schedulingWarning?{type:"error",text:result.schedulingWarning}:{type:"success",text:"Learner activated successfully. Zoom classrooms will be provisioned near class time."});setScrollAfterActivation(true);await refresh();
  }
 
