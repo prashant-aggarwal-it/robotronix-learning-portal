@@ -596,6 +596,7 @@ export async function activateOnboarding(id:string,assignment:{courseId:string;t
   const submission=await getOnboardingSubmission(id);
   if(!submission)return{ok:false,error:"Onboarding submission not found."};
   if(submission.status==="active")return{ok:false,error:"This onboarding submission is already active."};
+  if(submission.status!=="setup_pending")return{ok:false,error:"Mark the completed onboarding setup ready before activation."};
   // Fail before creating a learner if the additive activation-link migration was not installed.
   // Otherwise onboarding may remain pending after successfully creating an enrollment.
   const migrationClient=getSupabaseBrowserClient();
