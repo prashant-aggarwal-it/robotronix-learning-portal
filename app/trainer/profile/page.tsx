@@ -15,7 +15,10 @@ import {useEffect,useState} from "react";import {validInternationalPhone} from "
    getTrainerFinanceRequest(tr.id),
    getLatestApprovedTrainerPayoutCycle(tr.id)
   ]);
-  const [f,p,r,cycle]=results.map(result=>result.status==="fulfilled"?result.value:null);
+  const f=results[0].status==="fulfilled"?results[0].value:null;
+  const p=results[1].status==="fulfilled"?results[1].value:null;
+  const r=results[2].status==="fulfilled"?results[2].value:null;
+  const cycle=results[3].status==="fulfilled"?results[3].value:null;
   setFinance(f);setPlan(p);setPending(r);setApprovedCycle(cycle);
   setFinanceWarning(results.some(result=>result.status==="rejected")?"Some payout information could not be loaded. Your personal profile is still available; retry to refresh the payment details.":"");
   if(!payEdit)setDraft({accountHolderName:r?.accountHolderName||f?.accountHolderName||"",bankName:r?.bankName||f?.bankName||"",accountNumber:r?.accountNumber||f?.accountNumber||"",ifsc:r?.ifsc||f?.ifsc||"",upiId:r?.upiId||f?.upiId||"",pan:r?.pan||f?.pan||"",preferredPayoutMethod:r?.preferredPayoutMethod||f?.preferredPayoutMethod||"bank",trainerNote:r?.trainerNote||""});
