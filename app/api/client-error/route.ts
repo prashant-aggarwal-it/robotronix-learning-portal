@@ -21,13 +21,18 @@ export async function POST(request: NextRequest) {
   }catch{return new NextResponse(null,{status:400});}
   if(!body||typeof body!=="object")return new NextResponse(null,{status:400});
   const report=body as {name?:unknown;digest?:unknown;path?:unknown};
+  const workflowCodes=new Set(["ONBOARDING_LOAD","ONBOARDING_SAVE","ENROLLMENT_CREATE","COHORT_CREATE","ENROLLMENT_FINANCE","SCHEDULE_LOAD","SCHEDULE_SAVE","AVAILABILITY_SAVE","FINANCE_LOAD","FINANCE_SAVE"]);
+  const workflowCode=typeof (report as {code?:unknown}).code==="string"?(report as {code:string}).code:"";
+  if((report as {kind?:unknown}).kind==="workflow"&&!workflowCodes.has(workflowCode))return new NextResponse(null,{status:400});
   const path=typeof report.path==="string"?report.path:"";
   const routeBucket=(path.match(/^\/(admin|trainer|parent|student|login)(?:\/|$)/)||[])[1]||"other";
   const errorName=report.name==="TypeError"?"TYPE":report.name==="RangeError"?"RANGE":"BOUNDARY";
+  const isWorkflow=(report as {kind?:unknown}).kind==="workflow";
   const referenceId=await logSystemEvent({
-    source:"client-runtime",action:routeBucket,code:"CLIENT_"+errorName,
-    message:"Authenticated user encountered an application error boundary"
+    source:isWorkflow?"client-workflow":"client-runtime",action:isWorkflow?"mutation":routeBucket,
+    code:isWorkflow?workflowCode:"CLIENT_"+errorName,
+    message:isWorkflow?"Authenticated user encountered an operational workflow failure":"Authenticated user encountered an application error boundary"
   });
-  console.error("[portal-client-error]",{referenceId,routeBucket,errorName});
+  console.error("[portal-client-error]",{referenceId,code:isWorkflow?workflowCode:errorName,routeBucket});
   return NextResponse.json({ok:true,referenceId},{status:202,headers:{"Cache-Control":"no-store"}});
 }
