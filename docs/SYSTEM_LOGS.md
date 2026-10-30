@@ -64,3 +64,35 @@ Canonical SQL for this feature is `database/01_install/modules/schema/08_operati
 `portal_job_runs` records success, partial or failed outcomes per scheduled invocation, with counts, elapsed time and reference ID. Admin UI reads the latest execution per job; history is not yet an independent uptime check. Enabled row-level security permits only active Admins via `is_admin()`; browser clients have no write permissions. Service role writes the records. All job log writes are best effort, so a temporary monitoring failure should not make successful class operations fail. `purge_old_portal_job_runs(30)` is available for a later approved retention job; no automated cleanup is deployed by this change.
 
 Current coverage: reminder processing and Zoom retention/reconciliation. **Not completed by this commit**: every enrollment, payment, user-session or browser workflow; an externally independent downtime detector; scheduled health notifications and automatic incident resolution. Do not classify these as verified without DEV tests.
+
+## 2026-10-30 operational error coverage (PR #35)
+
+All new operational events contain a short static error code and a generated reference ID. Operators can search the reference ID at **Admin > System Logs** and correlate it with Netlify's `[zoom-recording]`, `[zoom-reconcile]`, or `[portal-client-error]` messages. Never place third-party exception messages, bearer tokens, customer form values, signed media URLs, or personal messages in `safe_message`.
+
+| Source | Failure categories recorded |
+| --- | --- |
+| `zoom-recording` | Details, playback stages (token/profile/meeting/authorization/upstream/refresh/retry), HTTP status, update stages (Zoom trash vs local database write) |
+| `zoom-reconcile` | Failed meeting, failed recording and incomplete batch |
+| `zoom-classroom` / `zoom-meetings` | Classroom reads, JIT sync/cancellation, general meeting list/create/cancel |
+| `zoom-webhook` / `razorpay-webhook` | Provider webhook claim, retry and processing stages; raw provider errors are not persisted in operational history |
+| `finance` | Invoice list and provider/ledger actions; exchange-rate provider failures |
+| `client-runtime` | Authenticated React error-boundary failures (route bucket only) |
+| `client-workflow` | Authenticated onboarding, enrollment, opening finance, cohort, scheduling, availability, and finance failure codes |
+
+The client reporter sends only a server-allowlisted failure code via authenticated request; it sends no exception stack, email, student name, form value or payment data. Client-reported errors are **signals**, not proof that the server operation failed. A browser session must be valid for its report to persist, and reports are best effort.
+
+### Daily operator workflow
+
+1. Inspect **Admin > System Logs > Background job health**. Each expected job must have a recent heartbeat; missing jobs and runs older than three scheduled intervals are flagged. This is a browser-side view, not an external alert.
+2. Filter operational events by `error` and investigate new reference IDs. Use error codes to select Zoom, Supabase Auth, Razorpay or Netlify diagnostic consoles; do not paste sensitive raw provider payloads into the portal.
+3. For Zoom deletion errors, `ZOOM_UPDATE_ZOOM_TRASH` means Zoom did not confirm trashing, while `ZOOM_UPDATE_SAVE_DELETED_STATUS` means Zoom may have already trashed the file but portal status update failed. **Reconcile before retrying** the latter case.
+4. For webhook errors, inspect the event retry ledger and provider delivery history before manually replaying anything. Do not issue duplicate invoices or notifications.
+5. For `CLIENT_*` / workflow events, reproduce in DEV and use the code and time to locate the affected UI flow; never assume a user-generated report is authoritative.
+
+### Known limitations / deployment gates
+
+- Netlify deployment, Supabase table permissions and DEV end-to-end verification are **not** implied by a committed PR. Verify the service-role insert succeeds and all new browser workflow reports appear in DEV.
+- Logging itself is best effort. If Supabase is down, the log table may be unavailable too; Netlify console logs and an **independent uptime monitor** are still required.
+- There is **no configured out-of-band alert destination** for missed cron runs, database downtime or repeated 5xx responses. Admin dashboard overdue markers require someone to open the page. Add a separately authenticated external monitor/notification channel before claiming proactive alerting.
+- Direct Supabase writes from screens not in the allowlist and some noncritical routes are not covered by named operational events. Use dedicated failure handlers when adding new workflows.
+- Never deliberately delete real recordings, create financial transactions or force production failures for monitoring tests.
