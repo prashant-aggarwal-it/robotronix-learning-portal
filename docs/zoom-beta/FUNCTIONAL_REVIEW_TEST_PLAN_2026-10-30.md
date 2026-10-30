@@ -12,6 +12,24 @@ Version: 30 October 2026. Scope: production submission; exercise only disposable
 - Admin must provision disposable course, enrollment, scheduled lesson, trainer and learner records (no real children's personal data).
 - Record the deployed commit SHA, host account eligibility, exact app scopes shown in Production > Scopes, and any restricted feature access before executing.
 
+## Reviewer account and synthetic classroom provisioning checklist (Production)
+
+**Observed read-only Production baseline (30 October 2026):** 11 Supabase Auth users (eight email, three Google), one portal `profiles` row (admin), one `zoom_host_accounts` row, 20 courses and zero `schedule_events`. These counts may change; always recheck before setup. The existing Zoom host row does **not** establish a working OAuth connection; verify `status` and conduct a real authorized operation before claiming it works.
+
+**Safeguard:** Never bulk-run Development's eight-user QA seed on Production. Do not insert directly into `auth.users` or set reviewer passwords in SQL, Git, shared documents or logs. Create dedicated Auth users via Supabase Dashboard Authentication > Users > Add user, or through the portal's supported invite flow. Use reviewer-controlled/test-provider inboxes and privately communicated credentials. Do not change real user accounts.
+
+1. **Reviewer Admin:** Create an adult-only portal Admin login using the supported account and role assignment workflow; explicitly verify its `profiles.role = 'admin'`, active status, and ability to access `/admin/zoom`. Do not infer Admin permission from Auth creation alone.
+2. **Reviewer Trainer:** Create a separate Auth user and provision/link a trainer profile/record through the portal's existing trainer onboarding. Verify Trainer role and visibility of assigned classes.
+3. **Reviewer Parent:** Create a separate Auth user and parent profile via the existing portal onboarding. Associate it only with the synthetic learner.
+4. **Synthetic learner:** Create a fictional learner record linked to the reviewer Parent. Provision a Student login only if student-role sign-in is required for the actual reviewer path. Never use a real child's details or Zoom account.
+5. **Course and enrollment:** Select a suitable existing active online course and assign the synthetic learner to the reviewer Trainer with a disposable enrollment. Use the portal's normal validation and scheduling workflow instead of arbitrary SQL inserts.
+6. **Class:** Create exactly one near-term online Zoom-enabled class in a reviewer-accessible slot; ensure the reviewer host is connected and its capacity/reservation is valid. JIT provisioning can occur within approximately 35 minutes of start; do not expect a remote Zoom meeting to exist immediately after creating a future schedule.
+7. **Host access:** Use an eligible, adult-owned, disposable Zoom test host with the app allowlisted for Beta when required; check OAuth scopes, account permissions, 2FA and cloud recording license. Verify the existing Production Zoom host row is actually connected before reusing it.
+8. **Review evidence:** Record role access, enrollment visibility, host connection, meeting creation, Trainer host start, Parent/learner attendee join, authorized recording where supported, reschedule and cancel behavior. Mark unexecuted checks NOT RUN.
+9. **Cleanup:** Cancel/delete only disposable meetings/classes and deactivate test-only reviewer accounts following review. Keep a record of test identifiers without secrets so nothing customer-owned is affected.
+
+**Provisioning status:** NOT PERFORMED by this document. The Supabase connector currently available for this task exposes database SQL/schema inspection, not Auth Admin user creation; therefore no sign-in-capable reviewer identities were created by code inspection. Do not claim these accounts or classes exist until created and tested through the supported workflow.
+
 ## Step-by-step functional journey
 | ID | Actor | Steps | Expected result |
 | --- | --- | --- | --- |
