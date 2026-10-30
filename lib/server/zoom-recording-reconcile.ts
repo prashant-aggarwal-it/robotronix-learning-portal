@@ -26,8 +26,30 @@ export async function reconcileZoomRecording(
   retain_until:new Date(base.getTime()+days*86400000).toISOString(),
   updated_at:new Date().toISOString()
  };
- // ignoreDuplicates makes repeated notifications/reconciliations harmless:
- // no existing lifecycle or admin-controlled field can be overwritten.
+ // Refresh provider-owned metadata for an existing completed recording.
+ // Never overwrite Robotronix lifecycle, protection, visibility, retention or
+ // deleted state; stale URLs otherwise remain unusable indefinitely.
+ const {data:existing,error:lookupError}=await db.from("zoom_recordings")
+  .select("id,status").eq("zoom_recording_file_id",fileId).maybeSingle();
+ if(lookupError)throw new Error(lookupError.message);
+ if(existing){
+  if(existing.status!=="completed")return false;
+  const providerUpdate={
+   ...(row.download_url?{download_url:row.download_url}:{}),
+   ...(row.play_url?{play_url:row.play_url}:{}),
+   recording_type:row.recording_type,file_type:row.file_type,
+   file_extension:row.file_extension,file_size_bytes:row.file_size_bytes,
+   recording_start:row.recording_start,recording_end:row.recording_end,
+   updated_at:row.updated_at
+  };
+  const {error:updateError}=await db.from("zoom_recordings").update(providerUpdate)
+   .eq("id",existing.id).eq("status","completed");
+  if(updateError)throw new Error(updateError.message);
+  return true;
+ }
+ // Concurrent webhooks can both observe a missing file. Ignore only the insert
+ // race; later reconciliation updates its provider metadata without altering
+ // administrator-controlled policy fields.
  const {error}=await db.from("zoom_recordings").upsert(row,{
   onConflict:"zoom_recording_file_id",ignoreDuplicates:true
  });
