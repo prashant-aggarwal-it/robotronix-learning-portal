@@ -3,6 +3,7 @@ import {GridSearch,GridReset} from "@/components/admin/GridFilterControls";
 import Link from "next/link";
 import {Suspense,useEffect,useState} from "react";
 import {FormErrorSummary} from "@/components/admin/FormErrorSummary";
+import {reportOperationalError} from "@/lib/client/report-operational-error";
 import {readableSaveError,type FormIssue} from "@/lib/form-errors";
 import {useSearchParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
@@ -27,7 +28,7 @@ function Workspace(){
  const[familyAllocations,setFamilyAllocations]=useState<Record<string,string>>({});
  const [billingModel,setBillingModel]=useState("session_package");const [billingScheme,setBillingScheme]=useState("Per 8 Classes");const [editingPackage,setEditingPackage]=useState<FeePackage|null>(null);const [renewFrom,setRenewFrom]=useState<FeePackage|null>(null);const [paymentMethod,setPaymentMethod]=useState("UPI");const [inst,setInst]=useState([{due:today(),amount:0}]);const[formIssues,setFormIssues]=useState<FormIssue[]>([]);
  async function reload(){const [l,e,s,c,a,v,t,p]=await Promise.all([loadFeeLedger(),repo.listAdminEnrollments(),repo.listAdminStudents(),repo.listAdminCourses(),repo.listClassAttendance(),repo.listScheduleEvents(),repo.listTrainerEarnings(),repo.listTrainerPayouts()]);setPackages(l.packages);setPayments(l.payments);setEnrollments(e);setStudents(s);setCourses(c);setAttendance(a);setEvents(v);setEarnings(t);setPayouts(p);const db=getSupabaseBrowserClient();if(db){const {data:links,error:linkError}=await db.from("parent_students").select("parent_id,student_id");if(linkError)throw Error(linkError.message);setFamilyLinks(links||[])}setLoaded(true)}
- useEffect(()=>{reload().catch(e=>setError(e.message))},[]);
+ useEffect(()=>{reload().catch(e=>{void reportOperationalError("FINANCE_LOAD");setError(e.message)})},[]);
  useLiveRefresh(["student_fee_payments","class_attendance","trainer_earnings"],reload,"admin-finance");
  useEffect(()=>{if(loaded&&openNewPackage){setTab("package");setInst([{due:today(),amount:0}])}},[loaded,openNewPackage]);
  const label=(id:string)=>{const e=enrollments.find(x=>x.id===id);return `${students.find(s=>s.id===e?.studentId)?.fullName||id} · ${courses.find(c=>c.id===e?.courseId)?.title||''}`};
@@ -37,7 +38,7 @@ function Workspace(){
  const generated=earnings.filter(e=>e.status!=='void'&&e.earningDate.startsWith(month)&&e.earningDate<=asOf).reduce((s,e)=>s+e.totalAmount,0);
  const paid=payouts.filter(p=>p.status==='paid'&&p.paidAt?.startsWith(month)&&p.paidAt.slice(0,10)<=asOf).reduce((s,p)=>s+p.payableAmount,0);
  const revenue=sums.reduce((s,r)=>s+r.periodEarned,0);
- async function save(fn:()=>Promise<void|string>){if(busy)return;setBusy(true);setError('');setNotice('');try{const message=await fn();setNotice(message||'Saved successfully.');await reload();setTab('overview');setFormIssues([]);setEditingPackage(null);setRenewFrom(null)}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
+ async function save(fn:()=>Promise<void|string>){if(busy)return;setBusy(true);setError('');setNotice('');try{const message=await fn();setNotice(message||'Saved successfully.');await reload();setTab('overview');setFormIssues([]);setEditingPackage(null);setRenewFrom(null)}catch(e){void reportOperationalError("FINANCE_SAVE");setError(readableSaveError(e))}finally{setBusy(false)}}
  function startNewAgreement(){setEditingPackage(null);setRenewFrom(null);setBillingModel("session_package");setBillingScheme("Per 8 Classes");setInst([{due:today(),amount:0}]);setTab("package");setError("")}
  function openRenewal(p:FeePackage){setEditingPackage(null);setRenewFrom(p);setBillingModel(p.billing_model||"session_package");setBillingScheme(p.scheme);setInst([{due:today(),amount:p.amount}]);setTab("package");setError("")}
  function openEdit(p:FeePackage){setEditingPackage(p);setRenewFrom(null);setBillingModel(p.billing_model||"session_package");setBillingScheme(p.scheme);setInst(p.installments.map(i=>({...i})));setTab("package");setError("")}
