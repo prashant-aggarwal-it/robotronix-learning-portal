@@ -78,8 +78,18 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{record
    stage="zoom-trash";
    await zoomApi(meeting.host_account_id,`/meetings/${encodeURIComponent(meeting.zoom_meeting_id)}/recordings/${encodeURIComponent(recording.zoom_recording_file_id)}?action=trash`,{method:"DELETE"});
    stage="save-deleted-status";
-   const {error}=await auth.admin.from("zoom_recordings").update({status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",recording.id);
-   if(error)throw new Error(error.message);return NextResponse.json({ok:true,status:"deleted"});
+   // Zoom has confirmed the trash operation. Retry transient ledger failures
+   // without repeating the remote deletion (which may now return 404).
+   let saved=false;
+   for(let attempt=0;attempt<3;attempt++){
+    const {error}=await auth.admin.from("zoom_recordings").update({
+     status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()
+    }).eq("id",recording.id).eq("status","completed");
+    if(!error){saved=true;break;}
+    if(attempt<2)await new Promise<void>(resolve=>setTimeout(resolve,250*(attempt+1)));
+   }
+   if(!saved)throw new Error("Remote trash succeeded but local status update failed.");
+   return NextResponse.json({ok:true,status:"deleted"});
   }
   return NextResponse.json({ok:false,error:"Unsupported recording action."},{status:400});
  }catch(error){
