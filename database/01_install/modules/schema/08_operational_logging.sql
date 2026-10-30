@@ -41,5 +41,25 @@ begin
 end $$;
 revoke all on function public.purge_old_portal_job_runs(integer) from public,anon,authenticated;
 grant execute on function public.purge_old_portal_job_runs(integer) to service_role;
+
+-- Idempotent email-alert dispatch claims, retained separately from diagnostic logs.
+-- A unique dedupe_key prevents overlapping scheduled invocations from emailing twice.
+create table if not exists public.portal_alert_dispatches (
+ id uuid primary key default gen_random_uuid(),
+ dedupe_key text not null unique,
+ category text not null check(category in ('critical-errors','job-heartbeat')),
+ status text not null default 'claimed' check(status in ('claimed','sent','failed')),
+ reference_id text not null,
+ created_at timestamptz not null default now(),
+ completed_at timestamptz,
+ failure_code text
+);
+create index if not exists portal_alert_dispatches_created_idx on public.portal_alert_dispatches(created_at desc);
+alter table public.portal_alert_dispatches enable row level security;
+revoke all on public.portal_alert_dispatches from anon,authenticated;
+grant select on public.portal_alert_dispatches to authenticated;
+drop policy if exists portal_alert_dispatches_admin_read on public.portal_alert_dispatches;
+create policy portal_alert_dispatches_admin_read on public.portal_alert_dispatches
+ for select to authenticated using(public.is_admin());
 commit;
 notify pgrst, 'reload schema';
