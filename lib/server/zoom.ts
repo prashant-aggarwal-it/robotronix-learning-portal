@@ -2,7 +2,11 @@ import crypto from "node:crypto";
 import {createClient,type SupabaseClient} from "@supabase/supabase-js";
 
 const ZOOM_API="https://api.zoom.us/v2";
-const ZOOM_OAUTH="https://zoom.us/oauth/token";\n\nexport class ZoomApiError extends Error {\n constructor(public readonly status:number,message:string){super(message);this.name="ZoomApiError";}\n}
+const ZOOM_OAUTH="https://zoom.us/oauth/token";
+
+export class ZoomApiError extends Error {
+ constructor(public readonly status:number,message:string){super(message);this.name="ZoomApiError";}
+}
 
 export type ZoomHostSafe={id:string;label:string;zoomUserId:string;zoomEmail:string;zoomAccountId:string|null;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;connectedAt:string;lastSyncAt:string|null};
 
