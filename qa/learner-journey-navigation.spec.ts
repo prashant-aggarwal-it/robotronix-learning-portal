@@ -72,7 +72,8 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(parent).toContain("familyLearningStage(selected)");
   expect(student).toContain("familyLearningStage(data)");
   expect(trainer).toContain("zonedRangeParts(e.date");
-  expect(accessApi).toContain('linked&&(type==="student"');
+  expect(accessApi).toContain('linked&&Boolean(auth?.last_sign_in_at)');
+  expect(accessApi).toContain('needsReview?"needs_review"');
   expect(accessUi).toContain("Family account linked");
  });
  test("onboarding handoff is linked across Admin, Parent and Trainer",()=>{
