@@ -114,3 +114,13 @@ The client reporter sends only a server-allowlisted failure code via authenticat
 6. After DEV acceptance, enable the three environment variables in the production Netlify context and deploy. Check both Netlify function logs and the delivery panel.
 
 **Important:** Email is disabled if any of the three environment variables are absent. No recipient has been chosen by the code. Delivery is through Resend's HTTPS API, not Supabase Auth SMTP. The monitor cannot detect a complete Netlify or Supabase outage on its own; a separately hosted synthetic uptime check remains necessary for that guarantee. If the outbox claim is written but the provider call fails, the alert is not resent within the cooldown window. This is a deliberate anti-duplication safeguard and must be visible in Admin delivery history.
+
+## Zoom recording reliability changes (2026-10-30)
+
+A focused source audit found three tangible weaknesses in the existing playback/reconciliation path:
+- The persisted download URL can contain an earlier `access_token`. The server now **replaces** it with the current host token on every media request (including after OAuth refresh), rather than retaining an expired query token.
+- Recording reconciliation previously ignored duplicate file IDs, leaving stale provider download URLs untouched. For existing **completed** files it now refreshes provider-owned metadata while preserving deletion state, protection, visibility and retention. Deleted files are never resurrected by synchronization.
+- An upstream login/JSON error page with HTTP 200 could be passed to the browser as a video. Streaming now rejects HTML/JSON content and emits `ZOOM_STREAM_NON_MEDIA`.
+- Recording DELETE provider failures now add the safe upstream HTTP status to their stage-specific error code (for example `ZOOM_UPDATE_ZOOM_TRASH_HTTP_404`). The vendor response body is not written to the system log.
+
+**Still required:** DEV test with a nonessential test recording for authorized playback, seek/Range requests, existing stale URL refresh, protection toggle and Zoom Trash. HTTP 404 during deletion must not be assumed to mean successful trashing; reconcile against Zoom first. No production recordings were deleted as part of this code audit. The Zoom API provider endpoint contract could not be independently retrieved during this session, so DELETE request semantics have not been changed speculatively.
