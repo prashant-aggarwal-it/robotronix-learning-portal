@@ -48,7 +48,7 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
   }  
   if(!upstream.ok&&upstream.status!==206){const referenceId=await logSystemEvent({source:"zoom-recording",action:"stream",code:"ZOOM_STREAM_HTTP_"+String(upstream.status),message:"Recording upstream delivery failed"});
    console.error("[zoom-recording] upstream response failure",{status:upstream.status,stage,referenceId});return new NextResponse("Unable to stream this Zoom recording. Reference: "+referenceId,{status:502,headers:{"Cache-Control":"no-store"}});}
-  const headers=new Headers();
+  // A provider login page or JSON error may be returned with HTTP 200. Sending\n  // that as video masks the real failure as a generic browser playback error.\n  const mediaType=(upstream.headers.get("content-type")||"").toLowerCase();\n  if(mediaType.includes("text/html")||mediaType.includes("application/json")){\n   const referenceId=await logSystemEvent({source:"zoom-recording",action:"stream",code:"ZOOM_STREAM_NON_MEDIA",message:"Zoom recording endpoint returned non-media content"});\n   console.error("[zoom-recording] unexpected upstream content type",{referenceId,stage});\n   return new NextResponse("Unable to stream this Zoom recording. Reference: "+referenceId,{status:502,headers:{"Cache-Control":"no-store"}});\n  }\n  const headers=new Headers();
   for(const key of ["content-type","content-length","content-range","accept-ranges","etag","last-modified"]){const value=upstream.headers.get(key);if(value)headers.set(key,value);}
   headers.set("Cache-Control","private, no-store");
   headers.set("Content-Disposition","inline");
