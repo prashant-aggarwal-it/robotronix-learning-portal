@@ -145,7 +145,9 @@ export async function zoomAuthorizedFetchUrl(hostId:string,url:string,init:Reque
   // Zoom cloud-recording download URLs accept the OAuth token as a query value.
   // Keeping the bearer header as well covers direct API responses, while the
   // query token survives Zoom's redirect to the signed media URL.
-  // Replace a stale token embedded in persisted Zoom download URLs. Using the\n  // previous query token after a host refresh results in repeat 401/403 errors.\n  target.searchParams.set("access_token",token);
+  // Replace a stale token embedded in persisted Zoom download URLs. Using the
+  // previous query token after a host refresh results in repeat 401/403 errors.
+  target.searchParams.set("access_token",token);
   return fetch(target.toString(),{...init,cache:"no-store",redirect:"follow",headers:{Authorization:`Bearer ${token}`,...(init.headers||{})}});
  };
  let response=await request(decryptZoomSecret(row.access_token_encrypted));
