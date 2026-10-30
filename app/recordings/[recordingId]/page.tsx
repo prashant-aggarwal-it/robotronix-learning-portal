@@ -69,8 +69,8 @@ function Player(){
    {loading&&!recording&&<p>Preparing recording…</p>}
    {error&&<p className="errorBanner" role="alert">{error}</p>}
    {recording&&(audioOnly
-    ?<audio ref={player as React.RefObject<HTMLAudioElement>} key={recording.streamUrl} src={recording.streamUrl} controls preload="metadata" style={{width:"100%"}} onError={onMediaError} onLoadedMetadata={onLoaded}/>
-    :<video ref={player as React.RefObject<HTMLVideoElement>} key={recording.streamUrl} src={recording.streamUrl} controls playsInline preload="metadata" style={{width:"100%",maxHeight:"72vh",background:"#07152c",borderRadius:16}} onError={onMediaError} onLoadedMetadata={onLoaded}/>)}
+    ?<audio ref={node=>{player.current=node}} key={recording.streamUrl} src={recording.streamUrl} controls preload="metadata" style={{width:"100%"}} onError={onMediaError} onLoadedMetadata={onLoaded}/>
+    :<video ref={node=>{player.current=node}} key={recording.streamUrl} src={recording.streamUrl} controls playsInline preload="metadata" style={{width:"100%",maxHeight:"72vh",background:"#07152c",borderRadius:16}} onError={onMediaError} onLoadedMetadata={onLoaded}/>)}
    <p className="cellSub">If playback stops during a long recording, secure access can be renewed without sharing a Zoom download link.</p>
   </section>
  </main>;
