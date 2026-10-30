@@ -16,6 +16,7 @@ function Player(){
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
  const [retrying,setRetrying]=useState(false);
+ const [generation,setGeneration]=useState(0);
  const player=useRef<HTMLVideoElement|HTMLAudioElement|null>(null);
  const resumeAt=useRef(0);
  const automaticRetryUsed=useRef(false);
@@ -29,6 +30,7 @@ function Player(){
    const response=await portalApi("/api/zoom/recordings/"+encodeURIComponent(recordingId));
    if(!active.current)return;
    setRecording(response.recording);
+   setGeneration(value=>value+1);
    setError("");
   }catch{
    if(active.current)setError("Unable to obtain secure recording access. Please try again.");
@@ -69,7 +71,7 @@ function Player(){
    {loading&&!recording&&<p>Preparing recording…</p>}
    {error&&<p className="errorBanner" role="alert">{error}</p>}
    {recording&&(audioOnly
-    ?<audio ref={node=>{player.current=node}} key={recording.streamUrl} src={recording.streamUrl} controls preload="metadata" style={{width:"100%"}} onError={onMediaError} onLoadedMetadata={onLoaded}/>
+    ?<audio ref={node=>{player.current=node}} key={recording.streamUrl+"-"+generation} src={recording.streamUrl} controls preload="metadata" style={{width:"100%"}} onError={onMediaError} onLoadedMetadata={onLoaded}/>
     :<video ref={node=>{player.current=node}} key={recording.streamUrl} src={recording.streamUrl} controls playsInline preload="metadata" style={{width:"100%",maxHeight:"72vh",background:"#07152c",borderRadius:16}} onError={onMediaError} onLoadedMetadata={onLoaded}/>)}
    <p className="cellSub">If playback stops during a long recording, secure access can be renewed without sharing a Zoom download link.</p>
   </section>
