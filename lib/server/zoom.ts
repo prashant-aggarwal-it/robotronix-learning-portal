@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import {createClient,type SupabaseClient} from "@supabase/supabase-js";
 
 const ZOOM_API="https://api.zoom.us/v2";
-const ZOOM_OAUTH="https://zoom.us/oauth/token";
+const ZOOM_OAUTH="https://zoom.us/oauth/token";\n\nexport class ZoomApiError extends Error {\n constructor(public readonly status:number,message:string){super(message);this.name="ZoomApiError";}\n}
 
 export type ZoomHostSafe={id:string;label:string;zoomUserId:string;zoomEmail:string;zoomAccountId:string|null;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;connectedAt:string;lastSyncAt:string|null};
 
@@ -111,7 +111,7 @@ export async function zoomApi(hostId:string,path:string,init:RequestInit={}){
   }
  }
  const json=await response.json().catch(()=>({})) as any;
- if(!response.ok)throw new Error(json?.message||json?.reason||`Zoom API request failed (${response.status}).`);
+ if(!response.ok)throw new ZoomApiError(response.status,json?.message||json?.reason||`Zoom API request failed (${response.status}).`);
  await db.from("zoom_host_accounts").update({last_sync_at:new Date().toISOString()}).eq("id",hostId);
  return json;
 }
