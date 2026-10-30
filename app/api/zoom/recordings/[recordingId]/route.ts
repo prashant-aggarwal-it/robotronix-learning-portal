@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {requirePortalUser} from "@/lib/server/portal-api";
 import {classAccessForProfile} from "@/lib/server/zoom-classroom";
 import {createRecordingStreamToken} from "@/lib/server/zoom-recording";
-import {zoomApi} from "@/lib/server/zoom";
+import {zoomApi,ZoomApiError} from "@/lib/server/zoom";
 import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
 
@@ -82,10 +82,11 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{record
    if(error)throw new Error(error.message);return NextResponse.json({ok:true,status:"deleted"});
   }
   return NextResponse.json({ok:false,error:"Unsupported recording action."},{status:400});
- }catch{
-  const code="ZOOM_UPDATE_"+stage.toUpperCase().replace(/-/g,"_");
+ }catch(error){
+  const upstreamStatus=error instanceof ZoomApiError?error.status:null;
+  const code="ZOOM_UPDATE_"+stage.toUpperCase().replace(/-/g,"_")+(upstreamStatus?"_HTTP_"+upstreamStatus:"");
   const referenceId=await logSystemEvent({source:"zoom-recording",action:"update",code,message:"Recording update failed"});
-  console.error("[zoom-recording] update failed",{stage,referenceId});
+  console.error("[zoom-recording] update failed",{stage,upstreamStatus,referenceId});
   return NextResponse.json({ok:false,error:"Unable to update recording.",referenceId},{status:stage==="zoom-trash"?502:500,headers:{"Cache-Control":"no-store"}});
  }
 }
