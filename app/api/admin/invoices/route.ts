@@ -2,6 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin,apiFailure} from "@/lib/server/admin-api";
 import {razorpayMode,razorpayRequest} from "@/lib/server/razorpay";
 import {applyRazorpayInvoiceEntity,syncRazorpayInvoice} from "@/lib/server/razorpay-invoices";
+import {logSystemEvent} from "@/lib/server/system-log";
 
 const EXPORT_DECLARATION="SUPPLY MEANT FOR EXPORT UNDER LETTER OF UNDERTAKING WITHOUT PAYMENT OF INTEGRATED TAX";
 const SUPPLIER={
@@ -67,7 +68,10 @@ export async function GET(request:NextRequest){
     }catch{}
   }
   return NextResponse.json({ok:true,mode:razorpayMode(),invoices:(invoices||[]).map(uiInvoice),candidates:rows,packageSummaries,supplier:SUPPLIER},{headers:{"Cache-Control":"no-store"}});
- }catch(e){return apiFailure(e instanceof Error?e.message:"Unable to load invoices.",500)}
+ }catch{
+  const referenceId=await logSystemEvent({source:"finance",action:"invoice-list",code:"INVOICE_LIST_FAILURE",message:"Invoice list could not be loaded"});
+  return apiFailure("Unable to load invoices. Reference: "+referenceId,500);
+ }
 }
 
 export async function POST(request:NextRequest){
@@ -135,5 +139,8 @@ export async function POST(request:NextRequest){
     return NextResponse.json({ok:true,invoice:uiInvoice(data)});
   }
   return apiFailure("Unsupported invoice action.");
- }catch(e){return apiFailure(e instanceof Error?e.message:"Invoice operation failed.",500)}
+ }catch{
+  const referenceId=await logSystemEvent({source:"finance",action:"invoice-operation",code:"INVOICE_OPERATION_FAILURE",message:"Invoice provider or ledger operation failed"});
+  return apiFailure("Invoice operation failed. Reference: "+referenceId,500);
+ }
 }
