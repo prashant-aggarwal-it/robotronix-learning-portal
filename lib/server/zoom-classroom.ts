@@ -1,4 +1,5 @@
 import type {SupabaseClient} from "@supabase/supabase-js";
+import {randomUUID} from "node:crypto";
 import {zonedLocalToUtc} from "@/lib/timezones";
 import {zoomApi} from "@/lib/server/zoom";
 
@@ -45,7 +46,12 @@ async function loadHosts(db:SupabaseClient){
  return (data||[]) as HostRow[];
 }
 
-async function hostAvailable(db:SupabaseClient,hostId:string,start:Date,end:Date,excludeMeetingId?:string){
+async function hostAvailable(db:SupabaseClient,hostId:string,start:Date,end:Date,excludeMeetingId?:string,excludeEventId?:string){
+ const {data:reservations,error:reservationError}=await db.from("zoom_class_host_reservations")
+  .select("schedule_event_id").eq("host_account_id",hostId).eq("allocation_status","reserved")
+  .lt("starts_at",end.toISOString()).gt("ends_at",start.toISOString());
+ if(reservationError)throw new Error("Zoom host reservations are unavailable.");
+ if((reservations||[]).some((r:any)=>r.schedule_event_id!==excludeEventId))return false;
  const from=new Date(start.getTime()-12*60*60*1000).toISOString();
  const to=new Date(end.getTime()+12*60*60*1000).toISOString();
  let query=db.from("zoom_meetings").select("id,scheduled_start,duration_minutes,status")
@@ -61,13 +67,15 @@ async function hostAvailable(db:SupabaseClient,hostId:string,start:Date,end:Date
  });
 }
 
-async function chooseHost(db:SupabaseClient,start:Date,end:Date,preferredHostId?:string,excludeMeetingId?:string){
+async function chooseHost(db:SupabaseClient,start:Date,end:Date,preferredHostId?:string,excludeMeetingId?:string,requiredEventId?:string){
  const hosts=await loadHosts(db);
  if(!hosts.length)throw new Error("No enabled Zoom host account is connected. Connect or enable a Zoom account first.");
  if(preferredHostId){
   const preferred=hosts.find(h=>h.id===preferredHostId);
-  if(preferred&&await hostAvailable(db,preferred.id,start,end,excludeMeetingId))return preferred;
+  if(preferred&&await hostAvailable(db,preferred.id,start,end,excludeMeetingId,requiredEventId))return preferred;
+  if(requiredEventId)throw new Error("The reserved Zoom host is unavailable for this class. Review host capacity.");
  }
+ if(requiredEventId)throw new Error("No Zoom host reservation is assigned to this class.");
  for(const host of hosts){
   if(await hostAvailable(db,host.id,start,end,excludeMeetingId))return host;
  }
@@ -111,7 +119,7 @@ export async function cancelZoomForScheduleEvent(db:SupabaseClient,scheduleEvent
  return {action:"cancelled" as const,meetingId:meeting.id};
 }
 
-export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId:string,actorId?:string){
+async function syncZoomForScheduleEventInternal(db:SupabaseClient,scheduleEventId:string,actorId?:string,options:{force?:boolean}={}){
  const {data:event,error:eventError}=await db.from("schedule_events")
   .select("id,trainer_id,course_id,enrollment_id,cohort_id,student_id,title,date,start_time,end_time,timezone,event_type,status")
   .eq("id",scheduleEventId).maybeSingle();
@@ -125,8 +133,39 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
  const {start,end,duration}=classWindow(typed);
  const {data:existing,error:meetingError}=await db.from("zoom_meetings").select("*").eq("schedule_event_id",scheduleEventId).eq("purpose","class").maybeSingle();
  if(meetingError)throw new Error(meetingError.message);
+ // The course schedule can be generated months ahead; only provision a room near class time.
+ // Existing rooms are still synchronized for reschedules, and cancelled events handled above.
+ const untilStart=start.getTime()-Date.now();
+ if(!options.force&&!existing&&untilStart>35*60_000)return {action:"deferred" as const};
+ if(!options.force&&!existing&&untilStart< -15*60_000)return {action:"expired" as const};
 
- const host=await chooseHost(db,start,end,existing?.host_account_id,existing?.id);
+ // Reuse an existing meeting before allocating another host or creating a duplicate.
+ // Zoom PATCH responses do not contain join_url, so retrieve it from Zoom if the stored link is missing.
+ if(existing&&["scheduled","started"].includes(existing.status)&&(!existing.join_url||!/^https:\/\//i.test(existing.join_url))){
+  try{
+   const remote=await zoomApi(existing.host_account_id,`/meetings/${encodeURIComponent(existing.zoom_meeting_id)}`);
+   const joinUrl=typeof remote?.join_url==="string"&&/^https:\/\//i.test(remote.join_url)?remote.join_url:null;
+   if(joinUrl){
+    const {error:repairError}=await db.from("zoom_meetings").update({join_url:joinUrl,last_error:null,updated_at:new Date().toISOString()}).eq("id",existing.id);
+    if(repairError)throw new Error(repairError.message);
+    return {action:"repaired" as const,meetingId:existing.id,hostId:existing.host_account_id};
+   }
+   throw new Error("Zoom returned no valid joining URL for the existing meeting.");
+  }catch(repairError){
+   const reason=repairError instanceof Error?repairError.message:String(repairError);
+   await db.from("zoom_meetings").update({last_error:"Zoom joining link unavailable: "+reason,updated_at:new Date().toISOString()}).eq("id",existing.id);
+   throw new Error("Existing Zoom meeting needs attention: "+reason);
+  }
+ }
+ const {error:capacityError}=await db.rpc("reserve_zoom_host_for_class",{p_event_id:scheduleEventId});
+ if(capacityError)throw new Error("Zoom host capacity reservation could not be refreshed.");
+ const {data:reservation,error:reservationReadError}=await db.from("zoom_class_host_reservations")
+  .select("host_account_id,allocation_status").eq("schedule_event_id",scheduleEventId).maybeSingle();
+ if(reservationReadError)throw new Error("Zoom host reservation lookup failed.");
+ if(!reservation?.host_account_id||reservation.allocation_status!=="reserved"){
+  throw new Error("No connected Zoom host is available for this class window. Admin must resolve the capacity conflict.");
+ }
+ const host=await chooseHost(db,start,end,reservation.host_account_id,existing?.id,scheduleEventId);
  const body={
   topic:`Robotronix Classroom · ${typed.title}`,
   type:2,
@@ -150,6 +189,10 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
  }
 
  const created=await zoomApi(host.id,"/users/me/meetings",{method:"POST",body:JSON.stringify(body)});
+ if(!created?.id||typeof created.join_url!=="string"||!/^https:\/\//i.test(created.join_url)){
+  if(created?.id)await deleteRemoteMeetingSafely(host.id,String(created.id)).catch(()=>{});
+  throw new Error("Zoom did not return a valid meeting ID and join URL. Classroom provisioning was not completed.");
+}
  if(existing){
   // Reserve the new host in the database before removing the original Zoom room.
   // The GiST exclusion constraint rejects overlapping concurrent reservations.
@@ -183,6 +226,24 @@ export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId
   throw new Error(insertError.code==="23P01"?"The Zoom host became busy while scheduling. Please retry.":insertError.message);
  }
  return {action:"created" as const,meetingId:inserted.id,hostId:host.id};
+}
+
+
+/**
+ * One caller at a time may provision or repair a given classroom.
+ * The short-lived DB lease is held across Zoom API calls and released in finally.
+ * An expired lease is reclaimable after an interrupted invocation.
+ */
+export async function syncZoomForScheduleEvent(db:SupabaseClient,scheduleEventId:string,actorId?:string,options:{force?:boolean}={}){
+ const token=randomUUID();
+ const {data:claimed,error}=await db.rpc("claim_zoom_class_provisioning",{p_event_id:scheduleEventId,p_token:token});
+ if(error)throw new Error("Zoom provisioning lock is unavailable. Apply the canonical Zoom JIT schema before enabling this release.");
+ if(!claimed)return {action:"busy" as const};
+ try{return await syncZoomForScheduleEventInternal(db,scheduleEventId,actorId,options);}
+ finally{
+  const {error:releaseError}=await db.rpc("release_zoom_class_provisioning",{p_event_id:scheduleEventId,p_token:token});
+  if(releaseError)console.error("[zoom-classroom] lease cleanup failed",scheduleEventId,releaseError.code||"unknown");
+ }
 }
 
 export async function classAccessForProfile(db:SupabaseClient,scheduleEventId:string,profile:{id:string;role:string}){

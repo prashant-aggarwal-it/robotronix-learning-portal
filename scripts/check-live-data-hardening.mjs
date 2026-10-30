@@ -1,14 +1,15 @@
 import fs from "node:fs";
+import {readCanonicalSql} from "./read-canonical-sql.mjs";
 
 const required=[
  "hooks/useLiveRefresh.ts",
- "database/01_install/01_CREATE_SCHEMA.sql",
+ "database/01_install/modules/schema/01_core_schema.sql",
  "app/api/zoom/retention/route.ts",
  "netlify/functions/zoom-retention.mts"
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing live-data hardening file: "+file);
 
-const migration=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
+const migration=readCanonicalSql();
 for(const marker of ["supabase_realtime","schedule_events","onboarding_submissions","class_attendance","student_invoices","trainer_earnings"])if(!migration.includes(marker))throw new Error("Live-data migration missing: "+marker);
 
 const hook=fs.readFileSync("hooks/useLiveRefresh.ts","utf8");

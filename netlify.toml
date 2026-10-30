@@ -7,3 +7,7 @@
 
 [functions."zoom-retention"]
   schedule = "15 2 * * *"
+
+# Just-in-time Zoom classroom provisioning and bounded retry every five minutes.
+[functions."zoom-auto-reconcile"]
+  schedule = "*/5 * * * *"

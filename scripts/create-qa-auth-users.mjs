@@ -82,7 +82,7 @@ async function main() {
   }
 
   console.log("\nQA Auth users ready.");
-  console.log("Next: run database/02_qa/01_QA_SEED.sql in the Supabase SQL Editor.");
+  console.log("Next: create the four additional Auth accounts manually, then run database/02_qa/01_PREPARE_DEV_QA_PROFILES.sql and 02_RUN_DEV_QA_DATA.sql in DEV.");
 }
 
 main().catch(err => {

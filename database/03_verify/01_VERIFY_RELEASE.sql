@@ -1,3 +1,7 @@
+-- STEP A4: READ-ONLY schema verification. Run AFTER the fresh generated installer
+-- and BEFORE creating the eight DEV QA profiles and synthetic business data.
+-- Never use this file as a schema installer. See database/README.md.
+
 -- Robotronix™ Learning Portal — Production v1.0.0
 -- Generated consolidated release file. Fresh-install oriented; historical patch files are intentionally omitted.
 
@@ -880,3 +884,36 @@ begin
  end if;
 end $$;
 select 'PHASES_2_3_4_MIGRATION_GATES' as section,'PASS' as result;
+
+-- Recent P0/P1 audit requirements are part of the canonical fresh-install schema.
+-- This verification is read-only and must pass without running any additive patch.
+do $$
+declare item text;
+begin
+ foreach item in array array['portal_access_requests','student_invoices','zoom_meetings','zoom_recordings'] loop
+  if to_regclass('public.'||item) is null then
+   raise exception 'Missing audited table %',item;
+  end if;
+  if not exists (
+    select 1 from pg_trigger trg
+    join pg_class cls on cls.oid=trg.tgrelid
+    join pg_namespace ns on ns.oid=cls.relnamespace
+    where ns.nspname='public' and cls.relname=item
+      and trg.tgname='audit_'||item and not trg.tgisinternal and trg.tgenabled<>'D'
+  ) then raise exception 'Canonical P0/P1 audit trigger missing: %',item; end if;
+ end loop;
+ if not exists(
+  select 1 from pg_trigger
+  where tgname='onboarding_submission_admin_notification_trg'
+    and tgrelid='public.onboarding_submissions'::regclass and not tgisinternal and tgenabled<>'D'
+ ) then raise exception 'Onboarding admin notification trigger missing'; end if;
+end $$;
+select 'CONSOLIDATED_AUDIT_COVERAGE_GATE' as section,'PASS' as result;
+
+-- P0/P1 audit coverage verification (read only)
+-- Verification:
+SELECT c.relname AS table_name, t.tgname AS audit_trigger, t.tgenabled AS enabled
+FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+LEFT JOIN pg_trigger t ON t.tgrelid=c.oid AND t.tgname='audit_'||c.relname
+WHERE n.nspname='public' AND c.relname IN ('portal_access_requests','student_invoices','zoom_meetings','zoom_recordings')
+ORDER BY c.relname;

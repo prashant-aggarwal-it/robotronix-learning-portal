@@ -9,7 +9,7 @@ type Classroom={
  meeting:null|{id:string;status:string;recordingEnabled:boolean;recordingStatus:string;learnerRecordingVisible:boolean;recordingId?:string|null;lastError?:string|null};
 };
 
-export function ZoomClassActions({scheduleEventId,compact=false}:{scheduleEventId:string;compact?:boolean}){
+export function ZoomClassActions({scheduleEventId,compact=false,showAdminSetupLink=false}:{scheduleEventId:string;compact?:boolean;showAdminSetupLink?:boolean}){
  const[data,setData]=useState<Classroom|null>(null),[error,setError]=useState("");
  const[reusableLink,setReusableLink]=useState("");
  useEffect(()=>{let live=true;portalApi("/api/zoom/classroom/"+encodeURIComponent(scheduleEventId)).then(x=>{if(live)setData(x.classroom)}).catch(e=>{if(live)setError(e instanceof Error?e.message:String(e))});getClassReusableZoomLinkV2(scheduleEventId).then(url=>{if(live)setReusableLink(url)}).catch(()=>{});return()=>{live=false}},[scheduleEventId]);
@@ -22,7 +22,7 @@ export function ZoomClassActions({scheduleEventId,compact=false}:{scheduleEventI
    ?<a className={"button "+(compact?"small":"")} href={reusableLink} target="_blank" rel="noopener noreferrer">Join Trainer Zoom Room</a>
    :<small role="status" className="muted">Trainer Zoom room connected. Joining opens shortly before the class.</small>;
  }
- if(!data.available&&!data.meeting?.recordingId)return <div role="status" className="infoBanner compactInfoBanner"><b>Zoom setup pending</b><span>{data.meeting?.lastError?"Zoom requires attention: "+data.meeting.lastError:"The class is booked, but its Zoom meeting has not been provisioned. An administrator can use Zoom Classroom → Reconcile missing classes after connecting a host."}</span></div>;
+ if(!data.available&&!data.meeting?.recordingId)return <div role="status" className="infoBanner compactInfoBanner" style={{display:"grid",gap:6,alignItems:"start"}}><b>{data.meeting?.lastError?"Zoom needs attention":data.withinJoinWindow?"Classroom not ready":"Zoom setup scheduled"}</b><span>{data.meeting?.lastError?"Zoom requires attention: "+data.meeting.lastError:data.withinJoinWindow?"Join time has arrived but the classroom is unavailable. Contact Admin for assistance.":"The Zoom room is set up automatically closer to class time. No action is required yet."}</span>{showAdminSetupLink&&(data.withinJoinWindow||Boolean(data.meeting?.lastError))&&<Link href="/admin/zoom" className="button ghost smallButton" style={{justifySelf:"start"}}>Review Zoom Classroom →</Link>}</div>;
  const disabled=!data.withinJoinWindow;
  return <div className={compact?"row":"row topGap"}>
   {data.available&&data.canHost&&<Link aria-disabled={disabled} className={"button "+(compact?"small ":"")+(disabled?"disabled":"")} href={disabled?"#":"/classroom/"+scheduleEventId+"?mode=host"} onClick={e=>disabled&&e.preventDefault()}>Start Class</Link>}

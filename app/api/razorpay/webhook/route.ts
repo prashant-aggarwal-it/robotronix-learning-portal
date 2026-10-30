@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import {NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
 import {verifyRazorpayWebhook} from "@/lib/server/razorpay";
-import {applyRazorpayInvoiceEntity} from "@/lib/server/razorpay-invoices";
+import {applyRazorpayInvoiceEntity,razorpayCurrencyUnit} from "@/lib/server/razorpay-invoices";
 
 export const dynamic="force-dynamic";
 
@@ -64,7 +64,9 @@ export async function POST(request:Request){
   }
 
   const paymentId=entity.payment_id||event?.payload?.payment?.entity?.id||null;
-  await applyRazorpayInvoiceEntity(db,invoice,entity,"webhook",paymentId);
+  const rawPaymentAmount=Number(event?.payload?.payment?.entity?.amount);
+  const paidTransactionAmount=Number.isFinite(rawPaymentAmount)&&rawPaymentAmount>0?rawPaymentAmount/razorpayCurrencyUnit(invoice.currency):undefined;
+  await applyRazorpayInvoiceEntity(db,invoice,entity,"webhook",paymentId,paidTransactionAmount);
 
   const {error:doneError}=await db.from("razorpay_webhook_events").update({processed_at:new Date().toISOString(),processing_error:null}).eq("event_key",key);
   if(doneError)throw new Error(doneError.message);

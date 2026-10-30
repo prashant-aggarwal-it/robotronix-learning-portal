@@ -1,5 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
+import {readableSaveError} from "@/lib/form-errors";
+import {GridSearch,GridReset} from "@/components/admin/GridFilterControls";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
 import {AdminPageHeader} from "@/components/admin/AdminPageHeader";
@@ -8,7 +10,7 @@ import {displayLabel} from "@/lib/display";
 import {exportWorkbook} from "@/lib/export-workbook";
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
-type Candidate={packageId:string;packageName:string;currency:string;amount:number;sessions:number;studentName:string;courseTitle:string;courseCode:string;customer:{name:string;email:string;phone:string;line1:string;line2:string;city:string;state:string;postal:string;country:string};addressComplete:boolean;international:boolean};
+type Candidate={packageId:string;packageName:string;currency:string;amount:number;sessions:number|null;studentName:string;courseTitle:string;courseCode:string;customer:{name:string;email:string;phone:string;line1:string;line2:string;city:string;state:string;postal:string;country:string};addressComplete:boolean;international:boolean};
 type Invoice={
  id:string;invoice_number:string;internal_reference:string;status:string;currency:string;amount:number;amount_due:number;amount_paid:number;
  customer_name:string;customer_email?:string;customer_phone?:string;service_name:string;issue_date:string;due_date:string;paid_at?:string|null;
@@ -30,13 +32,14 @@ function Workspace(){
  const[query,setQuery]=useState(""),[filter,setFilter]=useState<"all"|"needs_invoice"|"draft"|"outstanding"|"overdue"|"paid"|"attention">("all");
  const[selectedId,setSelectedId]=useState<string|null>(null);
 
- async function reload(){setError("");try{setData(await adminApi("/api/admin/invoices"))}catch(e){setError(e instanceof Error?e.message:String(e))}}
+ async function reload(){setError("");try{setData(await adminApi("/api/admin/invoices"))}catch(e){setError(readableSaveError(e))}}
  useEffect(()=>{void reload()},[]);
  useLiveRefresh(["student_invoices","student_fee_payments"],reload,"admin-invoices");
  async function act(body:any,success="Invoice action completed successfully."){
+  if(busy)return;
   setBusy(true);setError("");setNotice("");
   try{const r=await adminApi("/api/admin/invoices",{method:"POST",body:JSON.stringify(body)});setNotice(r.reused?"An invoice already existed for this fee package, so Robotronix reused it.":success);await reload()}
-  catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}
+  catch(e){setError(readableSaveError(e))}finally{setBusy(false)}
  }
  async function copy(value?:string|null){if(!value)return;try{await navigator.clipboard.writeText(value);setNotice("Payment link copied.");window.setTimeout(()=>setNotice(""),1800)}catch{setError("Unable to copy the payment link in this browser.")}}
 
@@ -92,7 +95,7 @@ function Workspace(){
     <button className={filter==="paid"?"button":"button secondary"} onClick={()=>setFilter("paid")}>Paid · {counts.paid}</button>
     <button className={filter==="attention"?"button":"button secondary"} onClick={()=>setFilter("attention")}>Needs attention · {counts.attention}</button>
    </div>
-   <input className="input" style={{maxWidth:440,marginBottom:14}} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search invoice, parent, email, service or payment ID"/>
+   <div className="dataToolbar" style={{marginBottom:14}}><GridSearch value={query} onChange={setQuery} placeholder="Search invoice, parent, email, service or payment ID"/><GridReset changed={Boolean(query||filter!=="all")} onReset={()=>{setQuery("");setFilter("all")}}/></div>
 
    <div className="tableWrap professionalTable"><table><thead><tr><th>Invoice</th><th>Customer</th><th>Amount</th><th>Balance</th><th>Due</th><th>Status</th><th>Payment</th><th>Actions</th></tr></thead><tbody>
     {filtered.length?filtered.map(i=><tr key={i.id}>

@@ -1,7 +1,8 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requirePortalUser} from "@/lib/server/portal-api";
 import {createMeetingSdkJwt,zoomApi} from "@/lib/server/zoom";
-import {classAccessForProfile,classJoinWindow} from "@/lib/server/zoom-classroom";
+import {classAccessForProfile,classJoinWindow,syncZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
+import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
 
 export async function POST(request:NextRequest){
@@ -18,6 +19,18 @@ export async function POST(request:NextRequest){
    if(mode==="host"&&!access.canHost)return NextResponse.json({ok:false,error:"Only the assigned Trainer or Admin can start this classroom."},{status:403});
    const window=classJoinWindow(access.event,auth.profile.role);
    if(!window.allowed&&auth.profile.role!=="admin")return NextResponse.json({ok:false,error:"Classroom access opens shortly before the scheduled class and closes after the class window."},{status:403});
+   // Classroom pages request SDK credentials directly. Recover a missing room here
+   // as well as in the status API, rather than depending on a preceding GET call.
+   const {data:readiness}=await auth.admin.from("zoom_meetings")
+    .select("id,join_url,status").eq("schedule_event_id",scheduleEventId).eq("purpose","class").maybeSingle();
+   if((!readiness||!readiness.join_url||readiness.status==="error")
+       &&["scheduled","tentative","makeup"].includes(access.event.status)){
+    try{await syncZoomForScheduleEvent(auth.admin,scheduleEventId);}
+    catch{
+     await logSystemEvent({source:"zoom-classroom",action:"jit-recovery",level:"error",code:"CLASSROOM_JIT_FAILED",
+      message:"Authorized classroom launch could not provision the scheduled Zoom meeting."});
+    }
+   }
    const {data,error}=await auth.admin.from("zoom_meetings")
     .select("id,host_account_id,zoom_meeting_id,passcode,purpose,status,schedule_event_id")
     .eq("schedule_event_id",scheduleEventId).eq("purpose","class").maybeSingle();

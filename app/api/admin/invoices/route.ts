@@ -90,7 +90,7 @@ export async function POST(request:NextRequest){
     const issueDate=new Date().toISOString().slice(0,10),dueDate=plusDays(issueDate,2);
     const {data:numberData,error:numberError}=await admin.rpc("next_robotronix_invoice_number",{p_issue_date:issueDate});if(numberError||!numberData)throw new Error(numberError?.message||"Could not allocate invoice number.");
     const invoiceNumber=String(numberData),serviceName=c.course.public_name||c.course.short_title||c.course.title;
-    const serviceDescription=`Robotronix™ ${serviceName} (Online) – ${c.pkg.sessions} Sessions`;
+    const serviceDescription=`Robotronix™ ${serviceName} (Online) – ${c.pkg.sessions?`${c.pkg.sessions} Sessions`:"Agreed learning services"}`;
     const invoiceTerms=terms(c.pkg.sessions,serviceName),amount=Number(c.pkg.amount),inr=Math.round(amount*rate*100)/100;
     const place=`Outside India – ${[b.city,b.state,b.country].filter(Boolean).join(", ")}`;
     const notes={

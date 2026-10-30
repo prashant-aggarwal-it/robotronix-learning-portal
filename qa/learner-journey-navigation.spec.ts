@@ -1,5 +1,6 @@
 import {test,expect} from "@playwright/test";
 import {readFileSync} from "node:fs";
+import {readCanonicalSql} from "../scripts/read-canonical-sql.mjs";
 
 const source=(path:string)=>readFileSync(path,"utf8");
 
@@ -9,29 +10,105 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   const onboarding=source("app/admin/onboarding/[id]/page.tsx");
   expect(repository).toContain("enrollmentId:enrollment.id");
   expect(repository).toContain("generateEnrollmentScheduleV2(enrollment.id");
-  expect(onboarding).toContain("Continue to enrollment");
+  expect(onboarding).toContain("View enrollment");
   expect(onboarding).toContain("activationResult?.enrollmentId");
+   expect(onboarding).toContain("activatedEnrollmentId");
   expect(onboarding).toContain("activationResult?.studentId");
-  expect(onboarding).toContain("booking needs attention");
+   expect(onboarding).toContain("Student profile & corrections");
+  expect(onboarding).toContain("result.schedulingWarning");
  });
- test("activated onboarding persists links and existing Supabase needs additive migration",()=>{
+ test("activated onboarding link fields exist in the canonical fresh schema",()=>{
   const repo=source("lib/repository.ts");
-  const schema=source("database/01_install/01_CREATE_SCHEMA.sql");
-  const migration=source("database/04_migrations/2026_10_24_PHASES_2_3_4_ADDITIVE.sql");
+  const schema=readCanonicalSql();
   const onboarding=source("app/admin/onboarding/[id]/page.tsx");
   expect(repo).toContain("activatedStudentId:created.id,activatedEnrollmentId:enrollment.id");
-  expect(onboarding).toContain('r.status==="active"&&r.activatedStudentId&&r.activatedEnrollmentId');
+  expect(onboarding).toContain('r?.status==="active"');
+   expect(onboarding).toContain("activatedEnrollmentId");
+   expect(onboarding).not.toContain("Open Students");
+   expect(onboarding).not.toContain("Open Enrollments");
   for(const field of ["activated_student_id","activated_enrollment_id"]) {
     expect(schema).toContain(field);
-    expect(migration).toContain(field);
   }
+ });
+ test("quick class wrap-up asks for trainer-confirmed evidence once and shows parent draft",()=>{
+  const editor=source("components/operations/ClassRecordEditor.tsx");
+  const cards=source("components/experience/ExperienceCards.tsx");
+  expect(editor).toContain("QUICK CLASS WRAP-UP");
+  expect(editor).toContain("confirmedOutcomes");
+  expect(editor).toContain("sessionMeta.sessionTopic.trim()");
+  expect(editor).toContain("parentUpdateDraft");
+  expect(editor).toContain("Parent update preview");
+  expect(editor).toContain("Internal trainer / admin note");
+  expect(editor).toContain("Parent-visible progress note");
+  expect(cards).toContain("observation.feedback");
+  expect(source("app/trainer/page.tsx")).toContain("Class wrap-up pending");
+ });
+ test("learner progress distinguishes attendance from learning evidence across roles",()=>{
+  const workspace=source("components/progress/LearnerProgressWorkspace.tsx");
+  const cards=source("components/experience/ExperienceCards.tsx");
+  const parent=source("app/parent/page.tsx");
+  const learner=source("app/parent/learner/[studentId]/page.tsx");
+  const student=source("app/student/page.tsx");
+  expect(workspace).toContain("hasLearningEvidence");
+  expect(workspace).toContain("attendedCount");
+  expect(workspace).toContain("Not enough evidence");
+  expect(workspace).toContain('role==="admin"&&<Link');
+  expect(cards).toContain("learnerHasLearningEvidence(snapshot)");
+  expect(parent).toContain("learnerHasLearningEvidence(selected)");
+  expect(learner).toContain("learnerHasLearningEvidence(data)");
+  expect(student).toContain("learnerHasLearningEvidence(data)");
+ });
+ test("learner lifecycle and portal linking use consistent role-specific presentation",()=>{
+  const stage=source("lib/learner-lifecycle.ts");
+  const studentProfile=source("app/admin/students/[id]/page.tsx");
+  const parent=source("app/parent/page.tsx");
+  const student=source("app/student/page.tsx");
+  const trainer=source("app/trainer/page.tsx");
+  const accessApi=source("app/api/admin/portal-access/route.ts");
+  const accessUi=source("components/admin/PortalAccessPanel.tsx");
+  expect(stage).toContain("enrollmentLearningLabel");
+  expect(stage).toContain("familyLearningStage");
+  expect(studentProfile).toContain("enrollmentLearningLabel(current,todayIstDate())");
+  expect(parent).toContain("familyLearningStage(selected)");
+  expect(student).toContain("familyLearningStage(data)");
+  expect(trainer).toContain("zonedRangeParts(e.date");
+  expect(accessApi).toContain('linked&&(type==="student"');
+  expect(accessUi).toContain("Family account linked");
+ });
+ test("onboarding handoff is linked across Admin, Parent and Trainer",()=>{
+  const onboarding=source("app/admin/onboarding/[id]/page.tsx");
+  const student=source("app/admin/students/[id]/page.tsx");
+  const enrollment=source("app/admin/enrollments/[id]/page.tsx");
+  const parent=source("app/parent/page.tsx");
+  const trainer=source("app/trainer/page.tsx");
+  expect(onboarding).toContain("getAdminEnrollment(enrollmentId)");
+  expect(onboarding).toContain("getAdminStudent(studentId)");
+  expect(onboarding).toContain("linkedState?.enrollment!==false");
+  expect(student).toContain("item.activatedStudentId===id");
+  expect(enrollment).toContain("item.activatedEnrollmentId===id");
+  expect(parent).toContain("awaiting activation");
+  expect(trainer).toContain("after Admin activates their enrollment");
+ });
+ test("billing link scrolls after enrollment detail loads",()=>{
+  const profile=source("app/admin/students/[id]/page.tsx");
+  const enrollment=source("app/admin/enrollments/[id]/page.tsx");
+  const invoice=source("components/finance/EnrollmentInvoicePanel.tsx");
+  expect(profile).toContain("#billing-invoice");
+  expect(invoice).toContain('id="billing-invoice"');
+  expect(enrollment).toContain("window.location.hash");
+  expect(enrollment).toContain("scrollIntoView");
+  expect(enrollment).toContain('window.addEventListener("hashchange",focusLinkedSection)');
  });
  test("enrollment is class hub using existing idempotent generator",()=>{
   const enrollment=source("app/admin/enrollments/[id]/page.tsx");
   expect(enrollment).toContain("generateEnrollmentScheduleV2(record.id,\"full\")");
-  expect(enrollment).toContain("countedBookings");
+  expect(enrollment).toContain("allClassRecords");
+  expect(enrollment).toContain("showAllClasses?visibleClassRecords:visibleClassRecords.slice(0,3)");
+   expect(enrollment).toContain("Estimated not yet arranged");
+   expect(enrollment).toContain("Class filters");
+  expect(enrollment).toContain("Show fewer classes");
   expect(enrollment).toContain("nextClass.id");
-  expect(enrollment).toContain("/admin/classes?enrollment=");
+  expect(enrollment).toContain("?enrollment=${encodeURIComponent(record.id)}");
  });
  test("each schedule calendar view opens consistent class details",()=>{
   const schedule=source("app/admin/schedule/page.tsx");
@@ -48,7 +125,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  });
  test("class editor is authoritative for Zoom, cancellation and enrollment return",()=>{
   const editor=source("components/operations/ClassRecordEditor.tsx");
-  for(const action of ["ZoomClassActions","cancelClassV2","rescheduleClassV2","saveClassAttendance","Open enrollment"])expect(editor).toContain(action);
+  for(const action of ["ZoomClassActions","cancelClassV2","rescheduleClassV2","saveClassAttendance","Back to enrollment"])expect(editor).toContain(action);
  });
  test("classes accept a filtered enrollment history route",()=>{
   const classes=source("app/admin/classes/page.tsx");
@@ -63,15 +140,16 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
  });
  test("Zoom shows meeting pending or failures rather than empty controls",()=>{
   const zoom=source("components/ZoomClassActions.tsx");
-  expect(zoom).toContain("Zoom setup pending");
-  expect(zoom).toContain("Reconcile missing classes");
+  expect(zoom).toContain("Zoom setup scheduled");
+  expect(zoom).toContain("The Zoom room is set up automatically closer to class time");
+  expect(zoom).toContain("Review Zoom Classroom");
   expect(zoom).toContain("data.meeting?.lastError");
   expect(zoom).toContain("!data.available&&reusableLink&&data.canJoin");
   expect(zoom).toContain("data.withinJoinWindow");
   expect(zoom).not.toContain("if(reusableLink)return");
  });
  test("availability requires an authorized atomic transaction",()=>{
-  const sql=source("database/01_install/01_CREATE_SCHEMA.sql");
+  const sql=readCanonicalSql();
   const repo=source("lib/repository.ts");
   expect(sql).toContain("function public.replace_trainer_availability_v1");
   expect(sql).toContain("pg_advisory_xact_lock");
@@ -95,7 +173,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(admin).toContain("Learner recording access updated.");
  });
  test("Zoom host overlap and remote meeting cleanup remain wired",()=>{
-  const schema=source("database/01_install/01_CREATE_SCHEMA.sql");
+  const schema=readCanonicalSql();
   const classroom=source("lib/server/zoom-classroom.ts");
   expect(schema).toContain("zoom_host_active_meeting_no_overlap");
   expect(schema).toContain("exclude using gist");
@@ -162,4 +240,47 @@ test("Historical payouts never report invented changed-field counts; pending cha
  expect(review).toContain("aria-pressed={showFull}");
  expect(admin).toContain("PAYOUT REVIEW HISTORY");
  expect(admin).toContain("PAYOUT CHANGES REQUIRING REVIEW");
+});
+
+test("Cross-role class navigation keeps the learner calendar and trainer history in context",()=>{
+ const calendar=source("components/calendar/LearnerCalendar.tsx");
+ const parent=source("app/parent/calendar/page.tsx");
+ const student=source("app/student/calendar/page.tsx");
+ const trainer=source("app/trainer/classes/page.tsx");
+ const classEditor=source("components/operations/ClassRecordEditor.tsx");
+ expect(parent).toContain('<LearnerCalendar events={scoped} role="parent"');
+ expect(student).toContain('<LearnerCalendar events={scoped} role="student"');
+ for(const marker of ["showAllUpcoming","showHistory","Class history","Show all ${upcoming.length} upcoming classes","setShowHistory(true);selectDate(e.date)"])expect(calendar).toContain(marker);
+ expect(trainer).toContain("['all','All classes']");
+ expect(trainer).toContain('view==="history"');
+ expect(classEditor).toContain('role==="admin"?"/admin/classes":"/trainer/classes"');
+});
+
+
+test("Zoom scheduling repairs missing join URLs and performs bounded automatic retry",()=>{
+ const zoom=source("lib/server/zoom-classroom.ts");
+ const reconciliation=source("app/api/zoom/reconcile-classes/route.ts");
+ const cron=source("app/api/zoom/auto-reconcile/route.ts");
+ const job=source("netlify/functions/zoom-auto-reconcile.mts");
+ const config=source("netlify.toml");
+ const repository=source("lib/repository.ts");
+ const classroom=source("app/api/zoom/classroom/[scheduleEventId]/route.ts");
+ const enrollment=source("app/admin/enrollments/[id]/page.tsx");
+ expect(zoom).toContain('action:"repaired" as const');
+ expect(zoom).toContain("join_url:joinUrl");
+ expect(zoom).toContain("Zoom did not return a valid meeting ID and join URL");
+ expect(reconciliation).toContain(".range(page*200,page*200+199)");
+ expect(reconciliation).toContain("eligibleCount");
+ expect(reconciliation).toContain("batch.length<12");
+ expect(reconciliation).toContain("linked.get(event.id)");
+ expect(cron).toContain('["scheduled","makeup"]');
+ expect(cron).toContain("x-robotronix-cron-secret");
+ expect(cron).toContain(".slice(0,12)");
+ expect(cron).toContain("35*60_000");
+ expect(job).toContain("/api/zoom/auto-reconcile");
+ expect(config).toContain('[functions."zoom-auto-reconcile"]');
+ expect(repository).toContain('adminApi("/api/zoom/reconcile-classes"');
+ expect(repository).toContain("zoomWarning");
+ expect(classroom).toContain("meeting.join_url");
+ expect(enrollment).toContain('"Zoom ready"');
 });

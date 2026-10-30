@@ -2,11 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root=process.cwd();
-const schema=fs.readFileSync(path.join(root,'database/01_install/01_CREATE_SCHEMA.sql'),'utf8');
+const modulesDir=path.join(root,'database/01_install/modules');
+const sqlModules=(kind)=>fs.readdirSync(path.join(modulesDir,kind)).filter(name=>/^\d\d_[a-z0-9_]+\.sql$/.test(name)).sort().map(name=>fs.readFileSync(path.join(modulesDir,kind,name),'utf8')).join('');
+const schema=sqlModules('schema');
+const reference=sqlModules('reference');
+if(!schema||!reference)throw new Error('Missing canonical SQL modules.');
 
 // Reject malformed single-dollar PL/pgSQL delimiters before execution.
-if (/\bdo\s+\$(?!\$)/i.test(schema) || /\bas\s+\$(?!\$)/i.test(schema) || /\bend\s+\$;/i.test(schema)) {
-  throw new Error('Fresh schema has an invalid PL/pgSQL dollar delimiter (expected double dollars).');
+if (/\bdo\s+\$(?:\s|;)/i.test(schema) || /\bas\s+\$(?:\s|;)/i.test(schema) || /\bend\s+\$;/i.test(schema)) {
+  throw new Error('Fresh schema has an invalid bare-dollar PL/pgSQL delimiter.');
 }
 
 const must=[
@@ -32,6 +36,9 @@ const must=[
   'replace_trainer_availability_v1',
   'onboarding_submission_admin_notification_trg',
   'grant usage on schema public to authenticated',
+  'audit_core_change()',
+  "'portal_access_requests','student_invoices','zoom_meetings','zoom_recordings'",
+  'portal_job_runs',
 ];
 for(const marker of must){if(!schema.includes(marker))throw new Error(`Fresh schema missing consolidated marker: ${marker}`)}
 
@@ -46,19 +53,23 @@ const enrollmentStartGuard=schema.match(/create or replace function public\.enfo
 if(!enrollmentStartGuard.includes("coalesce(new.migration_type, 'native') <> 'active_existing'")){
   throw new Error('Fresh schema enrollment start-date guard does not permit historical dates for active_existing migrations.');
 }
+if(fs.existsSync(path.join(root,'database/archive')))throw new Error('Archived SQL must not ship in canonical release.');
+const qaSql=fs.readdirSync(path.join(root,'database/02_qa')).filter(name=>name.endsWith('.sql')).sort();
+const expectedQaSql=['01_PREPARE_DEV_QA_PROFILES.sql','02_RUN_DEV_QA_DATA.sql','03_VERIFY_DEV_QA.sql'];
+if(JSON.stringify(qaSql)!==JSON.stringify(expectedQaSql))throw new Error('Unexpected DEV QA SQL files: '+qaSql.join(', '));
 if(fs.existsSync(path.join(root,'database/04_hotfixes')))throw new Error('Fresh release must not contain database/04_hotfixes.');
-for(const file of ['database/01_install/02_INSERT_MASTER_REFERENCE_DATA.sql','database/03_verify/01_VERIFY_RELEASE.sql','database/02_qa/01_QA_SEED.sql','database/02_qa/02_QA_CLEANUP.sql']){
+for(const file of ['database/03_verify/01_VERIFY_RELEASE.sql','database/02_qa/01_PREPARE_DEV_QA_PROFILES.sql','database/02_qa/02_RUN_DEV_QA_DATA.sql','database/02_qa/03_VERIFY_DEV_QA.sql']){
   if(!fs.existsSync(path.join(root,file)))throw new Error(`Missing required release database file: ${file}`);
 }
 // Consolidated releases must never require separate post-install SQL patches.
 const verificationFiles=fs.readdirSync(path.join(root,'database/03_verify'));
 const unexpectedVerificationSql=verificationFiles.filter(name=>name.endsWith('.sql') && name!=='01_VERIFY_RELEASE.sql');
 if(unexpectedVerificationSql.length)throw new Error('Extra SQL scripts found in 03_verify: '+unexpectedVerificationSql.join(', '));
-for(const directory of ['database/04_hotfixes','database/migrations','supabase/migrations']){
+for(const directory of ['database/04_hotfixes','database/04_migrations','database/05_features','database/migrations','supabase/migrations']){
  if(fs.existsSync(path.join(root,directory)))throw new Error('Incremental SQL patch directory must not ship in the release: '+directory);
 }
 for(const name of fs.readdirSync(path.join(root,'database/01_install'))){
- if(name.endsWith('.sql')&&!['01_CREATE_SCHEMA.sql','02_INSERT_MASTER_REFERENCE_DATA.sql','03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql'].includes(name))
+ if(name.endsWith('.sql')&&!['03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql'].includes(name))
   throw new Error('Unexpected extra install script: '+name);
 }
 // Guard against stale SQL paths in future check scripts after consolidation.
@@ -98,4 +109,4 @@ for(const marker of ['replace_trainer_availability_v1','activated_student_id','a
  if(!verify.includes(marker))throw new Error('Release database verification missing: '+marker);
 }
 
-console.log('Fresh database release check passed: schema is consolidated and no hotfix folder remains.');
+console.log('Fresh database release check passed: ordered functional SQL modules are present and validated.');

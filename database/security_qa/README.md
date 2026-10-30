@@ -39,13 +39,17 @@ The expected accounts are:
 Do not put credentials in the SQL file or Git. The seed deliberately does not
 alter profile roles. It fails if any expected active profile is missing.
 
-1. Execute `03_PROD_SECURITY_QA_SEED.sql` once in Supabase SQL Editor.
+1. Execute `01_PROD_SECURITY_QA_SEED.sql` once in Supabase SQL Editor.
 2. Check the six counts (expected 1,2,2,2,2,2).
 3. Test role and family isolation using the seven dedicated logins.
-4. Run `04_PROD_SECURITY_QA_CLEANUP.sql` when finished. Cleanup is blocked if
+4. Run `02_PROD_SECURITY_QA_CLEANUP.sql` when finished. Cleanup is blocked if
    scheduled classes exist for these test enrollments.
 5. Retire the test Auth users via the authorized Auth admin process separately.
 
 Neither SQL file deletes Auth users or changes RLS, triggers or privilege policy.
 They are not an exhaustive functional QA data pack (no Zoom recordings,
 attendance, payments or payroll). Never run the archived legacy QA seed in prod.
+
+## Separate permanent QA template
+
+`03_PERMANENT_PORTAL_QA_SEED_TEMPLATE.sql` is a maintained **template** for the separate four-account permanent portal QA workflow. Do not execute the template directly. The active `npm run qa:prod-permanent:generate-sql` command reads it and writes a local ignored file to `database/security_qa/generated/01_LOCAL_PROD_QA_SEED.sql` after configuring `.env.portal-qa.local`. This is **not** part of DEV setup and must never be run without explicit authorization and a reviewed target.

@@ -17,8 +17,9 @@ const emails=roles.map(role=>{
  return email.toLowerCase();
 });
 if(new Set(emails).size!==4)throw new Error('QA email addresses must be four distinct identities.');
-let sql=fs.readFileSync('database/archive/legacy/02_qa__03_PERMANENT_PROD_QA_SEED.sql','utf8');
+let sql=fs.readFileSync('database/security_qa/03_PERMANENT_PORTAL_QA_SEED_TEMPLATE.sql','utf8');
 roles.forEach((role,i)=>{sql=sql.replaceAll(`portal-qa-${role}@robotronix.local`,emails[i]);});
-const target=path.resolve('database/02_qa/04_GENERATED_LOCAL_PROD_QA_SEED.sql');
+const target=path.resolve('database/security_qa/generated/01_LOCAL_PROD_QA_SEED.sql');
+fs.mkdirSync(path.dirname(target),{recursive:true});
 fs.writeFileSync(target,sql,{flag:'w',mode:0o600});
 console.log('Generated local QA seed: '+target+' (gitignored).');

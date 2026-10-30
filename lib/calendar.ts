@@ -41,6 +41,37 @@ export function downloadEventIcs(event:ScheduleEvent){
  const url=URL.createObjectURL(blob);
  const a=document.createElement("a");a.href=url;a.download="Robotronix-"+event.date+"-"+event.title.replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"")+".ics";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
+
+/** One-time calendar import of already scheduled classes. Not a live subscription. */
+export function downloadScheduleIcs(events:ScheduleEvent[],learnerName:string){
+ const unique=[...new Map(events.map(event=>[event.id,event])).values()]
+  .filter(event=>event.eventType==="class"&&["scheduled","tentative","makeup"].includes(event.status))
+  .sort((a,b)=>(a.date+a.startTime).localeCompare(b.date+b.startTime));
+ if(!unique.length)return 0;
+ const generated=utcStamp(new Date());
+ const entries=unique.flatMap(event=>{
+  const {start,end}=instantPair(event);
+  return[
+   "BEGIN:VEVENT",
+   "UID:"+esc(event.id)+"@portal.robotronixstemlab.com",
+   "DTSTAMP:"+generated,
+   "DTSTART:"+utcStamp(start),
+   "DTEND:"+utcStamp(end),
+   "SUMMARY:"+esc(event.title),
+   "DESCRIPTION:"+esc("Robotronix Learning Portal - "+learnerName+"\\nPlease check the portal for updates or changes to this class."),
+   "STATUS:"+(event.status==="tentative"?"TENTATIVE":"CONFIRMED"),
+   "END:VEVENT"
+  ];
+ });
+ const contents=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Robotronix//Learning Portal//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",...entries,"END:VCALENDAR"].join("\r\n")+"\r\n";
+ const blob=new Blob([contents],{type:"text/calendar;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download="Robotronix-"+learnerName.replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"")+"-classes.ics";
+ document.body.appendChild(a);a.click();a.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+ return unique.length;
+}
+
 export function calendarEventDate(event:ScheduleEvent){return event.date}
 export function monthCells(year:number,month:number){
  const first=new Date(Date.UTC(year,month,1));const mondayIndex=(first.getUTCDay()+6)%7;const start=new Date(first);start.setUTCDate(first.getUTCDate()-mondayIndex);

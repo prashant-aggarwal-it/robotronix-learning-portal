@@ -1,0 +1,12 @@
+import {readFileSync} from "node:fs";
+import {strict as assert} from "node:assert";
+const layout=readFileSync("app/layout.tsx","utf8");
+const css=readFileSync("app/typography.css","utf8");
+const readability=readFileSync("app/readability.css","utf8");
+assert(layout.indexOf('import "./typography.css";')>layout.indexOf('import "./theme.css";'));
+assert(layout.indexOf('import "./typography.css";')>layout.indexOf('import "./schedule-unified.css";'));
+for(const token of ["--rx-text-xs","--rx-text-sm","--rx-text-base","--rx-text-page","--rx-weight-semibold","--rx-leading-normal","--rx-text-secondary"])assert(css.includes(token),token);
+for(const selector of [".professionalTable th",".professionalTable td",".professionalTable .cellSub",".workspaceShell .sidebarNav a",".workspaceShell .panelHeader h2",".experienceShell .parentPortalNavigation a"])assert(css.includes(selector),selector);
+assert(css.includes("@media(max-width:760px)"));
+assert(readability.includes(".professionalTable th"));
+console.log("PASS: Shared typography tokens, import ordering and cross-role selectors");

@@ -98,3 +98,134 @@
 @media(prefers-reduced-motion:reduce){
  [data-portal-theme="ai-flow"] :is(.card,.panel,.button,.kpiCard,.experienceCard){transition:none!important}
 }
+
+
+/* Parent dashboard AI Flow palette: luminous, modern, and consistent with the admin theme. */
+[data-portal-theme="ai-flow"] .parentDashboardVibrant{
+ position:relative;isolation:isolate;
+ padding:10px 12px 30px;
+ border-radius:26px;
+ background:
+ radial-gradient(ellipse at 8% 0%,rgba(45,110,255,.105),transparent 38%),
+ radial-gradient(ellipse at 94% 6%,rgba(0,199,217,.17),transparent 37%),
+ linear-gradient(160deg,#f8fbff 5%,#f0f7ff 48%,#f9fcff);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRefresh{padding:12px 6px 4px}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRefresh h1{
+ color:#102447;font-size:clamp(28px,3.1vw,42px);letter-spacing:-.037em;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentEyebrow{
+ color:#245cf2;font-size:11px;letter-spacing:.105em;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRefresh p{color:#526c88;font-size:14px}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant :is(.parentLearnerStrip,.parentPrimaryClass,.parentJourneySummary,.parentRecentHistory,.parentLearningCards>.experienceCard,.parentSupportRow>.experienceCard,.parentSupportQuick){
+ border:1px solid #dce8f8;
+ background:#fff;
+ box-shadow:0 10px 26px rgba(32,80,144,.065);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearnerStrip{
+ background:linear-gradient(110deg,#fff 0%,#f5fbff 65%,#edfbfa);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearnerChoice.selected{
+ background:linear-gradient(135deg,#eaf4ff,#e5fbf8);
+ border-color:#1b8ee4;box-shadow:inset 0 0 0 1px rgba(27,142,228,.26);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearnerAvatar{
+ background:#d9f2fa;color:#055f90;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLinkButton{
+ background:#fff;color:#1754a5;border-color:#cbdff6;
+ box-shadow:0 5px 13px rgba(19,78,162,.055);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLinkButton:hover{
+ background:#edf8ff;border-color:#42a3e7;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass{
+ background:linear-gradient(140deg,#f1f9ff,#fff 55%);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .nextClassCard{
+ background:transparent;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .nextClassAccent{
+ background:linear-gradient(170deg,#315bf4 0%,#1787dc 51%,#00b9cd 100%);
+ color:#fff;box-shadow:5px 0 25px rgba(33,109,222,.10);
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .experienceCardBody{
+ padding:26px 28px;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .experienceLabel{color:#255ff2}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass h3{color:#102b4d}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .calendarActions{gap:9px;margin-top:14px}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .calendarActions :is(a,button){
+ flex:0 1 auto;width:auto;max-width:100%;
+ border-radius:11px;padding:10px 14px;font-size:13px;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .calendarActions .button.secondary{
+ background:#e8f2ff;color:#154a98;border:1px solid #bfd7fb;box-shadow:none;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentJourneySummary{
+ background:linear-gradient(145deg,#fff 45%,#f0fcfb);
+ border-top:4px solid #15bad0;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentJourneySummary .parentBigProgress strong{
+ color:#135ff0;font-size:44px;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentJourneySummary .parentQuickStats>div{
+ background:linear-gradient(135deg,#f3f8ff,#eaf8ff);border:1px solid #d9eafb;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentJourneySummary .parentQuickStats>div:last-child{
+ background:linear-gradient(135deg,#edfbf6,#e8f8fa);border-color:#d1eee9;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearningNow .parentSectionHeading h2,
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRecentHistory .parentSectionHeading h2{color:#102d4c}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearningCards>.experienceCard:first-child{
+ background:linear-gradient(160deg,#fff,#f5f9ff);
+ border-top:3px solid #4f7ef9;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentLearningCards>.experienceCard:last-child{
+ background:linear-gradient(160deg,#fff,#f1fcf9);
+ border-top:3px solid #13b7a5;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentSupportQuick{
+ background:linear-gradient(135deg,#eef8ff,#f3fcfc);
+ border-color:#cfe7f5;
+}
+[data-portal-theme="ai-flow"] .parentDashboardVibrant .parentRecentHistory{
+ background:#fff;border-top:3px solid #a2d9f7;
+}
+@media(max-width:640px){
+ [data-portal-theme="ai-flow"] .parentDashboardVibrant{padding:6px 6px 22px;border-radius:17px}
+ [data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .experienceCardBody{padding:18px}
+ [data-portal-theme="ai-flow"] .parentDashboardVibrant .parentPrimaryClass .calendarActions :is(a,button){flex:1 1 160px}
+}
+
+/* Parent calendar – AI Flow layout and colour treatment */
+[data-portal-theme="ai-flow"] .parentCalendarExperience{max-width:1240px;margin:0 auto;padding:30px 12px 40px;min-width:0}
+[data-portal-theme="ai-flow"] .parentCalendarTopGrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:18px 0}
+[data-portal-theme="ai-flow"] .parentCalendarNext,[data-portal-theme="ai-flow"] .parentCalendarExport{padding:21px!important;border:1px solid #d5e7f5;border-radius:19px;background:linear-gradient(135deg,#edfbff,#fff);box-shadow:0 8px 24px rgba(30,85,144,.055);min-width:0}
+[data-portal-theme="ai-flow"] .parentCalendarNext{border-left:5px solid #18a6c9}
+[data-portal-theme="ai-flow"] .parentCalendarNext h2{font-size:clamp(20px,2vw,27px);line-height:1.3;color:#123451;margin:10px 0}
+[data-portal-theme="ai-flow"] .parentCalendarNext p{font-size:14px;color:#58738b}
+[data-portal-theme="ai-flow"] .parentCalendarExport{background:linear-gradient(135deg,#effcf8,#fff)}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .learnerCalendarPrimary{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.85fr);gap:16px;align-items:start}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace :is(.learnerCalendarPanel,.learnerUpcomingList,.calendarDayDetail){background:#fff;border:1px solid #dce9f6;border-radius:19px;padding:18px;min-width:0;box-shadow:0 8px 23px rgba(23,73,131,.045)}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .panelHeader{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .panelHeader h2{font-size:23px;color:#173751}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .panelHeader p{font-size:13px;color:#677f97}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .monthCalendar{background:#daebf6;border-color:#daebf6}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .monthCell{min-height:87px;padding:7px;background:#fff}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .monthCell:hover{background:#effaff}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .monthCell.selected{background:#eaf9ff;box-shadow:inset 0 0 0 2px #0b9dca}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .monthCell i{font-size:10px;color:#0e5c83;background:#dbf3fd;padding:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .monthCell.outside{background:#f6faff}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .parentUpcomingRows{display:grid;gap:9px}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .parentUpcomingLesson{display:flex;align-items:center;gap:10px;width:100%;min-width:0;text-align:left;padding:12px;border:1px solid #d9eaf5;border-radius:12px;background:#f6fbff;color:#173d58;cursor:pointer}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .parentUpcomingLesson.isNext{background:#e7f9f5;border-color:#a2e0d7}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .parentUpcomingLesson:hover{background:#e7f7ff;border-color:#6bc1e4}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .parentUpcomingLesson>b{font-size:12px;min-width:77px;color:#187ca3}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .parentUpcomingLesson>span:nth-child(2){display:grid;gap:4px;flex:1;min-width:0;font-size:14px;font-weight:700}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .parentUpcomingLesson small{font-size:12px;font-weight:400;color:#647d93;overflow-wrap:anywhere}
+[data-portal-theme="ai-flow"] .parentCalendarWorkspace .parentUpcomingLesson>span:last-child{color:#14789c}
+@media(max-width:1050px){[data-portal-theme="ai-flow"] .parentCalendarWorkspace .learnerCalendarPrimary{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:800px){[data-portal-theme="ai-flow"] .parentCalendarTopGrid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:640px){[data-portal-theme="ai-flow"] .parentCalendarExperience{padding:20px 6px 30px}[data-portal-theme="ai-flow"] .parentCalendarWorkspace :is(.learnerCalendarPanel,.learnerUpcomingList,.calendarDayDetail){padding:10px}[data-portal-theme="ai-flow"] .parentCalendarWorkspace .monthCell{min-height:62px;padding:4px}[data-portal-theme="ai-flow"] .parentCalendarWorkspace .monthCell i{display:none}}

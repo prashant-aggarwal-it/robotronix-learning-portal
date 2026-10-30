@@ -4,8 +4,9 @@ import {useEffect,useMemo,useState} from "react";
 import {AppShell} from "@/components/AppShell";
 import {SessionCycleProgress} from "@/components/SessionCycleProgress";
 import {RoleGuard} from "@/components/RoleGuard";
-import {FeedbackCard,NextClassCard,ParentActionCard,ProjectSpotlight,learningStatusCopy} from "@/components/experience/ExperienceCards";
+import {FeedbackCard,NextClassCard,ParentActionCard,ProjectSpotlight} from "@/components/experience/ExperienceCards";
 import {ParentDelightHub} from "@/components/experience/ParentDelightHub";
+import {familyLearningStage,learnerHasLearningEvidence} from "@/lib/learner-lifecycle";
 import {getParentLearnerExperiences,getCurrentParentSetupState} from "@/lib/repository";
 import type {LearnerExperienceSnapshot} from "@/lib/types";
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
@@ -17,36 +18,44 @@ export default function ParentPage(){
  useLiveRefresh(["schedule_events","class_attendance","learning_observations","session_records"],reload,"parent-dashboard");
  const selected=useMemo(()=>children?.find(x=>x.learner.id===selectedId)??children?.[0],[children,selectedId]);
  return <RoleGuard allow={["parent"]}><AppShell role="parent">
-  {children===undefined?<div className="experienceLoading">Loading your family learning space…</div>:!children.length?<div className="experienceEmpty premiumEmpty"><div className="experienceEmptyIcon">◎</div>{(setup?.submitted||0)>0?<><h2>Your family setup has been submitted</h2><p>We’re reviewing your learner details. Once an enrollment is activated, classes, progress, projects and mentor updates will appear here automatically.</p><div className="row"><span className="statusBadge status-planned">Pending activation</span><Link className="button ghost" href="/onboarding">+ Add another child</Link></div></>:<><h2>Set up your child’s learning profile</h2><p>Add your child’s details, learning interests and preferred class timings. You can add more than one child to the same family account.</p><Link className="button" href="/onboarding">Start Family Setup</Link></>}</div>:selected&&(()=>{
+  <div className="parentDashboardVibrant">
+  {Boolean(setup?.pending)&&Boolean(children?.length)&&<div className="infoBanner" role="status" style={{marginBottom:16}}><b>{setup?.pending} learner setup{setup?.pending===1?" is":"s are"} awaiting activation.</b> Your active learners remain available below. Submitted learner details will appear here after Admin completes enrollment. <Link href="/onboarding" className="textLink">Add another child →</Link></div>}
+  {children===undefined?<div className="experienceLoading">Loading your family learning space…</div>:!children.length?<div className="experienceEmpty premiumEmpty"><div className="experienceEmptyIcon">◎</div>{(setup?.submitted||0)>0?<><h2>Your family setup has been submitted</h2><p>We’re reviewing your learner details. Once an enrollment is activated, classes, progress, projects and mentor updates will appear here automatically.</p><div className="row"><span className="statusBadge status-planned">{setup?.pending?"Awaiting Admin activation":"Setup submitted"}</span><Link className="button ghost" href="/onboarding">+ Add another child</Link></div></>:<><h2>Set up your child’s learning profile</h2><p>Add your child’s details, learning interests and preferred class timings. You can add more than one child to the same family account.</p><Link className="button" href="/onboarding">Start Family Setup</Link></>}</div>:selected&&(()=>{
    const firstName=selected.learner.name.split(" ")[0];
-   const status=learningStatusCopy(selected.learner.status);
-   const attendedRecent=selected.recentClasses.filter(x=>x.attendance==="attended"||x.attendance==="late").length;
+   const noLessonsYet=selected.learner.sessionsCompleted===0&&(selected.learner.hoursCompleted??0)===0;
+   const learningStage=familyLearningStage(selected);
+   const hasEvidence=learnerHasLearningEvidence(selected);
    const completedProjects=selected.projects.filter(p=>p.status==="completed").length;
-   const latestProject=selected.projects[0];
    const flexible=!(Number(selected.learner.plannedHours)>0);
-   const milestone=completedProjects?`${completedProjects} practical ${completedProjects===1?"project":"projects"} completed`:selected.learner.sessionsCompleted?`${selected.learner.sessionsCompleted} attended sessions building momentum`:"Learning journey ready to begin";
    return <>
-   <section className="familyHero parentPulseHero">
-    <div className="familyHeroCopy">
-      <div className="parentIdentity"><span className="childAvatar heroAvatar">{selected.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><div><span className="experienceLabel">{firstName.toUpperCase()}’S LEARNING PULSE</span><div className={`parentStatusChip ${status.tone}`}><i/>{status.label}</div></div></div>
-      <h1>{selected.learner.status==="on_track"?`${firstName} is building good momentum.`:selected.learner.status==="reinforce"?`${firstName} is strengthening key concepts.`:`${firstName} has extra mentor focus right now.`}</h1>
-      <p>{selected.courseTitle} · {selected.enrollmentType==="one_to_one"?"1-to-1 learning":"Cohort learning"} with mentor {selected.trainerName}</p>
-      <div className="parentHeroMetrics"><div><b>{flexible?selected.learner.sessionsCompleted:`${selected.learner.progress}%`}</b><span>{flexible?"Sessions attended":"Course journey"}</span></div><div><b>{selected.learner.attendance}%</b><span>Attendance</span></div><div><b>{completedProjects}</b><span>Projects completed</span></div></div>
-      <div className="parentMilestone"><span>Latest momentum</span><b>{milestone}</b></div>
+    <div className="parentRefresh">
+      <div><span className="parentEyebrow">FAMILY DASHBOARD · {learningStage}</span><h1>{firstName}'s learning hub</h1><p>{selected.courseTitle} · {selected.enrollmentType==="one_to_one"?"1-to-1 learning":"Cohort learning"} · Mentor {selected.trainerName}</p></div>
+      <Link className="parentLinkButton" href="/parent/calendar">View calendar →</Link>
     </div>
-    <div className="familySwitcher"><div className="familySwitcherHead"><span>Viewing learner</span><small>{children.length>1?`${children.length} learners linked`:"Family account"}</small></div><div className="childSwitchRow">{children.map(child=><button key={child.learner.id} className={`childSwitch ${selected.learner.id===child.learner.id?"active":""}`} onClick={()=>setSelectedId(child.learner.id)}><span className="childAvatar">{child.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><span><b>{child.learner.name}</b><small>{child.learner.grade} · {child.courseTitle}</small></span><span className="childSwitchArrow">→</span></button>)}</div><Link className="familyLearnerLink" href={`/parent/learner/${selected.learner.id}`}>Open {firstName}’s learner view →</Link><Link className="familyLearnerLink addLearnerLink" href="/onboarding">+ Add another child</Link></div>
-   </section>
-
-   <section className="parentStoryGrid">
-    <div className="parentStoryCard highlight"><span className="experienceLabel">THIS WEEK AT ROBOTRONIX™</span><h2>Learned. Built. Improved.</h2><div className="storySteps"><div><i>01</i><span><small>Consistency</small><b>{attendedRecent?`${attendedRecent} recent ${attendedRecent===1?"class":"classes"} attended`:"Next class is the next step"}</b></span></div><div><i>02</i><span><small>Current focus</small><b>{selected.learner.nextFocus||"Keep building confidence through practice"}</b></span></div><div><i>03</i><span><small>Practical proof</small><b>{latestProject?.title||"First practical build coming up"}</b></span></div></div></div>
-    <div className="parentCourseJourney"><div className="journeyTop"><div><span className="experienceLabel">{flexible?"LEARNING JOURNEY":"COURSE JOURNEY"}</span><h3>{selected.courseTitle}</h3></div><strong>{flexible?`${selected.learner.sessionsCompleted} attended`:`${selected.learner.hoursCompleted??0} / ${selected.learner.plannedHours??0} hours`}</strong></div><SessionCycleProgress hoursCompleted={selected.learner.hoursCompleted} plannedHours={selected.learner.plannedHours} attendedClasses={selected.learner.sessionsCompleted}/><div className="journeyMeta"><span>{flexible?"Hour target not set · attendance tracked separately":`${selected.learner.progress}% course complete`}</span><span>Classes attended are shown separately</span></div><Link href={`/parent/learner/${selected.learner.id}`} className="textLink">See the full learning journey →</Link></div>
-   </section>
-
-   <section className="experienceKpis parentKpis"><div className="experienceKpi kpiProgress"><span>{flexible?"Learning sessions":"Course progress"}</span><b>{flexible?selected.learner.sessionsCompleted:`${selected.learner.progress}%`}</b><small>{flexible?"Attended sessions · 8-session rhythm":`${selected.learner.hoursCompleted??0} of ${selected.learner.plannedHours??0} instructional hours · ${selected.learner.hoursRemaining??0} left`}</small></div><div className="experienceKpi kpiAttendance"><span>Attendance</span><b>{selected.learner.attendance}%</b><small>{selected.attendanceRecorded} recorded classes</small></div><div className="experienceKpi kpiProjects"><span>Practical builds</span><b>{completedProjects}</b><small>{selected.projects.length} project records</small></div><div className="experienceKpi kpiSignal"><span>Learning status</span><b className={`statusText ${selected.learner.status}`}>{status.label}</b><small>Based on recent mentor signals</small></div></section>
-
-   <ParentDelightHub snapshot={selected}/>
-   <section className="experienceGrid parentDashboardGrid"><div className="experienceStack"><ParentActionCard snapshot={selected}/><FeedbackCard snapshot={selected}/></div><div className="experienceStack"><NextClassCard event={selected.nextClass} trainer={selected.trainerName}/><ProjectSpotlight snapshot={selected} href={`/parent/learner/${selected.learner.id}`}/></div></section>
-   <section className="experienceSection recentLearningSection"><div className="experienceSectionHead"><div><span className="experienceLabel">RECENT LEARNING RHYTHM</span><h2>Consistency at a glance</h2><p>Attendance history stays transparent, while only attended classes move course progress forward.</p></div></div><div className="recentClassStrip">{selected.recentClasses.length?selected.recentClasses.map(item=><div className={`recentClass recent-${item.attendance}`} key={item.scheduleEventId}><span className={`attendanceDot ${item.attendance}`}/><div><b>{new Intl.DateTimeFormat("en-IN",{day:"numeric",month:"short"}).format(new Date(`${item.date}T12:00:00`))}</b><small>{item.attendance.charAt(0).toUpperCase()+item.attendance.slice(1)}</small></div></div>):<div className="experienceEmpty compact"><p>No attendance records yet.</p></div>}</div></section>
-  </>})()}
+    <div id="my-children" className="parentLearnerStrip" aria-label="My children">
+      <div className="parentLearnerChoices">{children.map(child=><div className={`parentLearnerChoice ${selected.learner.id===child.learner.id?"selected":""}`} key={child.learner.id}><button type="button" className="parentLearnerSelect" aria-pressed={selected.learner.id===child.learner.id} aria-label={`View dashboard for ${child.learner.name}`} onClick={()=>setSelectedId(child.learner.id)}><span className="parentLearnerAvatar">{child.learner.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><span><b>{child.learner.name}</b><small>{child.learner.grade}</small></span></button><Link className="parentLearnerJourneyLink" href={`/parent/learner/${child.learner.id}`} aria-label={`Open ${child.learner.name}'s learning journey`}>Open learning journey →</Link></div>)}</div>
+      <Link href="/onboarding" className="parentLinkButton">+ Add another child</Link>
+    </div>
+    <div className="parentPriorityGrid">
+      <section className="parentPrimaryClass" aria-label="Your next class">
+        <NextClassCard event={selected.nextClass} trainer={selected.trainerName}/>
+      </section>
+      <section className="parentJourneySummary" aria-label="Course progress">
+        <div className="parentSummaryTitle"><div><span className="parentEyebrow">LEARNING PROGRESS</span><h2>{selected.courseTitle}</h2></div><Link href={`/parent/learner/${selected.learner.id}`} className="parentInlineLink">Full journey →</Link></div>
+        <div className="parentBigProgress"><strong>{flexible?`${selected.learner.sessionsCompleted}`:`${selected.learner.progress}%`}</strong><span>{flexible?"classes attended":"course completed"}</span></div>
+        <SessionCycleProgress hoursCompleted={selected.learner.hoursCompleted} plannedHours={selected.learner.plannedHours} attendedClasses={selected.learner.sessionsCompleted}/>
+        <p>{flexible?"Learning hours will appear when the course plan is available.":`${selected.learner.hoursCompleted??0} of ${selected.learner.plannedHours??0} instructional hours delivered`}</p>
+        <div className="parentQuickStats"><div><b>{selected.attendanceRecorded?selected.learner.attendance+"%":"—"}</b><span>Attendance</span><small>{selected.attendanceRecorded?selected.attendanceRecorded+" recorded classes":"No classes recorded"}</small></div><div><b>{completedProjects}</b><span>Projects completed</span><small>{completedProjects?"Keep creating":"First build ahead"}</small></div></div>
+      </section>
+    </div>
+    <section className="parentLearningNow">
+      <div className="parentSectionHeading"><span className="parentEyebrow">YOUR CHILD'S LEARNING</span><h2>{noLessonsYet?"An exciting start is ahead":"What has been happening"}</h2><p>{!hasEvidence?(noLessonsYet?"Once classes begin, you’ll see meaningful updates here.":"Classes have started. Mentor learning evidence will appear after class feedback is published."):"Follow mentor feedback, class learning and practical projects in one place."}</p></div>
+      <div className="parentLearningCards"><FeedbackCard snapshot={selected}/><ProjectSpotlight snapshot={selected} href={`/parent/learner/${selected.learner.id}`}/></div>
+    </section>
+    <section className="parentSupportRow"><ParentActionCard snapshot={selected}/><div className="parentSupportQuick"><span className="parentEyebrow">NEED HELP?</span><h3>Your family support space</h3><p>Ask about classes, schedules or your child's learning.</p><Link href="/parent/messages" className="parentLinkButton">Open messages →</Link></div></section>
+    <section className="parentRecentHistory"><div className="parentSectionHeading"><span className="parentEyebrow">RECENT CLASSES</span><h2>Attendance at a glance</h2></div><div className="recentClassStrip">{selected.recentClasses.length?selected.recentClasses.map(item=><div className={`recentClass recent-${item.attendance}`} key={item.scheduleEventId}><span className={`attendanceDot ${item.attendance}`}/><div><b>{new Intl.DateTimeFormat("en-IN",{day:"numeric",month:"short"}).format(new Date(`${item.date}T12:00:00`))}</b><small>{item.attendance.charAt(0).toUpperCase()+item.attendance.slice(1)}</small></div></div>):<p className="parentQuietEmpty">Attendance history will appear after your child's first class.</p>}</div></section>
+    <details className="parentAdditionalServices"><summary>More family services · Reschedule, support and referrals</summary><ParentDelightHub snapshot={selected}/></details>
+    </>})()}
+  </div>
  </AppShell></RoleGuard>;
 }

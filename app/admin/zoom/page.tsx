@@ -1,5 +1,7 @@
 "use client";
 import {Suspense,useEffect,useMemo,useState} from "react";
+import {FormErrorSummary} from "@/components/admin/FormErrorSummary";
+import {readableSaveError,type FormIssue} from "@/lib/form-errors";
 import {useSearchParams} from "next/navigation";
 import {AppShell} from "@/components/AppShell";
 import {RoleGuard} from "@/components/RoleGuard";
@@ -8,6 +10,8 @@ import {adminApi} from "@/lib/admin-api-client";
 import {useLiveRefresh} from "@/hooks/useLiveRefresh";
 
 type Host={id:string;label:string;zoomEmail:string;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;lastSyncAt:string|null};
+type ReadinessIssue={id:string;title:string;date:string;startTime:string;timezone:string;hostReserved:boolean;hasZoomRoom:boolean;needsAttention:boolean};
+type ReadinessSummary={scheduled:number;capacityConflicts:number;waitingForJit:number;ready:number};
 type Recording={id:string;recording_type:string;file_type:string;file_size_bytes:number;recording_start:string|null;status:string;learner_visible:boolean;retain_until:string|null;protected_from_deletion:boolean};
 type Meeting={id:string;purpose:"class"|"general"|"demo";topic:string;status:string;scheduled_start:string;duration_minutes:number;recording_status:string;recording_enabled:boolean;join_url?:string|null;passcode?:string|null;meeting_notes?:string|null;last_error?:string|null;event:any;host?:{label:string;email:string}|null;presence:any;recordings:Recording[]};
 
@@ -23,26 +27,37 @@ function Workspace(){
  const params=useSearchParams();
  const[tab,setTab]=useState<"overview"|"meetings"|"recordings"|"hosts">("overview");
  const[hosts,setHosts]=useState<Host[]>([]),[meetings,setMeetings]=useState<Meeting[]>([]),[storage,setStorage]=useState<Array<{hostId:string;bytes:number}>>([]);
+ const[readiness,setReadiness]=useState<ReadinessSummary>({scheduled:0,capacityConflicts:0,waitingForJit:0,ready:0});
+ const[readinessIssues,setReadinessIssues]=useState<ReadinessIssue[]>([]);
  const[label,setLabel]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const[showCreate,setShowCreate]=useState(false);
  const[classView,setClassView]=useState<"today"|"upcoming"|"issues"|"all">("today");
  const[classQuery,setClassQuery]=useState("");
  const[classPage,setClassPage]=useState(1);
- const[newMeeting,setNewMeeting]=useState({title:"",startAt:"",durationMinutes:60,recording:true,notes:""});
+ const[newMeeting,setNewMeeting]=useState({title:"",startAt:"",durationMinutes:60,recording:true,notes:""});const[meetingIssues,setMeetingIssues]=useState<FormIssue[]>([]);
 
- async function load(){setError("");try{const x=await adminApi("/api/zoom/overview");setHosts(x.hosts||[]);setMeetings(x.meetings||[]);setStorage(x.storageByHost||[])}catch(e){setError(e instanceof Error?e.message:String(e))}}
+ async function load(){setError("");try{const x=await adminApi("/api/zoom/overview");setHosts(x.hosts||[]);setMeetings(x.meetings||[]);setStorage(x.storageByHost||[]);setReadiness(x.readinessSummary||{scheduled:0,capacityConflicts:0,waitingForJit:0,ready:0});setReadinessIssues(x.readinessIssues||[])}catch(e){setError(readableSaveError(e))}}
  async function reconcileClasses(){
-  if(!window.confirm("Provision Zoom rooms for scheduled online classes that have no linked meeting? Existing class bookings will remain unchanged."))return;
+  if(!window.confirm("Check and provision missing Zoom rooms only for classes starting in the next 35 minutes. Future course bookings will remain reserved without creating Zoom meetings."))return;
   setBusy(true);setError("");setNotice("");
   try{
    const x=await adminApi("/api/zoom/reconcile-classes",{method:"POST"});
-   setNotice(`Classroom reconciliation: ${x.created||0} created, ${x.skipped||0} skipped, ${x.failed||0} need review. ${x.failed?"See error details below.":""}`);
-   if(x.failures?.length)setError(x.failures.slice(0,5).map((f:{eventId:string;reason:string})=>f.eventId+": "+f.reason).join(" · "));
    await load();
-  }catch(e){setError(e instanceof Error?e.message:String(e))}
+   setNotice(`Zoom reconciliation: ${x.created||0} created, ${x.skipped||0} skipped, ${x.failed||0} failed in this batch.${x.remaining?` ${x.remaining} additional eligible classes remain; run again to continue.`:""}`);
+   if(x.failures?.length)setError(x.failures.slice(0,5).map((f:{eventId:string;reason:string})=>f.eventId+": "+f.reason).join(" · "));
+  }catch(e){setError(readableSaveError(e))}
   finally{setBusy(false)}
  }
- async function syncZoom(){setBusy(true);setError("");setNotice("");try{const x=await adminApi("/api/zoom/reconcile",{method:"POST"});setNotice(`Synced with Zoom · ${x.meetingsSynced||0} meetings · ${x.recordingsSynced||0} recording files${x.errors?` · ${x.errors} item(s) need review`:""}`);await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
+ async function retryClassCapacity(id:string){
+  if(busy)return;setBusy(true);setError("");setNotice("");
+  try{
+   const result=await adminApi("/api/zoom/schedule/sync",{method:"POST",
+    body:JSON.stringify({scheduleEventId:id,action:"reserve"})});
+   await load();
+   setNotice(result.action==="reserved"?"Zoom host capacity reserved for this class.":"No connected Zoom host is free for this class time. Adjust the schedule or connect another host.");
+  }catch(e){setError(readableSaveError(e))}finally{setBusy(false)}
+ }
+ async function syncZoom(){if(busy)return;setBusy(true);setError("");setNotice("");try{const x=await adminApi("/api/zoom/reconcile",{method:"POST"});setNotice(`Synced with Zoom · ${x.meetingsSynced||0} meetings · ${x.recordingsSynced||0} recording files${x.errors?` · ${x.errors} item(s) need review`:""}`);await load()}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
  useEffect(()=>{void load()},[]);
  useLiveRefresh(["zoom_meetings","zoom_recordings","zoom_host_accounts"],load,"admin-zoom");
  useEffect(()=>{if(params.get("connected"))setNotice("Zoom account connected successfully"+(params.get("email")?" · "+params.get("email"):"")+".");if(params.get("zoom_error"))setError(String(params.get("zoom_error")))},[params]);
@@ -53,7 +68,7 @@ function Workspace(){
  const now=Date.now();
  const dayKey=(date:Date)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(date);
  const todayKey=dayKey(new Date());
- const needsAttention=(m:Meeting)=>m.status==="error"||Boolean(m.last_error)||(!m.event?.id)||m.status==="cancelled";
+ const needsAttention=(m:Meeting)=>m.status==="error"||Boolean(m.last_error)||(!m.join_url&&m.purpose==="class")||(!m.event?.id)||m.status==="cancelled";
  const filteredClasses=classes.filter(m=>{
    const start=new Date(m.scheduled_start).getTime();
    const relevant=classView==="today"?dayKey(new Date(m.scheduled_start))===todayKey:classView==="upcoming"?start>=now:classView==="issues"?needsAttention(m):true;
@@ -70,13 +85,19 @@ function Workspace(){
  const active=hosts.filter(h=>h.enabled&&h.status==="connected").length;
  const live=meetings.filter(m=>m.status==="started").length;
 
- async function connect(){setBusy(true);setError("");try{const next=label.trim()||"Zoom Host "+(hosts.length+1);const x=await adminApi("/api/zoom/connect",{method:"POST",body:JSON.stringify({label:next})});window.location.assign(x.authorizationUrl)}catch(e){setError(e instanceof Error?e.message:String(e));setBusy(false)}}
- async function patchHost(id:string,body:any){setBusy(true);setError("");try{await adminApi("/api/zoom/hosts",{method:"PATCH",body:JSON.stringify(Object.assign({id},body))});await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
- async function createMeeting(){setBusy(true);setError("");try{const body:any={title:newMeeting.title.trim(),durationMinutes:newMeeting.durationMinutes,recording:newMeeting.recording,notes:newMeeting.notes.trim()};if(newMeeting.startAt)body.startAt=new Date(newMeeting.startAt).toISOString();await adminApi("/api/zoom/meetings",{method:"POST",body:JSON.stringify(body)});setNewMeeting({title:"",startAt:"",durationMinutes:60,recording:true,notes:""});setShowCreate(false);setNotice("Meeting created successfully.");await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
- async function cancelMeeting(id:string){if(!window.confirm("Cancel this Zoom meeting?"))return;setBusy(true);try{await adminApi("/api/zoom/meetings",{method:"PATCH",body:JSON.stringify({id,action:"cancel"})});await load()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
- async function recordingAction(id:string,action:string,days?:number){if(action==="delete"&&!window.confirm("Move this recording to Zoom trash?"))return;setBusy(true);setError("");setNotice("");try{await adminApi("/api/zoom/recordings/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({action,days})});await load();setNotice(action==="delete"?"Recording moved to Zoom trash and removed from active list.":action==="toggle-protect"?"Recording protection updated.":action==="toggle-learner"?"Learner recording access updated.":"Recording retention extended.")}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
+ async function connect(){if(busy)return;setBusy(true);setError("");try{const next=label.trim()||"Zoom Host "+(hosts.length+1);const x=await adminApi("/api/zoom/connect",{method:"POST",body:JSON.stringify({label:next})});window.location.assign(x.authorizationUrl)}catch(e){setError(readableSaveError(e));setBusy(false)}}
+ async function patchHost(id:string,body:any){if(busy)return;setBusy(true);setError("");try{await adminApi("/api/zoom/hosts",{method:"PATCH",body:JSON.stringify(Object.assign({id},body))});await load()}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
+ async function createMeeting(){if(busy)return;
+ const issues:FormIssue[]=[];
+ if(!newMeeting.title.trim())issues.push({field:"meetingTitle",message:"Enter a meeting title."});
+ if(newMeeting.startAt&&Number.isNaN(Date.parse(newMeeting.startAt)))issues.push({field:"meetingStart",message:"Choose a valid meeting date and time."});
+ if(![30,45,60,90,120].includes(newMeeting.durationMinutes))issues.push({field:"meetingDuration",message:"Select a supported meeting duration."});
+ setMeetingIssues(issues);if(issues.length){setError("Correct the highlighted meeting details before saving.");return;}
+ setBusy(true);setError("");try{const body:any={title:newMeeting.title.trim(),durationMinutes:newMeeting.durationMinutes,recording:newMeeting.recording,notes:newMeeting.notes.trim()};if(newMeeting.startAt)body.startAt=new Date(newMeeting.startAt).toISOString();await adminApi("/api/zoom/meetings",{method:"POST",body:JSON.stringify(body)});setNewMeeting({title:"",startAt:"",durationMinutes:60,recording:true,notes:""});setShowCreate(false);setNotice("Meeting created successfully.");await load()}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
+ async function cancelMeeting(id:string){if(busy)return;if(!window.confirm("Cancel this Zoom meeting?"))return;setBusy(true);try{await adminApi("/api/zoom/meetings",{method:"PATCH",body:JSON.stringify({id,action:"cancel"})});await load()}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
+ async function recordingAction(id:string,action:string,days?:number){if(busy)return;if(action==="delete"&&!window.confirm("Move this recording to Zoom trash?"))return;setBusy(true);setError("");setNotice("");try{await adminApi("/api/zoom/recordings/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({action,days})});await load();setNotice(action==="delete"?"Recording moved to Zoom trash and removed from active list.":action==="toggle-protect"?"Recording protection updated.":action==="toggle-learner"?"Learner recording access updated.":"Recording retention extended.")}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
  async function watchRecording(id:string){window.open("/admin/zoom/recording/"+encodeURIComponent(id),"_blank","noopener,noreferrer")}
- async function copy(value?:string|null){if(!value)return;await navigator.clipboard.writeText(value);setNotice("Guest Zoom link copied.");window.setTimeout(()=>setNotice(""),2000)}
+ async function copy(value?:string|null){if(!value)return;try{await navigator.clipboard.writeText(value);setNotice("Guest Zoom link copied.")}catch{setError("Unable to copy the link. Check clipboard permission and try again.")}}
 
  const tabButton=(id:typeof tab,title:string,count:number)=><button className={tab===id?"button":"button secondary"} onClick={()=>setTab(id)}>{title+" · "+count}</button>;
 
@@ -93,12 +114,26 @@ function Workspace(){
   </section>
 
   <section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row zoomOperationsActions"><button className="button zoomUtilityButton" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New meeting</button><button className="button ghost zoomUtilityButton" disabled={busy} onClick={reconcileClasses}>Reconcile missing classes</button><button className="button secondary zoomUtilityButton" disabled={busy} onClick={syncZoom}>{busy?"Syncing…":"Sync with Zoom"}</button></div></div>
+   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row zoomOperationsActions"><button className="button zoomUtilityButton" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New meeting</button><button className="button ghost zoomUtilityButton" disabled={busy} onClick={reconcileClasses}>Retry upcoming classrooms</button><button className="button secondary zoomUtilityButton" disabled={busy} onClick={syncZoom}>{busy?"Syncing…":"Sync with Zoom"}</button></div></div>
    <div className="row" style={{gap:8,flexWrap:"wrap"}}>{tabButton("overview","Classes",classes.length)}{tabButton("meetings","Meetings",general.length)}{tabButton("recordings","Recordings",recordings.length)}{tabButton("hosts","Hosts",hosts.length)}</div>
   </section>
 
   {tab==="overview"&&<section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">CLASSROOM DELIVERY</div><h2>Zoom classroom operations</h2><p>Today's sessions appear first. Use the learner's enrollment for their full course timetable.</p></div></div>
+   <div className="panelHeader"><div><div className="eyebrow">CLASSROOM DELIVERY</div><h2>Zoom classroom operations</h2><p>Zoom rooms are provisioned shortly before classes. Full-course host reservations are tracked separately.</p></div></div>
+   <div className="row" style={{gap:16,flexWrap:"wrap",marginBottom:12}}>
+    <strong>Upcoming scheduled: {readiness.scheduled}</strong>
+    <span>Ready rooms: {readiness.ready}</span>
+    <span>Awaiting just-in-time provisioning: {readiness.waitingForJit}</span>
+    <strong style={readiness.capacityConflicts?{color:"var(--danger,#b42318)"}:{}}>Host capacity exceptions: {readiness.capacityConflicts}</strong>
+   </div>
+   {readinessIssues.length>0&&<details style={{marginBottom:16}} open={readiness.capacityConflicts>0}>
+    <summary>Review capacity and provisioning exceptions ({readinessIssues.length} shown)</summary>
+    <div className="tableWrap"><table><thead><tr><th>Class</th><th>Scheduled date</th><th>Issue</th><th>Action</th></tr></thead><tbody>
+     {readinessIssues.map(x=><tr key={x.id}><td>{x.title}</td><td>{x.date} · {x.startTime} ({x.timezone})</td>
+      <td>{!x.hostReserved?"No connected host slot reserved":"Provisioned Zoom room needs review"}</td>
+      <td><button className="button ghost" disabled={busy} onClick={()=>void retryClassCapacity(x.id)}>Retry capacity</button> <a href={"/admin/classes/"+encodeURIComponent(x.id)}>Open class</a></td></tr>)}
+    </tbody></table></div>
+   </details>}
    <div className="row zoomClassFilters">
     <label>View <select className="input" value={classView} onChange={e=>{setClassView(e.target.value as typeof classView);setClassPage(1)}}>
      <option value="today">Today</option><option value="upcoming">Upcoming</option><option value="issues">Needs attention</option><option value="all">All provisioned</option>
@@ -123,13 +158,13 @@ function Workspace(){
    {showCreate&&<section className="dataSection">
     <div className="panelHeader"><div><div className="eyebrow">NEW GENERAL MEETING</div><h2>Create without opening Zoom</h2><p>Robotronix automatically chooses an available host. Share the guest link with anyone you invite.</p></div><button className="button secondary" onClick={()=>setShowCreate(false)}>Close</button></div>
     <div className="formGrid">
-     <label>Meeting title<input className="input" value={newMeeting.title} onChange={e=>setNewMeeting(v=>Object.assign({},v,{title:e.target.value}))} placeholder="e.g. Demo with ABC School"/></label>
-     <label>Start time (optional)<input className="input" type="datetime-local" value={newMeeting.startAt} onChange={e=>setNewMeeting(v=>Object.assign({},v,{startAt:e.target.value}))}/></label>
-     <label>Duration<select className="select" value={newMeeting.durationMinutes} onChange={e=>setNewMeeting(v=>Object.assign({},v,{durationMinutes:Number(e.target.value)}))}><option value={30}>30 minutes</option><option value={45}>45 minutes</option><option value={60}>60 minutes</option><option value={90}>90 minutes</option><option value={120}>2 hours</option></select></label>
+     <label id="field-meetingTitle" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingTitle")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Meeting title *<input className="input" value={newMeeting.title} onChange={e=>setNewMeeting(v=>Object.assign({},v,{title:e.target.value}))} placeholder="e.g. Demo with ABC School"/></label>
+     <label id="field-meetingStart" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingStart")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Start time (optional)<input className="input" type="datetime-local" value={newMeeting.startAt} onChange={e=>setNewMeeting(v=>Object.assign({},v,{startAt:e.target.value}))}/></label>
+     <label id="field-meetingDuration" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingDuration")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Duration<select className="select" value={newMeeting.durationMinutes} onChange={e=>setNewMeeting(v=>Object.assign({},v,{durationMinutes:Number(e.target.value)}))}><option value={30}>30 minutes</option><option value={45}>45 minutes</option><option value={60}>60 minutes</option><option value={90}>90 minutes</option><option value={120}>2 hours</option></select></label>
      <label>Recording<select className="select" value={newMeeting.recording?"yes":"no"} onChange={e=>setNewMeeting(v=>Object.assign({},v,{recording:e.target.value==="yes"}))}><option value="yes">Cloud recording on</option><option value="no">Do not record</option></select></label>
      <label style={{gridColumn:"1 / -1"}}>Notes<input className="input" value={newMeeting.notes} onChange={e=>setNewMeeting(v=>Object.assign({},v,{notes:e.target.value}))} placeholder="Optional internal purpose or context"/></label>
     </div>
-    <div className="row topGap"><button className="button" disabled={busy||!newMeeting.title.trim()} onClick={createMeeting}>Create Meeting</button><button className="button secondary" onClick={()=>setShowCreate(false)}>Cancel</button></div>
+    <FormErrorSummary issues={meetingIssues}/>{error&&<div className="errorBanner" role="alert">{error}</div>}<div className="row topGap"><button className="button" disabled={busy} onClick={createMeeting}>Create Meeting</button><button className="button secondary" onClick={()=>setShowCreate(false)}>Cancel</button></div>
    </section>}
    <section className="dataSection">
     <div className="panelHeader"><div><div className="eyebrow">DEMOS · CLIENTS · INTERNAL</div><h2>General meetings</h2><p>These meetings do not create learner attendance, progress or payroll records.</p></div><button className="button" onClick={()=>setShowCreate(true)}>+ New Meeting</button></div>

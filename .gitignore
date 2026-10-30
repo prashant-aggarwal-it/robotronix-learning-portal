@@ -14,5 +14,5 @@ Thumbs.db
 tsconfig.tsbuildinfo
 
 # Generated production QA seed with test email addresses
-database/02_qa/04_GENERATED_LOCAL_PROD_QA_SEED.sql
+database/security_qa/generated/
 database/generated/

@@ -157,9 +157,9 @@ body{background:linear-gradient(180deg,#f9faff 0,#f4f5fa 100%)}
 .tableActions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.tableAction.subtle{color:#7b8190;font-weight:650}
 
 /* v0.8 — Operations Complete */
-.cleanStepper{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:720px;margin:18px 0 24px;background:#fff;border:1px solid #e7e8f0;border-radius:18px;padding:17px 20px;box-shadow:0 10px 35px rgba(42,48,83,.045)}
+.cleanStepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));max-width:960px;margin:18px 0 24px;background:#fff;border:1px solid #e7e8f0;border-radius:18px;padding:17px 20px;box-shadow:0 10px 35px rgba(42,48,83,.045)}
 .cleanStep{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:9px;color:#9298a8;position:relative}.cleanStep>span{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#f1f2f6;color:#7d8494;font-size:12px;font-weight:850;z-index:2}.cleanStep>b{font-size:13px;white-space:nowrap}.cleanStep>i{height:2px;background:#ececf3;display:block;margin:0 13px}.cleanStep.current>span{background:#6d3cc9;color:#fff;box-shadow:0 7px 17px rgba(109,60,201,.22)}.cleanStep.current>b{color:#4e2aaa}.cleanStep.done>span{background:#e6f7f0;color:#16845d}.cleanStep.done>b{color:#28765e}.cleanStep.done>i{background:#a9dfcb}
-.readinessCard{margin-top:20px;border:1px solid #e5e6ef;border-radius:18px;background:linear-gradient(145deg,#fbfbfe,#f8f7ff);padding:18px 20px;display:grid;grid-template-columns:minmax(210px,.7fr) 1.3fr;gap:20px;align-items:start}.readinessCard>div{display:grid;gap:5px}.readinessCard>div>b{font-size:17px}.readinessCard>div>span{font-size:12px;color:#7c8496}.readinessCard ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0;padding:0;list-style:none}.readinessCard li{font-size:12px;color:#8d94a5;padding:8px 10px;border:1px solid #e8e9ef;border-radius:10px;background:#fff}.readinessCard li:before{content:"○";margin-right:7px}.readinessCard li.ok{color:#147454;border-color:#cfe9dd;background:#f5fbf8}.readinessCard li.ok:before{content:"✓";font-weight:900}
+.readinessCard{margin-top:20px;border:1px solid #e5e6ef;border-radius:18px;background:linear-gradient(145deg,#fbfbfe,#f8f7ff);padding:18px 20px;display:grid;grid-template-columns:minmax(210px,.7fr) 1.3fr;gap:20px;align-items:start}.readinessCard>div{display:grid;gap:5px}.readinessCard>div>b{font-size:17px}.readinessCard>div>span{font-size:12px;color:#7c8496}.readinessCard ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0;padding:0;list-style:none}.readinessCard li{font-size:12px;color:#8d94a5;padding:8px 10px;border:1px solid #e8e9ef;border-radius:10px;background:#fff}.readinessCard li.ok{color:#147454;border-color:#cfe9dd;background:#f5fbf8}
 .assignmentPanel,.formPanel{margin-top:18px}.successPanel{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 22px;background:#f1fbf6;border:1px solid #cfeada;border-radius:18px}.successPanel>div{display:flex;gap:13px;align-items:center}.successPanel>div>span{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#1b9b6c;color:#fff;font-weight:900}.successPanel p{margin:4px 0 0;color:#657c71;font-size:13px}
 .readOnlyMetrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px}.readOnlyMetrics>div{display:grid;gap:4px;padding:17px;border:1px solid #e6e7ef;border-radius:16px;background:#fafafe}.readOnlyMetrics span{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#7f8697;font-weight:800}.readOnlyMetrics b{font-size:27px;letter-spacing:-.03em}.readOnlyMetrics small{color:#888fa0}
 .holdPanel{margin-top:20px;padding:18px;border:1px solid #f0dfb3;background:#fffaf0;border-radius:18px}
@@ -172,7 +172,7 @@ body{background:linear-gradient(180deg,#f9faff 0,#f4f5fa 100%)}
 .progressCell{display:flex;align-items:center;gap:9px;min-width:150px}.progressCell .miniProgress{flex:1}.softBadge.softAmber{background:#fff2df;color:#9b6508}.softBadge.softGreen{background:#e7f8f0;color:#147852}
 .availabilityRows{display:grid;gap:8px;margin-top:15px}.availabilityRow{display:grid;grid-template-columns:minmax(110px,1fr) minmax(95px,130px) 22px minmax(95px,130px);gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid #eeeef3}.availabilityRow label{display:flex;align-items:center;gap:8px}.overrideList{display:grid;gap:8px;margin-top:18px}.overrideRow{display:flex;justify-content:space-between;gap:15px;align-items:center;padding:12px 0;border-bottom:1px solid #eeeef3}.overrideRow>div{display:grid;gap:3px}.overrideRow span,.overrideRow small{font-size:11px;color:#858c9d}.availabilityHint{font-size:9px;color:#67a58e;display:block;text-align:center;margin-top:18px}.weekMatrix.trainerWeekMatrix{display:grid;grid-template-columns:72px repeat(7,minmax(125px,1fr));min-width:1040px;border:1px solid #e5e6ee;border-radius:17px;overflow:auto;background:#fff}.weekCorner,.weekDayHead,.weekTime,.trainerWeekMatrix .weekCell{border-right:1px solid #ededf3;border-bottom:1px solid #ededf3}.weekCorner,.weekDayHead{padding:10px;background:#f8f9fc;min-height:57px}.weekDayHead{display:grid;gap:2px}.weekDayHead span{font-size:10px;color:#858c9c}.weekHourRow{display:contents}.weekTime{padding:10px 5px;background:#fafbfc;color:#858c9c;font-size:10px;text-align:center}.trainerWeekMatrix .weekCell{min-height:62px;padding:5px}.trainerWeekMatrix .weekEvent{font-size:9px}
 .classRecordGrid{display:grid;gap:12px}.attendanceRow{display:grid;grid-template-columns:minmax(180px,1fr) minmax(140px,190px) minmax(180px,1fr);gap:12px;align-items:center;padding:12px;border:1px solid #e7e8ef;border-radius:14px;background:#fff}
-@media(max-width:800px){.cleanStepper{padding:13px}.cleanStep{grid-template-columns:30px 1fr}.cleanStep>i{display:none}.cleanStep>span{width:28px;height:28px}.readinessCard{grid-template-columns:1fr}.readinessCard ul{grid-template-columns:1fr}.availabilityRow{grid-template-columns:1fr 1fr}.availabilityRow label{grid-column:1/-1}.availabilityRow>span{display:none}.readOnlyMetrics{grid-template-columns:1fr}.attendanceRow{grid-template-columns:1fr}}
+@media(max-width:800px){.cleanStepper{padding:13px;grid-template-columns:repeat(2,minmax(0,1fr));row-gap:12px}.cleanStep{grid-template-columns:30px 1fr}.cleanStep>i{display:none}.cleanStep>span{width:28px;height:28px}.readinessCard{grid-template-columns:1fr}.readinessCard ul{grid-template-columns:1fr}.availabilityRow{grid-template-columns:1fr 1fr}.availabilityRow label{grid-column:1/-1}.availabilityRow>span{display:none}.readOnlyMetrics{grid-template-columns:1fr}.attendanceRow{grid-template-columns:1fr}}
 .scheduleEvent{position:relative}.eventRemove{position:absolute;right:4px;top:4px;width:18px;height:18px;border:0;border-radius:50%;background:rgba(255,255,255,.7);color:inherit;font-weight:900;line-height:18px;padding:0;opacity:.55}.scheduleEvent:hover .eventRemove{opacity:1}
 
 /* v0.9 — Learner progress */
@@ -236,7 +236,7 @@ body{background:radial-gradient(circle at 8% 0%,rgba(132,92,246,.10),transparent
 .experienceTopbar .nav{gap:2px}.experienceTopbar .nav a{position:relative;padding:10px 12px;font-size:13px}.experienceTopbar .nav a.active{color:#4f2aa5;background:#f5f1ff}.experienceTopbar .nav a.active:after{content:"";position:absolute;left:14px;right:14px;bottom:5px;height:2px;border-radius:99px;background:linear-gradient(90deg,var(--premium-purple),var(--premium-pink))}
 .experienceAccount{padding-left:10px;border-left:1px solid #ececf3}.footer{opacity:.8}
 .workspaceSidebar{background:radial-gradient(circle at 50% -10%,rgba(130,86,225,.28),transparent 14rem),linear-gradient(180deg,#171727,#10131f)}
-.workspaceSidebar:after{content:"";position:absolute;inset:auto 15px 85px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent)}
+/* Sidebar navigation must remain unobstructed when scrolled; footer owns its separator. */
 .sidebarBrand{box-shadow:0 10px 30px rgba(0,0,0,.16)}
 .sidebarNav a{border:1px solid transparent}.sidebarNav a.active{border-color:rgba(184,164,245,.12);box-shadow:inset 0 0 0 1px rgba(184,164,245,.08),0 8px 24px rgba(0,0,0,.10)}
 .workspaceTopbar{background:rgba(255,255,255,.94);box-shadow:0 5px 22px rgba(32,37,64,.025)}
@@ -456,7 +456,7 @@ body{background:radial-gradient(circle at 8% 0%,rgba(132,92,246,.10),transparent
 .editSubsectionHead{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}.editSubsectionHead b{font-size:13px;color:#242d45}.editSubsectionHead span{font-size:10.5px;color:#858da0}
 .guardianIdentityGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.guardianPhoneFull{margin-top:12px;min-width:0}.guardianPhoneFull .phoneInputWrap{grid-template-columns:minmax(135px,160px) minmax(180px,1fr);max-width:100%}.guardianPhoneFull .phoneDial,.guardianPhoneFull .phoneNumber{width:100%;min-width:0}
 .sameAsContact{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;font-weight:750;color:#4d566b;cursor:pointer}.sameAsContact input{accent-color:#7249d4}.guardianPhoneHint{display:block;margin-top:8px;font-size:10px;color:#8b92a2}
-.familyChildEditGrid{align-items:end}.fullSpan{grid-column:1/-1;min-width:0}.fullSpan>.formGroup,.fullSpan.timezoneField{width:100%}.familyChildEditGrid .timezoneCombobox,.familyChildEditGrid .timezoneField{max-width:none;width:100%}
+.familyChildEditGrid{align-items:start}.fullSpan{grid-column:1/-1;min-width:0}.fullSpan>.formGroup,.fullSpan.timezoneField{width:100%}.familyChildEditGrid .timezoneCombobox,.familyChildEditGrid .timezoneField{max-width:none;width:100%}
 .structuredAvailabilityEditor{display:grid;gap:12px;margin-top:12px}.structuredAvailabilityMeta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border:1px solid #e5e2f2;border-radius:11px;background:#faf9ff}.structuredAvailabilityMeta b{font-size:11px;color:#453678}.structuredAvailabilityMeta span{font-size:10px;color:#7d8497}.timingWindowRow.hasError{padding-bottom:28px;position:relative}.timingOverlapError{position:absolute;left:0;bottom:5px}.compactError{padding:9px 11px}
 .onboardingSummaryCard .phoneInputWrap{max-width:100%}
 @media(max-width:1100px){.familyEditWorkspace{grid-template-columns:1fr}}
@@ -1417,3 +1417,436 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .portalAccessPanel .fieldHint{display:block;max-width:580px;line-height:1.5}
 .portalAccessPanel .portalAccessActions{margin-top:12px}
 @media(max-width:600px){.trainerOverviewGrid .attentionRow{align-items:flex-start;flex-wrap:wrap}.trainerOverviewGrid .attentionRow>b{margin-left:auto}.portalAccessPanel{padding:18px}}
+
+
+/* Onboarding availability layout: keep nested editor responsive without changing other scheduling screens. */
+.assignmentWorkspace,.assignmentWorkspace>*,.schedulingAssistColumn,.parentAvailabilitySetupEditor,.parentAvailabilitySetupEditor .structuredAvailabilityEditor,.parentAvailabilitySetupEditor .timingDayCard{min-width:0}
+.parentAvailabilitySetupEditor .schedulingAssistHead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.parentAvailabilitySetupEditor .schedulingAssistHead>div{flex:1 1 240px;min-width:0}
+.parentAvailabilitySetupEditor .schedulingAssistHead>.button{flex:0 0 auto;white-space:nowrap}
+.parentAvailabilitySummary{margin-top:12px;display:grid;gap:9px}
+.parentAvailabilitySummary>small{font-size:12px;color:#65738b}
+.parentAvailabilityChips{display:flex;flex-wrap:wrap;gap:7px}
+.parentAvailabilityChips span{padding:8px 10px;border-radius:9px;background:#f0f8f5;border:1px solid #d8eee5;color:#18765d;font-size:12px;font-weight:700}
+.parentAvailabilityEmpty{display:grid;gap:4px;padding:13px 14px;border:1px dashed #d6ddeb;border-radius:12px;background:#fff}
+.parentAvailabilityEmpty b{font-size:13px;color:#26344b}.parentAvailabilityEmpty span{font-size:12px;color:#738098}
+.parentAvailabilitySetupEditor .structuredAvailabilityMeta{min-width:0;overflow-wrap:anywhere}
+.parentAvailabilitySetupEditor .timingDayCard{padding:12px}
+.parentAvailabilitySetupEditor .timingDayHead{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.parentAvailabilitySetupEditor .timingDayActions{gap:12px}
+.parentAvailabilitySetupEditor .timingWindowRow{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr) auto;align-items:end;gap:8px;padding:9px 0}
+.parentAvailabilitySetupEditor .timeField{min-width:0}
+.parentAvailabilitySetupEditor .timeField .input{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.parentAvailabilitySetupEditor .timingWindowRow>.indiaTimePreview,.parentAvailabilitySetupEditor .timingWindowRow>.overnightHint,.parentAvailabilitySetupEditor .timingWindowRow>.timingValidationMessages{grid-column:1/-1}
+.parentAvailabilitySetupEditor .timingWindowRow>.iconButton{grid-column:4;grid-row:1;align-self:end}
+.parentAvailabilitySetupEditor .timeArrow{padding:0 0 14px;font-size:13px;align-self:end}
+.parentAvailabilitySetupEditor .timingAddDay{max-width:100%;white-space:normal}
+.parentAvailabilitySetupEditor .copyTimingPanel{min-width:0}
+.parentAvailabilitySetupEditor .copyDayChoices{gap:6px}
+.stickyOnboardingActions{margin-bottom:14px}
+@media(max-width:600px){.parentAvailabilitySetupEditor .timingWindowRow{grid-template-columns:minmax(0,1fr) 10px minmax(0,1fr) 34px!important;gap:5px}.parentAvailabilitySetupEditor .timeArrow{display:block}.parentAvailabilitySetupEditor .timingWindowRow .timeField{grid-column:auto}.parentAvailabilitySetupEditor .timingWindowRow>.iconButton{grid-column:4;grid-row:1}.parentAvailabilitySetupEditor .timingDayActions{width:100%}}
+
+/* Onboarding learning setup: assignment spans full width; availability and matching use equal columns. */
+.assignmentPanel .assignmentWorkspace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.assignmentPanel .assignmentSetupCard{grid-column:1/-1;min-width:0}
+.assignmentPanel .assignmentFields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.assignmentPanel .assignmentContextGrid{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:12px}
+.assignmentPanel .schedulingAssistColumn{display:contents}
+.assignmentPanel .parentAvailabilitySetupEditor,.assignmentPanel .preferenceAssist.schedulingAssist,.assignmentPanel .cohortSetupHint{min-width:0;align-self:start;border:1px solid #e8e9f1;border-radius:16px;background:#fbfbfd;padding:15px}
+.assignmentPanel .preferenceAssist.schedulingAssist{display:grid;gap:12px;margin-top:0;height:auto}
+.assignmentPanel .scheduleMatchSummary{display:flex;gap:8px;flex-wrap:wrap;margin:0}
+.assignmentPanel .scheduleMatchSummary span{flex:1 1 100px;text-align:center}
+.assignmentPanel .assignmentFields .formGroup{min-width:0}
+.assignmentPanel .assignmentFields input,.assignmentPanel .assignmentFields select{width:100%;min-width:0}
+@media(max-width:1100px){.assignmentPanel .assignmentFields{grid-template-columns:repeat(2,minmax(0,1fr))}.assignmentPanel .assignmentContextGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.assignmentPanel .assignmentWorkspace{grid-template-columns:minmax(0,1fr)}.assignmentPanel .assignmentSetupCard{grid-column:1}.assignmentPanel .assignmentFields{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:500px){.assignmentPanel .assignmentContextGrid{grid-template-columns:minmax(0,1fr)}}
+
+/* Parent dashboard refresh — AI Flow uses light surfaces, teal/blue accents and readable typography. */
+.parentRefresh,.parentLearnerStrip,.parentPriorityGrid,.parentLearningNow,.parentSupportRow,.parentRecentHistory{max-width:1240px;margin-left:auto;margin-right:auto}
+.parentRefresh{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:16px;margin-bottom:16px}
+.parentEyebrow{font-size:11px;font-weight:850;letter-spacing:.09em;color:#087e8b}
+.parentRefresh h1{font-size:clamp(26px,3vw,38px);line-height:1.16;color:#122642;margin:6px 0}
+.parentRefresh p,.parentSectionHeading p,.parentJourneySummary p{font-size:14px;line-height:1.55;color:#64748b;margin:5px 0}
+.parentLinkButton{display:inline-flex;align-items:center;justify-content:center;border:1px solid #cbdfea;background:#fff;padding:10px 15px;border-radius:12px;color:#0f597e;font-weight:750;font-size:13px;text-decoration:none;white-space:nowrap}
+.parentLinkButton:hover,.parentLearnerChoice:hover{border-color:#0b95a4;background:#f1fbfb}
+.parentLearnerStrip{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #e0eaf0;border-radius:18px;padding:12px 16px;margin-bottom:16px}
+.parentLearnerChoices{display:flex;flex-wrap:wrap;gap:10px;min-width:0}
+.parentLearnerChoice{display:flex;align-items:center;text-align:left;gap:9px;border:1px solid #dfe8ee;border-radius:12px;background:#fff;padding:7px 12px;cursor:pointer;color:#19324b}
+.parentLearnerChoice.selected{border-color:#0b9caa;background:#e9f9f9;box-shadow:0 0 0 1px #0b9caa inset}
+.parentLearnerChoice b,.parentLearnerChoice small{display:block}.parentLearnerChoice b{font-size:13px}.parentLearnerChoice small{font-size:11px;color:#65758a}
+.parentLearnerAvatar{display:grid;place-items:center;background:#d8f1f2;color:#006d7b;width:34px;height:34px;border-radius:11px;font-size:12px;font-weight:800}
+.parentPriorityGrid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:16px;align-items:stretch}
+.parentPrimaryClass,.parentJourneySummary{min-width:0;border:1px solid #dce8f0;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 28px rgba(15,42,77,.04)}
+.parentPrimaryClass .nextClassCard{height:100%;background:#f5fbff;border:0;border-radius:0;box-shadow:none;display:flex}
+.parentPrimaryClass .nextClassAccent{background:linear-gradient(155deg,#007e93,#0875b9);color:white}
+.parentPrimaryClass .experienceCardBody{padding:24px;min-width:0;flex:1}
+.parentPrimaryClass h3{font-size:clamp(19px,2vw,25px);line-height:1.3;color:#123052}
+.parentPrimaryClass p{font-size:15px}
+.parentJourneySummary{padding:23px}.parentSummaryTitle{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.parentSummaryTitle h2{font-size:18px;margin:6px 0;color:#172d47}
+.parentInlineLink{font-size:12px;font-weight:750;color:#037c91;text-decoration:none;white-space:nowrap}
+.parentBigProgress{display:flex;align-items:baseline;gap:10px;margin:13px 0 10px}
+.parentBigProgress strong{font-size:36px;letter-spacing:-.04em;color:#087f92;line-height:1}
+.parentBigProgress span{font-size:13px;color:#637389}
+.parentQuickStats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.parentQuickStats>div{display:grid;gap:4px;background:#f4fafc;border:1px solid #e0eef1;border-radius:13px;padding:12px}
+.parentQuickStats b{font-size:22px;color:#193655}.parentQuickStats span{font-size:12px;font-weight:750;color:#455c74}.parentQuickStats small{font-size:11px;color:#718198}
+.parentLearningNow,.parentRecentHistory{margin-top:24px}.parentSectionHeading{margin-bottom:12px}.parentSectionHeading h2{font-size:23px;color:#132943;margin:5px 0}
+.parentLearningCards,.parentSupportRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.parentLearningCards>.experienceCard,.parentSupportRow>.experienceCard,.parentSupportQuick{min-width:0;border:1px solid #e0eaf0;border-radius:18px;background:#fff;box-shadow:none}
+.parentLearningCards .experienceCardBody,.parentSupportRow .experienceCardBody{padding:20px}
+.parentSupportRow{margin-top:16px}.parentSupportQuick{padding:22px}.parentSupportQuick h3{font-size:19px;color:#172d47;margin:8px 0}.parentSupportQuick p{color:#65758a;font-size:13px;margin:0 0 14px}
+.parentRecentHistory{padding:20px;background:#fff;border:1px solid #e0eaf0;border-radius:18px;margin-bottom:30px}
+.parentQuietEmpty{font-size:14px;color:#65758a;margin:8px 0}
+@media(max-width:950px){.parentPriorityGrid,.parentLearningCards,.parentSupportRow{grid-template-columns:1fr}}
+@media(max-width:640px){.parentRefresh,.parentLearnerStrip{align-items:stretch;flex-direction:column}.parentRefresh{margin-top:8px}.parentPrimaryClass .nextClassCard{flex-direction:column}.parentPrimaryClass .nextClassAccent{display:flex;align-items:center;gap:8px}.parentJourneySummary{padding:16px}.parentLearnerStrip{padding:12px}.parentSummaryTitle{flex-wrap:wrap}}
+
+/* Parent family dashboard: child selection and direct journey link are separate actions. */
+.parentLearnerChoice{cursor:default;flex-wrap:wrap;gap:10px}
+.parentLearnerSelect{display:flex;align-items:center;gap:9px;min-width:0;text-align:left;background:transparent;border:0;padding:3px;cursor:pointer;color:inherit;font:inherit}
+.parentLearnerSelect:focus-visible,.parentLearnerJourneyLink:focus-visible{outline:2px solid #1685e9;outline-offset:3px;border-radius:6px}
+.parentLearnerJourneyLink{color:#08779c;font-size:12px;font-weight:800;text-decoration:none;padding:7px 9px;border-radius:8px;background:#f0faff;white-space:nowrap}
+.parentLearnerJourneyLink:hover{background:#dff4fc;color:#075473}
+#my-children{scroll-margin-top:115px}
+@media(max-width:640px){.parentLearnerChoice{width:100%;justify-content:space-between}.parentLearnerJourneyLink{white-space:normal}}
+
+/* Parent billing: readable AI Flow finance surfaces */
+.parentBillingPage{max-width:1240px;margin:0 auto;padding:26px 12px 55px}
+.parentBillingHeader{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:21px}
+.parentBillingHeader h1{font-size:clamp(27px,3vw,38px);letter-spacing:-.03em;color:#102b49;margin:5px 0}
+.parentBillingHeader p,.parentBillingPackage p{font-size:14px;color:#64778b;line-height:1.5;margin:5px 0}
+.parentBillingChildren,.parentBillingTabs{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:14px 0}
+.parentBillingChildren button,.parentBillingTabs button{border:1px solid #dbe8f4;background:white;border-radius:11px;padding:11px 15px;font-size:13px;font-weight:750;color:#3e5974;cursor:pointer}
+.parentBillingChildren button.selected,.parentBillingTabs button.selected{background:#e8f8fa;border-color:#12a9c4;color:#095c78}
+.parentBillingStack{display:grid;gap:14px}
+.parentBillingPackage{padding:22px 24px;background:linear-gradient(145deg,#fff,#f7fbff);border:1px solid #dce9f4;border-radius:20px;box-shadow:0 9px 26px rgba(18,68,130,.045)}
+.parentBillingPackage h2{font-size:21px;line-height:1.25;color:#173453;margin:5px 0}
+.parentBillingPackageHeading{display:flex;justify-content:space-between;gap:15px;align-items:start}
+.parentBillingStatus{border-radius:25px;padding:8px 12px;font-size:12px;font-weight:750;background:#eaf1fb;color:#316496;white-space:nowrap}
+.parentBillingStatus.paid{background:#dff8ee;color:#097457}
+.parentBillingStatus.overdue{background:#fff2df;color:#9b5f13}
+.parentBillingKpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:20px 0 14px}
+.parentBillingKpis>div{background:#f1f8fc;border:1px solid #e0edf6;border-radius:13px;padding:15px 13px;min-width:0}
+.parentBillingKpis small{display:block;font-size:12px;color:#657d92;margin-bottom:8px}
+.parentBillingKpis strong{font-size:clamp(17px,2vw,25px);color:#173453;overflow-wrap:anywhere}
+.parentBillingTrack{height:10px;background:#e7eff8;border-radius:999px;overflow:hidden}
+.parentBillingTrack span{height:100%;display:block;background:linear-gradient(90deg,#1784e1,#0fbbab);border-radius:999px}
+.parentBillingFoot{margin-top:12px!important}
+.parentBillingRecord{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:17px 0;border-bottom:1px solid #e0eaf3}
+.parentBillingRecord:last-child{border-bottom:0}
+.parentBillingRecord b{color:#193850;font-size:14px}
+.parentBillingRecord small{font-size:12px;color:#70869a;overflow-wrap:anywhere}
+.parentBillingDisclaimer{font-size:12px;color:#627991;line-height:1.6;margin-top:20px}
+@media(max-width:850px){.parentBillingKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.parentBillingPage{padding:18px 8px 40px}.parentBillingHeader,.parentBillingPackageHeading,.parentBillingRecord{align-items:stretch;flex-direction:column}.parentBillingPackage{padding:16px}.parentBillingKpis{gap:7px}.parentBillingKpis>div{padding:10px}.parentBillingRecord .parentLinkButton{width:max-content}}
+
+/* Keep optional family concierge available without overwhelming the main dashboard. */
+.parentAdditionalServices{max-width:1240px;margin:20px auto 28px;border:1px solid #dbe9f4;border-radius:18px;background:#fff;overflow:hidden}
+.parentAdditionalServices>summary{cursor:pointer;list-style:revert;padding:18px 22px;font-size:15px;font-weight:750;color:#14567c;background:linear-gradient(120deg,#f4faff,#eefbf9)}
+.parentAdditionalServices[open]>summary{border-bottom:1px solid #dcebf3}
+.parentAdditionalServices>.delightHub{margin:0;padding:16px;background:#fff}
+@media(max-width:640px){.parentAdditionalServices>summary{font-size:14px;padding:15px}}
+
+/* Parent portal header: intentional two-row desktop navigation, no orphaned links. */
+.parentPortalHeader{display:flex!important;flex-direction:column;align-items:stretch!important;gap:0!important;padding:0!important;overflow:visible}
+.parentPortalHeaderTop{display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0;padding:14px 20px}
+.parentPortalHeaderTop .brandLogo{flex:0 0 auto;min-width:0}
+.parentPortalHeaderTop .brandLogo img{width:210px;max-width:100%;height:auto;object-fit:contain}
+.parentPortalHeaderActions{display:flex;align-items:center;justify-content:flex-end;gap:11px;min-width:0;flex-wrap:nowrap}
+.parentPortalHeaderActions>.button,.parentPortalHeaderActions .button{white-space:nowrap}
+.parentPortalHeaderActions .themeSwitcher{flex:0 0 auto}
+.parentPortalAddLearner{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap;min-height:40px;padding:9px 14px;border-radius:11px;border:1px solid #cae8ed;background:#ebfbfa;color:#086878;font-size:13px;font-weight:750}
+.parentPortalAddLearner:hover{background:#d9f5f3;border-color:#64c6cc}
+.parentPortalNavigation{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch;column-gap:8px;min-width:0;width:100%;padding:6px 16px 12px;overflow:visible;border-top:1px solid #edf1f7}
+.parentPortalNavigation a{display:flex;align-items:center;justify-content:center;min-width:0;min-height:44px;box-sizing:border-box;border-radius:10px;padding:10px 8px;font-size:14px;line-height:1.25;font-weight:650;color:#4d647f;text-align:center;text-decoration:none;white-space:normal}
+.parentPortalNavigation a:hover{background:#eff7fc;color:#145b86}
+.parentPortalNavigation a.active{background:#e7f5ff;color:#086b99;font-weight:800;box-shadow:inset 0 -2px 0 #0ea5bf}
+.parentPortalHeaderActions .button{font-size:13px}
+.parentPortalHeaderActions .notificationBell{flex-shrink:0}
+[data-portal-theme="ai-flow"] .parentPortalHeader{background:rgba(255,255,255,.97);border-color:#e1eaf4;box-shadow:0 10px 30px rgba(24,71,123,.07)}
+[data-portal-theme="ai-flow"] .parentPortalNavigation a.active{background:#e9f6fe;color:#085f91;box-shadow:inset 0 -3px 0 #15b4cb}
+@media(max-width:1000px){
+ .parentPortalHeaderTop{padding:12px 14px}
+ .parentPortalHeaderTop .brandLogo img{width:170px}
+ .parentPortalHeaderActions{gap:7px}
+ .parentPortalNavigation{column-gap:4px;padding-inline:8px}.parentPortalNavigation a{padding:9px 4px;font-size:13px}
+}
+@media(max-width:760px){
+ .parentPortalHeaderTop{padding:10px 12px}
+ .parentPortalHeaderTop .brandLogo img{width:145px;max-width:38vw;height:auto}
+ .parentPortalHeaderActions{gap:7px}
+ .parentPortalHeaderActions .button{display:none}
+ .parentPortalAddLearner{font-size:12px;padding:8px 9px;min-height:36px}
+ .parentPortalNavigation{display:none}
+}
+@media(max-width:410px){.parentPortalHeaderActions .themeSwitcher{display:none}}
+
+/* Parent billing: balanced setup state and quieter transactional navigation */
+.parentBillingCurrentLearner{display:flex;align-items:center;gap:11px;margin:12px 0 14px;color:#163651}
+.parentBillingCurrentLearner>span:last-child{display:grid;gap:3px}
+.parentBillingCurrentLearner strong{font-size:14px}
+.parentBillingCurrentLearner small{font-size:12px;color:#6a7f92}
+.parentBillingLearnerAvatar{height:40px;width:40px;display:grid;place-items:center;border-radius:13px;background:#dbf5f5;color:#087d8e;font-size:12px;font-weight:850}
+.parentBillingTabs{gap:7px;margin:10px 0 17px}
+.parentBillingTabs button{padding:9px 14px;font-size:13px;min-height:40px}
+.parentBillingEmpty{display:grid;grid-template-columns:64px minmax(0,1fr);gap:20px;align-items:start;padding:28px;background:linear-gradient(115deg,#ffffff,#f6fbff);border:1px solid #dceaf4;border-radius:20px;box-shadow:0 8px 24px rgba(29,77,134,.04)}
+.parentBillingEmptyIcon{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;color:#0c7d94;font-size:29px;font-weight:850;background:linear-gradient(135deg,#e1f6fd,#e3f9f1)}
+.parentBillingEmptyContent{min-width:0}
+.parentBillingEmpty h2{margin:8px 0;font-size:clamp(21px,2.2vw,28px);line-height:1.25;color:#15324e}
+.parentBillingEmptyContent>p{font-size:14px;color:#61768b;line-height:1.65;max-width:760px}
+.parentBillingEmptyDetails{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.parentBillingEmptyDetails>div{display:grid;gap:5px;padding:12px 14px;border-radius:12px;border:1px solid #dcebf3;background:#f5fbfd;min-width:0}
+.parentBillingEmptyDetails span{font-size:12px;color:#70839a}
+.parentBillingEmptyDetails strong{font-size:13px;overflow-wrap:anywhere;color:#193957}
+.parentBillingOutlineButton{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:9px 14px;margin:2px 8px 2px 0;border:1px solid #bee0ed;border-radius:11px;background:#fff;color:#096886;font-size:13px;font-weight:750;text-decoration:none;cursor:pointer}
+.parentBillingOutlineButton:hover{background:#eaf8ff;border-color:#5ab4d5}
+.parentBillingHint{color:#7e5c23!important;background:#fff9e9;border:1px solid #f6e4bb;border-radius:11px;padding:11px 13px;font-size:13px;line-height:1.5}
+.parentBillingDisclaimer{font-size:11px;max-width:960px;margin:15px 0 0;color:#788b9d;line-height:1.5}
+.parentBillingDisclaimer a{color:#126d99;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:650px){.parentBillingEmpty{padding:18px;grid-template-columns:1fr;gap:10px}.parentBillingEmptyIcon{width:47px;height:47px;font-size:23px}.parentBillingEmptyDetails{grid-template-columns:1fr}.parentBillingTabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.parentBillingTabs button{white-space:nowrap}}
+
+
+/* Final Parent Portal header polish — compact rows, refined tabs and understated account actions. */
+.parentPortalHeaderTop{padding:11px 20px;gap:14px}
+.parentPortalHeaderTop .brandLogo img{width:200px}
+.parentPortalHeaderActions{gap:10px;padding-right:6px}
+.parentPortalNavigation{padding:4px 16px 9px;column-gap:8px}
+.parentPortalNavigation a{min-height:42px;padding:9px 8px;font-size:14px;font-weight:600}
+.parentPortalNavigation a.active{font-weight:700;box-shadow:inset 0 -2px 0 #0ea5bf}
+[data-portal-theme="ai-flow"] .parentPortalNavigation a.active{box-shadow:inset 0 -2px 0 #15b4cb}
+.parentPortalHeaderActions .parentPortalSignOut{background:transparent;color:#65778d;border-color:#e4ebf4;box-shadow:none;font-weight:600}
+.parentPortalHeaderActions .parentPortalSignOut:hover{background:#f4f8fc;color:#244c70;border-color:#cddbe9}
+.parentPortalHeaderActions .notificationBell{margin:3px 9px 3px 0;padding:9px 11px}
+.parentPortalHeaderActions .notificationBell i{right:-9px;top:-9px;border:2px solid #fff;min-width:23px;height:23px}
+@media(max-width:1000px) and (min-width:761px){
+ .parentPortalHeaderTop{padding:10px 14px}
+ .parentPortalNavigation{column-gap:4px;padding:4px 8px 9px}
+ .parentPortalNavigation a{font-size:13px;padding:9px 5px}
+}
+@media(max-width:760px){
+ .parentPortalHeaderTop{padding:9px 12px}
+ .parentPortalNavigation{display:none}
+ .parentPortalHeaderActions .notificationBell{margin:3px 8px 3px 0}
+}
+
+/* Admin command centre: same AI Flow clarity as family-facing pages. */
+.adminCommandKpis .adminKpiLink{min-width:0;display:block;border-radius:19px;text-decoration:none}
+.adminCommandKpis .adminKpiLink:focus-visible{outline:3px solid #008fb4;outline-offset:3px}
+.adminCommandKpis .adminKpiLink:hover .kpiCard{border-color:#a7dce9;box-shadow:0 12px 31px rgba(15,100,151,.12);transform:translateY(-1px)}
+.adminCommandKpis .kpiCard{height:100%;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.adminCommandKpis .kpiCard:before{background:linear-gradient(180deg,#0c8fcb,#12bcbe)}
+.adminCommandKpis .kpiCard.tone-amber:before{background:#e6a341}
+.adminCommandKpis .kpiCard:after{background:rgba(14,152,198,.045)}
+.adminCommandKpis .kpiTop{color:#57728a}
+.adminCommandKpis .kpiValue{color:#16334f}
+.adminCommandKpis .kpiDetail{white-space:normal;overflow:visible;text-overflow:clip}
+.adminCommandGrid{align-items:start}
+.adminCommandPanel{min-width:0;border-color:#dce9f4;background:#fff;box-shadow:0 9px 26px rgba(27,74,123,.05);padding:19px 20px}
+.adminCommandPanel .panelHeader{align-items:center}
+.adminCommandPanel .panelHeader h2{font-size:21px;color:#173a55}
+.adminCommandPanel .eyebrow,.adminCommandPanel .textLink{color:#117da0}
+.adminCommandActivity .adminCommandActivityRow{grid-template-columns:76px minmax(0,1fr) auto;border-radius:11px;padding:11px 7px;text-decoration:none}
+.adminCommandActivityRow:hover{background:#f2faff}
+.adminCommandActivityRow .activityTime{background:#e8f5fc;color:#056c99}
+.adminCommandActivityRow>div:nth-child(2){min-width:0}
+.adminCommandActivityRow>div:nth-child(2) b{font-size:13px;color:#223d57}
+.adminCommandActivityRow>div:nth-child(2) span{font-size:12px;color:#687f94}
+.adminClassView{font-size:12px!important;color:#087b9c!important;font-weight:750;white-space:nowrap}
+.adminCommandEmpty{padding:14px 12px;border-radius:13px;background:#f5fbff}
+.adminCommandEmpty b{font-size:14px;color:#23445d}
+.adminCommandEmpty p{font-size:13px;color:#6b8092;line-height:1.4}
+.adminCommandActions a{display:grid;grid-template-columns:12px minmax(0,1fr) 18px;align-items:center;gap:11px;padding:13px 8px;border-radius:10px}
+.adminCommandActions a:hover{background:#f1faff}
+.adminCommandActions a>span:nth-child(2){display:grid;gap:5px;min-width:0;margin:0}
+.adminCommandActions a b{font-size:13px;color:#1c3a52}
+.adminCommandActions a small{font-size:12px;color:#70849a}
+.adminAttentionDot{width:9px;height:9px;border-radius:50%;background:#e9aa48}
+.adminAttentionDot.adminAttentionInfo{background:#11a2c0}
+.adminCommandActions .adminAttentionArrow{font-size:18px;color:#107999;text-align:right;margin:0}
+.adminAllClear{padding:18px 12px;background:#ecf9f5;border-radius:12px;color:#16765d;font-weight:700;font-size:13px}
+.adminSidebarToggle{display:flex;align-items:center;gap:8px;margin:4px 8px 3px;padding:8px 10px;border:1px solid rgba(129,177,214,.22);border-radius:10px;color:#b2d8e6;background:rgba(23,154,190,.07);font-size:12px;font-weight:650;cursor:pointer}
+.adminSidebarToggle:hover{background:rgba(23,154,190,.16)}
+.adminSidebarToggle:focus-visible{outline:2px solid #29cae9;outline-offset:2px}
+.workspaceShell.adminSidebarCollapsed{grid-template-columns:74px minmax(0,1fr)}
+.adminSidebarCollapsed .workspaceSidebar{padding-left:8px;padding-right:8px}
+.adminSidebarCollapsed .sidebarBrand{padding:8px;min-height:50px}
+.adminSidebarCollapsed .sidebarBrand img{width:100%;object-fit:cover;object-position:left center}
+.adminSidebarCollapsed .portalName,.adminSidebarCollapsed .navGroupLabel,.adminSidebarCollapsed .sidebarFooter,.adminSidebarCollapsed .navItemText,.adminSidebarCollapsed .adminSidebarToggle span{display:none}
+.adminSidebarCollapsed .sidebarNav a{justify-content:center;padding:12px 6px;min-height:40px}
+.adminSidebarCollapsed .navIndicator{width:10px;height:10px}
+.adminSidebarCollapsed .adminSidebarToggle{justify-content:center;padding:8px;margin:9px 4px}
+.adminSidebarCollapsed .sidebarNav{scrollbar-width:thin}
+@media(max-width:760px){
+ .workspaceShell.adminSidebarCollapsed{display:block}
+ .adminSidebarCollapsed .workspaceSidebar{padding:10px 12px}
+ .adminSidebarCollapsed .sidebarBrand img{object-fit:contain;width:100%}
+ .adminSidebarCollapsed .navItemText{display:inline}
+ .adminSidebarCollapsed .sidebarNav a{padding:10px 11px;gap:10px}
+ .adminSidebarCollapsed .sidebarFooter{display:none}
+ .adminSidebarToggle{display:none}
+ .adminCommandPanel{padding:15px}
+ .adminCommandActivity .adminCommandActivityRow{grid-template-columns:67px minmax(0,1fr);gap:7px}
+ .adminCommandActivityRow .adminClassView{grid-column:2;justify-self:start}
+}
+
+/* Admin navigation: recognisable icons instead of status dots in collapsed rail. */
+.sidebarNav .adminSidebarIcon{width:18px;height:18px;flex:0 0 18px;color:#7185a2;transition:color .15s ease}
+.sidebarNav a:hover .adminSidebarIcon{color:#0c8cb5}
+.sidebarNav a.active .adminSidebarIcon{color:#fff}
+.adminSidebarToggle{width:max-content;min-height:36px;gap:7px;color:#326782;background:#f1f9fc;border-color:#d6e8f0}
+.adminSidebarToggle:hover{color:#075e7d;background:#e7f6fc}
+.adminSidebarCollapsed .sidebarNav .adminSidebarIcon{display:block;width:20px;height:20px;flex-basis:20px;color:#708eaa}
+.adminSidebarCollapsed .sidebarNav a:hover .adminSidebarIcon{color:#087ba8}
+.adminSidebarCollapsed .sidebarNav a.active .adminSidebarIcon{color:#fff}
+.adminSidebarCollapsed .sidebarNav a{border-radius:12px;min-height:43px;padding:10px;display:flex;align-items:center;justify-content:center}
+.adminSidebarCollapsed .sidebarNav .adminSidebarGroupStart:not(:first-child){border-top:1px solid #e3ebf4;margin-top:9px;padding-top:9px}
+.adminSidebarCollapsed .sidebarBrand{justify-content:center;overflow:hidden}
+.adminSidebarCollapsed .sidebarBrand img{width:42px;height:36px;max-width:none;object-fit:cover;object-position:left center}
+.adminSidebarCollapsed .adminSidebarToggle{color:#256986;background:#e9f6fa;border-color:#d4e6ed}
+.adminSidebarCollapsed .adminSidebarToggle:hover{background:#d8f0f7}
+@media(max-width:760px){.adminSidebarCollapsed .sidebarNav .adminSidebarGroupStart:not(:first-child){border:0;margin:0;padding:0}.adminSidebarCollapsed .sidebarNav .adminSidebarIcon{width:18px;height:18px;flex-basis:18px}}
+
+
+/* Reusable compact status filters — keep counts and actions on one accessible row. */
+.statusFilterTabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.statusFilterTab{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 14px;white-space:nowrap;border:1px solid #dce6f0;border-radius:12px;background:#fff;color:#46617e;font-size:13px;font-weight:650;line-height:1.35;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.statusFilterTab:hover{border-color:#8ccad7;background:#f1fbfd;color:#096b86}
+.statusFilterTab.selected{border-color:#27a9c1;background:#e6f7fb;color:#075e7b;box-shadow:inset 0 -2px 0 #0bb4c5}
+.statusFilterCount{min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;border-radius:999px;background:#edf2f7;color:#536a82;font-size:12px;font-weight:750}
+.statusFilterTab.selected .statusFilterCount{background:#c9ecf4;color:#075c76}
+.statusFilterTab:focus-visible{outline:2px solid #059db6;outline-offset:2px}
+@media(max-width:580px){.statusFilterTabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}.statusFilterTab{flex-shrink:0;padding:8px 11px}}
+
+
+/* Trainer workspace — reuse the Admin command-centre visual hierarchy. */
+.workspaceShell .trainerPremiumHero{
+ background:linear-gradient(115deg,#fff 0%,#f6fbff 74%,#f0fafd 100%);
+ border:1px solid #dce9f4;
+ border-radius:22px;
+ box-shadow:0 10px 29px rgba(24,73,121,.05);
+ padding:20px 24px;
+ margin-bottom:14px;
+}
+.workspaceShell .trainerPremiumHero:after{background:rgba(17,161,196,.06)}
+.workspaceShell .trainerPremiumHero h1{
+ color:#17324d;font-size:clamp(27px,2.4vw,35px);font-weight:700;
+ line-height:1.18;letter-spacing:-.032em
+}
+.workspaceShell .trainerPremiumHero p{font-size:14px;line-height:1.5;color:#617991}
+.workspaceShell .trainerPremiumHero .experienceLabel{color:#087e9d;font-size:12px;letter-spacing:.07em;font-weight:700}
+.workspaceShell .trainerPremiumHero .trainerToday{
+ border-color:#d9eaf4;background:#fff;box-shadow:none;
+ min-width:132px;padding:12px 15px
+}
+.workspaceShell .trainerToday span{font-size:12px;color:#627890;font-weight:700}
+.workspaceShell .trainerToday b{font-size:29px;color:#173c55}
+.workspaceShell .trainerToday small{font-size:12px;color:#667f95}
+.workspaceShell .trainerPremiumMetrics{
+ grid-template-columns:repeat(5,minmax(0,1fr));
+ gap:12px;margin:16px 0 20px;
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard{
+ min-width:0;padding:16px 15px;gap:7px;
+ background:#fff;border:1px solid #dfebf5;
+ border-radius:18px;box-shadow:0 9px 25px rgba(28,81,128,.045);
+ border-left:3px solid #0ba7c9;
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard:after{background:rgba(17,151,202,.055)}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard.attention{
+ border-color:#edc98e;border-left-color:#d69a32;background:#fffaf3
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard>span{
+ font-size:12px;letter-spacing:.025em;font-weight:700;
+ color:#637a91;line-height:1.35
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard>b{
+ font-size:clamp(24px,2.2vw,31px);color:#193550;font-weight:700;line-height:1.15
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard>p{
+ font-size:13px;color:#667b90;line-height:1.45;margin:0;min-height:37px
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard>i{
+ color:#077d9c;font-size:13px;font-style:normal;font-weight:650
+}
+.workspaceShell .trainerPremiumMetrics .trainerActionCard:hover{
+ transform:translateY(-1px);border-color:#a9d8e7;
+ box-shadow:0 14px 32px rgba(27,91,145,.09)
+}
+.workspaceShell .trainerPremiumWorkspace{gap:18px;align-items:start}
+.workspaceShell .trainerPremiumWorkspace .experienceSectionHead h2{
+ color:#193550;font-size:21px;font-weight:700;line-height:1.25
+}
+.workspaceShell .trainerPremiumWorkspace .experienceSectionHead p{
+ color:#667d92;font-size:14px;line-height:1.5
+}
+.workspaceShell .trainerPremiumWorkspace .experienceLabel{font-size:12px;font-weight:700;color:#0981a3;letter-spacing:.065em}
+.workspaceShell .trainerPremiumWorkspace .experienceCard{
+ border-color:#dce9f3;box-shadow:0 9px 25px rgba(25,78,126,.045)
+}
+.workspaceShell .trainerPremiumWorkspace .experienceCard h3{font-size:19px;font-weight:700;line-height:1.3;color:#193550}
+.workspaceShell .trainerPremiumWorkspace .experienceCard p,
+.workspaceShell .trainerPremiumWorkspace .experienceCard small{font-size:13px;line-height:1.5;color:#667e95}
+.workspaceShell .trainerPremiumWorkspace .textLink{color:#087f9e;font-size:13px;font-weight:700}
+.workspaceShell .trainerPremiumLearnerTable{border-color:#dce8f2;box-shadow:0 9px 24px rgba(27,83,128,.045)}
+.workspaceShell .trainerPremiumLearnerTable .trainerLearnerHead{
+ background:#f5f9fc;color:#58718a;font-size:12px;font-weight:700
+}
+.workspaceShell .trainerPremiumLearnerTable .trainerLearnerRow b{font-size:14px;font-weight:600;color:#193550}
+.workspaceShell .trainerPremiumLearnerTable .trainerLearnerRow small{font-size:13px;color:#647a90}
+.workspaceShell .trainerPremiumLearnerTable .trainerLearnerRow:hover{background:#f2fafe}
+.workspaceShell .trainerPremiumWorkspace .experienceEmpty{background:#f6fafd;border-color:#dfebf3}
+.workspaceShell .trainerPremiumWorkspace .experienceEmpty p{font-size:14px;color:#647b90}
+.workspaceShell .trainerPremiumWorkspace .priorityQueue a:hover{background:#f2fafe}
+@media(max-width:1250px){.workspaceShell .trainerPremiumMetrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:950px){.workspaceShell .trainerPremiumMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ .workspaceShell .trainerPremiumHero{padding:17px;gap:12px;flex-wrap:wrap}
+ .workspaceShell .trainerPremiumMetrics{grid-template-columns:1fr 1fr;gap:8px}
+ .workspaceShell .trainerPremiumMetrics .trainerActionCard{padding:12px;min-height:135px}
+ .workspaceShell .trainerPremiumMetrics .trainerActionCard>p{min-height:0}
+}
+@media(max-width:390px){.workspaceShell .trainerPremiumMetrics{grid-template-columns:1fr}}
+
+
+/* Trainer teaching command centre: compact, purposeful and consistent with Admin AI Flow. */
+.trainerCommandHero{align-items:center}
+.trainerCommandHero .button{position:relative;z-index:2;white-space:nowrap}
+.workspaceShell .trainerCommandMetrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+.trainerCommandNotice{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 0 18px;padding:16px 20px;border:1px solid #d7e9f2;border-radius:16px;background:#f2faff}
+.trainerCommandNotice b{font-size:14px;color:#173a55}
+.trainerCommandNotice p{margin:4px 0 0;font-size:13px;color:#617b91;line-height:1.5}
+.trainerCommandNotice a{white-space:nowrap}
+.trainerCommandColumns{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start;gap:16px;margin:4px 0 18px}
+.trainerCommandColumns>.experienceCard{min-width:0;padding:20px;border-color:#deebf5;box-shadow:0 9px 28px rgba(23,75,125,.05)}
+.trainerCommandSectionTitle{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:16px}
+.trainerCommandSectionTitle h2,.trainerCommandCohorts h2{font-size:21px;font-weight:700;line-height:1.25;color:#173a55;margin:5px 0}
+.trainerCommandSectionTitle p{font-size:13px;color:#627b92;margin:4px 0}
+.trainerCommandSectionTitle .experienceLabel,.trainerCommandCohorts .experienceLabel{font-size:12px;letter-spacing:.055em;color:#087f9d;font-weight:700}
+.trainerCommandSectionTitle .textLink{white-space:nowrap;font-size:13px;color:#077b9a;font-weight:700}
+.trainerCommandList{display:grid;gap:7px}
+.trainerCommandLine{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:13px;min-width:0;padding:12px;border:1px solid #e3edf4;background:#fbfdff;border-radius:12px;text-decoration:none}
+.trainerCommandLine:hover{border-color:#9bcddb;background:#f2fafe}
+.trainerCommandLine>span:nth-child(2){min-width:0;display:grid;gap:4px}
+.trainerCommandLine b{font-size:14px;font-weight:650;color:#173a55}
+.trainerCommandLine small{font-size:12px;color:#687f95;line-height:1.45}
+.trainerCommandLine strong{font-size:12px;color:#087f9e;white-space:nowrap}
+.trainerCommandTime{background:#e6f6fb;border-radius:9px;padding:8px 10px;font-size:12px;color:#08718e;font-weight:700;white-space:nowrap}
+.trainerCommandTaskIcon{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:#fff4de;color:#a86d0b;font-weight:800}
+.trainerCommandEmpty{padding:20px;border-radius:13px;border:1px dashed #d2e2ec;background:#f7fbfd}
+.trainerCommandEmpty b{font-size:14px;color:#1c4b69}
+.trainerCommandEmpty p{font-size:13px;line-height:1.55;color:#687e92;margin:5px 0 0}
+.trainerCommandAllClear{background:#f0fbf7;border-color:#ceeade}
+.trainerCommandNext{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:13px;padding:11px 12px;border-radius:12px;background:#f0f9fc}
+.trainerCommandNext span{font-size:11px;color:#647e91;font-weight:700}
+.trainerCommandNext b{font-size:13px;color:#214e6c}
+.trainerCommandNext a{font-size:13px;font-weight:700;color:#087f9e}
+.trainerCommandMore{font-size:12px;color:#667d90;margin:8px 0 0}
+.trainerCommandLearning{margin:18px 0 22px}
+.trainerCommandLearning .experienceSectionHead h2{font-size:21px;color:#173a55}
+.trainerCommandLearning .experienceSectionHead p{font-size:13px;color:#667d92}
+.trainerCommandLearning>.textLink{display:inline-block;margin-top:12px}
+.trainerCommandCohorts{max-width:100%}
+@media(max-width:1050px){.trainerCommandColumns{grid-template-columns:1fr}}
+@media(max-width:760px){.trainerCommandColumns>.experienceCard{padding:16px}.trainerCommandNotice{align-items:start;flex-direction:column}.trainerCommandLine{grid-template-columns:auto minmax(0,1fr)}.trainerCommandLine strong{grid-column:2}.trainerCommandSectionTitle{flex-wrap:wrap}}
+@media(max-width:520px){.workspaceShell .trainerCommandMetrics{grid-template-columns:1fr}.trainerCommandHero{align-items:start}.trainerCommandTime{padding:7px 8px}}

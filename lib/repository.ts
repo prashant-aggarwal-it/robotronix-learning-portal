@@ -9,6 +9,7 @@ import type {
   SessionUpdateInput, StudentAdminRecord, TrainerAdminRecord, TrainerFinanceRecord, TrainerSummary, UserRole, DeliveryCenterRecord, LearningObservationRecord, TrainerFeedbackRecord, LearnerProjectRecord, EnrollmentHoldRecord, ProgressAlertActionRecord, ProgressAlertState, LearnerProgressRow, ProgressAlertRecord, ClassAttendanceRecord, WeeklyScheduleSlot, ReminderPolicy, TrainerCompensationPlan, TrainerEarningRecord, TrainerPayoutRecord, CorrectionRequestRecord, PortalAuditRecord, ParentCommunityProfile, FamilyIntroductionRecord, TrainerFinanceChangeRequest
 } from "./types";
 import { getSupabaseBrowserClient } from "./supabase/browser";
+import {adminApi} from "./admin-api-client";
 import { buildLearnerProgressRows, buildProgressAlerts } from "./progress-engine";
 import { emitNotification } from "./communication-repository";
 import { IST_TIMEZONE, shortTimeZoneLabel, zonedLocalToUtc, zonedParts, zonedRangeParts } from "./timezones";
@@ -234,14 +235,14 @@ export async function submitOnboarding(input: Omit<OnboardingSubmission,"id"|"us
 function mapOnboardingStatus(value:any):OnboardingSubmission["status"]{if(value==="submitted")return"new";if(value==="reviewed"||value==="assigned")return"setup_pending";return(value??"new") as any;}
 export async function listOnboardingSubmissions():Promise<OnboardingSubmission[]>{
   const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.onboarding.list();
-  const {data}=await supabase.from("onboarding_submissions").select("*").order("submitted_at",{ascending:false});
+  const data=await readAllPages(()=>supabase.from("onboarding_submissions").select("*").order("submitted_at",{ascending:false}).order("id"));
   return(data??[]).map((r:any)=>{const base:OnboardingSubmission={id:r.id,userId:r.user_id,loginEmail:r.login_email??"",motherName:r.mother_name??"",motherMobile:r.mother_mobile??"",fatherName:r.father_name??"",fatherMobile:r.father_mobile??"",primaryGuardianName:r.primary_guardian_name??"",primaryGuardianRelationship:r.primary_guardian_relationship??undefined,primaryGuardianMobile:r.primary_guardian_mobile??"",secondaryGuardianName:r.secondary_guardian_name??"",secondaryGuardianRelationship:r.secondary_guardian_relationship??undefined,secondaryGuardianMobile:r.secondary_guardian_mobile??"",primaryContact:r.primary_contact??"mother",primaryWhatsApp:r.primary_whatsapp??"",alternateWhatsApp:r.alternate_whatsapp??"",city:r.city??"",country:r.country??"",state:r.state??"",timezone:r.timezone??IST_TIMEZONE,addressLine1:r.address_line1??"",addressLine2:r.address_line2??"",postalCode:r.postal_code??"",billingName:r.billing_name??r.primary_guardian_name??"",billingEmail:r.billing_email??r.login_email??"",billingPhone:r.billing_phone??r.primary_whatsapp??"",childName:r.child_name??"",childDob:r.child_dob??"",grade:r.grade??"",school:r.school??"",preferredClassDays:r.preferred_class_days??[],preferredTimeWindows:r.preferred_time_windows??"",interests:r.interests??[],goal:r.goal??"",codingExperience:r.coding_experience??"",roboticsExperience:r.robotics_experience??"",source:r.source??"",referringParentName:r.referring_parent_name??"",dataConsent:r.data_consent??false,portfolioConsent:r.portfolio_consent??false,marketingMediaConsent:r.marketing_media_consent??false,status:mapOnboardingStatus(r.status),activatedStudentId:r.activated_student_id??undefined,activatedEnrollmentId:r.activated_enrollment_id??undefined,assignedCourseId:r.assigned_course_id??undefined,assignedTrainerId:r.assigned_trainer_id??undefined,enrollmentType:r.enrollment_type??undefined,cohortId:r.cohort_id??undefined,startDate:r.start_date??undefined,draftScheduleTimezone:r.draft_schedule_timezone??undefined,draftScheduleRules:Array.isArray(r.draft_schedule_rules)?r.draft_schedule_rules:[],submittedAt:r.submitted_at,activatedAt:r.activated_at??undefined,updatedAt:r.updated_at??undefined};const g=guardiansFromRecord(base);return{...base,primaryGuardianName:g.primary.name,primaryGuardianRelationship:g.primary.relationship,primaryGuardianMobile:g.primary.mobile,secondaryGuardianName:g.secondary?.name??"",secondaryGuardianRelationship:g.secondary?.relationship,secondaryGuardianMobile:g.secondary?.mobile??""};});
 }
 export async function getOnboardingSubmission(id:string){return(await listOnboardingSubmissions()).find(x=>x.id===id)??null;}
 export async function updateOnboardingSubmission(id:string,patch:Partial<OnboardingSubmission>){
   const supabase=getSupabaseBrowserClient();const now=new Date().toISOString();if(!supabase)return demoStore.onboarding.update(id,{...patch,updatedAt:now});
   const db:any={};const map:any={motherName:"mother_name",motherMobile:"mother_mobile",fatherName:"father_name",fatherMobile:"father_mobile",primaryGuardianName:"primary_guardian_name",primaryGuardianRelationship:"primary_guardian_relationship",primaryGuardianMobile:"primary_guardian_mobile",secondaryGuardianName:"secondary_guardian_name",secondaryGuardianRelationship:"secondary_guardian_relationship",secondaryGuardianMobile:"secondary_guardian_mobile",primaryContact:"primary_contact",primaryWhatsApp:"primary_whatsapp",alternateWhatsApp:"alternate_whatsapp",city:"city",country:"country",state:"state",timezone:"timezone",addressLine1:"address_line1",addressLine2:"address_line2",postalCode:"postal_code",billingName:"billing_name",billingEmail:"billing_email",billingPhone:"billing_phone",childName:"child_name",childDob:"child_dob",grade:"grade",school:"school",preferredClassDays:"preferred_class_days",preferredTimeWindows:"preferred_time_windows",interests:"interests",goal:"goal",codingExperience:"coding_experience",roboticsExperience:"robotics_experience",source:"source",referringParentName:"referring_parent_name",activatedStudentId:"activated_student_id",activatedEnrollmentId:"activated_enrollment_id",assignedCourseId:"assigned_course_id",assignedTrainerId:"assigned_trainer_id",enrollmentType:"enrollment_type",cohortId:"cohort_id",startDate:"start_date",draftScheduleTimezone:"draft_schedule_timezone",draftScheduleRules:"draft_schedule_rules",status:"status",activatedAt:"activated_at"};
-  Object.entries(patch).forEach(([k,v])=>{if(map[k])db[map[k]]=v===undefined?null:v});const {data,error}=await supabase.from("onboarding_submissions").update({...db,updated_at:now}).eq("id",id).select().maybeSingle();return error?null:data;
+  Object.entries(patch).forEach(([k,v])=>{if(map[k])db[map[k]]=(k==="childDob"||k==="startDate")&&v===""?null:v===undefined?null:v});const {data,error}=await supabase.from("onboarding_submissions").update({...db,updated_at:now}).eq("id",id).select().maybeSingle();if(error)throw new Error(error.message);if(!data)throw new Error("No matching onboarding record was updated.");return data;
 }
 
 /** Fetch all records visible to this account without Supabase's default 1,000-row response cap.
@@ -298,7 +299,7 @@ export async function deleteAdminStudent(id:string){
 }
 
 // ---------------- Admin Trainer CRUD ----------------
-export async function listAdminTrainers():Promise<TrainerAdminRecord[]>{const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.trainers.list();const[{data},{data:links},{data:access}]=await Promise.all([supabase.from("trainers").select("*").order("full_name"),supabase.from("trainer_courses").select("trainer_id,course_id"),supabase.from("portal_access_requests").select("target_id,status").eq("target_type","trainer")]);return(data??[]).map((r:any)=>({id:r.id,fullName:r.full_name??"",mobile:r.mobile??"",email:r.email??"",city:r.city??"",country:r.country??"India",state:r.state??"",timezone:r.timezone??"Asia/Kolkata",designation:r.designation??"",joiningDate:r.joining_date??"",specialties:r.specialties??[],courseIds:(links??[]).filter((x:any)=>x.trainer_id===r.id).map((x:any)=>x.course_id),recordStatus:r.record_status??"active",zoomJoinUrl:r.zoom_join_url??"",loginLinked:Boolean(r.profile_id),portalAccessStatus:(access??[]).find((a:any)=>a.target_id===r.id)?.status==="invited"?"invite_sent":(access??[]).find((a:any)=>a.target_id===r.id)?.status==="disabled"?"disabled":r.profile_id?"portal_ready":"not_linked",updatedAt:r.updated_at}));}
+export async function listAdminTrainers():Promise<TrainerAdminRecord[]>{const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.trainers.list();const[data,links,access]=await Promise.all([readAllPages(()=>supabase.from("trainers").select("*").order("full_name").order("id")),readAllPages(()=>supabase.from("trainer_courses").select("trainer_id,course_id").order("trainer_id").order("course_id")),readAllPages(()=>supabase.from("portal_access_requests").select("target_id,status").eq("target_type","trainer").order("target_id"))]);return(data??[]).map((r:any)=>({id:r.id,fullName:r.full_name??"",mobile:r.mobile??"",email:r.email??"",city:r.city??"",country:r.country??"India",state:r.state??"",timezone:r.timezone??"Asia/Kolkata",designation:r.designation??"",joiningDate:r.joining_date??"",specialties:r.specialties??[],courseIds:(links??[]).filter((x:any)=>x.trainer_id===r.id).map((x:any)=>x.course_id),recordStatus:r.record_status??"active",zoomJoinUrl:r.zoom_join_url??"",loginLinked:Boolean(r.profile_id),portalAccessStatus:(access??[]).find((a:any)=>a.target_id===r.id)?.status==="invited"?"invite_sent":(access??[]).find((a:any)=>a.target_id===r.id)?.status==="disabled"?"disabled":r.profile_id?"portal_ready":"not_linked",updatedAt:r.updated_at}));}
 export async function getAdminTrainer(id:string){return(await listAdminTrainers()).find(x=>x.id===id)??null;}
 export async function createAdminTrainer(input:Omit<TrainerAdminRecord,"id"|"loginLinked"|"updatedAt">){const supabase=getSupabaseBrowserClient();const record:TrainerAdminRecord={...input,id:slugify(input.fullName)||makeId("trainer"),loginLinked:false,updatedAt:new Date().toISOString()};if(!supabase)return{ok:true,id:demoStore.trainers.create(record).id};const {data,error}=await supabase.from("trainers").insert({full_name:input.fullName,mobile:input.mobile,email:input.email,city:input.city,country:input.country??"India",state:input.state??"",timezone:input.timezone??"Asia/Kolkata",designation:input.designation,joining_date:input.joiningDate||null,specialties:input.specialties,record_status:input.recordStatus}).select("id").single();if(error)return{ok:false,error:error.message};if(input.courseIds.length){const {error:tc}=await supabase.from("trainer_courses").insert(input.courseIds.map(courseId=>({trainer_id:data.id,course_id:courseId})));if(tc)return{ok:false,error:tc.message};}return{ok:true,id:data.id};}
 export async function updateAdminTrainer(id:string,input:Partial<TrainerAdminRecord>){const supabase=getSupabaseBrowserClient();if(!supabase)return{ok:true,data:demoStore.trainers.update(id,input)};const db:any={};const map:any={fullName:"full_name",mobile:"mobile",email:"email",city:"city",country:"country",state:"state",timezone:"timezone",designation:"designation",joiningDate:"joining_date",specialties:"specialties",recordStatus:"record_status"};Object.entries(input).forEach(([k,v])=>{if(map[k])db[map[k]]=v});const{error}=await supabase.from("trainers").update({...db,updated_at:new Date().toISOString()}).eq("id",id);if(error)return{ok:false,error:error.message};if(input.courseIds){await supabase.from("trainer_courses").delete().eq("trainer_id",id);if(input.courseIds.length){const{error:tc}=await supabase.from("trainer_courses").insert(input.courseIds.map(courseId=>({trainer_id:id,course_id:courseId})));if(tc)return{ok:false,error:tc.message};}}return{ok:true};}
@@ -334,7 +335,7 @@ export async function saveTrainerFinance(trainerId:string,input:Omit<TrainerFina
 }
 
 // ---------------- Admin Course CRUD ----------------
-export async function listAdminCourses():Promise<CourseAdminRecord[]>{const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.courses.list();const{data}=await supabase.from("courses").select("*").order("title");return(data??[]).map((r:any)=>({id:r.id,slug:r.slug,title:r.title,shortTitle:r.short_title??r.title,publicName:r.public_name??r.title,internalName:r.internal_name??r.short_title??r.title,outcomeSubtitle:r.outcome_subtitle??"",code:r.code??"",category:r.category??"",gradeFrom:r.grade_from??0,gradeTo:r.grade_to??0,ageFrom:r.age_from??0,ageTo:r.age_to??0,level:r.level??"",totalSessions:r.total_sessions??0,sessionDuration:r.session_duration??60,plannedHours:r.planned_hours??((r.total_sessions??0)*(r.session_duration??60)/60),deliveryModes:r.delivery_modes??[],codingType:r.coding_type??"",technologies:r.technologies??[],description:r.description??"",outcomes:r.outcomes??[],projects:r.projects??[],assessmentPattern:r.assessment_pattern??"",practiceMissions:r.practice_missions??true,certificate:r.certificate??true,status:r.status??"draft",defaultCohortCapacity:r.default_cohort_capacity??4,minimumCohortSize:r.minimum_cohort_size??2,updatedAt:r.updated_at}));}
+export async function listAdminCourses():Promise<CourseAdminRecord[]>{const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.courses.list();const data=await readAllPages(()=>supabase.from("courses").select("*").order("title").order("id"));return(data??[]).map((r:any)=>({id:r.id,slug:r.slug,title:r.title,shortTitle:r.short_title??r.title,publicName:r.public_name??r.title,internalName:r.internal_name??r.short_title??r.title,outcomeSubtitle:r.outcome_subtitle??"",code:r.code??"",category:r.category??"",gradeFrom:r.grade_from??0,gradeTo:r.grade_to??0,ageFrom:r.age_from??0,ageTo:r.age_to??0,level:r.level??"",totalSessions:r.total_sessions??0,sessionDuration:r.session_duration??60,plannedHours:r.planned_hours??((r.total_sessions??0)*(r.session_duration??60)/60),deliveryModes:r.delivery_modes??[],codingType:r.coding_type??"",technologies:r.technologies??[],description:r.description??"",outcomes:r.outcomes??[],projects:r.projects??[],assessmentPattern:r.assessment_pattern??"",practiceMissions:r.practice_missions??true,certificate:r.certificate??true,status:r.status??"draft",defaultCohortCapacity:r.default_cohort_capacity??4,minimumCohortSize:r.minimum_cohort_size??2,updatedAt:r.updated_at}));}
 export async function getAdminCourse(id:string){return(await listAdminCourses()).find(x=>x.id===id||x.slug===id)??null;}
 export async function createAdminCourse(input:Omit<CourseAdminRecord,"id"|"updatedAt">){const supabase=getSupabaseBrowserClient();const id=slugify(input.slug||input.title)||makeId("course");const record:CourseAdminRecord={...input,id,slug:id,updatedAt:new Date().toISOString()};if(!supabase)return{ok:true,id:demoStore.courses.create(record).id};const{data,error}=await supabase.from("courses").insert({slug:record.slug,title:record.title,short_title:record.shortTitle,public_name:record.publicName||record.title,internal_name:record.internalName||record.shortTitle||record.title,outcome_subtitle:record.outcomeSubtitle||"",code:record.code,category:record.category,grade_from:record.gradeFrom,grade_to:record.gradeTo,age_from:record.ageFrom,age_to:record.ageTo,level:record.level,total_sessions:record.totalSessions,session_duration:record.sessionDuration,planned_hours:record.plannedHours??plannedCourseHours(record),delivery_modes:record.deliveryModes,coding_type:record.codingType,technologies:record.technologies,description:record.description,outcomes:record.outcomes,projects:record.projects,assessment_pattern:record.assessmentPattern,practice_missions:record.practiceMissions,certificate:record.certificate,status:record.status,default_cohort_capacity:record.defaultCohortCapacity??4,minimum_cohort_size:record.minimumCohortSize??2}).select("id").single();return error?{ok:false,error:error.message}:{ok:true,id:data.id};}
 export async function updateAdminCourse(id:string,input:Partial<CourseAdminRecord>){const supabase=getSupabaseBrowserClient();if(!supabase)return{ok:true,data:demoStore.courses.update(id,input)};const db:any={};const map:any={slug:"slug",title:"title",shortTitle:"short_title",publicName:"public_name",internalName:"internal_name",outcomeSubtitle:"outcome_subtitle",code:"code",category:"category",gradeFrom:"grade_from",gradeTo:"grade_to",ageFrom:"age_from",ageTo:"age_to",level:"level",totalSessions:"total_sessions",sessionDuration:"session_duration",plannedHours:"planned_hours",deliveryModes:"delivery_modes",codingType:"coding_type",technologies:"technologies",description:"description",outcomes:"outcomes",projects:"projects",assessmentPattern:"assessment_pattern",practiceMissions:"practice_missions",certificate:"certificate",status:"status",defaultCohortCapacity:"default_cohort_capacity",minimumCohortSize:"minimum_cohort_size"};Object.entries(input).forEach(([k,v])=>{if(map[k])db[map[k]]=v});const{error}=await supabase.from("courses").update({...db,updated_at:new Date().toISOString()}).eq("id",id);return error?{ok:false,error:error.message}:{ok:true};}
@@ -569,19 +570,33 @@ export async function createMakeupClassV2(eventId:string,date:string,startTime:s
  return error?{ok:false,error:error.message}:{ok:true,id:String(data)};
 }
 
-export async function generateEnrollmentScheduleV2(enrollmentId:string,horizon:"full"|"weeks"|"manual"="full",weeks?:number):Promise<{ok:true;created:number;total:number}|{ok:false;error:string}>{
+export async function generateEnrollmentScheduleV2(enrollmentId:string,horizon:"full"|"weeks"|"manual"="full",weeks?:number):Promise<{ok:true;created:number;total:number;zoomWarning?:string}|{ok:false;error:string}>{
  if(horizon==="manual")return{ok:true,created:0,total:0};
  const supabase=getSupabaseBrowserClient();
  if(!supabase)return{ok:false,error:"Automatic class booking requires an installed database."};
  const {data,error}=await supabase.rpc("generate_enrollment_schedule_v2",{p_enrollment_id:enrollmentId,p_horizon:horizon,p_weeks:horizon==="weeks"?weeks:null});
  if(error)return{ok:false,error:error.message};
- return{ok:true,created:Number(data?.created??0),total:Number(data?.total??0)};
+ const result={ok:true as const,created:Number(data?.created??0),total:Number(data?.total??0),zoomWarning:undefined as string|undefined};
+ // The database RPC creates class bookings; the Zoom meeting is a separate external resource.
+ // Reconcile immediately after booking, preserving the enrollment even when Zoom is unavailable.
+ try{
+  let remaining=0;
+  for(let attempt=0;attempt<4;attempt++){
+   const batch=await adminApi("/api/zoom/reconcile-classes",{method:"POST",body:JSON.stringify({enrollmentId})});
+   remaining=Number(batch.remaining||0);
+   if(batch.failed)result.zoomWarning=`Zoom setup needs attention for ${batch.failed} class(es). Check Zoom Classroom reconciliation details.`;
+   if(!remaining||batch.processed===0||batch.failed)break;
+  }
+  if(remaining)result.zoomWarning=`Zoom provisioning is incomplete. ${remaining} additional class(es) need checking in Zoom Classroom.`;
+ }catch(error){result.zoomWarning="Classes were booked, but Zoom setup needs attention: "+(error instanceof Error?error.message:String(error));}
+ return result;
 }
 
 export async function activateOnboarding(id:string,assignment:{courseId:string;trainerId:string;enrollmentType:"one_to_one"|"small_group";cohortId?:string;startDate?:string;scheduleTimezone?:string;scheduleRules?:WeeklyScheduleSlot[];scheduleOverrideConfirmed?:boolean;scheduleOverrideNote?:string;schedulingHorizon?:"full"|"weeks"|"manual";schedulingWeeks?:number}){
   const submission=await getOnboardingSubmission(id);
   if(!submission)return{ok:false,error:"Onboarding submission not found."};
   if(submission.status==="active")return{ok:false,error:"This onboarding submission is already active."};
+  if(submission.status!=="setup_pending")return{ok:false,error:"Mark the completed onboarding setup ready before activation."};
   // Fail before creating a learner if the additive activation-link migration was not installed.
   // Otherwise onboarding may remain pending after successfully creating an enrollment.
   const migrationClient=getSupabaseBrowserClient();
@@ -609,14 +624,14 @@ export async function activateOnboarding(id:string,assignment:{courseId:string;t
   const created=await createAdminStudent({fullName:submission.childName,dob:submission.childDob,grade:submission.grade,school:submission.school,city:submission.city,country:submission.country,state:submission.state??"",timezone:submission.timezone||IST_TIMEZONE,addressLine1:submission.addressLine1,addressLine2:submission.addressLine2,postalCode:submission.postalCode,billingName:submission.billingName,billingEmail:submission.billingEmail,billingPhone:submission.billingPhone,preferredClassDays:submission.preferredClassDays,preferredTimeWindows:submission.preferredTimeWindows,motherName:submission.motherName,motherMobile:submission.motherMobile,fatherName:submission.fatherName,fatherMobile:submission.fatherMobile,primaryGuardianName:submission.primaryGuardianName,primaryGuardianRelationship:submission.primaryGuardianRelationship,primaryGuardianMobile:submission.primaryGuardianMobile,secondaryGuardianName:submission.secondaryGuardianName,secondaryGuardianRelationship:submission.secondaryGuardianRelationship,secondaryGuardianMobile:submission.secondaryGuardianMobile,primaryContact:submission.primaryContact,primaryWhatsApp:submission.primaryWhatsApp,alternateWhatsApp:submission.alternateWhatsApp,parentLoginEmail:submission.loginEmail,interests:submission.interests,previousExperience:`Coding: ${submission.codingExperience}; Robotics: ${submission.roboticsExperience}`,source:submission.source,recordStatus:"active"});if(!created.ok)return created;
   const enrollment=await createAdminEnrollment({studentId:created.id!,courseId:assignment.courseId,trainerId:assignment.trainerId,enrollmentType:assignment.enrollmentType,cohortId:assignment.enrollmentType==="small_group"?assignment.cohortId:undefined,status:"active",startedAt:assignment.startDate,deliveryChannel:"online",centerLocation:"",scheduleMode:"recurring",scheduleTimezone,scheduleRules,scheduleOverrideConfirmed:assignment.scheduleOverrideConfirmed??false,scheduleOverrideNote:assignment.scheduleOverrideNote});if(!enrollment.ok){const supabase=getSupabaseBrowserClient();if(supabase&&created.id){await supabase.from("students").delete().eq("id",created.id);}return{ok:false,error:"Unable to activate learner. No enrollment was created. "+(enrollment.error??"Please review the delivery setup and try again.")};}
   const supabase=getSupabaseBrowserClient();if(supabase&&submission.userId){const{data:parent}=await supabase.from("parents").select("id").eq("profile_id",submission.userId).maybeSingle();if(parent)await supabase.from("parent_students").upsert({parent_id:parent.id,student_id:created.id,relationship_label:"Parent"},{onConflict:"parent_id,student_id"});}
-  const storedActivation=await updateOnboardingSubmission(id,{status:"active",activatedStudentId:created.id,activatedEnrollmentId:enrollment.id,assignedCourseId:assignment.courseId,assignedTrainerId:assignment.trainerId,enrollmentType:assignment.enrollmentType,cohortId:assignment.cohortId,startDate:assignment.startDate,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules,activatedAt:new Date().toISOString()});
+  const storedActivation=await updateOnboardingSubmission(id,{status:"active",activatedStudentId:created.id,activatedEnrollmentId:enrollment.id,assignedCourseId:assignment.courseId,assignedTrainerId:assignment.trainerId,enrollmentType:assignment.enrollmentType,cohortId:assignment.cohortId,startDate:assignment.startDate,draftScheduleTimezone:scheduleTimezone,draftScheduleRules:scheduleRules,activatedAt:new Date().toISOString()}).catch(()=>null);
   if(!storedActivation)return{ok:true,studentId:created.id,enrollmentId:enrollment.id,schedulingWarning:"Learner and enrollment were created, but the onboarding record could not be marked active. Do not activate again; open the enrollment and contact Admin."};
   // Activation and class booking are separate existing operations. Never claim the
   // student creation was rolled back if the atomic booking RPC fails.
   if(assignment.enrollmentType==="one_to_one"&&assignment.schedulingHorizon!=="manual"&&enrollment.id){
    const booking=await generateEnrollmentScheduleV2(enrollment.id,assignment.schedulingHorizon??"full",assignment.schedulingWeeks);
    if(!booking.ok)return{ok:true,studentId:created.id,enrollmentId:enrollment.id,schedulingWarning:"Learner activated, but future classes were NOT booked: "+booking.error};
-   return{ok:true,studentId:created.id,enrollmentId:enrollment.id,classesCreated:booking.created};
+   return{ok:true,studentId:created.id,enrollmentId:enrollment.id,classesCreated:booking.created,...(booking.zoomWarning?{schedulingWarning:booking.zoomWarning}:{})};
   }
   return{ok:true,studentId:created.id,enrollmentId:enrollment.id};
 }
@@ -643,7 +658,7 @@ export async function saveLearningObservations(scheduleEventId:string,trainerId:
 
 export async function listTrainerFeedback(filters?:{studentId?:string;enrollmentId?:string}):Promise<TrainerFeedbackRecord[]>{
   const supabase=getSupabaseBrowserClient();if(!supabase){let rows=demoStore.feedback.list();if(filters?.studentId)rows=rows.filter(x=>x.studentId===filters.studentId);if(filters?.enrollmentId)rows=rows.filter(x=>x.enrollmentId===filters.enrollmentId);return rows.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));}
-  let q=supabase.from("trainer_feedback").select("*").order("created_at",{ascending:false});if(filters?.studentId)q=q.eq("student_id",filters.studentId);if(filters?.enrollmentId)q=q.eq("enrollment_id",filters.enrollmentId);const{data}=await q;return(data??[]).map((r:any)=>({id:r.id,studentId:r.student_id,enrollmentId:r.enrollment_id,trainerId:r.trainer_id,type:r.feedback_type,title:r.title,summary:r.summary,strengths:r.strengths??"",nextFocus:r.next_focus??"",signal:r.signal,createdAt:r.created_at,updatedAt:r.updated_at}));
+  let q=supabase.from("trainer_feedback").select("*").order("created_at",{ascending:false});if(filters?.studentId)q=q.eq("student_id",filters.studentId);if(filters?.enrollmentId)q=q.eq("enrollment_id",filters.enrollmentId);const data=await readAllPages(()=>q);return(data??[]).map((r:any)=>({id:r.id,studentId:r.student_id,enrollmentId:r.enrollment_id,trainerId:r.trainer_id,type:r.feedback_type,title:r.title,summary:r.summary,strengths:r.strengths??"",nextFocus:r.next_focus??"",signal:r.signal,createdAt:r.created_at,updatedAt:r.updated_at}));
 }
 export async function createTrainerFeedback(input:Omit<TrainerFeedbackRecord,"id"|"createdAt"|"updatedAt">){const supabase=getSupabaseBrowserClient();const record:TrainerFeedbackRecord={...input,id:makeId("feedback"),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};if(!supabase){demoStore.feedback.create(record);await emitNotification({recipientRole:"parent",studentId:input.studentId,trainerId:input.trainerId,type:"feedback_posted",priority:"info",title:"New mentor feedback",message:input.title,href:`/parent/learner/${input.studentId}`});await emitNotification({recipientRole:"student",studentId:input.studentId,trainerId:input.trainerId,type:"feedback_posted",priority:"info",title:"New mentor feedback",message:input.title,href:"/student"});return{ok:true,id:record.id};}const{data,error}=await supabase.from("trainer_feedback").insert({student_id:input.studentId,enrollment_id:input.enrollmentId,trainer_id:input.trainerId,feedback_type:input.type,title:input.title,summary:input.summary,strengths:input.strengths,next_focus:input.nextFocus,signal:input.signal}).select("id").single();return error?{ok:false,error:error.message}:{ok:true,id:data.id};}
 export async function updateTrainerFeedback(id:string,patch:Partial<TrainerFeedbackRecord>){const supabase=getSupabaseBrowserClient();if(!supabase)return{ok:true,data:demoStore.feedback.update(id,{...patch,updatedAt:new Date().toISOString()})};const db:any={};const map:any={type:"feedback_type",title:"title",summary:"summary",strengths:"strengths",nextFocus:"next_focus",signal:"signal"};Object.entries(patch).forEach(([k,v])=>{if(map[k])db[map[k]]=v});const{error}=await supabase.from("trainer_feedback").update({...db,updated_at:new Date().toISOString()}).eq("id",id);return error?{ok:false,error:error.message}:{ok:true};}
@@ -841,11 +856,74 @@ export async function listPortalAuditLog(limit=100):Promise<PortalAuditRecord[]>
 }
 
 
+/** Fetch a record's own audit trail; do not infer history from the global recent-events window. */
+export async function listPortalAuditLogForRecord(entityTypes:string[],entityId:string,limit=500):Promise<PortalAuditRecord[]>{
+ const types=entityTypes.filter(Boolean);
+ if(!types.length||!entityId)return[];
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return demoStore.auditLog.list().filter(a=>types.includes(a.entityType)&&a.entityId===entityId).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,limit);
+ const{data,error}=await supabase.from("portal_audit_log").select("*").in("entity_type",types).eq("entity_id",entityId).order("created_at",{ascending:false}).limit(Math.min(limit,1000));
+ if(error)throw new Error("Unable to load record history: "+error.message);
+ return(data??[]).map((r:any)=>({id:String(r.id),actorProfileId:r.actor_profile_id??undefined,entityType:r.entity_type,entityId:r.entity_id,action:r.action,beforeData:r.before_data??undefined,afterData:r.after_data??undefined,createdAt:r.created_at}));
+}
+
+/** Admin learner journey: link onboarding, enrollments, classes, attendance and progress.
+ * Requests use normal Supabase RLS. No privileged browser keys.
+ */
+export async function listLearnerJourneyAudit(studentId:string,limit=500):Promise<PortalAuditRecord[]>{
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return demoStore.auditLog.list().filter(a=>a.entityId===studentId).slice(0,limit);
+ const [enrollmentResult,classResult,onboardingResult,attendanceResult,observationResult,holdsResult]=await Promise.all([
+  supabase.from("enrollments").select("id").eq("student_id",studentId),
+  supabase.from("schedule_events").select("id").eq("student_id",studentId),
+  supabase.from("onboarding_submissions").select("id").eq("activated_student_id",studentId),
+  supabase.from("class_attendance").select("id").eq("student_id",studentId),
+  supabase.from("learning_observations").select("id").eq("student_id",studentId),
+  supabase.from("enrollment_holds").select("id,enrollment_id").limit(1000)
+ ]);
+ for(const result of [enrollmentResult,classResult,onboardingResult,attendanceResult,observationResult,holdsResult])if(result.error)throw new Error("Unable to build learner journey: "+result.error.message);
+ const enrollmentIds=(enrollmentResult.data??[]).map((r:any)=>String(r.id));
+ const classIds=(classResult.data??[]).map((r:any)=>String(r.id));
+ const onboardingIds=(onboardingResult.data??[]).map((r:any)=>String(r.id));
+ const attendanceIds=(attendanceResult.data??[]).map((r:any)=>String(r.id));
+ const observationIds=(observationResult.data??[]).map((r:any)=>String(r.id));
+ const holdIds=(holdsResult.data??[]).filter((r:any)=>enrollmentIds.includes(String(r.enrollment_id))).map((r:any)=>String(r.id));
+ const filters=[
+  {types:["students","student_guardians"],ids:[studentId]},
+  {types:["enrollments"],ids:enrollmentIds},
+  {types:["enrollment_holds"],ids:holdIds},
+  {types:["schedule_events"],ids:classIds},
+  {types:["class_attendance"],ids:attendanceIds},
+  {types:["learning_observations"],ids:observationIds},
+  {types:["learning_observation_internal_notes"],ids:[studentId]},
+  {types:["onboarding_submissions"],ids:onboardingIds}
+ ];
+ const queries=filters.filter(f=>f.ids.length).map(f=>supabase.from("portal_audit_log").select("*").in("entity_type",f.types).in("entity_id",f.ids.slice(0,500)).order("created_at",{ascending:false}).limit(limit));
+ const results=await Promise.all(queries);
+ const items=new Map<string,PortalAuditRecord>();
+ for(const result of results){
+  if(result.error)throw new Error("Unable to load learner history: "+result.error.message);
+  for(const r of result.data??[])items.set(String(r.id),{id:String(r.id),actorProfileId:r.actor_profile_id??undefined,entityType:r.entity_type,entityId:r.entity_id,action:r.action,beforeData:r.before_data??undefined,afterData:r.after_data??undefined,createdAt:r.created_at});
+ }
+ return [...items.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,limit);
+}
+
+/** Resolve audit actors into profile labels for Admin screens. */
+export async function resolveAuditActorNames(ids:string[]):Promise<Record<string,string>>{
+ const unique=[...new Set(ids.filter(Boolean))].slice(0,500);
+ if(!unique.length)return{};
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return{};
+ const{data,error}=await supabase.from("profiles").select("id,full_name,role").in("id",unique);
+ if(error)throw new Error("Unable to resolve audit actors: "+error.message);
+ return Object.fromEntries((data??[]).map((p:any)=>[p.id,p.full_name?String(p.full_name):String(p.role??"User")]));
+}
+
 // ---------------- Role profile, community and trainer finance self-service ----------------
 export async function getCurrentTrainerRecord():Promise<TrainerAdminRecord|null>{
  const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.trainers.list()[0]??null;
- const{data:{user}}=await supabase.auth.getUser();if(!user)return null;
- const{data}=await supabase.from("trainers").select("*").eq("profile_id",user.id).maybeSingle();if(!data)return null;
+ const{data:{user},error:authError}=await supabase.auth.getUser();if(authError)throw new Error("Unable to verify trainer session.");if(!user)return null;
+ const{data,error:trainerError}=await supabase.from("trainers").select("*").eq("profile_id",user.id).maybeSingle();if(trainerError)throw new Error("Unable to read trainer record.");if(!data)return null;
  const{data:links}=await supabase.from("trainer_courses").select("course_id").eq("trainer_id",data.id);
  return{id:data.id,fullName:data.full_name??"",mobile:data.mobile??"",email:data.email??"",city:data.city??"",country:data.country??"India",state:data.state??"",timezone:data.timezone??IST_TIMEZONE,designation:data.designation??"Trainer",joiningDate:data.joining_date??"",specialties:data.specialties??[],courseIds:(links??[]).map((x:any)=>x.course_id),recordStatus:data.record_status??"active",loginLinked:Boolean(data.profile_id),portalAccessStatus:data.profile_id?"portal_ready":"not_linked",updatedAt:data.updated_at};
 }

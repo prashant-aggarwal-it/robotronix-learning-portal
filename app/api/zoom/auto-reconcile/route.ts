@@ -1,0 +1,134 @@
+import {NextRequest,NextResponse} from "next/server";
+import {syncZoomForScheduleEvent,cancelZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
+import {zoomServiceClient} from "@/lib/server/zoom";
+import {zonedLocalToUtc} from "@/lib/timezones";
+import {logSystemEvent} from "@/lib/server/system-log";
+import {recordJobRun} from "@/lib/server/job-monitor";
+export const dynamic="force-dynamic";
+
+// JIT provisioning: server-authenticated; scan classes in the next 35 minutes, up to 12 per run.
+export async function POST(request:NextRequest){
+ const expected=process.env.INTERNAL_CRON_SECRET?.trim();
+ const supplied=request.headers.get("x-robotronix-cron-secret")?.trim();
+ if(!expected||supplied!==expected)return NextResponse.json({ok:false,error:"Unauthorized."},{status:401});
+ const runStarted=Date.now();
+ try{
+  const db=zoomServiceClient();
+  const {data:hosts,error:hostError}=await db.from("zoom_host_accounts")
+   .select("id").eq("status","connected").eq("enabled",true).limit(1);
+  if(hostError)throw new Error(hostError.message);
+  if(!hosts?.length){
+   await recordJobRun({jobName:"zoom-auto-reconcile",status:"failed",failed:1,durationMs:Date.now()-runStarted,errorCode:"ZOOM_HOST_POOL_EMPTY"});
+   return NextResponse.json({ok:false,created:0,repaired:0,failed:1,error:"No connected Zoom host is available."},{status:503});
+  }
+  const {data:meetings,error:meetingsError}=await db.from("zoom_meetings")
+   .select("schedule_event_id,join_url,status,last_error,updated_at,scheduled_start")
+   .eq("purpose","class").not("schedule_event_id","is",null);
+  if(meetingsError)throw new Error(meetingsError.message);
+  const [offlineEnrollments,offlineCohorts]=await Promise.all([
+   db.from("enrollments").select("id").eq("delivery_channel","offline"),
+   db.from("cohorts").select("id").eq("delivery_channel","offline")
+  ]);
+  if(offlineEnrollments.error||offlineCohorts.error)throw new Error(offlineEnrollments.error?.message||offlineCohorts.error?.message);
+  const offlineEnrollmentIds=new Set((offlineEnrollments.data||[]).map(row=>row.id));
+  const offlineCohortIds=new Set((offlineCohorts.data||[]).map(row=>row.id));
+  const linked=new Map((meetings||[]).map(m=>[m.schedule_event_id,m]));
+  const candidates:string[]=[];
+  const fromDate=new Date(Date.now()-48*60*60_000).toISOString().slice(0,10);
+  const toDate=new Date(Date.now()+48*60*60_000).toISOString().slice(0,10);
+  for(let page=0;page<15;page++){
+   const {data:events,error}=await db.from("schedule_events")
+    .select("id,date,start_time,timezone,enrollment_id,cohort_id")
+    .eq("event_type","class").in("status",["scheduled","makeup"])
+    .gte("date",fromDate).lte("date",toDate)
+    .order("date",{ascending:true}).order("start_time",{ascending:true}).order("id",{ascending:true})
+    .range(page*200,page*200+199);
+   if(error)throw new Error(error.message);
+   for(const event of events||[]){
+    if((event.enrollment_id&&offlineEnrollmentIds.has(event.enrollment_id))||(event.cohort_id&&offlineCohortIds.has(event.cohort_id)))continue;
+    const meeting=linked.get(event.id);
+    // Back off after a failed repair or provisioning attempt, without hiding
+    // timestamp mismatches caused by a reschedule.
+    if(meeting?.last_error&&meeting.updated_at&&Date.now()-new Date(meeting.updated_at).getTime()<5*60_000)continue;
+    try{
+     const expectedStart=zonedLocalToUtc(event.date,event.start_time,event.timezone||"Asia/Kolkata").getTime();
+     const untilStart=expectedStart-Date.now();
+     if(untilStart< -5*60_000||untilStart>35*60_000)continue;
+     const ready=Boolean(meeting?.join_url&&/^https:\/\//i.test(meeting.join_url)&&!["cancelled","error"].includes(meeting.status));
+     const matchesTime=Math.abs(new Date(meeting?.scheduled_start||0).getTime()-expectedStart)<60_000;
+     if(ready&&matchesTime)continue;
+     candidates.push(event.id);
+    }catch{}
+   }
+   if((events||[]).length<200)break;
+  }
+  // Rotate the starting point so repeated failure of an unlinked class cannot starve later classes.
+  const offset=candidates.length?Math.floor(Date.now()/3600000)%candidates.length:0;
+  const chosen=candidates.slice(offset).concat(candidates.slice(0,offset)).slice(0,12);
+  let created=0,repaired=0,skipped=0;
+  const failures:Array<{eventId:string;reason:string}>=[];
+  for(const eventId of chosen){
+   try{
+    const result=await syncZoomForScheduleEvent(db,eventId);
+    if(result.action==="created")created++;
+    else if(result.action==="repaired")repaired++;
+    else skipped++;
+   }catch(e){
+    const reason=e instanceof Error?e.message:String(e);
+    failures.push({eventId,reason});
+    console.error("Zoom automatic classroom provisioning failed",eventId);
+    const reference=await logSystemEvent({source:"zoom-auto-reconcile",action:"provision-meeting",level:"error",code:"ZOOM_RECONCILE_ITEM_FAILED",message:"Automatic Zoom meeting reconciliation failed for a class."});
+    failures[failures.length-1]={eventId,reason:"Provisioning failed. Reference: "+reference};
+   }
+  }
+  // Repair host reservations for future classes whose preferred host was missing,
+  // disabled, or unavailable when the original course schedule was created.
+  let reservationsRecovered=0;
+  const {data:unallocated,error:allocationError}=await db.from("zoom_class_host_reservations")
+   .select("schedule_event_id").eq("allocation_status","unallocated")
+   .gte("ends_at",new Date().toISOString())
+   .order("updated_at",{ascending:true}).limit(10);
+  if(allocationError)throw new Error("Zoom reservation backlog query failed.");
+  for(const reservation of unallocated||[]){
+   const {data:allocation,error:allocationFailure}=await db.rpc("reserve_zoom_host_for_class",{p_event_id:reservation.schedule_event_id});
+   if(allocationFailure)throw new Error("Zoom reservation recovery RPC failed.");
+   if(allocation==="reserved")reservationsRecovered++;
+  }
+
+  // Recover cancellations not followed by the original application's Zoom API
+  // cleanup. Leave completed and currently started meetings untouched.
+  let cancelled=0;
+  const {data:activeMeetings,error:activeMeetingError}=await db.from("zoom_meetings")
+   .select("schedule_event_id").eq("purpose","class").eq("status","scheduled")
+   .gte("scheduled_start",new Date(Date.now()-24*60*60_000).toISOString())
+   .order("scheduled_start",{ascending:true}).limit(300);
+  if(activeMeetingError)throw new Error("Zoom cancellation reconciliation lookup failed.");
+  const activeIds=(activeMeetings||[]).map(m=>m.schedule_event_id).filter((id):id is string=>Boolean(id));
+  if(activeIds.length){
+   const {data:classStates,error:stateError}=await db.from("schedule_events")
+    .select("id,status,enrollment_id,cohort_id").in("id",activeIds);
+   if(stateError)throw new Error("Zoom cancellation state lookup failed.");
+   const invalid=(classStates||[]).filter(s=>
+    ["cancelled","rescheduled","blocked"].includes(s.status)
+    ||(s.enrollment_id&&offlineEnrollmentIds.has(s.enrollment_id))
+    ||(s.cohort_id&&offlineCohortIds.has(s.cohort_id))
+   ).slice(0,5);
+   for(const item of invalid){
+    try{await cancelZoomForScheduleEvent(db,item.id);cancelled++;}
+    catch{
+     failures.push({eventId:item.id,reason:"Unable to clean up cancelled classroom."});
+     await logSystemEvent({source:"zoom-auto-reconcile",action:"cancel-class",level:"error",
+      code:"ZOOM_CANCEL_RECONCILIATION_FAILED",message:"Zoom meeting cleanup after class cancellation failed."});
+    }
+   }
+  }
+  if(created+repaired>0)await logSystemEvent({source:"zoom-auto-reconcile",action:"reconcile",level:"info",message:"Zoom reconciliation created "+created+" and repaired "+repaired+" meeting(s)."});
+  await recordJobRun({jobName:"zoom-auto-reconcile",status:failures.length?"partial":"success",processed:chosen.length,succeeded:created+repaired,failed:failures.length,durationMs:Date.now()-runStarted});
+  return NextResponse.json({ok:failures.length===0,created,repaired,skipped,cancelled,reservationsRecovered,failed:failures.length,processed:chosen.length,remainingCandidates:Math.max(0,candidates.length-chosen.length),failures},{headers:{"Cache-Control":"no-store"}});
+ }catch(e){
+  console.error("Zoom automatic reconciliation failed");
+  const reference=await logSystemEvent({source:"zoom-auto-reconcile",action:"reconcile",level:"error",code:"ZOOM_RECONCILE_JOB_FAILED",message:"Automatic Zoom meeting reconciliation could not complete."});
+  await recordJobRun({jobName:"zoom-auto-reconcile",status:"failed",failed:1,durationMs:Date.now()-runStarted,referenceId:reference,errorCode:"ZOOM_RECONCILE_JOB_FAILED"});
+  return NextResponse.json({ok:false,error:"Automatic Zoom reconciliation failed.",reference},{status:500});
+ }
+}

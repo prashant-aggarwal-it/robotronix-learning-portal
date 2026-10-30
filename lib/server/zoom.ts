@@ -75,6 +75,11 @@ async function tokenRequest(params:URLSearchParams){
 export async function exchangeZoomCode(code:string){return tokenRequest(new URLSearchParams({grant_type:"authorization_code",code,redirect_uri:zoomRedirectUri()}))}
 
 async function refreshHostToken(db:SupabaseClient,row:ZoomHostRow){
+ // Another request may already have rotated this host\'s single-use refresh token.
+ const newest=await getHostRow(db,row.id);
+ if(newest.access_token_encrypted!==row.access_token_encrypted&&
+    new Date(newest.access_token_expires_at).getTime()>Date.now()+60_000)return newest;
+ row=newest;
  const token=await tokenRequest(new URLSearchParams({grant_type:"refresh_token",refresh_token:decryptZoomSecret(row.refresh_token_encrypted)}));
  const updates={access_token_encrypted:encryptZoomSecret(token.access_token),refresh_token_encrypted:encryptZoomSecret(token.refresh_token),access_token_expires_at:new Date(Date.now()+Math.max(60,token.expires_in-60)*1000).toISOString(),last_sync_at:new Date().toISOString(),status:"connected"};
  const {error}=await db.from("zoom_host_accounts").update(updates).eq("id",row.id);if(error)throw new Error(error.message);
@@ -94,6 +99,17 @@ export async function zoomApi(hostId:string,path:string,init:RequestInit={}){
  const request=async(token:string)=>fetch(`${ZOOM_API}${path}`,{...init,cache:"no-store",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json",...(init.headers||{})}});
  let response=await request(decryptZoomSecret(row.access_token_encrypted));
  if(response.status===401){row=await refreshHostToken(db,row);response=await request(decryptZoomSecret(row.access_token_encrypted));}
+ // Do not automatically repeat a Zoom meeting CREATE (POST) after an ambiguous
+ // provider timeout/5xx; repeating it could create a second remote meeting.
+ // GET/PATCH/DELETE are safe to retry briefly before the next scheduled sweep.
+ const method=String(init.method||"GET").toUpperCase();
+ if(["GET","PATCH","DELETE","PUT"].includes(method)){
+  for(let retry=0;retry<2&&[429,500,502,503,504].includes(response.status);retry++){
+   await new Promise<void>(resolve=>setTimeout(resolve,300*(retry+1)));
+   response=await request(decryptZoomSecret(row.access_token_encrypted));
+   if(response.status===401){row=await refreshHostToken(db,row);response=await request(decryptZoomSecret(row.access_token_encrypted));}
+  }
+ }
  const json=await response.json().catch(()=>({})) as any;
  if(!response.ok)throw new Error(json?.message||json?.reason||`Zoom API request failed (${response.status}).`);
  await db.from("zoom_host_accounts").update({last_sync_at:new Date().toISOString()}).eq("id",hostId);

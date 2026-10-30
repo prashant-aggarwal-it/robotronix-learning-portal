@@ -1,0 +1,29 @@
+name: QA branch static validation
+on:
+  push:
+    branches:
+      - fix/qa-onboarding-save-feedback-20261025
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Shared typography contract
+        run: node scripts/check-typography.mjs
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Billing and finance regression tests
+        run: npx playwright test qa/parent-billing-config.spec.ts --project=desktop-chromium --no-deps
+      - name: Build in demo mode
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_ENV: demo

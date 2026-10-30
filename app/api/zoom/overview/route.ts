@@ -62,7 +62,40 @@ export async function GET(request:NextRequest){
    return {hostId:h.id,bytes};
   });
 
-  return NextResponse.json({ok:true,hosts:hosts.map(safeHost),meetings:rows,recordings:recRows,storageByHost},
+  // Show unprovisioned classes as well as created meetings. Future classes should
+  // be in the reservation ledger long before their Zoom meeting exists.
+  const today=new Date(),from=new Date(today.getTime()-24*60*60_000).toISOString().slice(0,10);
+  const through=new Date(today.getTime()+7*24*60*60_000).toISOString().slice(0,10);
+  const [futureResult,reservationResult,offlineEnrollments,offlineCohorts]=await Promise.all([
+   auth.admin.from("schedule_events").select("id,title,date,start_time,timezone,enrollment_id,cohort_id,delivery_mode,status")
+    .eq("event_type","class").in("status",["scheduled","tentative","makeup"])
+    .gte("date",from).lte("date",through).order("date",{ascending:true}).order("start_time",{ascending:true}).limit(1000),
+   auth.admin.from("zoom_class_host_reservations").select("schedule_event_id,host_account_id,allocation_status")
+    .gte("starts_at",new Date(today.getTime()-24*60*60_000).toISOString())
+    .lte("starts_at",new Date(today.getTime()+8*24*60*60_000).toISOString()).limit(1500),
+   auth.admin.from("enrollments").select("id").eq("delivery_channel","offline"),
+   auth.admin.from("cohorts").select("id").eq("delivery_channel","offline")
+  ]);
+  if(futureResult.error||reservationResult.error||offlineEnrollments.error||offlineCohorts.error)
+   throw new Error("Zoom classroom readiness ledger unavailable.");
+  const offlineEnrollmentIds=new Set((offlineEnrollments.data||[]).map(x=>x.id));
+  const offlineCohortIds=new Set((offlineCohorts.data||[]).map(x=>x.id));
+  const reservationMap=new Map((reservationResult.data||[]).map(r=>[r.schedule_event_id,r]));
+  const existingMap=new Map(meetings.filter((m:any)=>m.purpose==="class").map((m:any)=>[m.schedule_event_id,m]));
+  const upcomingReadiness=(futureResult.data||[]).filter(e=>e.delivery_mode!=="offline"
+    &&(!e.enrollment_id||!offlineEnrollmentIds.has(e.enrollment_id))
+    &&(!e.cohort_id||!offlineCohortIds.has(e.cohort_id)))
+    .map(e=>{
+     const reserve:any=reservationMap.get(e.id),meeting:any=existingMap.get(e.id);
+     return {id:e.id,title:e.title,date:e.date,startTime:e.start_time,timezone:e.timezone,
+      hostReserved:reserve?.allocation_status==="reserved"&&hosts.some((h:any)=>h.id===reserve.host_account_id&&h.status==="connected"&&h.enabled===true),
+      hasZoomRoom:Boolean(meeting?.join_url&&meeting?.status!=="cancelled"&&meeting?.status!=="error"),
+      needsAttention:reserve?.allocation_status!=="reserved"||Boolean(meeting?.status==="error"||meeting?.last_error)};
+    });
+  const readinessSummary={scheduled:upcomingReadiness.length,capacityConflicts:upcomingReadiness.filter(x=>!x.hostReserved).length,
+   waitingForJit:upcomingReadiness.filter(x=>x.hostReserved&&!x.hasZoomRoom).length,
+   ready:upcomingReadiness.filter(x=>x.hasZoomRoom).length};
+  return NextResponse.json({ok:true,hosts:hosts.map(safeHost),meetings:rows,recordings:recRows,storageByHost,readinessSummary,readinessIssues:upcomingReadiness.filter(x=>x.needsAttention).slice(0,30)},
    {headers:{"Cache-Control":"no-store"}});
  }catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:500});}
 }

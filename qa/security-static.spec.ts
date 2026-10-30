@@ -1,5 +1,6 @@
 import {test,expect} from "@playwright/test";
 import fs from "node:fs";
+import {readCanonicalSql} from "../scripts/read-canonical-sql.mjs";
 
 test.describe("Security invariants (offline, no production network)",()=>{
  test("Admin API checks verified identity, active profile and role",()=>{
@@ -20,7 +21,7 @@ test.describe("Security invariants (offline, no production network)",()=>{
   expect(source.indexOf("verifyRazorpayWebhook(raw,sig)")).toBeLessThan(source.indexOf("JSON.parse(raw)"));
  });
  test("Scheduling RPCs are restricted and enforce roles server-side",()=>{
-  const source=fs.readFileSync("database/01_install/01_CREATE_SCHEMA.sql","utf8");
+  const source=readCanonicalSql();
   for(const name of ["generate_enrollment_schedule_v2","generate_cohort_schedule_v2","reassign_enrollment_trainer_v2","reassign_cohort_trainer_v2","resolve_class_cancellation_v2"]){
    expect(source).toContain("revoke all on function public."+name+"(");
    const i=source.toLowerCase().indexOf("create or replace function public."+name+"(");
