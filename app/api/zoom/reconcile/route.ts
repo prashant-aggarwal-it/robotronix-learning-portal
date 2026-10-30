@@ -2,6 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin} from "@/lib/server/admin-api";
 import {zoomApi} from "@/lib/server/zoom";
 import {reconcileZoomRecording} from "@/lib/server/zoom-recording-reconcile";
+import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
 
 function iso(value:any){if(!value)return null;const d=new Date(value);return Number.isNaN(d.getTime())?null:d.toISOString()}
@@ -43,12 +44,24 @@ export async function POST(request:NextRequest){
         if(Date.now()>expectedEnd)updates.status="ended";
        }
       }
-     }catch(recordingError){errors++;console.error("Zoom recording reconciliation failed",meeting.id,recordingError);}
+     }catch{
+      errors++;
+      const referenceId=await logSystemEvent({source:"zoom-reconcile",action:"recordings",code:"ZOOM_RECONCILE_RECORDINGS",message:"Recording reconciliation failed for a meeting"});
+      console.error("[zoom-reconcile] recording failure",{referenceId});
+     }
     }
     const {error:uErr}=await auth.admin.from("zoom_meetings").update(updates).eq("id",meeting.id);if(uErr)throw new Error(uErr.message);
     meetingsSynced++;
-   }catch{errors++}
+   }catch{
+    errors++;
+    const referenceId=await logSystemEvent({source:"zoom-reconcile",action:"meeting",code:"ZOOM_RECONCILE_MEETING",message:"Meeting reconciliation failed"});
+    console.error("[zoom-reconcile] meeting failure",{referenceId});
+   }
   }
-  return NextResponse.json({ok:true,meetingsSynced,recordingsSynced,errors},{headers:{"Cache-Control":"no-store"}});
- }catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:500,headers:{"Cache-Control":"no-store"}});}
+  if(errors){await logSystemEvent({source:"zoom-reconcile",action:"batch",level:"warning",code:"ZOOM_RECONCILE_PARTIAL",message:"Reconciliation finished with failed items"});}
+  return NextResponse.json({ok:errors===0,meetingsSynced,recordingsSynced,errors},{headers:{"Cache-Control":"no-store"}});
+ }catch{
+  const referenceId=await logSystemEvent({source:"zoom-reconcile",action:"batch",code:"ZOOM_RECONCILE_FAILED",message:"Recording reconciliation batch failed"});
+  return NextResponse.json({ok:false,error:"Unable to reconcile recordings.",referenceId},{status:500,headers:{"Cache-Control":"no-store"}});
+ }
 }
