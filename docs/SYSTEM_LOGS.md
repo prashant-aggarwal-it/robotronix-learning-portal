@@ -96,3 +96,21 @@ The client reporter sends only a server-allowlisted failure code via authenticat
 - There is **no configured out-of-band alert destination** for missed cron runs, database downtime or repeated 5xx responses. Admin dashboard overdue markers require someone to open the page. Add a separately authenticated external monitor/notification channel before claiming proactive alerting.
 - Direct Supabase writes from screens not in the allowlist and some noncritical routes are not covered by named operational events. Use dedicated failure handlers when adding new workflows.
 - Never deliberately delete real recordings, create financial transactions or force production failures for monitoring tests.
+
+## Scheduled critical email alerts (implemented in PR #35; enable only after DEV verification)
+
+`netlify/functions/operational-email-alerts.mjs` runs every **15 minutes (UTC cron)** and requires no new package. It checks:
+- Error-severity `portal_system_logs` entries from the previous 30 minutes, summarized without PII.
+- The latest recorded execution of each of four expected jobs. Runs are overdue after the greater of 15 minutes or 1.5 scheduled intervals. The latest `failed` or `partial` run also raises a warning.
+- Email events are grouped into one critical-errors digest per hour and one job-health alert per six-hour period. `portal_alert_dispatches.dedupe_key` has a unique constraint; the first run claims delivery, and concurrent repeats do not send again. Failed sends are marked `failed` in the Admin alert history and can be investigated; automatic within-window retries are intentionally suppressed to avoid alert storms.
+
+### Required setup in Netlify (server-only)
+
+1. Verify the sender domain with an email provider that supports the Resend Emails API. Create a scoped API key.
+2. Set `RESEND_API_KEY`, `ROBOTRONIX_ALERT_FROM_EMAIL` (verified sender address), and `ROBOTRONIX_ALERT_TO_EMAIL` (explicitly approved operator mailbox) as **server-side** environment variables. Do not add the `NEXT_PUBLIC_` prefix or put values in GitHub.
+3. Back up DEV and apply the additive `database/01_install/modules/schema/08_operational_logging.sql` module. Confirm `portal_alert_dispatches` exists, its RLS is active, service-role can insert and authenticated non-admin roles cannot read it. The canonical fresh installer also includes this module. Apply to production only after separate migration review/approval.
+4. Deploy to DEV and run a controlled synthetic `portal_system_logs` error row. Verify a single email and one `sent` row in `portal_alert_dispatches`; check the Admin > System Logs > Critical email alert delivery panel. Avoid testing with production recordings or payment transactions.
+5. Confirm a simulated old heartbeat triggers one job-health email, and a second overlapping invocation produces `deduplicated`, not an extra email. Validate missing API key leaves the scheduled function disabled and does not throw.
+6. After DEV acceptance, enable the three environment variables in the production Netlify context and deploy. Check both Netlify function logs and the delivery panel.
+
+**Important:** Email is disabled if any of the three environment variables are absent. No recipient has been chosen by the code. Delivery is through Resend's HTTPS API, not Supabase Auth SMTP. The monitor cannot detect a complete Netlify or Supabase outage on its own; a separately hosted synthetic uptime check remains necessary for that guarantee. If the outbox claim is written but the provider call fails, the alert is not resent within the cooldown window. This is a deliberate anti-duplication safeguard and must be visible in Admin delivery history.
