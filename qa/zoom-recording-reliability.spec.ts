@@ -9,7 +9,8 @@ test.describe("Zoom recording resilience contracts (offline)",()=>{
   expect(zoom).toContain('target.searchParams.set("access_token",token)');
   expect(zoom).not.toContain('if(!target.searchParams.has("access_token"))');
   expect(zoom).toContain('target.protocol!=="https:"');
-  test("rotating OAuth refresh tokens require a distributed expiring lease",()=>{
+ });
+ test("rotating OAuth refresh tokens require a distributed expiring lease",()=>{
   const zoom=source("lib/server/zoom.ts");
   const schema=source("database/01_install/modules/schema/08_operational_logging.sql");
   expect(zoom).toContain('acquire_zoom_refresh_lease');
@@ -33,7 +34,6 @@ test.describe("Zoom recording resilience contracts (offline)",()=>{
   expect(route).toContain('Remote trash succeeded but local status update failed.');
   expect(webhook).toContain('.in("zoom_recording_file_id",fileIds)');
  });
-});
  test("reconciliation refreshes provider metadata without changing local deletion policy",()=>{
   const sourceCode=source("lib/server/zoom-recording-reconcile.ts");
   expect(sourceCode).toContain('select("id,status").eq("zoom_recording_file_id",fileId)');
