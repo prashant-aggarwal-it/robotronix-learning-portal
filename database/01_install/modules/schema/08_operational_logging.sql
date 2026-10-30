@@ -77,7 +77,7 @@ grant select,insert,update,delete on public.zoom_refresh_leases to service_role;
 
 create or replace function public.acquire_zoom_refresh_lease(p_host_id uuid,p_owner_id uuid)
 returns boolean language plpgsql security invoker set search_path=public
-as $
+as $zoom_lease$
 declare v_claimed uuid;
 begin
  insert into public.zoom_refresh_leases(host_id,owner_id,expires_at)
@@ -87,14 +87,14 @@ begin
  where public.zoom_refresh_leases.expires_at<now()
  returning owner_id into v_claimed;
  return v_claimed=p_owner_id;
-end $;
+end $zoom_lease$;
 
 create or replace function public.release_zoom_refresh_lease(p_host_id uuid,p_owner_id uuid)
 returns void language sql security invoker set search_path=public
-as $
+as $zoom_release$
  delete from public.zoom_refresh_leases
  where host_id=p_host_id and owner_id=p_owner_id;
-$;
+$zoom_release$;
 revoke all on function public.acquire_zoom_refresh_lease(uuid,uuid) from public,anon,authenticated;
 revoke all on function public.release_zoom_refresh_lease(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.acquire_zoom_refresh_lease(uuid,uuid) to service_role;
