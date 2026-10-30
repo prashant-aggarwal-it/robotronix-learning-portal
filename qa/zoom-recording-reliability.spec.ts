@@ -30,5 +30,7 @@ test.describe("Zoom recording resilience contracts (offline)",()=>{
   expect(route).toContain('stage="zoom-trash"');
   expect(route).toContain('stage="save-deleted-status"');
   expect(route).toContain('referenceId=await logSystemEvent');
+  expect(route).toContain("error instanceof ZoomApiError");
+  expect(route).toContain('"_HTTP_"+upstreamStatus');
  });
 });
