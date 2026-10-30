@@ -31,17 +31,41 @@ Version: 30 October 2026. Scope: production submission; exercise only disposable
 | F14 | Zoom host owner | Open Zoom Marketplace > Manage > Added Apps, select Robotronix Classroom, Remove, confirm on disposable host only. | Zoom revokes access; future meeting management/sync can no longer use removed authorization. Admin must re-link before reuse. |
 | F15 | Admin | Repeat connect for previously removed disposable host if desired. | New authorization succeeds without reuse of invalid previous tokens. |
 
-## Scope-by-scope validation (complete from actual Production Scopes screen)
-Zoom requires **each requested OAuth scope** to be justified and mapped to an independently reproducible test.
-Create one row for EVERY permission shown in Marketplace; for each record:
-1. Exact Zoom scope identifier (copy from console, do not guess).
-2. Why it is necessary for a real product action.
-3. Test ID(s) F04–F15 demonstrating the action.
-4. Expected Zoom API operation and displayed portal outcome.
-5. Result PASS/FAIL/BLOCKED; provider response and evidence (redacted).
-6. Whether a narrower scope would suffice; remove unused scopes before resubmitting.
+## Production OAuth scope audit and reviewer test matrix (code-reviewed 30 October 2026)
 
-**Do not submit this plan as scope-complete until this matrix is filled from the actual Marketplace Scopes list.**
+This maps the eight scopes visible in Zoom Marketplace Production to implemented server-side API calls in GitHub main. **Code-reviewed does not mean live-tested.** Reviewer must record PASS/FAIL/BLOCKED and redacted evidence after testing a disposable host.
+
+| Exact production scope | Implementation evidence | Reproducible reviewer action | Expected result | Live result |
+| --- | --- | --- | --- | --- |
+| `meeting:write:meeting` | `lib/server/zoom-classroom.ts`: `POST /users/me/meetings`; `app/api/zoom/test-meeting/route.ts` | F04–F05 connect host, create disposable test meeting in Admin Zoom or provision eligible near-start online class (F06–F07). | Meeting created in Zoom and reflected in portal without duplicate. | NOT RUN |
+| `meeting:delete:meeting` | `lib/server/zoom-classroom.ts`: `DELETE /meetings/{id}`; `app/api/zoom/test-meeting/route.ts` | F13 cancel/delete a **disposable future** meeting/test class. | Meeting removed/cancelled remotely; portal state reconciled. | NOT RUN |
+| `meeting:update:meeting` | `lib/server/zoom-classroom.ts`: `PATCH /meetings/{id}` | F13 change a future disposable online class time (where authorized workflow permits). | Corresponding Zoom meeting time updates without duplicate. | NOT RUN |
+| `meeting:read:meeting` | `lib/server/zoom-classroom.ts` and `app/api/zoom/reconcile/route.ts`: `GET /meetings/{id}` | F10 Admin reconciles a provisioned test meeting. | Updated meeting metadata/status shown in portal. | NOT RUN |
+| `cloud_recording:read:recording` | `app/api/zoom/reconcile/route.ts`: `GET /meetings/{id}/recordings`; `app/api/zoom/recordings/[recordingId]/stream/route.ts`: authorized download | F11 use recording-enabled eligible host, conduct disposable class, allow Zoom processing, reconcile and play as authorized viewer. | Recording discovered and playable only by permitted viewer; requires Zoom recording-capable plan. | NOT RUN |
+| `user:read:user` | `app/api/zoom/oauth/callback/route.ts`: `GET /users/me` | F04–F05 complete OAuth, then inspect Zoom host listing in Admin. | Host ID/email linked to correct authorized host; no access token shown. | NOT RUN |
+| `user:read:zak` | `app/api/zoom/sdk-session/route.ts`: `GET /users/me/zak` for authorized host | F08 start eligible test meeting as assigned trainer via embedded Classroom; verify host experience (meeting SDK). | Authorized host session can start; attendee cannot obtain host privilege. | NOT RUN |
+| `meeting:read:participant` | **No direct participant REST API call found in inspected Zoom integration.** `app/api/zoom/webhook/route.ts` processes signed `meeting.participant_joined` / `meeting.participant_left` event payloads; `app/api/zoom/overview/route.ts` reads stored sessions from Supabase. | F08–F10 can demonstrate participant events, **but this does not prove this REST OAuth scope is needed**. | Treat as candidate for removal after confirming no other code path or Zoom product feature depends on scope. | SCOPE JUSTIFICATION PENDING |
+
+### Scope decision before submission
+
+- Keep the seven scopes with directly identified REST API calls, subject to real reviewer-accessible functional tests and Zoom scope entitlement verification.
+- Investigate and, if genuinely unused, **remove `meeting:read:participant` from Production requested scopes**; do not claim event webhook handling alone demonstrates its necessity. Recheck any resulting authorization/consent URL and test-host authorization after scope changes.
+- The `meeting:read:meeting` and recording scopes above use the explicit endpoints identified in code. Zoom's final scope/API mapping must be confirmed against a successful live response; if Zoom rejects any call with missing authorization, adjust only to the documented minimum scope.
+- The Zoom webhook currently supports URL validation, signed meeting and recording events. Verify event subscriptions and the secret-token setup independently; Zoom's prior dashboard showed **event subscription revalidation failure**. This is a separate blocker, not an OAuth scope test.
+- The User-managed Education age-gate decision and verified developer-domain email remain separate outstanding Marketplace feedback items.
+
+### Evidence worksheet for each test
+
+Record **test ID, UTC timestamp, portal account role, disposable Zoom host account (redacted), Zoom meeting ID (redacted), API operation, PASS/FAIL/BLOCKED, expected vs actual outcome, and screenshot/log reference**. Do not paste passwords, secrets, OAuth tokens, ZAK, attendee personal data, or real students' details.
+
+### Pre-submission gates
+
+1. Prepare separate reviewer-accessible adult Admin, Trainer, Parent and learner profiles, with only synthetic student data; deliver credentials and 2FA/OTP arrangements privately through Zoom.
+2. Confirm connected test Zoom host and record the host's license/recording eligibility; current freshly rebuilt Production DB had **zero connected hosts** at latest check.
+3. Run F01–F15 on Production or reviewer-reachable Beta with correct matching Zoom credentials. Mark tests blocked where feature/license is unavailable; never assert PASS from code inspection.
+4. Verify Zoom webhook endpoint URL revalidation and meeting event delivery if participant presence/recordings are part of reviewer test.
+5. After removing any truly unused requested scopes, regenerate/reconfirm the Zoom authorization URL, reauthorize disposable host, and repeat impacted tests.
+6. Do not submit until the scope matrix contains actual test outcomes and reviewer setup instructions are repeatable.
 
 ## Deployment and reviewer safety
 - Test Zoom authorization against a reviewer-accessible deployment and matching DEV/PROD credentials; avoid production customer data.
