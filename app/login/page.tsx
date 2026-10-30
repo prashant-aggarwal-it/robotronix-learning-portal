@@ -1,18 +1,22 @@
 "use client";
 import Link from "next/link";
 import {FormEvent,useState} from "react";
-import {useRouter} from "next/navigation";
+import {useRouter,useSearchParams} from "next/navigation";
+import {Suspense} from "react";
 import {getCurrentAccountAccess,requestEmailSignInCode,verifyEmailSignInCode,signIn,signInWithGoogle} from "@/lib/repository";
 
-export default function Login(){
+export default function Login(){return <Suspense fallback={<main className="authPage"><section className="authCard">Loading sign in…</section></main>}><LoginContent/></Suspense>}
+function LoginContent(){
  const router=useRouter();
+ const query=useSearchParams();
+ const next=query.get("next")==="/zoom/connect"?"/zoom/connect":null;
  const[email,setEmail]=useState(""),[password,setPassword]=useState(""),[code,setCode]=useState("");
  const[codeSent,setCodeSent]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(false);
  async function finish(){
   const access=await getCurrentAccountAccess();
   if(access.state==="disabled"){setError("Your Robotronix portal access is disabled. Please contact Robotronix Admin.");return;}
   if(access.state==="unlinked"){setError("Your email is not linked to an active portal profile yet. Contact Admin, or start family onboarding.");return;}
-  router.replace(`/${access.role}`);
+  router.replace(next&&access.role==="admin"?next:`/${access.role}`);
  }
  async function passwordSignIn(e:FormEvent){
   e.preventDefault();setLoading(true);setError("");
@@ -20,6 +24,7 @@ export default function Login(){
   finally{setLoading(false);}
  }
  async function google(){
+  if(next&&typeof window!=="undefined")sessionStorage.setItem("robotronix:post-auth-next",next);
   setLoading(true);setError("");const r=await signInWithGoogle();
   if(!r.ok){setError(r.error??"Unable to start Google sign-in");setLoading(false);}
  }
