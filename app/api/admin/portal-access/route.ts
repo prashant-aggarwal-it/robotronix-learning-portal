@@ -4,7 +4,7 @@ import {logSystemEvent} from "@/lib/server/system-log";
 
 // Admin-only server endpoint. The service-role key must never enter client components.
 type Target = "trainer"|"student";
-type Action = "invite"|"resend"|"link"|"provision"|"disable"|"enable"|"replace";
+type Action = "invite"|"resend"|"link"|"provision"|"disable"|"enable"|"replace"|"family_link"|"family_unlink"|"family_primary";
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function failure(message:string,status=400){return NextResponse.json({ok:false,error:message},{status,headers:{"Cache-Control":"no-store"}})}
 
@@ -60,7 +60,7 @@ async function resolveTarget(admin:any,type:Target,id:string){
  const email=String(guardian?.parent_login_email||"").trim();
  const links=await familyLinks(admin,id);
  const profileId=links.find(link=>link.email===email.toLowerCase())?.profileId||null;
- return{id:student.id,profileId,email,name:guardian?.primary_guardian_name||student.full_name,archived:false,staleLinks:links.filter(link=>link.email!==email.toLowerCase())};
+ return{id:student.id,profileId,email,name:guardian?.primary_guardian_name||student.full_name,archived:false,staleLinks:links.filter(link=>link.relationship!=="Additional guardian"&&link.email!==email.toLowerCase())};
 }
 async function lookupStatus(admin:any,type:Target,id:string){
  const target=await resolveTarget(admin,type,id);
@@ -86,7 +86,37 @@ export async function GET(request:NextRequest){
  const ctx=await adminContext(request);if(ctx.error)return ctx.error;
  const type=request.nextUrl.searchParams.get("type") as Target,id=request.nextUrl.searchParams.get("id")||"";
  if(!["trainer","student"].includes(type)||!id)return failure("Missing target.");
- try{const status=await lookupStatus(ctx.admin!,type,id);return status?NextResponse.json({ok:true,...status},{headers:{"Cache-Control":"no-store"}}):failure("Record not found.",404)}
+ try{
+  const status=await lookupStatus(ctx.admin!,type,id);
+  if(!status)return failure("Record not found.",404);
+  if(type==="student"&&request.nextUrl.searchParams.get("view")==="family"){
+   const links=await familyLinks(ctx.admin!,id);
+   const parentIds=[...new Set(links.map(link=>link.parentId))];
+   let associations:Array<{parent_id:string;student_id:string}>=[];
+   if(parentIds.length){
+    const {data,error}=await ctx.admin!.from("parent_students").select("parent_id,student_id").in("parent_id",parentIds);
+    if(error)throw new Error(error.message);
+    associations=data||[];
+   }
+   const children=Array.from(new Set(associations.map(link=>link.student_id)));
+   let names:Array<{id:string;full_name:string}>=[];
+   if(children.length){
+    const {data,error}=await ctx.admin!.from("students").select("id,full_name").in("id",children);
+    if(error)throw new Error(error.message);
+    names=data||[];
+   }
+   const profiles=await Promise.all(links.map(async link=>{
+    const {data,error}=await ctx.admin!.from("profiles").select("active").eq("id",link.profileId).maybeSingle();
+    if(error)throw new Error(error.message);
+    const {data:auth}=await ctx.admin!.auth.admin.getUserById(link.profileId);
+    return{parentId:link.parentId,email:link.email,relationship:link.relationship,
+      active:data?.active!==false,lastLoginAt:auth.user?.last_sign_in_at||null,
+      children:associations.filter(x=>x.parent_id===link.parentId).map(x=>({id:x.student_id,name:names.find(n=>n.id===x.student_id)?.full_name||"Learner"}))};
+   }));
+   return NextResponse.json({ok:true,...status,accounts:profiles},{headers:{"Cache-Control":"no-store"}});
+  }
+  return NextResponse.json({ok:true,...status},{headers:{"Cache-Control":"no-store"}});
+ }
  catch(e){const referenceId=await logSystemEvent({source:"portal-access",action:"status",code:"PORTAL_ACCESS_STATUS_FAILURE",message:"Admin portal-access status lookup failed"});return failure("Could not check portal access. Reference: "+referenceId,500)}
 }
 export async function POST(request:NextRequest){
@@ -94,10 +124,48 @@ export async function POST(request:NextRequest){
  let body:{type?:Target;id?:string;action?:Action;email?:string};
  try{body=await request.json()}catch{return failure("Invalid request.")}
  const type=body.type,id=body.id,action=body.action;
- if(!type||!["trainer","student"].includes(type)||!id||!/^[\w-]{6,50}$/.test(id)||!action||!["invite","resend","link","provision","disable","enable","replace"].includes(action))return failure("Invalid target or action.");
+ if(!type||!["trainer","student"].includes(type)||!id||!/^[\w-]{6,50}$/.test(id)||!action||!["invite","resend","link","provision","disable","enable","replace","family_link","family_unlink","family_primary"].includes(action))return failure("Invalid target or action.");
  const admin=ctx.admin!,actorId=ctx.actorId!;
  try{
   const target=await resolveTarget(admin,type,id);if(!target)return failure("Record not found.",404);
+  if(["family_link","family_unlink","family_primary"].includes(action)){
+   if(type!=="student")return failure("Family access actions require a learner.");
+   const managedEmail=String(body.email||"").trim().toLowerCase();
+   if(!emailPattern.test(managedEmail))return failure("Enter an existing parent's valid email.");
+   const links=await familyLinks(admin,id);
+   const existingLink=links.find(link=>link.email===managedEmail);
+   if(action==="family_link"){
+    if(existingLink)return failure("That family account is already linked to this learner.");
+    const found=await findAuthByEmail(admin,managedEmail);
+    if(!found)return failure("No existing parent login uses that email. Provision the primary guardian first.");
+    const{data:profile,error:profileError}=await admin.from("profiles").select("role,active").eq("id",found.id).maybeSingle();
+    if(profileError)throw new Error(profileError.message);
+    if(profile?.role!=="parent"||profile.active===false)return failure("Only active parent portal accounts can be linked.");
+    const{data:parent,error:parentError}=await admin.from("parents").upsert({profile_id:found.id},{onConflict:"profile_id"}).select("id").single();
+    if(parentError||!parent)throw new Error(parentError?.message||"Parent profile unavailable.");
+    const{error:linkError}=await admin.from("parent_students").insert({parent_id:parent.id,student_id:id,relationship_label:"Additional guardian"});
+    if(linkError)throw new Error(linkError.message);
+   }else{
+    if(!existingLink)return failure("That parent is not linked to this learner.");
+    if(action==="family_unlink"){
+     if(existingLink.relationship!=="Additional guardian")return failure("Change the primary login before removing this account.");
+     const{error,count}=await admin.from("parent_students").delete({count:"exact"}).eq("parent_id",existingLink.parentId).eq("student_id",id).eq("relationship_label","Additional guardian");
+     if(error||count!==1)throw new Error(error?.message||"Family link was not removed.");
+    }else{
+     // Promote the selected linked guardian; keep the previous guardian as additional access.
+     const {error:guardianError}=await admin.from("student_guardians").update({parent_login_email:managedEmail}).eq("student_id",id);
+     if(guardianError)throw new Error(guardianError.message);
+     const {error:promoteError}=await admin.from("parent_students").update({relationship_label:"Primary guardian"}).eq("student_id",id).eq("parent_id",existingLink.parentId);
+     if(promoteError)throw new Error(promoteError.message);
+     for(const link of links.filter(x=>x.parentId!==existingLink.parentId&&x.relationship!=="Additional guardian")){
+      const{error}=await admin.from("parent_students").update({relationship_label:"Additional guardian"}).eq("student_id",id).eq("parent_id",link.parentId);
+      if(error)throw new Error(error.message);
+     }
+    }
+   }
+   await audit(admin,actorId,type,id,action,managedEmail);
+   return NextResponse.json({ok:true});
+  }
   if(target.archived&&["invite","resend","link","provision"].includes(action))return failure("Archived trainers cannot receive new portal access.");
   const email=(body.email||target.email||"").trim().toLowerCase();
   if(type==="student"&&target.staleLinks?.length&&action!=="replace")return failure("Existing family access needs review after a guardian email change. Use Replace family login to revoke old learner links explicitly.",409);
