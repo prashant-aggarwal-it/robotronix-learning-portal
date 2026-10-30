@@ -146,8 +146,23 @@ export async function POST(request:NextRequest){
     }else if(body.event==="recording.completed"){
      await handleRecording(db,meeting,body);
     }else if(body.event==="recording.deleted"){
-     await db.from("zoom_recordings").update({status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("zoom_meeting_id",meeting.id);
-     await db.from("zoom_meetings").update({recording_status:"deleted",updated_at:new Date().toISOString()}).eq("id",meeting.id);
+     const files=Array.isArray(body?.payload?.object?.recording_files)?body.payload.object.recording_files:[];
+     const fileIds=files.map((f:any)=>String(f?.id||f?.recording_id||"")).filter(Boolean);
+     if(fileIds.length){
+      const {error:deletedError}=await db.from("zoom_recordings").update({
+       status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      }).eq("zoom_meeting_id",meeting.id).in("zoom_recording_file_id",fileIds);
+      if(deletedError)throw new Error("Recording deletion webhook status update failed.");
+     }else{
+      await logSystemEvent({source:"zoom-webhook",action:"recording-deleted",level:"warning",code:"ZOOM_DELETION_FILE_IDS_MISSING",message:"Zoom deletion webhook omitted recording file identifiers; reconcile manually"});
+     }
+     // Do not mark every file deleted when Zoom only reports one file.
+     const {data:remaining,error:remainingError}=await db.from("zoom_recordings").select("id").eq("zoom_meeting_id",meeting.id).eq("status","completed").limit(1);
+     if(remainingError)throw new Error("Unable to verify remaining Zoom recordings.");
+     if(!remaining?.length&&fileIds.length){
+      const {error:meetingError}=await db.from("zoom_meetings").update({recording_status:"deleted",updated_at:new Date().toISOString()}).eq("id",meeting.id);
+      if(meetingError)throw new Error("Unable to update deleted meeting recording status.");
+     }
     }
    }
    stage="mark-processed";
