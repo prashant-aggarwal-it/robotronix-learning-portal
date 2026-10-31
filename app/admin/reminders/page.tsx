@@ -10,7 +10,7 @@ import {listReminderPolicies,saveReminderPolicy} from "@/lib/repository";
 import type {ReminderPolicy} from "@/lib/types";
 type RowState={state:"clean"|"dirty"|"saving"|"saved"|"error";message?:string};
 type Health={checkedAt:string;processorStatus:string;lastRun:{started_at:string;status:string;processed:number;succeeded:number;failed:number}|null;lastSuccessAt:string|null;runs24h:number;failures24h:number;generated24h:number;recent:{id:string;at:string;recipientRole:string;read:boolean}[];note:string};
-const defaults:Record<string,number>={"parent:class":30,"student:class":15,"trainer:class":30,"trainer:attendance_pending":30};
+const defaults:Record<string,number>={"rem-parent-30":30,"rem-student-15":15,"rem-trainer-30":30,"rem-trainer-10":10,"rem-trainer-update-30":30};
 function label(role:string){return role.charAt(0).toUpperCase()+role.slice(1)}
 const fmt=(date:string)=>new Date(date).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
 export default function ReminderSettings(){
@@ -62,7 +62,7 @@ export default function ReminderSettings(){
  }
  async function reset(){
   if(!window.confirm("Restore the standard timing defaults? Existing enabled/disabled choices will remain unchanged."))return;
-  for(const row of current.current){const n=defaults[row.recipientRole+":"+row.eventType];if(n===undefined)continue;await save(row.id,row.eventType==="attendance_pending"?{minutesAfter:n}:{minutesBefore:n});}
+  for(const row of current.current){const n=defaults[row.id];if(n===undefined)continue;await save(row.id,row.eventType==="attendance_pending"?{minutesAfter:n}:{minutesBefore:n});}
  }
  const locked=loading||busy.current.size>0;
  return <RoleGuard allow={["admin"]}><AppShell role="admin"><AdminPageHeader eyebrow="AUTOMATED FOLLOW-UP" title="Class Reminder Rules" description="Configure in-app reminders relative to each scheduled class occurrence. Configuration changes are distinct from reminder delivery." actions={<button className="button ghost" onClick={()=>{void refresh();void loadHealth()}} disabled={locked}>Refresh</button>}/>
