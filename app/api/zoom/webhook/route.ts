@@ -103,6 +103,7 @@ async function handleRecording(db:any,meeting:any,body:any){
 
 export async function POST(request:NextRequest){
  let raw="";
+ let stage="decode";
  try{
   raw=await request.text();
   const body=JSON.parse(raw||"{}");
@@ -112,7 +113,9 @@ export async function POST(request:NextRequest){
    const encrypted=crypto.createHmac("sha256",secret()).update(plain).digest("hex");
    return NextResponse.json({plainToken:plain,encryptedToken:encrypted});
   }
+  stage="signature";
   if(!verify(raw,request))return NextResponse.json({ok:false,error:"Invalid Zoom webhook signature."},{status:401});
+  stage="claim";
 
   const db=zoomServiceClient();
   const hash=eventHash(raw);
@@ -129,6 +132,7 @@ export async function POST(request:NextRequest){
   }
 
   try{
+   stage="dispatch";
    const meeting=await findMeeting(db,body?.payload?.object||{});
    if(meeting){
     if(body.event==="meeting.started"){
@@ -142,18 +146,36 @@ export async function POST(request:NextRequest){
     }else if(body.event==="recording.completed"){
      await handleRecording(db,meeting,body);
     }else if(body.event==="recording.deleted"){
-     await db.from("zoom_recordings").update({status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("zoom_meeting_id",meeting.id);
-     await db.from("zoom_meetings").update({recording_status:"deleted",updated_at:new Date().toISOString()}).eq("id",meeting.id);
+     const files=Array.isArray(body?.payload?.object?.recording_files)?body.payload.object.recording_files:[];
+     const fileIds=files.map((f:any)=>String(f?.id||f?.recording_id||"")).filter(Boolean);
+     if(fileIds.length){
+      const {error:deletedError}=await db.from("zoom_recordings").update({
+       status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      }).eq("zoom_meeting_id",meeting.id).in("zoom_recording_file_id",fileIds);
+      if(deletedError)throw new Error("Recording deletion webhook status update failed.");
+     }else{
+      await logSystemEvent({source:"zoom-webhook",action:"recording-deleted",level:"warning",code:"ZOOM_DELETION_FILE_IDS_MISSING",message:"Zoom deletion webhook omitted recording file identifiers; reconcile manually"});
+     }
+     // Do not mark every file deleted when Zoom only reports one file.
+     const {data:remaining,error:remainingError}=await db.from("zoom_recordings").select("id").eq("zoom_meeting_id",meeting.id).eq("status","completed").limit(1);
+     if(remainingError)throw new Error("Unable to verify remaining Zoom recordings.");
+     if(!remaining?.length&&fileIds.length){
+      const {error:meetingError}=await db.from("zoom_meetings").update({recording_status:"deleted",updated_at:new Date().toISOString()}).eq("id",meeting.id);
+      if(meetingError)throw new Error("Unable to update deleted meeting recording status.");
+     }
     }
    }
-   await db.from("zoom_webhook_events").update({processed_at:new Date().toISOString(),processing_error:null}).eq("event_hash",hash);
-  }catch(error){
-   await db.from("zoom_webhook_events").update({processed_at:null,processing_error:error instanceof Error?error.message:String(error)}).eq("event_hash",hash);
-   throw error;
+   stage="mark-processed";
+   const {error:doneError}=await db.from("zoom_webhook_events").update({processed_at:new Date().toISOString(),processing_error:null}).eq("event_hash",hash);
+   if(doneError)throw new Error("Unable to mark Zoom webhook processed.");
+  }catch{
+   await db.from("zoom_webhook_events").update({processed_at:null,processing_error:"ZOOM_WEBHOOK_"+stage.toUpperCase().replace(/-/g,"_")}).eq("event_hash",hash);
+   throw new Error("Zoom webhook processing failed.");
   }
   return NextResponse.json({ok:true});
- }catch(error){
-  const referenceId=await logSystemEvent({source:"zoom-webhook",action:"webhook-processing",code:"ZOOM_WEBHOOK_PROCESSING_FAILURE",message:"Zoom webhook processing failed"});
-  return NextResponse.json({ok:false,error:"Webhook processing failed",referenceId},{status:400});
+ }catch{
+  const referenceId=await logSystemEvent({source:"zoom-webhook",action:"webhook-processing",code:"ZOOM_WEBHOOK_"+stage.toUpperCase().replace(/-/g,"_"),message:"Zoom webhook processing failed"});
+  console.error("[zoom-webhook] processing failed",{stage,referenceId});
+  return NextResponse.json({ok:false,error:"Webhook processing failed",referenceId},{status:stage==="decode"||stage==="signature"?400:500});
  }
 }

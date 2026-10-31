@@ -37,15 +37,18 @@ export async function POST(request:Request){
   event_key:key,event_type:eventType,razorpay_event_id:event?.id?String(event.id):null,
   razorpay_invoice_id:razorpayInvoiceId,attempt_count:1
  });
- if(claimError&&String(claimError.code)!=="23505")return NextResponse.json({ok:false,error:claimError.message},{status:500});
+ if(claimError&&String(claimError.code)!=="23505"){
+  const referenceId=await logSystemEvent({source:"razorpay-webhook",action:"claim",code:"RAZORPAY_WEBHOOK_CLAIM_FAILURE",message:"Unable to claim payment webhook event"});
+  return NextResponse.json({ok:false,error:"Webhook processing unavailable",referenceId},{status:500});
+ }
  if(claimError&&String(claimError.code)==="23505"){
   const {data:existing,error:readError}=await db.from("razorpay_webhook_events").select("processed_at,processing_error,attempt_count").eq("event_key",key).maybeSingle();
-  if(readError)return NextResponse.json({ok:false,error:readError.message},{status:500});
+  if(readError){const referenceId=await logSystemEvent({source:"razorpay-webhook",action:"retry",code:"RAZORPAY_WEBHOOK_RETRY_READ_FAILURE",message:"Unable to retry payment webhook event"});return NextResponse.json({ok:false,error:"Webhook retry unavailable",referenceId},{status:500});}
   if(existing?.processed_at&&!existing.processing_error)return NextResponse.json({ok:true,duplicate:true});
   const {error:retryError}=await db.from("razorpay_webhook_events").update({
    processed_at:null,processing_error:null,attempt_count:Number(existing?.attempt_count||0)+1
   }).eq("event_key",key);
-  if(retryError)return NextResponse.json({ok:false,error:retryError.message},{status:500});
+  if(retryError){const referenceId=await logSystemEvent({source:"razorpay-webhook",action:"retry",code:"RAZORPAY_WEBHOOK_RETRY_WRITE_FAILURE",message:"Unable to retry payment webhook event"});return NextResponse.json({ok:false,error:"Webhook retry unavailable",referenceId},{status:500});}
  }
 
  try{
@@ -72,8 +75,7 @@ export async function POST(request:Request){
   if(doneError)throw new Error(doneError.message);
   return NextResponse.json({ok:true});
  }catch(error){
-  const message=error instanceof Error?error.message:String(error);
-  await db.from("razorpay_webhook_events").update({processed_at:null,processing_error:message}).eq("event_key",key);
+  await db.from("razorpay_webhook_events").update({processed_at:null,processing_error:"RAZORPAY_EVENT_PROCESSING_FAILURE"}).eq("event_key",key);
   const referenceId=await logSystemEvent({source:"razorpay-webhook",action:"invoice-reconciliation",code:"RAZORPAY_EVENT_PROCESSING_FAILURE",message:"Invoice webhook processing failed"});
   return NextResponse.json({ok:false,error:"Webhook processing failed",referenceId},{status:500});
  }

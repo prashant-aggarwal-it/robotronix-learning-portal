@@ -20,5 +20,6 @@ export async function GET(req:NextRequest){
  const {data,error}=await query;
  if(error)return NextResponse.json({error:"Unable to read system logs"},{status:500});
  const {data:jobs,error:jobsError}=await admin.from("portal_job_runs").select("id,job_name,started_at,finished_at,status,processed,succeeded,failed,reference_id,error_code,duration_ms").order("started_at",{ascending:false}).limit(120);
- return NextResponse.json({rows:data||[],jobs:jobsError?[]:jobs||[],jobHistoryAvailable:!jobsError},{headers:{"Cache-Control":"no-store"}});
+ const {data:alerts,error:alertsError}=await admin.from("portal_alert_dispatches").select("id,category,status,created_at,completed_at,failure_code,reference_id").order("created_at",{ascending:false}).limit(40);
+ return NextResponse.json({rows:data||[],jobs:jobsError?[]:jobs||[],jobHistoryAvailable:!jobsError,alerts:alertsError?[]:alerts||[],alertHistoryAvailable:!alertsError},{headers:{"Cache-Control":"no-store"}});
 }

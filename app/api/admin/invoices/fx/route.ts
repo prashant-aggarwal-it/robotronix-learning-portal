@@ -1,5 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin,apiFailure} from "@/lib/server/admin-api";
+import {logSystemEvent} from "@/lib/server/system-log";
 
 const SUPPORTED=new Set(["USD","AED","GBP","EUR","SGD","HKD","MYR","AUD","NZD","CAD","SAR","QAR","OMR","KWD","BHD"]);
 
@@ -13,5 +14,8 @@ export async function GET(request:NextRequest){
     const rate=Number(data?.rates?.INR);
     if(!response.ok||data?.result!=="success"||!Number.isFinite(rate)||rate<=0)throw new Error("Exchange rate unavailable.");
     return NextResponse.json({ok:true,currency,rate,source:"ExchangeRate-API open endpoint",provider:"open.er-api.com",fetchedAt:new Date().toISOString(),providerUpdatedAt:data.time_last_update_utc||null},{headers:{"Cache-Control":"no-store"}});
-  }catch(e){return apiFailure(e instanceof Error?e.message:"Unable to fetch exchange rate.",502)}
+  }catch{
+    const referenceId=await logSystemEvent({source:"finance",action:"fx-rate",code:"FX_PROVIDER_FAILURE",message:"Invoice exchange-rate lookup failed"});
+    return apiFailure("Exchange rate unavailable. Reference: "+referenceId,502);
+  }
 }

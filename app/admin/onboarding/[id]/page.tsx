@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {FormErrorSummary} from "@/components/admin/FormErrorSummary";
+import {reportOperationalError} from "@/lib/client/report-operational-error";
 import {readableSaveError,validateDraftDates,type FormIssue} from "@/lib/form-errors";
 import {useEffect,useMemo,useState} from "react";
 import {useParams} from "next/navigation";
@@ -121,6 +122,7 @@ export default function OnboardingDetail(){
   setBaseline(signature({record:a,courseId:nextCourseId,trainerId:nextTrainerId,type:nextType,cohortId:nextCohortId,startDate:nextStartDate,scheduleTimezone:nextTimezone,scheduleRules:nextRules}));
   setLastSavedAt(a.updatedAt);
   } catch (error) {
+   void reportOperationalError("ONBOARDING_LOAD");
    setLoadError(error instanceof Error?error.message:"Unable to load onboarding details.");
   }
  }
@@ -224,6 +226,7 @@ export default function OnboardingDetail(){
   setLastSavedAt(savedAt);setBaseline(signature({record:nextRecord,courseId,trainerId,type,cohortId,startDate,scheduleTimezone,scheduleRules}));setEditAvailability(false);setEditFamilyDetails(false);setNotice({type:"success",text:targetStatus==="draft"?"Draft saved successfully.":"Setup is ready. Review and select Activate learner when you are ready."});
   setR(nextRecord);
   } catch (error) {
+   void reportOperationalError("ONBOARDING_SAVE");
    setNotice({type:"error",text:readableSaveError(error)});
   } finally {
    setActiveAction(null);

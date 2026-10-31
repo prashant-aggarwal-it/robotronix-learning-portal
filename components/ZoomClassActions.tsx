@@ -13,7 +13,7 @@ export function ZoomClassActions({scheduleEventId,compact=false,showAdminSetupLi
  const[data,setData]=useState<Classroom|null>(null),[error,setError]=useState("");
  const[reusableLink,setReusableLink]=useState("");
  useEffect(()=>{let live=true;portalApi("/api/zoom/classroom/"+encodeURIComponent(scheduleEventId)).then(x=>{if(live)setData(x.classroom)}).catch(e=>{if(live)setError(e instanceof Error?e.message:String(e))});getClassReusableZoomLinkV2(scheduleEventId).then(url=>{if(live)setReusableLink(url)}).catch(()=>{});return()=>{live=false}},[scheduleEventId]);
- async function watch(){if(!data?.meeting?.recordingId)return;const win=window.open("","_blank");try{const x=await portalApi("/api/zoom/recordings/"+data.meeting.recordingId);if(win){win.opener=null;win.location.href=x.recording.streamUrl}else window.location.href=x.recording.streamUrl}catch(e){if(win)win.close();setError(e instanceof Error?e.message:String(e))}}
+ function watch(){if(!data?.meeting?.recordingId)return;const url="/recordings/"+encodeURIComponent(data.meeting.recordingId);const win=window.open(url,"_blank");if(win)win.opener=null;else window.location.href=url;}
 
  if(error)return <small role="status" className="muted">Online classroom unavailable: {error}</small>;
  if(!data)return compact?<span className="softBadge">Checking classroom…</span>:<small className="muted">Checking online classroom…</small>;

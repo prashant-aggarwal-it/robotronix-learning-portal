@@ -35,7 +35,8 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{schedule
    canHost:access.canHost,canJoin:access.canJoin,withinJoinWindow:window.allowed,opensAt:window.opensAt,closesAt:window.closesAt,
    meeting:meeting?{id:meeting.id,status:meeting.status,recordingEnabled:meeting.recording_enabled,recordingStatus:meeting.recording_status,learnerRecordingVisible:meeting.learner_recording_visible,recordingId,lastError:meeting.last_error||(!meeting.join_url?"Zoom joining link is missing; ask an administrator to reconcile this class.":null)}:null
   }},{headers:{"Cache-Control":"no-store"}});
- }catch(error){
-  return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:400});
+ }catch{
+  const referenceId=await logSystemEvent({source:"zoom-classroom",action:"read",code:"ZOOM_CLASSROOM_READ_FAILURE",message:"Classroom readiness request failed"});
+  return NextResponse.json({ok:false,error:"Unable to load classroom.",referenceId},{status:500,headers:{"Cache-Control":"no-store"}});
  }
 }

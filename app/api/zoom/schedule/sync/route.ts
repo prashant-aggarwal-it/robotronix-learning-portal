@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin} from "@/lib/server/admin-api";
 import {cancelZoomForScheduleEvent,syncZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
+import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
 
 export async function POST(request:NextRequest){
@@ -22,8 +23,9 @@ export async function POST(request:NextRequest){
     ?await cancelZoomForScheduleEvent(auth.admin,body.scheduleEventId,{removeLocal:true})
     :await syncZoomForScheduleEvent(auth.admin,body.scheduleEventId,auth.actorId);
   return NextResponse.json({ok:true,...result},{headers:{"Cache-Control":"no-store"}});
- }catch(error){
-  console.error("Zoom class sync failed",error instanceof Error?error.name:"UnknownError");
-  return NextResponse.json({ok:false,error:"Unable to update Zoom classroom"},{status:400,headers:{"Cache-Control":"no-store"}});
+ }catch{
+  const referenceId=await logSystemEvent({source:"zoom-classroom",action:"schedule-sync",code:"ZOOM_CLASSROOM_SYNC_FAILURE",message:"Classroom provisioning or cancellation failed"});
+  console.error("[zoom-classroom] sync failed",{referenceId});
+  return NextResponse.json({ok:false,error:"Unable to update Zoom classroom",referenceId},{status:502,headers:{"Cache-Control":"no-store"}});
  }
 }

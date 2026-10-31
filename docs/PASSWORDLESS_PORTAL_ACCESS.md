@@ -21,6 +21,13 @@
 - Fresh DEV installation: canonical 01 schema includes the new `provisioned` access state.
 - Existing Production account migration needs a review of duplicate Auth users and whether Google identity is correctly linked before deployment. No delete/recreate of existing live users.
 
+## Guardian email changes and explicit family access replacement
+- When the learner’s `student_guardians.parent_login_email` differs from any linked parent account email, the Admin panel shows **Family access review required**. Ordinary provision/link/disable actions are blocked to prevent silently leaving a previous guardian linked.
+- After confirming the replacement email and reviewing any legitimate additional guardian access, the Admin may explicitly select **Replace family login**. The action creates or reuses the approved parent identity, associates the learner and removes old account relationships **only for that learner**. Siblings attached to the old parent are unaffected; no Auth user is deleted.
+- Replacement is deliberately a privileged, confirmed action. Existing multi-guardian links are flagged for review rather than automatically removed. If preserving multiple authorized guardians is desired, do not use replacement until an explicit multi-guardian management workflow exists.
+- A family account is **Portal-ready** only after the linked Auth identity has actually signed in. Merely provisioning or linking it does not prove first login.
+- If replacement fails midway, the endpoint returns a reference ID. Admin should retry/review the account links before proceeding; the current REST-based operation is not a single database transaction.
+
 ## Acceptance cases
 | ID | Test | Expected |
 | --- | --- | --- |
@@ -36,5 +43,11 @@
 | AUTH-10 | Login routes for onboarding families | Self-service family onboarding still works |
 | AUTH-11 | Rate limiting and delivery | Email spam/OTP throttling handled without account enumeration |
 | AUTH-12 | Existing Production invitations | Old invited trainer still signs in with Google or legacy password |
+| AUTH-13 | Change guardian email with an older parent linked | Review status appears; normal linking blocked; older learner access remains unchanged before confirmation |
+| AUTH-14 | Confirm replacement for a parent with two learners | Old parent loses only the selected learner; other learner remains visible |
+| AUTH-15 | Multiple authorized guardians on one learner | Review warning; no removal without explicit admin confirmation |
+| AUTH-16 | Provision a new family identity without login | Awaiting first sign-in, not Portal-ready |
+| AUTH-17 | First Google or OTP sign-in on approved parent account | Linked identity ID unchanged; Portal-ready after verified sign-in |
+| AUTH-18 | Simulate partial replacement failure or concurrent access edit | No silent success; admin sees reference ID, reviews both old/new links |
 
 **Release gate:** All these tests require a connected DEV Supabase and real Google/SMTP setup. They have **not** been executed in this ChatGPT session.

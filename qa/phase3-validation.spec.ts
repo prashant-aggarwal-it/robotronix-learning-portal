@@ -60,8 +60,9 @@ test.describe("Phase 3 form quality release contracts",()=>{
   expect(text).toContain('field:"school",message:"Enter the child');
   expect(text).toContain('["School",Boolean(r.school?.trim()),"school",true]');
   expect(text).toContain('["Family timezone",isValidTimeZone(r.timezone),"childProfile",true]');
-  expect(text).toContain('Select any incomplete requirement to jump to the field');
-  expect(text).toContain('disabled={busy} onClick={activate}');
+  expect(text).toContain('Complete the highlighted requirements before marking setup ready');
+  expect(text).toContain('onClick={()=>void activate()}');
+  expect(text).toContain('r.status!=="setup_pending"||dirty');
  });
  test("manual student entry reflects migration-specific required fields",()=>{
   const text=source("components/admin/StudentForm.tsx");

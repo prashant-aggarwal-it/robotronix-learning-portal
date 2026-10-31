@@ -72,7 +72,8 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(parent).toContain("familyLearningStage(selected)");
   expect(student).toContain("familyLearningStage(data)");
   expect(trainer).toContain("zonedRangeParts(e.date");
-  expect(accessApi).toContain('linked&&(type==="student"');
+  expect(accessApi).toContain('linked&&Boolean(auth?.last_sign_in_at)');
+  expect(accessApi).toContain('needsReview?"needs_review"');
   expect(accessUi).toContain("Family account linked");
  });
  test("onboarding handoff is linked across Admin, Parent and Trainer",()=>{
@@ -87,7 +88,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(student).toContain("item.activatedStudentId===id");
   expect(enrollment).toContain("item.activatedEnrollmentId===id");
   expect(parent).toContain("awaiting activation");
-  expect(trainer).toContain("after Admin activates their enrollment");
+  expect(trainer).toContain("Once Admin activates an enrollment and assigns you");
  });
  test("billing link scrolls after enrollment detail loads",()=>{
   const profile=source("app/admin/students/[id]/page.tsx");
@@ -105,7 +106,7 @@ test.describe("Learner journey navigation contracts (offline)",()=>{
   expect(enrollment).toContain("allClassRecords");
   expect(enrollment).toContain("showAllClasses?visibleClassRecords:visibleClassRecords.slice(0,3)");
    expect(enrollment).toContain("Estimated not yet arranged");
-   expect(enrollment).toContain("Class filters");
+   expect(enrollment).toContain("Filter enrollment classes");
   expect(enrollment).toContain("Show fewer classes");
   expect(enrollment).toContain("nextClass.id");
   expect(enrollment).toContain("?enrollment=${encodeURIComponent(record.id)}");

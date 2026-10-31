@@ -4,6 +4,10 @@ import {createClient,type SupabaseClient} from "@supabase/supabase-js";
 const ZOOM_API="https://api.zoom.us/v2";
 const ZOOM_OAUTH="https://zoom.us/oauth/token";
 
+export class ZoomApiError extends Error {
+ constructor(public readonly status:number,message:string){super(message);this.name="ZoomApiError";}
+}
+
 export type ZoomHostSafe={id:string;label:string;zoomUserId:string;zoomEmail:string;zoomAccountId:string|null;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;connectedAt:string;lastSyncAt:string|null};
 
 type ZoomHostRow={
@@ -67,7 +71,7 @@ export function zoomAuthorizationUrl(actorId:string,label:string){
 
 async function tokenRequest(params:URLSearchParams){
  const auth=Buffer.from(`${zoomClientId()}:${zoomClientSecret()}`).toString("base64");
- const response=await fetch(ZOOM_OAUTH,{method:"POST",headers:{Authorization:`Basic ${auth}`,"Content-Type":"application/x-www-form-urlencoded"},body:params.toString(),cache:"no-store"});
+ const response=await fetch(ZOOM_OAUTH,{method:"POST",headers:{Authorization:`Basic ${auth}`,"Content-Type":"application/x-www-form-urlencoded"},body:params.toString(),cache:"no-store",signal:AbortSignal.timeout(15000)});
  const json=await response.json().catch(()=>({})) as any;
  if(!response.ok)throw new Error(json?.reason||json?.message||`Zoom OAuth token request failed (${response.status}).`);
  return json as {access_token:string;refresh_token:string;expires_in:number;scope?:string};
@@ -75,15 +79,43 @@ async function tokenRequest(params:URLSearchParams){
 export async function exchangeZoomCode(code:string){return tokenRequest(new URLSearchParams({grant_type:"authorization_code",code,redirect_uri:zoomRedirectUri()}))}
 
 async function refreshHostToken(db:SupabaseClient,row:ZoomHostRow){
- // Another request may already have rotated this host\'s single-use refresh token.
- const newest=await getHostRow(db,row.id);
- if(newest.access_token_encrypted!==row.access_token_encrypted&&
-    new Date(newest.access_token_expires_at).getTime()>Date.now()+60_000)return newest;
- row=newest;
- const token=await tokenRequest(new URLSearchParams({grant_type:"refresh_token",refresh_token:decryptZoomSecret(row.refresh_token_encrypted)}));
- const updates={access_token_encrypted:encryptZoomSecret(token.access_token),refresh_token_encrypted:encryptZoomSecret(token.refresh_token),access_token_expires_at:new Date(Date.now()+Math.max(60,token.expires_in-60)*1000).toISOString(),last_sync_at:new Date().toISOString(),status:"connected"};
- const {error}=await db.from("zoom_host_accounts").update(updates).eq("id",row.id);if(error)throw new Error(error.message);
- return{...row,...updates};
+ // Zoom rotates refresh tokens. Coordinate across Netlify processes using a
+ // short PostgreSQL lease, not just an in-memory promise or last-second read.
+ const ownerId=crypto.randomUUID();
+ let acquired=false;
+ for(let attempt=0;attempt<50;attempt++){
+  const newest=await getHostRow(db,row.id);
+  if(newest.access_token_encrypted!==row.access_token_encrypted&&
+     new Date(newest.access_token_expires_at).getTime()>Date.now()+10_000)return newest;
+  const {data,error}=await db.rpc("acquire_zoom_refresh_lease",{p_host_id:row.id,p_owner_id:ownerId});
+  if(error)throw new Error("Zoom refresh lease unavailable; apply operational logging database module.");
+  if(data===true){acquired=true;break;}
+  await new Promise<void>(resolve=>setTimeout(resolve,350));
+ }
+ if(!acquired)throw new Error("Zoom host token refresh already in progress. Retry shortly.");
+ try{
+  const current=await getHostRow(db,row.id);
+  if(current.access_token_encrypted!==row.access_token_encrypted&&
+     new Date(current.access_token_expires_at).getTime()>Date.now()+10_000)return current;
+  const token=await tokenRequest(new URLSearchParams({
+   grant_type:"refresh_token",refresh_token:decryptZoomSecret(current.refresh_token_encrypted)
+  }));
+  const updates={
+   access_token_encrypted:encryptZoomSecret(token.access_token),
+   refresh_token_encrypted:encryptZoomSecret(token.refresh_token),
+   access_token_expires_at:new Date(Date.now()+Math.max(60,token.expires_in-60)*1000).toISOString(),
+   last_sync_at:new Date().toISOString(),status:"connected"
+  };
+  const {data:saved,error:saveError}=await db.from("zoom_host_accounts").update(updates)
+   .eq("id",row.id).eq("refresh_token_encrypted",current.refresh_token_encrypted)
+   .select("*").maybeSingle();
+  if(saveError)throw new Error("Unable to save rotated Zoom token.");
+  if(!saved)throw new Error("Zoom host token changed during refresh; retry request.");
+  return saved as ZoomHostRow;
+ }finally{
+  const {error:releaseError}=await db.rpc("release_zoom_refresh_lease",{p_host_id:row.id,p_owner_id:ownerId});
+  if(releaseError)console.error("[zoom-oauth] refresh lease release failed",{code:releaseError.code||"unknown"});
+ }
 }
 async function getHostRow(db:SupabaseClient,hostId:string){
  const {data,error}=await db.from("zoom_host_accounts").select("*").eq("id",hostId).maybeSingle();if(error)throw new Error(error.message);if(!data)throw new Error("Zoom host account not found.");return data as ZoomHostRow;
@@ -111,7 +143,7 @@ export async function zoomApi(hostId:string,path:string,init:RequestInit={}){
   }
  }
  const json=await response.json().catch(()=>({})) as any;
- if(!response.ok)throw new Error(json?.message||json?.reason||`Zoom API request failed (${response.status}).`);
+ if(!response.ok)throw new ZoomApiError(response.status,json?.message||json?.reason||`Zoom API request failed (${response.status}).`);
  await db.from("zoom_host_accounts").update({last_sync_at:new Date().toISOString()}).eq("id",hostId);
  return json;
 }
@@ -141,7 +173,9 @@ export async function zoomAuthorizedFetchUrl(hostId:string,url:string,init:Reque
   // Zoom cloud-recording download URLs accept the OAuth token as a query value.
   // Keeping the bearer header as well covers direct API responses, while the
   // query token survives Zoom's redirect to the signed media URL.
-  if(!target.searchParams.has("access_token"))target.searchParams.set("access_token",token);
+  // Replace a stale token embedded in persisted Zoom download URLs. Using the
+  // previous query token after a host refresh results in repeat 401/403 errors.
+  target.searchParams.set("access_token",token);
   return fetch(target.toString(),{...init,cache:"no-store",redirect:"follow",headers:{Authorization:`Bearer ${token}`,...(init.headers||{})}});
  };
  let response=await request(decryptZoomSecret(row.access_token_encrypted));

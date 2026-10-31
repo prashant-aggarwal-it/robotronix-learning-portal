@@ -2,7 +2,8 @@ import {NextRequest,NextResponse} from "next/server";
 import {requirePortalUser} from "@/lib/server/portal-api";
 import {classAccessForProfile} from "@/lib/server/zoom-classroom";
 import {createRecordingStreamToken} from "@/lib/server/zoom-recording";
-import {zoomApi} from "@/lib/server/zoom";
+import {zoomApi,ZoomApiError} from "@/lib/server/zoom";
+import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
 
 async function load(auth:any,recordingId:string){
@@ -27,8 +28,10 @@ async function allowed(auth:any,meeting:any,recording:any){
 
 export async function GET(request:NextRequest,{params}:{params:Promise<{recordingId:string}>}){
  const auth=await requirePortalUser(request,["admin","trainer","parent","student"]);if("error" in auth)return auth.error;
+ let stage="load";
  try{
   const {recordingId}=await params;const {recording,meeting}=await load(auth,recordingId);
+  stage="authorization";
   if(!await allowed(auth,meeting,recording))return NextResponse.json({ok:false,error:"You do not have access to this recording."},{status:403});
   if(recording.status!=="completed")return NextResponse.json({ok:false,error:"This recording is not available for playback."},{status:404});
   const token=createRecordingStreamToken(recording.id,auth.profile.id);
@@ -36,21 +39,29 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
    sizeBytes:recording.file_size_bytes,status:recording.status,retainUntil:recording.retain_until,protected:recording.protected_from_deletion,
    learnerVisible:recording.learner_visible,streamUrl:`/api/zoom/recordings/${recording.id}/stream?token=${encodeURIComponent(token)}`}},
    {headers:{"Cache-Control":"no-store"}});
- }catch(error){console.error("Zoom recording API failed",error instanceof Error?error.name:"UnknownError");return NextResponse.json({ok:false,error:"Unable to process recording request."},{status:400,headers:{"Cache-Control":"no-store"}});}
+ }catch{
+  const referenceId=await logSystemEvent({source:"zoom-recording",action:"details",code:"ZOOM_DETAILS_"+stage.toUpperCase(),message:"Recording details request failed"});
+  console.error("[zoom-recording] details failed",{stage,referenceId});
+  return NextResponse.json({ok:false,error:"Unable to process recording request.",referenceId},{status:500,headers:{"Cache-Control":"no-store"}});
+ }
 }
 
 export async function PATCH(request:NextRequest,{params}:{params:Promise<{recordingId:string}>}){
  const auth=await requirePortalUser(request,["admin"]);if("error" in auth)return auth.error;
+ let stage="load";
  try{
   const {recordingId}=await params;const body=await request.json().catch(()=>({})) as {action?:string;days?:number};
   const {recording,meeting}=await load(auth,recordingId);
+  stage="validate-action";
   if(body.action==="toggle-learner"){
    const visible=!recording.learner_visible;
+   stage="save-learner-visibility";
    const {error}=await auth.admin.from("zoom_recordings").update({learner_visible:visible,updated_at:new Date().toISOString()}).eq("id",recording.id);
    if(error)throw new Error(error.message);return NextResponse.json({ok:true,learnerVisible:visible});
   }
   if(body.action==="toggle-protect"){
    const value=!recording.protected_from_deletion;
+   stage="save-protection";
    const {error}=await auth.admin.from("zoom_recordings").update({protected_from_deletion:value,updated_at:new Date().toISOString()}).eq("id",recording.id);
    if(error)throw new Error(error.message);return NextResponse.json({ok:true,protected:value});
   }
@@ -58,15 +69,34 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{record
    const days=Math.max(1,Math.min(3650,Number(body.days||60)));
    const base=Math.max(Date.now(),recording.retain_until?new Date(recording.retain_until).getTime():Date.now());
    const retainUntil=new Date(base+days*86400000).toISOString();
+   stage="save-retention";
    const {error}=await auth.admin.from("zoom_recordings").update({retain_until:retainUntil,updated_at:new Date().toISOString()}).eq("id",recording.id);
    if(error)throw new Error(error.message);return NextResponse.json({ok:true,retainUntil});
   }
   if(body.action==="delete"){
-   if(recording.protected_from_deletion)throw new Error("This recording is protected. Remove protection before deleting it.");
+   if(recording.protected_from_deletion)return NextResponse.json({ok:false,error:"This recording is protected. Remove protection before deleting it."},{status:409});
+   stage="zoom-trash";
    await zoomApi(meeting.host_account_id,`/meetings/${encodeURIComponent(meeting.zoom_meeting_id)}/recordings/${encodeURIComponent(recording.zoom_recording_file_id)}?action=trash`,{method:"DELETE"});
-   const {error}=await auth.admin.from("zoom_recordings").update({status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",recording.id);
-   if(error)throw new Error(error.message);return NextResponse.json({ok:true,status:"deleted"});
+   stage="save-deleted-status";
+   // Zoom has confirmed the trash operation. Retry transient ledger failures
+   // without repeating the remote deletion (which may now return 404).
+   let saved=false;
+   for(let attempt=0;attempt<3;attempt++){
+    const {error}=await auth.admin.from("zoom_recordings").update({
+     status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()
+    }).eq("id",recording.id).eq("status","completed");
+    if(!error){saved=true;break;}
+    if(attempt<2)await new Promise<void>(resolve=>setTimeout(resolve,250*(attempt+1)));
+   }
+   if(!saved)throw new Error("Remote trash succeeded but local status update failed.");
+   return NextResponse.json({ok:true,status:"deleted"});
   }
-  throw new Error("Unsupported recording action.");
- }catch(error){console.error("Zoom recording update failed",error instanceof Error?error.name:"UnknownError");return NextResponse.json({ok:false,error:"Unable to update recording."},{status:400,headers:{"Cache-Control":"no-store"}});}
+  return NextResponse.json({ok:false,error:"Unsupported recording action."},{status:400});
+ }catch(error){
+  const upstreamStatus=error instanceof ZoomApiError?error.status:null;
+  const code="ZOOM_UPDATE_"+stage.toUpperCase().replace(/-/g,"_")+(upstreamStatus?"_HTTP_"+upstreamStatus:"");
+  const referenceId=await logSystemEvent({source:"zoom-recording",action:"update",code,message:"Recording update failed"});
+  console.error("[zoom-recording] update failed",{stage,upstreamStatus,referenceId});
+  return NextResponse.json({ok:false,error:"Unable to update recording.",referenceId},{status:stage==="zoom-trash"?502:500,headers:{"Cache-Control":"no-store"}});
+ }
 }

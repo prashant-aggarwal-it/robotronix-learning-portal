@@ -41,5 +41,63 @@ begin
 end $$;
 revoke all on function public.purge_old_portal_job_runs(integer) from public,anon,authenticated;
 grant execute on function public.purge_old_portal_job_runs(integer) to service_role;
+
+-- Idempotent email-alert dispatch claims, retained separately from diagnostic logs.
+-- A unique dedupe_key prevents overlapping scheduled invocations from emailing twice.
+create table if not exists public.portal_alert_dispatches (
+ id uuid primary key default gen_random_uuid(),
+ dedupe_key text not null unique,
+ category text not null check(category in ('critical-errors','job-heartbeat')),
+ status text not null default 'claimed' check(status in ('claimed','sent','failed')),
+ reference_id text not null,
+ created_at timestamptz not null default now(),
+ completed_at timestamptz,
+ failure_code text
+);
+create index if not exists portal_alert_dispatches_created_idx on public.portal_alert_dispatches(created_at desc);
+alter table public.portal_alert_dispatches enable row level security;
+revoke all on public.portal_alert_dispatches from anon,authenticated;
+grant select on public.portal_alert_dispatches to authenticated;
+drop policy if exists portal_alert_dispatches_admin_read on public.portal_alert_dispatches;
+create policy portal_alert_dispatches_admin_read on public.portal_alert_dispatches
+ for select to authenticated using(public.is_admin());
+
+-- Distributed single-flight lease for Zoom's rotating refresh tokens.
+-- The HTTP request happens outside PostgreSQL; an expiring lease coordinates
+-- all Netlify instances without holding a database transaction open.
+create table if not exists public.zoom_refresh_leases (
+ host_id uuid primary key references public.zoom_host_accounts(id) on delete cascade,
+ owner_id uuid not null,
+ expires_at timestamptz not null
+);
+create index if not exists zoom_refresh_leases_expiry_idx on public.zoom_refresh_leases(expires_at);
+alter table public.zoom_refresh_leases enable row level security;
+revoke all on public.zoom_refresh_leases from anon,authenticated;
+grant select,insert,update,delete on public.zoom_refresh_leases to service_role;
+
+create or replace function public.acquire_zoom_refresh_lease(p_host_id uuid,p_owner_id uuid)
+returns boolean language plpgsql security invoker set search_path=public
+as $zoom_lease$
+declare v_claimed uuid;
+begin
+ insert into public.zoom_refresh_leases(host_id,owner_id,expires_at)
+ values(p_host_id,p_owner_id,now()+interval '45 seconds')
+ on conflict(host_id) do update
+ set owner_id=excluded.owner_id,expires_at=excluded.expires_at
+ where public.zoom_refresh_leases.expires_at<now()
+ returning owner_id into v_claimed;
+ return v_claimed=p_owner_id;
+end $zoom_lease$;
+
+create or replace function public.release_zoom_refresh_lease(p_host_id uuid,p_owner_id uuid)
+returns void language sql security invoker set search_path=public
+as $zoom_release$
+ delete from public.zoom_refresh_leases
+ where host_id=p_host_id and owner_id=p_owner_id;
+$zoom_release$;
+revoke all on function public.acquire_zoom_refresh_lease(uuid,uuid) from public,anon,authenticated;
+revoke all on function public.release_zoom_refresh_lease(uuid,uuid) from public,anon,authenticated;
+grant execute on function public.acquire_zoom_refresh_lease(uuid,uuid) to service_role;
+grant execute on function public.release_zoom_refresh_lease(uuid,uuid) to service_role;
 commit;
 notify pgrst, 'reload schema';

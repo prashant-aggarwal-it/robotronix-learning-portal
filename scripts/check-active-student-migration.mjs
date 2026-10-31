@@ -6,7 +6,7 @@ const checks=[
  ['lib/repository.ts',['openingCompletedSessions','openingCompletedMinutes','learning_observation_internal_notes']],
  ['app/admin/enrollments/page.tsx',['Existing active student · carry forward progress','OPENING COMMERCIAL POSITION','createOpeningFinanceSnapshot']],
  ['components/operations/ClassRecordEditor.tsx',['Parent-visible progress note','Internal trainer / admin note']],
- ['app/admin/page.tsx',['near completion','learner birthday']],
+ ['app/admin/page.tsx',['lowSessionEnrollments','learner birthday']],
 ];
 let failed=false;
 for(const [file,markers] of checks){
