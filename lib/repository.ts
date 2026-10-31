@@ -847,9 +847,25 @@ export async function createCorrectionRequest(input:{requestedByRole:UserRole;en
  const{data,error}=await supabase.from("correction_requests").insert({requested_by_role:input.requestedByRole,entity_type:input.entityType,entity_id:input.entityId,reason:input.reason.trim(),requested_changes:input.requestedChanges.trim()}).select("id").single();return error?{ok:false,error:error.message}:{ok:true,id:data.id};
 }
 export async function resolveCorrectionRequest(id:string,status:"approved"|"rejected"|"completed",adminNote:string){
- const supabase=getSupabaseBrowserClient(),now=new Date().toISOString();if(!supabase){const before=demoStore.correctionRequests.get(id);if(!before)return{ok:false,error:"Correction request not found."};const next=demoStore.correctionRequests.update(id,{status,adminNote,resolvedAt:now});demoStore.auditLog.create({id:makeId("audit"),entityType:"correction_requests",entityId:id,action:"UPDATE",beforeData:before as unknown as Record<string,unknown>,afterData:next as unknown as Record<string,unknown>,createdAt:now});return{ok:true};}
- const{error}=await supabase.from("correction_requests").update({status,admin_note:adminNote||null,resolved_at:now}).eq("id",id);return error?{ok:false,error:error.message}:{ok:true};
+ const supabase=getSupabaseBrowserClient(),now=new Date().toISOString();
+ const expected=status==="completed"?"approved":"open";
+ if((status==="completed"||status==="rejected")&&!adminNote.trim())return{ok:false,error:"An audit note is required for this decision."};
+ if(!supabase){
+  const before=demoStore.correctionRequests.get(id);
+  if(!before)return{ok:false,error:"Correction request not found."};
+  if(before.status!==expected)return{ok:false,error:"Correction status changed; refresh and review before continuing."};
+  const next=demoStore.correctionRequests.update(id,{status,adminNote,resolvedAt:now});
+  demoStore.auditLog.create({id:makeId("audit"),entityType:"correction_requests",entityId:id,action:"UPDATE",beforeData:before as unknown as Record<string,unknown>,afterData:next as unknown as Record<string,unknown>,createdAt:now});
+  return{ok:true};
+ }
+ const {data,error}=await supabase.from("correction_requests")
+  .update({status,admin_note:adminNote||null,resolved_at:now})
+  .eq("id",id).eq("status",expected).select("id");
+ if(error)return{ok:false,error:"Unable to update correction request."};
+ if(!data?.length)return{ok:false,error:"Correction request was already updated. Refresh and review its current state."};
+ return{ok:true};
 }
+
 export async function listPortalAuditLog(limit=100):Promise<PortalAuditRecord[]>{
  const supabase=getSupabaseBrowserClient();if(!supabase)return[...demoStore.auditLog.list()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,limit);
  const{data}=await supabase.from("portal_audit_log").select("*").order("created_at",{ascending:false}).limit(limit);return(data??[]).map((r:any)=>({id:String(r.id),actorProfileId:r.actor_profile_id??undefined,entityType:r.entity_type,entityId:r.entity_id,action:r.action,beforeData:r.before_data??undefined,afterData:r.after_data??undefined,createdAt:r.created_at}));
