@@ -53,6 +53,28 @@ export async function PATCH(req:NextRequest){
  if(!["open","acknowledged","resolved"].includes(String(body.status)))return fail("Invalid status",400);
  const note=String(body.note||"").trim();
  if(note.length>500||/[<>]/.test(note))return fail("Invalid note",400);
+ // Follow-up keys must refer to an actual alert source, not an arbitrary client string.
+ const [kind,...pieces]=key.split("|");
+ if(kind==="system"){
+  if(pieces.length!==3)return fail("Invalid system issue",400);
+  let decoded:string[];try{decoded=pieces.map(decodeURIComponent)}catch{return fail("Invalid issue key",400)}
+  const [source,action,code]=decoded;
+  let check=ctx.db!.from("portal_system_logs").select("id").eq("source",source).eq("action",action).limit(1);
+  check=code==="UNSPECIFIED"?check.is("error_code",null):check.eq("error_code",code);
+  const result=await check;
+  if(result.error||!result.data?.length)return fail("Unknown incident",404);
+ }else if(kind==="job"){
+  const name=decodeURIComponent(pieces[0]||"");
+  if(pieces.length!==1||!Object.hasOwn(expected,name))return fail("Unknown job",404);
+ }else{
+  if(pieces.length!==1)return fail("Invalid business alert",400);
+  const id=decodeURIComponent(pieces[0]||"");
+  if(!/^[0-9a-f-]{36}$/i.test(id))return fail("Invalid business record",400);
+  const table=kind==="hold"?"enrollments":kind==="class"?"schedule_events":kind==="login"?"trainers":null;
+  if(!table)return fail("Unknown alert category",400);
+  const result=await ctx.db!.from(table).select("id").eq("id",id).limit(1);
+  if(result.error||!result.data?.length)return fail("Business record not found",404);
+ }
  const assignedTo=body.assignedTo||null;
  if(assignedTo){
   if(!/^[0-9a-f-]{36}$/i.test(assignedTo))return fail("Invalid assignee",400);
