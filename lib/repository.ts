@@ -638,8 +638,30 @@ export async function activateOnboarding(id:string,assignment:{courseId:string;t
 
 
 // ---------------- Reminder policies ----------------
-export async function listReminderPolicies():Promise<ReminderPolicy[]>{const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.reminderPolicies.list();const{data}=await supabase.from("reminder_policies").select("*").order("recipient_role");return(data??[]).map((r:any)=>({id:r.id,eventType:r.event_type,recipientRole:r.recipient_role,minutesBefore:r.minutes_before??undefined,minutesAfter:r.minutes_after??undefined,enabled:r.enabled}));}
-export async function saveReminderPolicy(id:string,patch:Partial<ReminderPolicy>){const supabase=getSupabaseBrowserClient();if(!supabase){const row=demoStore.reminderPolicies.update(id,patch);return row?{ok:true,data:row}:{ok:false,error:"Reminder policy not found."};}const db:any={};if(patch.minutesBefore!==undefined)db.minutes_before=patch.minutesBefore;if(patch.minutesAfter!==undefined)db.minutes_after=patch.minutesAfter;if(patch.enabled!==undefined)db.enabled=patch.enabled;const{error}=await supabase.from("reminder_policies").update(db).eq("id",id);return error?{ok:false,error:error.message}:{ok:true};}
+export async function listReminderPolicies():Promise<ReminderPolicy[]>{
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return demoStore.reminderPolicies.list();
+ const{data,error}=await supabase.from("reminder_policies").select("*").order("recipient_role");
+ if(error)throw new Error("Unable to load reminder rules. Check the database connection and permissions.");
+ return(data??[]).map((r:any)=>({id:r.id,eventType:r.event_type,recipientRole:r.recipient_role,minutesBefore:r.minutes_before??undefined,minutesAfter:r.minutes_after??undefined,enabled:r.enabled}));
+}
+export async function saveReminderPolicy(id:string,patch:Partial<ReminderPolicy>){
+ const supabase=getSupabaseBrowserClient();
+ const numeric=patch.minutesAfter!==undefined?patch.minutesAfter:patch.minutesBefore;
+ if(numeric!==undefined&&(!Number.isInteger(numeric)||numeric<5||numeric>(patch.minutesAfter!==undefined?240:1440)))
+  return{ok:false,error:"Enter a whole number within the allowed timing range."};
+ if(!supabase){const row=demoStore.reminderPolicies.update(id,patch);return row?{ok:true,data:row}:{ok:false,error:"Reminder policy not found."};}
+ const db:any={};
+ if(patch.minutesBefore!==undefined)db.minutes_before=patch.minutesBefore;
+ if(patch.minutesAfter!==undefined)db.minutes_after=patch.minutesAfter;
+ if(patch.enabled!==undefined)db.enabled=patch.enabled;
+ if(!Object.keys(db).length)return{ok:false,error:"No changes to save."};
+ const{data,error}=await supabase.from("reminder_policies").update(db).eq("id",id)
+  .select("id,event_type,recipient_role,minutes_before,minutes_after,enabled").maybeSingle();
+ if(error)return{ok:false,error:"Unable to save reminder rule. Check access and try again."};
+ if(!data)return{ok:false,error:"The reminder rule was not updated. Refresh and try again."};
+ return{ok:true,data:{id:data.id,eventType:data.event_type,recipientRole:data.recipient_role,minutesBefore:data.minutes_before??undefined,minutesAfter:data.minutes_after??undefined,enabled:data.enabled} as ReminderPolicy};
+}
 
 // ---------------- Progress Core ----------------
 export async function listLearningObservations(filters?:{scheduleEventId?:string;enrollmentId?:string;studentId?:string}):Promise<LearningObservationRecord[]>{
@@ -847,9 +869,25 @@ export async function createCorrectionRequest(input:{requestedByRole:UserRole;en
  const{data,error}=await supabase.from("correction_requests").insert({requested_by_role:input.requestedByRole,entity_type:input.entityType,entity_id:input.entityId,reason:input.reason.trim(),requested_changes:input.requestedChanges.trim()}).select("id").single();return error?{ok:false,error:error.message}:{ok:true,id:data.id};
 }
 export async function resolveCorrectionRequest(id:string,status:"approved"|"rejected"|"completed",adminNote:string){
- const supabase=getSupabaseBrowserClient(),now=new Date().toISOString();if(!supabase){const before=demoStore.correctionRequests.get(id);if(!before)return{ok:false,error:"Correction request not found."};const next=demoStore.correctionRequests.update(id,{status,adminNote,resolvedAt:now});demoStore.auditLog.create({id:makeId("audit"),entityType:"correction_requests",entityId:id,action:"UPDATE",beforeData:before as unknown as Record<string,unknown>,afterData:next as unknown as Record<string,unknown>,createdAt:now});return{ok:true};}
- const{error}=await supabase.from("correction_requests").update({status,admin_note:adminNote||null,resolved_at:now}).eq("id",id);return error?{ok:false,error:error.message}:{ok:true};
+ const supabase=getSupabaseBrowserClient(),now=new Date().toISOString();
+ const expected=status==="completed"?"approved":"open";
+ if((status==="completed"||status==="rejected")&&!adminNote.trim())return{ok:false,error:"An audit note is required for this decision."};
+ if(!supabase){
+  const before=demoStore.correctionRequests.get(id);
+  if(!before)return{ok:false,error:"Correction request not found."};
+  if(before.status!==expected)return{ok:false,error:"Correction status changed; refresh and review before continuing."};
+  const next=demoStore.correctionRequests.update(id,{status,adminNote,resolvedAt:now});
+  demoStore.auditLog.create({id:makeId("audit"),entityType:"correction_requests",entityId:id,action:"UPDATE",beforeData:before as unknown as Record<string,unknown>,afterData:next as unknown as Record<string,unknown>,createdAt:now});
+  return{ok:true};
+ }
+ const {data,error}=await supabase.from("correction_requests")
+  .update({status,admin_note:adminNote||null,resolved_at:now})
+  .eq("id",id).eq("status",expected).select("id");
+ if(error)return{ok:false,error:"Unable to update correction request."};
+ if(!data?.length)return{ok:false,error:"Correction request was already updated. Refresh and review its current state."};
+ return{ok:true};
 }
+
 export async function listPortalAuditLog(limit=100):Promise<PortalAuditRecord[]>{
  const supabase=getSupabaseBrowserClient();if(!supabase)return[...demoStore.auditLog.list()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,limit);
  const{data}=await supabase.from("portal_audit_log").select("*").order("created_at",{ascending:false}).limit(limit);return(data??[]).map((r:any)=>({id:String(r.id),actorProfileId:r.actor_profile_id??undefined,entityType:r.entity_type,entityId:r.entity_id,action:r.action,beforeData:r.before_data??undefined,afterData:r.after_data??undefined,createdAt:r.created_at}));
