@@ -4,6 +4,7 @@ import {classAccessForProfile} from "@/lib/server/zoom-classroom";
 import {createRecordingStreamToken} from "@/lib/server/zoom-recording";
 import {zoomApi,ZoomApiError} from "@/lib/server/zoom";
 import {logSystemEvent} from "@/lib/server/system-log";
+import {zoomMeetingInstancePath} from "@/lib/server/zoom-recording-instance";
 export const dynamic="force-dynamic";
 
 async function load(auth:any,recordingId:string){
@@ -12,7 +13,7 @@ async function load(auth:any,recordingId:string){
   .eq("id",recordingId).maybeSingle();
  if(error)throw new Error(error.message);if(!data)throw new Error("Recording not found.");
  const {data:meeting,error:meetingError}=await auth.admin.from("zoom_meetings")
-  .select("id,host_account_id,zoom_meeting_id,schedule_event_id,purpose,topic,learner_recording_visible,status")
+  .select("id,host_account_id,zoom_meeting_id,zoom_meeting_uuid,schedule_event_id,purpose,topic,learner_recording_visible,status")
   .eq("id",data.zoom_meeting_id).maybeSingle();
  if(meetingError)throw new Error(meetingError.message);if(!meeting)throw new Error("Recording meeting not found.");
  return {recording:data,meeting};
@@ -75,17 +76,23 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{record
   }
   if(body.action==="delete"){
    if(recording.protected_from_deletion)return NextResponse.json({ok:false,error:"This recording is protected. Remove protection before deleting it."},{status:409});
+   if(recording.status!=="completed")return NextResponse.json({ok:false,error:"Only completed recordings can be moved to Zoom Trash."},{status:409});
+   // The numeric meeting ID targets Zoom's latest occurrence. Use the UUID of
+   // the exact meeting instance that owns this recording instead.
+   const instancePath=zoomMeetingInstancePath(meeting.zoom_meeting_uuid);
+   if(!instancePath)return NextResponse.json({ok:false,error:"This recording has no meeting instance UUID. Reconcile the meeting before trying again."},{status:409});
+   if(!recording.zoom_recording_file_id)return NextResponse.json({ok:false,error:"Missing Zoom recording file identifier. Reconcile recordings before trying again."},{status:409});
    stage="zoom-trash";
-   await zoomApi(meeting.host_account_id,`/meetings/${encodeURIComponent(meeting.zoom_meeting_id)}/recordings/${encodeURIComponent(recording.zoom_recording_file_id)}?action=trash`,{method:"DELETE"});
+   await zoomApi(meeting.host_account_id,`/meetings/${instancePath}/recordings/${encodeURIComponent(recording.zoom_recording_file_id)}?action=trash`,{method:"DELETE"});
    stage="save-deleted-status";
    // Zoom has confirmed the trash operation. Retry transient ledger failures
    // without repeating the remote deletion (which may now return 404).
    let saved=false;
    for(let attempt=0;attempt<3;attempt++){
-    const {error}=await auth.admin.from("zoom_recordings").update({
+    const {data:updated,error}=await auth.admin.from("zoom_recordings").update({
      status:"deleted",deleted_from_zoom_at:new Date().toISOString(),updated_at:new Date().toISOString()
-    }).eq("id",recording.id).eq("status","completed");
-    if(!error){saved=true;break;}
+    }).eq("id",recording.id).eq("status","completed").select("id").maybeSingle();
+    if(!error&&updated){saved=true;break;}
     if(attempt<2)await new Promise<void>(resolve=>setTimeout(resolve,250*(attempt+1)));
    }
    if(!saved)throw new Error("Remote trash succeeded but local status update failed.");
