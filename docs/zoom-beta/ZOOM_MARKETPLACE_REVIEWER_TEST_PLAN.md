@@ -62,19 +62,28 @@ Before submission, confirm the following **in the reviewer-accessible deployment
 
 **Portal route references:** `/admin/zoom`, `/admin/zoom-test`, `/trainer/classes`, `/trainer/demos`, and `/classroom/[scheduleEventId]` are recorded in the repository's integration guide. Other steps deliberately refer to in-app actions until the actual reviewer-facing labels and setup data have been checked on the deployed build.
 
-## 5. Mandatory **scope-by-scope** mapping — must reconcile against Zoom Marketplace
-**Do not submit this section without completing it.** The GitHub repository does **not** establish which exact OAuth scopes (including optional scopes) are currently selected in Zoom Marketplace. Copy *every exact scope string* from the app's **Scopes** screen into the table below, one row per scope, then pair it with its corresponding Zoom API call and the test above. Mark any optional scope explicitly; if an unused scope cannot be justified, remove it from the Marketplace request and confirm the app continues to function.
+## 5. Production OAuth scope-by-scope reviewer checklist
 
-| Exact requested Zoom scope | Required or optional | Zoom API/data accessed | Reviewer test ID and exact UI action | Expected result | Live result |
-| --- | --- | --- | --- | --- | --- |
-| **[COPY FROM MARKETPLACE]** | [Required/Optional] | Host identity/profile access | T02–T03; verify Zoom account connection | Identity belongs to the authorized Zoom host | Not yet recorded |
-| **[COPY FROM MARKETPLACE]** | [Required/Optional] | Meeting create/update/read/list, as actually requested | T04–T08 | Meeting lifecycle and correct permissions | Not yet recorded |
-| **[COPY FROM MARKETPLACE]** | [Required/Optional] | Cloud recording list/read/download, as actually requested | T09–T12 | Only authorized recording metadata/media available | Not yet recorded |
-| **[COPY FROM MARKETPLACE]** | [Required/Optional] | Recording deletion/trash, if requested | T13 | Only disposable recording moved to Trash | Not yet recorded |
-| **[COPY FROM MARKETPLACE]** | [Required/Optional] | Participant/report/meeting access, if requested | T05–T09 | Authorized class attendance and reconciliation | Not yet recorded |
-| **[COPY FROM MARKETPLACE]** | [Required/Optional] | Other requested/optional Zoom scopes | [add matching test] | [specify] | Not yet recorded |
+**Source:** Screenshot of Zoom Marketplace → Robotronix Classroom → Production → Scopes supplied by the app owner on 31 October 2026. **Eight scopes are selected; none are marked Optional.** Do not infer additional granted permissions from installed app behavior. Each row below must be marked PASS/FAIL/BLOCKED after the reviewer-accessible build is verified.
 
-For every scope, include its exact name and a screenshot of the Zoom consent screen if helpful. If Zoom Marketplace shows a separate **optional scope** choice, document both the granted and declined paths and verify fallback behavior.
+| Exact requested Zoom scope | Required? | Reviewer test action | Expected result | Verification |
+| --- | --- | --- | --- | --- |
+| `meeting:write:meeting` | Yes | T04: Create a disposable Zoom meeting for the sample class. | Meeting created under connected host; correct class association. | Pending latest build |
+| `meeting:delete:meeting` | Yes | From the supported Admin meeting controls, cancel/delete a *disposable* meeting after reviewing it. | Only the intended Zoom meeting is deleted/cancelled and portal status is reconciled. | Pending latest build |
+| `meeting:update:meeting` | Yes | Edit a disposable meeting's permitted schedule/topic using the app's supported meeting update or rescheduling action. | Zoom meeting displays the updated information. | Pending latest build |
+| `meeting:read:meeting` | Yes | Open existing test class/meeting and request its Zoom details or sync. | Correct meeting status, ID and host displayed. | Pending latest build |
+| `meeting:read:participant` | Yes | After two approved participants attend the disposable meeting, run attendance/meeting sync. | Participant data is associated only with that test meeting, subject to Zoom availability. | Pending latest build |
+| `cloud_recording:read:recording` | Yes | T09–T10: Read the processed cloud recording details and stream a permitted recording. | Authorized player can access recording data; unauthorized roles are denied. | Pending latest build |
+| `user:read:user` | Yes | T02–T03: Authorize Zoom host and view the connected account in Admin Zoom screen. | Connected host identity matches the authorizing Zoom user. | Pending latest build |
+| `user:read:zak` | Yes | T06: Launch the connected host's meeting using the supported host-start flow. | Host can start the intended meeting, without exposing the ZAK to unauthorized roles. | Pending latest build |
+
+### Scope gap identified
+
+The production scope screenshot **does not show any cloud-recording deletion permission**. Zoom documents `cloud_recording:delete:recording_file` for deleting a specific recording file, and `cloud_recording:delete:meeting_recording` for deleting all recording files for a meeting, with corresponding admin/master variants where applicable. See https://developers.zoom.us/docs/api/meetings/ and https://developers.zoom.us/docs/integrations/oauth-scopes-granular/.
+
+**Action before reviewer submission:** Compare the exact recording Trash API endpoint used by the application against Zoom's permission requirement. If deleting a single file is an intended feature and allowed for the user-managed app, request the least-privilege corresponding recording-delete scope, document why it is needed, reauthorize the host after scope changes, and add the file-to-Trash flow to the scope table. Do not claim deletion can be validated with the current read-only recording scope. Also confirm Zoom's host-side permission to delete cloud recordings is enabled. Avoid changing the Marketplace scopes without checking whether the app review must be resubmitted.
+
+**Optional scopes:** None of the eight selected scopes are checked as Optional in the supplied screenshot. If this setting changes, add tests for consent granted, consent declined, and app fallback.
 
 ## 6. Evidence and current results
 **Previously executed by the owner:** four distinct portal-role logins, Zoom Host 1 connection, meeting creation. These are historical results, not a fresh reviewer-ready certification of the latest deployment.
