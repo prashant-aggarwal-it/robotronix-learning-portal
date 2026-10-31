@@ -1,4 +1,5 @@
 import {NextRequest,NextResponse} from "next/server";
+import {randomUUID} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
 export const dynamic="force-dynamic";
 const fail=(error:string,status:number)=>NextResponse.json({ok:false,error},{status,headers:{"Cache-Control":"no-store"}});
@@ -18,7 +19,7 @@ export async function GET(req:NextRequest){
  const ctx=await getAdmin(req);if(ctx.error)return ctx.error;
  const db=ctx.db!,since=new Date(Date.now()-86400000).toISOString();
  const [runs,notifications]=await Promise.all([
-  db.from("portal_job_runs").select("started_at,status,processed,succeeded,failed,duration_ms,error_code").eq("job_name","process-reminders").order("started_at",{ascending:false}).limit(150),
+  db.from("portal_job_runs").select("started_at,status,processed,succeeded,failed,duration_ms,error_code").eq("job_name","process-reminders").order("started_at",{ascending:false}).limit(350),
   db.from("portal_notifications").select("id,created_at,recipient_role,title,read_at",{count:"exact"}).in("type",["class_reminder","attendance_pending","class-reminder","reminder"]).gte("created_at",since).order("created_at",{ascending:false}).limit(12)
  ]);
  if(runs.error||notifications.error)return fail("Unable to load reminder health; review job-history and notification permissions.",503);
@@ -44,7 +45,7 @@ export async function POST(req:NextRequest){
  const {data,error}=await ctx.db!.from("portal_notifications").insert({
   recipient_role:"admin",recipient_profile_id:ctx.id!,type:"reminder_self_test",priority:"info",
   title:"Reminder system test",message:"This is a test notification created by an administrator. It is not a class reminder.",
-  href:"/admin/reminders",dedupe_key:"reminder-self-test:"+ctx.id+":"+Math.floor(Date.now()/60000)
+  href:"/admin/reminders",dedupe_key:"reminder-self-test:"+ctx.id+":"+randomUUID()
  }).select("id").maybeSingle();
  if(error)return fail("Test notification could not be created; check notification permissions.",503);
  return NextResponse.json({ok:true,id:data?.id},{headers:{"Cache-Control":"no-store"}});
