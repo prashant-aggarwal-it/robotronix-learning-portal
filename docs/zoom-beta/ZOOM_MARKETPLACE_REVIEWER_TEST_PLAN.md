@@ -64,7 +64,7 @@ Before submission, confirm the following **in the reviewer-accessible deployment
 
 ## 5. Production OAuth scope-by-scope reviewer checklist
 
-**Source:** Screenshot of Zoom Marketplace → Robotronix Classroom → Production → Scopes supplied by the app owner on 31 October 2026. **Eight scopes are selected; none are marked Optional.** Do not infer additional granted permissions from installed app behavior. Each row below must be marked PASS/FAIL/BLOCKED after the reviewer-accessible build is verified.
+**Source:** Screenshot of Zoom Marketplace → Robotronix Classroom → Production → Scopes supplied by the app owner on 31 October 2026. **Nine scopes are configured according to the owner's subsequent update: eight originally shown in the screenshot plus `cloud_recording:delete:recording_file`. No optional scopes were selected in the original screenshot. Confirm the current Marketplace tab before submission.** Do not infer additional granted permissions from installed app behavior. Each row below must be marked PASS/FAIL/BLOCKED after the reviewer-accessible build is verified.
 
 | Exact requested Zoom scope | Required? | Reviewer test action | Expected result | Verification |
 | --- | --- | --- | --- | --- |
@@ -74,14 +74,17 @@ Before submission, confirm the following **in the reviewer-accessible deployment
 | `meeting:read:meeting` | Yes | Open existing test class/meeting and request its Zoom details or sync. | Correct meeting status, ID and host displayed. | Pending latest build |
 | `meeting:read:participant` | Yes | After two approved participants attend the disposable meeting, run attendance/meeting sync. | Participant data is associated only with that test meeting, subject to Zoom availability. | Pending latest build |
 | `cloud_recording:read:recording` | Yes | T09–T10: Read the processed cloud recording details and stream a permitted recording. | Authorized player can access recording data; unauthorized roles are denied. | Pending latest build |
+| `cloud_recording:delete:recording_file` | Yes | T13: Move one fully processed, disposable recording file to Zoom Trash using the Admin recording controls. | Provider accepts the request for that specific file; unrelated recordings remain unchanged. | **Blocked — last observed HTTP 400, needs OAuth grant verification and instance-specific deletion fix/retest** |
 | `user:read:user` | Yes | T02–T03: Authorize Zoom host and view the connected account in Admin Zoom screen. | Connected host identity matches the authorizing Zoom user. | Pending latest build |
 | `user:read:zak` | Yes | T06: Launch the connected host's meeting using the supported host-start flow. | Host can start the intended meeting, without exposing the ZAK to unauthorized roles. | Pending latest build |
 
-### Scope gap identified
+### Recording-delete scope added; live provider test still failing
 
-The production scope screenshot **does not show any cloud-recording deletion permission**. Zoom documents `cloud_recording:delete:recording_file` for deleting a specific recording file, and `cloud_recording:delete:meeting_recording` for deleting all recording files for a meeting, with corresponding admin/master variants where applicable. See https://developers.zoom.us/docs/api/meetings/ and https://developers.zoom.us/docs/integrations/oauth-scopes-granular/.
+The owner added `cloud_recording:delete:recording_file` and regenerated the OAuth authorization URL after the original eight-scope screenshot. The selected scope alone does **not** prove Host 1 granted it: verify the host completed the new consent flow. The last deletion test returned HTTP 400 at stage `zoom-trash`.
 
-**Action before reviewer submission:** Compare the exact recording Trash API endpoint used by the application against Zoom's permission requirement. If deleting a single file is an intended feature and allowed for the user-managed app, request the least-privilege corresponding recording-delete scope, document why it is needed, reauthorize the host after scope changes, and add the file-to-Trash flow to the scope table. Do not claim deletion can be validated with the current read-only recording scope. Also confirm Zoom's host-side permission to delete cloud recordings is enabled. Avoid changing the Marketplace scopes without checking whether the app review must be resubmitted.
+Repository review of the current Zoom correction branch found the deletion endpoint still uses the numeric `zoom_meeting_id` rather than the stored meeting-instance UUID. Confirm the required meeting-occurrence identifier against the official Zoom API and correct/test the endpoint if necessary. Use only disposable recordings.
+
+Evidence still required: a fresh current scope screenshot (nine rows), successful new consent, exact deployed commit, recording playback, individual-file Trash operation, and correctly synchronized local state. **Never mark T13 passed until a controlled live test passes.**
 
 **Optional scopes:** None of the eight selected scopes are checked as Optional in the supplied screenshot. If this setting changes, add tests for consent granted, consent declined, and app fallback.
 
