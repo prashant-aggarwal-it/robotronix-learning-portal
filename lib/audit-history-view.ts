@@ -19,6 +19,11 @@ export function auditActor(actorProfileId:string|undefined,names:Record<string,s
  if(!actorProfileId)return "Unattributed (system or unknown)";
  return names[actorProfileId]||"Unresolved user · "+actorProfileId.slice(0,8);
 }
+export function auditRecordTitle(record:AuditLike){
+ const from=record.afterData||record.beforeData||{};
+ const text=from.title??from.code;
+ return typeof text==="string"&&text.trim()?text.trim().slice(0,100):null;
+}
 export function auditCategory(type:string){
  if(/zoom|recording|meeting/.test(type))return "Zoom";
  if(/invoice|payment|finance|earning|payout|fee/.test(type))return "Finance";
