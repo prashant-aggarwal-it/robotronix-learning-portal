@@ -108,7 +108,8 @@ export async function GET(request:NextRequest){
    const profiles=await Promise.all(links.map(async link=>{
     const {data,error}=await ctx.admin!.from("profiles").select("active").eq("id",link.profileId).maybeSingle();
     if(error)throw new Error(error.message);
-    const {data:auth}=await ctx.admin!.auth.admin.getUserById(link.profileId);
+    const {data:auth,error:authError}=await ctx.admin!.auth.admin.getUserById(link.profileId);
+    if(authError)throw new Error(authError.message);
     return{parentId:link.parentId,email:link.email,relationship:link.relationship,
       active:data?.active!==false,lastLoginAt:auth.user?.last_sign_in_at||null,
       children:associations.filter(x=>x.parent_id===link.parentId).map(x=>({id:x.student_id,name:names.find(n=>n.id===x.student_id)?.full_name||"Learner"}))};
@@ -153,7 +154,8 @@ export async function POST(request:NextRequest){
      if(error||count!==1)throw new Error(error?.message||"Family link was not removed.");
     }else{
      // Promote the selected linked guardian; keep the previous guardian as additional access.
-     const {error:guardianError}=await admin.from("student_guardians").update({parent_login_email:managedEmail}).eq("student_id",id);
+     const {error:guardianError,count:guardianCount}=await admin.from("student_guardians").update({parent_login_email:managedEmail},{count:"exact"}).eq("student_id",id);
+     if(!guardianError&&guardianCount!==1)throw new Error("Guardian record was not found.");
      if(guardianError)throw new Error(guardianError.message);
      const {error:promoteError}=await admin.from("parent_students").update({relationship_label:"Primary guardian"}).eq("student_id",id).eq("parent_id",existingLink.parentId);
      if(promoteError)throw new Error(promoteError.message);
@@ -252,7 +254,7 @@ export async function POST(request:NextRequest){
     // Only remove this learner's old associations. Other children on those accounts remain linked.
     // Revalidate after provisioning so a concurrent admin change cannot silently escape review.
     const currentLinks=await familyLinks(admin,id);
-    const mismatches=currentLinks.filter(link=>link.profileId!==user.id);
+    const mismatches=currentLinks.filter(link=>link.profileId!==user.id&&link.relationship!=="Additional guardian");
     const expected=new Set(target.staleLinks.map(link=>link.parentId));
     if(mismatches.some(link=>!expected.has(link.parentId)))throw new Error("Family access changed during replacement. Review again.");
     for(const link of mismatches){
