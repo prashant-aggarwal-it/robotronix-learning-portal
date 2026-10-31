@@ -64,11 +64,11 @@ export async function PATCH(req:NextRequest){
   const result=await check;
   if(result.error||!result.data?.length)return fail("Unknown incident",404);
  }else if(kind==="job"){
-  const name=decodeURIComponent(pieces[0]||"");
+  let name="";try{name=decodeURIComponent(pieces[0]||"")}catch{return fail("Invalid job key",400)}
   if(pieces.length!==1||!Object.hasOwn(expected,name))return fail("Unknown job",404);
  }else{
   if(pieces.length!==1)return fail("Invalid business alert",400);
-  const id=decodeURIComponent(pieces[0]||"");
+  let id="";try{id=decodeURIComponent(pieces[0]||"")}catch{return fail("Invalid record key",400)}
   if(!/^[0-9a-f-]{36}$/i.test(id))return fail("Invalid business record",400);
   const table=kind==="hold"?"enrollments":kind==="class"?"schedule_events":kind==="login"?"trainers":null;
   if(!table)return fail("Unknown alert category",400);
