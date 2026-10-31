@@ -3,6 +3,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {ZoomApiError,zoomApi,zoomAuthorizedFetchUrl,zoomServiceClient} from "@/lib/server/zoom";
 import {classAccessForProfile} from "@/lib/server/zoom-classroom";
 import {readRecordingStreamToken} from "@/lib/server/zoom-recording";
+import {zoomMeetingInstancePath} from "@/lib/server/zoom-recording-instance";
 export const dynamic="force-dynamic";
 
 export async function GET(request:NextRequest,{params}:{params:Promise<{recordingId:string}>}){
@@ -37,10 +38,8 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
    stage="refresh-url";
    // Recordings belong to a meeting occurrence, not necessarily its latest numeric meeting ID.
    // Zoom requires double-encoding for UUIDs starting with "/" or containing "//".
-   const instance=String(meeting.zoom_meeting_uuid||"").trim();
-   if(!instance)throw new Error("Meeting instance UUID unavailable.");
-   const instancePath=instance.startsWith("/")||instance.includes("//")
-    ?encodeURIComponent(encodeURIComponent(instance)):encodeURIComponent(instance);
+   const instancePath=zoomMeetingInstancePath(meeting.zoom_meeting_uuid);
+   if(!instancePath)throw new Error("Meeting instance UUID unavailable.");
    const refreshed=await zoomApi(meeting.host_account_id,`/meetings/${instancePath}/recordings`);
    const file=(Array.isArray(refreshed.recording_files)?refreshed.recording_files:[])
     .find((x:{id?:string|number})=>String(x.id||"")===String(recording.zoom_recording_file_id));
