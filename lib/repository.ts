@@ -638,8 +638,30 @@ export async function activateOnboarding(id:string,assignment:{courseId:string;t
 
 
 // ---------------- Reminder policies ----------------
-export async function listReminderPolicies():Promise<ReminderPolicy[]>{const supabase=getSupabaseBrowserClient();if(!supabase)return demoStore.reminderPolicies.list();const{data}=await supabase.from("reminder_policies").select("*").order("recipient_role");return(data??[]).map((r:any)=>({id:r.id,eventType:r.event_type,recipientRole:r.recipient_role,minutesBefore:r.minutes_before??undefined,minutesAfter:r.minutes_after??undefined,enabled:r.enabled}));}
-export async function saveReminderPolicy(id:string,patch:Partial<ReminderPolicy>){const supabase=getSupabaseBrowserClient();if(!supabase){const row=demoStore.reminderPolicies.update(id,patch);return row?{ok:true,data:row}:{ok:false,error:"Reminder policy not found."};}const db:any={};if(patch.minutesBefore!==undefined)db.minutes_before=patch.minutesBefore;if(patch.minutesAfter!==undefined)db.minutes_after=patch.minutesAfter;if(patch.enabled!==undefined)db.enabled=patch.enabled;const{error}=await supabase.from("reminder_policies").update(db).eq("id",id);return error?{ok:false,error:error.message}:{ok:true};}
+export async function listReminderPolicies():Promise<ReminderPolicy[]>{
+ const supabase=getSupabaseBrowserClient();
+ if(!supabase)return demoStore.reminderPolicies.list();
+ const{data,error}=await supabase.from("reminder_policies").select("*").order("recipient_role");
+ if(error)throw new Error("Unable to load reminder rules. Check the database connection and permissions.");
+ return(data??[]).map((r:any)=>({id:r.id,eventType:r.event_type,recipientRole:r.recipient_role,minutesBefore:r.minutes_before??undefined,minutesAfter:r.minutes_after??undefined,enabled:r.enabled}));
+}
+export async function saveReminderPolicy(id:string,patch:Partial<ReminderPolicy>){
+ const supabase=getSupabaseBrowserClient();
+ const numeric=patch.minutesAfter!==undefined?patch.minutesAfter:patch.minutesBefore;
+ if(numeric!==undefined&&(!Number.isInteger(numeric)||numeric<5||numeric>(patch.minutesAfter!==undefined?240:1440)))
+  return{ok:false,error:"Enter a whole number within the allowed timing range."};
+ if(!supabase){const row=demoStore.reminderPolicies.update(id,patch);return row?{ok:true,data:row}:{ok:false,error:"Reminder policy not found."};}
+ const db:any={};
+ if(patch.minutesBefore!==undefined)db.minutes_before=patch.minutesBefore;
+ if(patch.minutesAfter!==undefined)db.minutes_after=patch.minutesAfter;
+ if(patch.enabled!==undefined)db.enabled=patch.enabled;
+ if(!Object.keys(db).length)return{ok:false,error:"No changes to save."};
+ const{data,error}=await supabase.from("reminder_policies").update(db).eq("id",id)
+  .select("id,event_type,recipient_role,minutes_before,minutes_after,enabled").maybeSingle();
+ if(error)return{ok:false,error:"Unable to save reminder rule. Check access and try again."};
+ if(!data)return{ok:false,error:"The reminder rule was not updated. Refresh and try again."};
+ return{ok:true,data:{id:data.id,eventType:data.event_type,recipientRole:data.recipient_role,minutesBefore:data.minutes_before??undefined,minutesAfter:data.minutes_after??undefined,enabled:data.enabled} as ReminderPolicy};
+}
 
 // ---------------- Progress Core ----------------
 export async function listLearningObservations(filters?:{scheduleEventId?:string;enrollmentId?:string;studentId?:string}):Promise<LearningObservationRecord[]>{
