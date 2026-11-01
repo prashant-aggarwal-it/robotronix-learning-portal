@@ -1,3 +1,4 @@
+import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
 import {NextRequest,NextResponse} from "next/server";
 import {requirePortalUser} from "@/lib/server/portal-api";
 import {classAccessForProfile} from "@/lib/server/zoom-classroom";
@@ -34,6 +35,7 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
   const {recordingId}=await params;const {recording,meeting}=await load(auth,recordingId);
   stage="authorization";
   if(!await allowed(auth,meeting,recording))return NextResponse.json({ok:false,error:"You do not have access to this recording."},{status:403});
+  if(!isPlayableZoomVideo(recording))return NextResponse.json({ok:false,error:"Only MP4 video recordings are available for playback."},{status:404});
   if(recording.status!=="completed")return NextResponse.json({ok:false,error:"This recording is not available for playback."},{status:404});
   const token=createRecordingStreamToken(recording.id,auth.profile.id);
   return NextResponse.json({ok:true,recording:{id:recording.id,topic:meeting.topic,fileType:recording.file_type,recordingType:recording.recording_type,
