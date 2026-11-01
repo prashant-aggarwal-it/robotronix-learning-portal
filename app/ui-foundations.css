@@ -131,3 +131,18 @@
 .workspaceShell .rxMeetingFields :is(input,select){margin-top:0;font-weight:450!important}
 .workspaceShell .rxMeetingComposer .formActions,.workspaceShell .rxMeetingComposer .row.topGap{margin-top:18px;gap:9px;flex-wrap:wrap}
 @media(max-width:670px){.workspaceShell .rxMeetingFields{grid-template-columns:1fr}.workspaceShell .rxMeetingComposer{padding:16px}}
+
+/* Keep the final Action column available when wide data grids scroll. */
+@media(min-width:760px){
+ .workspaceShell .professionalTable th:last-child,
+ .workspaceShell .professionalTable td:last-child{
+  position:sticky;right:0;z-index:2;background:#fff;
+  box-shadow:-5px 0 11px -10px rgba(24,62,92,.5);
+ }
+ .workspaceShell .professionalTable th:last-child{z-index:4;background:#f5f8fb}
+ .workspaceShell .professionalTable tbody tr:hover td:last-child{background:#f6fbfd}
+}
+/* Match Zoom-specific actions to the portal-wide dimensions and primary hue. */
+.workspaceShell .zoomAdminRefresh .zoomActionButton{border-radius:var(--rx-ui-radius);font-size:13px;font-weight:650}
+.workspaceShell .zoomAdminRefresh .zoomActionPrimary{background:linear-gradient(110deg,#235ce2,#078db3)}
+.workspaceShell .zoomAdminRefresh .zoomActionPrimary:hover:not(:disabled){background:linear-gradient(110deg,#164bc6,#077e9f)}
