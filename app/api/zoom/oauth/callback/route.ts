@@ -10,7 +10,19 @@ export async function GET(request:NextRequest){
   const meResponse=await fetch("https://api.zoom.us/v2/users/me",{headers:{Authorization:`Bearer ${tokens.access_token}`},cache:"no-store"});
   const me=await meResponse.json().catch(()=>({})) as any;if(!meResponse.ok)throw new Error(me?.message||"Unable to read the authorized Zoom user. Add the user:read:user scope and authorize again.");
   const db=zoomServiceClient();const row={label:parsed.label||`Zoom · ${me.email||me.id}`,zoom_user_id:String(me.id),zoom_email:String(me.email||""),zoom_account_id:me.account_id?String(me.account_id):null,status:"connected",access_token_encrypted:encryptZoomSecret(tokens.access_token),refresh_token_encrypted:encryptZoomSecret(tokens.refresh_token),access_token_expires_at:new Date(Date.now()+Math.max(60,tokens.expires_in-60)*1000).toISOString(),connected_by:parsed.actorId,connected_at:new Date().toISOString(),last_sync_at:new Date().toISOString()};
-  const {error:saveError}=await db.from("zoom_host_accounts").upsert(row,{onConflict:"zoom_user_id"});if(saveError)throw new Error(saveError.message);
-  base.searchParams.set("connected","1");base.searchParams.set("email",String(me.email||""));return NextResponse.redirect(base);
+  if(parsed.hostId){
+   const {data:existing,error:lookupError}=await db.from("zoom_host_accounts").select("id,zoom_user_id").eq("id",parsed.hostId).maybeSingle();
+   if(lookupError||!existing)throw new Error("Reauthorization target host not found.");
+   // Never attach a different Zoom identity to an existing host's meetings.
+   if(existing.zoom_user_id!==String(me.id))throw new Error("Reauthorization must use the same Zoom account.");
+   const {data:updated,error:saveError}=await db.from("zoom_host_accounts").update({
+    status:"connected",access_token_encrypted:row.access_token_encrypted,refresh_token_encrypted:row.refresh_token_encrypted,
+    access_token_expires_at:row.access_token_expires_at,last_sync_at:row.last_sync_at
+   }).eq("id",parsed.hostId).eq("zoom_user_id",String(me.id)).select("id").maybeSingle();
+   if(saveError||!updated)throw new Error("Unable to update existing Zoom host authorization.");
+  }else{
+   const {error:saveError}=await db.from("zoom_host_accounts").upsert(row,{onConflict:"zoom_user_id"});if(saveError)throw new Error(saveError.message);
+  }
+  base.searchParams.set("connected",parsed.hostId?"renewed":"1");base.searchParams.set("email",String(me.email||""));return NextResponse.redirect(base);
  }catch(error){console.error("Zoom OAuth callback failed",error instanceof Error?error.name:"UnknownError");base.searchParams.set("zoom_error","Unable to connect Zoom account. Check the Zoom app permissions and try again.");return NextResponse.redirect(base);}
 }
