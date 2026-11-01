@@ -1,7 +1,7 @@
 # Robotronix Portal UI Consistency Audit — 2026-11-01
 
 ## Scope and evidence
-Reviewed supplied screenshots: Trainers, Courses, Enrollments, Quick Demo Setup, Schedule, Zoom, Students, Onboarding, System Logs. Inspected source in `app/globals.css`, `app/theme.css` (imports), `app/typography.css`, `app/layout.tsx`, `components/admin/{AdminPageHeader,KpiCard,Pagination,GridFilterControls}`, and page implementations for Trainers, Courses, Students, Enrollments, Demos, Schedule, Zoom and System Logs. This is **source and screenshot review**, not automated visual validation of every portal route. Other routes still require QA.
+Reviewed supplied screenshots: Trainers, Courses, Enrollments, Quick Demo Setup, Schedule, Zoom, Students, Onboarding, System Logs. Performed a source-level inventory of **43 role navigation routes** (22 Admin, 10 Trainer, 6 Parent, 6 Student, counting root role paths and their nested destinations) including thin wrappers that delegate to shared feature components. Inspected source in `app/globals.css`, `app/theme.css` (imports), `app/typography.css`, `app/layout.tsx`, `components/admin/{AdminPageHeader,KpiCard,Pagination,GridFilterControls}`, and page implementations for Trainers, Courses, Students, Enrollments, Demos, Schedule, Zoom and System Logs. This is **source and screenshot review**, not automated visual validation of every portal route. Note that some route files are thin wrappers (for example messaging/notifications), so an in-depth visual QA must inspect their child components, not just the page modules. Other routes still require QA.
 
 ## Design contract (v1)
 | Token/pattern | Rule |
@@ -20,7 +20,7 @@ Reviewed supplied screenshots: Trainers, Courses, Enrollments, Quick Demo Setup,
 | Keyboard | Visible focus indicators, no focus suppression |
 | Responsive | Form one column on mobile; table horizontal scroll if truly needed; compact schedule navigator |
 
-## Findings and priority
+## Route inventory\n\n- **Admin:** Overview, Account, Parent Community, Onboarding, Students, Trainers, Courses, Enrollments, Demo Experience, Schedule, Classes, Zoom, Alerts, Audit, Logs, Finance, Invoices, Trainer Finance, Progress, Messages, Notifications and Reminders.\n- **Trainer:** Home, Profile, Progress, Demos, Classes, Schedule, Courses, Earnings, Messages and Notifications.\n- **Parent:** Dashboard, Calendar, Billing, Profile, Messages and Notifications.\n- **Student:** Home, Calendar, Profile, Course, Portfolio and Notifications.\n\nRepeated patterns from the source scan: raw `button` variants, `formGrid/formGroup` in multiple creation workflows, `professionalTable/tableWrap/dataToolbar` mixed across Admin, and separate professionalTabs / Zoom tab controls. The baseline visual foundation targets shared CSS classes without modifying data fetching or actions.\n\n## Findings and priority
 
 ### P0 — consistency, legibility and usability
 1. **Mixed action hierarchy**: Several `.button`, `.button.secondary`, `.button.ghost`, feature-specific `.zoomActionButton`, `.tableAction`, navigation link variants. Identical actions have inconsistent weights/gradients.
