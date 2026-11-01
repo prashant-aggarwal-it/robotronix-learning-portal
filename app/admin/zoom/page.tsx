@@ -1,5 +1,5 @@
-import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
 "use client";
+import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
 import {Suspense,useEffect,useMemo,useState} from "react";
 import {FormErrorSummary} from "@/components/admin/FormErrorSummary";
 import {readableSaveError,type FormIssue} from "@/lib/form-errors";
