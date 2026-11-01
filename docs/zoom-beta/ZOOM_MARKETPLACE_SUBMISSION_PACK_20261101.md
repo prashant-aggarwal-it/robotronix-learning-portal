@@ -56,6 +56,18 @@ These are draft explanations, not evidence of current scope grants. Verify each 
 - Include `ZOOM_MARKETPLACE_REVIEWER_TEST_PLAN.md` as downloadable reviewer instructions.
 - Explain that the host connection screen is restricted to adult administrators; parent/student accounts are for classroom participation and permissions testing.
 
+## Zoom review-note responses — ready to paste after checking exact reviewer wording
+
+### Education: User vs Admin App
+Robotronix Classroom is an educational Zoom integration for online STEM, robotics and coding lessons in the Robotronix Learning Portal. The Zoom integration is **user-managed** because designated adult Robotronix administrators authorize individual eligible Zoom host users to operate class meetings. Administrators connect and manage hosts, meetings and authorized recordings; trainers access assigned classrooms; parents and students use only the permitted meeting entry points for their linked classes. Parents and students do **not** install or authorize the Zoom application. Authorization is limited to an approved administrator and a Zoom user permitted to consent. The integration does not rely on account-wide Zoom installation. Public authorization entry: https://portal.robotronixstemlab.com/zoom/connect. End-user guide: https://portal.robotronixstemlab.com/zoom-guide.
+
+**Review caution:** Confirm this directly addresses the exact Zoom reviewer note; if Zoom asks whether account-wide admin installation is required, explain the host-account permissions and any Zoom tenant admin preapproval restrictions accurately. Do not claim any Zoom user can authorize if Zoom policy restricts it.
+
+### App Authorization Method
+Robotronix Classroom uses Zoom OAuth 2.0 **authorization code**. An approved adult portal administrator signs in, visits https://portal.robotronixstemlab.com/zoom/connect, confirms eligibility and continues to /admin/zoom, then chooses Connect Host. The server initiates the Zoom consent flow with signed state. After the eligible Zoom user approves the scopes, Zoom redirects to https://portal.robotronixstemlab.com/api/zoom/oauth/callback with a code and state. The backend verifies signed state, exchanges the code server-side, requests /users/me to identify the authorized Zoom user, and encrypts access/refresh tokens before saving the host association. Existing host reauthorization requires the **same Zoom user ID**; a different user is rejected. Only authorized server routes use tokens to manage meetings and recordings. Revocation through Zoom's installed-app management disables the integration for that host; a signed app_deauthorized webhook handler has been implemented in the pending PR and requires deployment and live verification before representing it as operational in Production.
+
+**Review caution:** Verify exact Production scopes, OAuth redirect URL, webhook configuration and live deployment before pasting any implementation claims as completed. Do not provide OAuth client secret, access tokens or reviewer passwords in public notes.
+
 ## Owner-only Production and Marketplace checks
 - [ ] Screenshot current Marketplace submission warnings and Production Scopes.
 - [ ] Confirm Production OAuth Redirect URL and allowed domain; verify ownership and HTTPS.
