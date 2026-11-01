@@ -46,8 +46,8 @@ Reviewed supplied screenshots: Trainers, Courses, Enrollments, Quick Demo Setup,
 17. Check empty/loading/error states, fixed floating controls (Module activity), responsive tables, and long translated content.
 
 ## Implemented in this branch
-- `app/ui-foundations.css` shared visual tokens and scoped refinements for primary/secondary/compact actions, forms, labels, tables, KPI, tabs, pagination and schedule controls.
-- Layout import last so new foundation takes precedence over legacy typography.
+- `app/ui-foundations.css` shared visual tokens and scoped refinements for primary/secondary/compact actions, forms, labels, tables, KPI, tabs, pagination and schedule controls on **Admin and Trainer** screens.\n- `app/ui-role-experiences.css` shares the corresponding control, input, link, badge, card and tab language across **Parent and Student** experiences without removing their learner-friendly layout.
+- Both stylesheets imported after older global/theme/typography CSS so the foundation takes precedence.
 - Better hierarchy for Quick Demo Setup and Zoom general meeting form.
 - Existing business logic, roles, filters, Zoom OAuth/recording APIs and database remain unchanged.
 
@@ -58,8 +58,15 @@ Reviewed supplied screenshots: Trainers, Courses, Enrollments, Quick Demo Setup,
 - Confirm actions and their busy/disabled states; compare click targets at mobile.
 - Verify Schedule toolbar layout at >=1440, 1280, 768, 390px.
 - Check sorting/pagination, horizontal scrolling and Action column access.
-- Check all role portals; CSS scope is `.workspaceShell`, so apply separate patterns to `.experienceShell` where required.
+- Check all role portals: `.workspaceShell` covers Admin and Trainer, `.experienceShell` covers Parent and Student. Both now have tailored shared visual foundations.\n- Source-level coverage is not proof of visual parity; nested child components, rendered theme variants and mobile browser states still need screenshot/interaction QA.
 - No production deploy without merge/deployment verification.
 
 ## Next implementation tranche
 Implement semantic shared React components (UiButton, UiLink, UiBadge, UiTabs, UiFormField, DataGridShell) and migrate high-traffic screens in small PRs, rather than a single fragile find/replace through the entire repository.
+
+## Role-wide coverage implemented in follow-up
+- **Admin:** directories, enrollment management, Zoom, scheduling, system logs, audit and other workspace pages inherit consistent controls, headings, table treatment and badges.
+- **Trainer:** the same workspace shell supports common grids, scheduling, earnings, class views and profile forms; specialist week matrices preserve their custom layout.
+- **Parent:** family dashboard, billing, calendar, profile and shared communication views now inherit matching button/link/input/label conventions while retaining their welcoming visual treatment.
+- **Student:** learning dashboard, calendar, course and portfolio inherit consistent typographic scale, accessible control focus and navigation/action styling.
+- **Excluded from automatic flattening:** parent/student custom information cards, learning progress visualisations, calendar/timeline matrices, real-time communications and stateful forms. These must retain domain-specific interactions and undergo visual QA.
