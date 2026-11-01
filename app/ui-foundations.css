@@ -146,3 +146,37 @@
 .workspaceShell .zoomAdminRefresh .zoomActionButton{border-radius:var(--rx-ui-radius);font-size:13px;font-weight:650}
 .workspaceShell .zoomAdminRefresh .zoomActionPrimary{background:linear-gradient(110deg,#235ce2,#078db3)}
 .workspaceShell .zoomAdminRefresh .zoomActionPrimary:hover:not(:disabled){background:linear-gradient(110deg,#164bc6,#077e9f)}
+
+/* All Admin and Trainer operational grids share one table rhythm.
+   Avoid forcing generic table styles onto calendar matrices and planning layouts. */
+.workspaceShell :is(.professionalTable,.operationsTable,.trainerGridTable,.courseGridTable){
+ border:1px solid #dce8f1;border-radius:13px;background:white;
+ box-shadow:0 5px 20px rgba(28,65,102,.04);
+}
+.workspaceShell .professionalTable thead th{border-bottom:1px solid #e3eaf0}
+.workspaceShell .professionalTable tbody tr:not(:last-child)>td{border-bottom:1px solid #edf2f6}
+.workspaceShell .professionalTable :is(.softBadge,.statusBadge){
+ font-size:12px!important;font-weight:600;border-radius:8px;padding:5px 9px;line-height:1.25;
+}
+/* Standard link text across all directory and management tables. */
+.workspaceShell .professionalTable td>a:not(.primaryTableLink):not(.button),
+.workspaceShell .professionalTable td .tableAction{
+ color:#116c94;font-size:13px;font-weight:650;text-decoration:none;
+}
+.workspaceShell .professionalTable td>a:not(.primaryTableLink):not(.button):hover{
+ color:#075b7f;text-decoration:underline;text-underline-offset:3px;
+}
+/* Consistent toolbar field density and pagination. */
+.workspaceShell .dataToolbar :is(.input,.select,input,select){
+ min-height:42px;padding:9px 12px;font-weight:450;border-radius:10px;
+}
+.workspaceShell .gridPagination{gap:12px;align-items:center}
+.workspaceShell .gridPagination .paginationSummary,
+.workspaceShell .gridPagination .paginationSummary label{font-size:13px;font-weight:500;color:#61778e}
+.workspaceShell .gridPagination .pageSizeSelect{min-height:35px;width:auto;font-size:13px}
+.workspaceShell .gridPagination .pageButton.active{box-shadow:none}
+/* Uniform clickable surface, without overriding disabled fields or custom calendar elements. */
+.workspaceShell .dataToolbar :is(button,a):focus-visible,
+.workspaceShell .professionalTable a:focus-visible{
+ outline:2px solid #0894bc;outline-offset:3px;
+}
