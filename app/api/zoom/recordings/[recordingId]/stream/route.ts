@@ -1,3 +1,4 @@
+import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
 import {logSystemEvent} from "@/lib/server/system-log";
 import {NextRequest,NextResponse} from "next/server";
 import {ZoomApiError,zoomApi,zoomAuthorizedFetchUrl,zoomServiceClient} from "@/lib/server/zoom";
@@ -16,8 +17,9 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
   const {data:profile,error:profileError}=await db.from("profiles").select("id,role,active,full_name").eq("id",grant.profileId).maybeSingle();
   if(profileError||!profile?.active)return new NextResponse("Recording access is no longer valid.",{status:403});
   stage="recording";
-  const {data:recording,error}=await db.from("zoom_recordings").select("id,zoom_meeting_id,zoom_recording_file_id,download_url,status,learner_visible,file_type").eq("id",recordingId).maybeSingle();
+  const {data:recording,error}=await db.from("zoom_recordings").select("id,zoom_meeting_id,zoom_recording_file_id,download_url,status,learner_visible,file_type,file_extension").eq("id",recordingId).maybeSingle();
   if(error||!recording||recording.status!=="completed"||!recording.download_url)return new NextResponse("Recording is unavailable.",{status:404});
+  if(!isPlayableZoomVideo(recording))return new NextResponse("Only MP4 video recordings can be played.",{status:404});
   stage="meeting";
   const {data:meeting,error:meetingError}=await db.from("zoom_meetings").select("id,host_account_id,zoom_meeting_id,zoom_meeting_uuid,schedule_event_id,purpose,learner_recording_visible").eq("id",recording.zoom_meeting_id).maybeSingle();
   if(meetingError||!meeting)return new NextResponse("Recording meeting is unavailable.",{status:404});

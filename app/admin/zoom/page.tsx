@@ -1,4 +1,5 @@
 "use client";
+import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
 import {Suspense,useEffect,useMemo,useState} from "react";
 import {FormErrorSummary} from "@/components/admin/FormErrorSummary";
 import {readableSaveError,type FormIssue} from "@/lib/form-errors";
@@ -64,7 +65,7 @@ function Workspace(){
 
  const classes=useMemo(()=>meetings.filter(m=>m.purpose==="class"),[meetings]);
  const general=useMemo(()=>meetings.filter(m=>m.purpose==="general"),[meetings]);
- const recordings=useMemo(()=>meetings.flatMap(m=>m.recordings.map(r=>Object.assign({},r,{meeting:m}))).filter((r:any)=>r.status!=="deleted"),[meetings]);
+ const recordings=useMemo(()=>meetings.flatMap(m=>m.recordings.map(r=>Object.assign({},r,{meeting:m}))).filter((r:any)=>r.status==="completed"&&isPlayableZoomVideo(r)),[meetings]);
  const now=Date.now();
  const dayKey=(date:Date)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(date);
  const todayKey=dayKey(new Date());
@@ -178,14 +179,14 @@ function Workspace(){
   </>}
 
   {tab==="recordings"&&<section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">SECURE RECORDING LIBRARY</div><h2>Cloud recordings by meeting</h2><p>Expand a meeting to see video, audio and other files. Playback and actions remain restricted to authorized Admin users.</p></div></div>
-   {meetings.filter(m=>m.recordings.some(r=>r.status!=="deleted")).map(m=><details key={m.id} className="panel historyPanel">
+   <div className="panelHeader"><div><div className="eyebrow">SECURE RECORDING LIBRARY</div><h2>Cloud recordings by meeting</h2><p>Only completed MP4 video recordings are shown. Audio and timeline files remain retained in Zoom and the recording ledger.</p></div></div>
+   {meetings.filter(m=>m.recordings.some(r=>r.status==="completed"&&isPlayableZoomVideo(r))).map(m=><details key={m.id} className="panel historyPanel">
     <summary style={{cursor:"pointer",display:"flex",gap:16,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap"}}>
      <span><b>{m.event?.title||m.topic}</b><span className="cellSub">{when(m.scheduled_start)} · {m.purpose==="class"?"Class":m.purpose==="demo"?"Demo":"Meeting"} · {m.host?.label||"Zoom host"}</span></span>
-     <span className="softBadge">{m.recordings.filter(r=>r.status!=="deleted").length} files</span>
+     <span className="softBadge">{m.recordings.filter(r=>r.status==="completed"&&isPlayableZoomVideo(r)).length} videos</span>
     </summary>
-    <div className="tableWrap topGap"><table><thead><tr><th>File type</th><th>Recorded</th><th>Size</th><th>Retention</th><th>Learner access</th><th>Actions</th></tr></thead><tbody>
-    {m.recordings.filter(r=>r.status!=="deleted").map(r=><tr key={r.id}>
+    <div className="tableWrap topGap"><table><thead><tr><th>Video type</th><th>Recorded</th><th>Size</th><th>Retention</th><th>Learner access</th><th>Actions</th></tr></thead><tbody>
+    {m.recordings.filter(r=>r.status==="completed"&&isPlayableZoomVideo(r)).map(r=><tr key={r.id}>
      <td>{r.recording_type||r.file_type||"Recording"}</td><td>{when(r.recording_start)}</td><td>{Number(r.file_size_bytes||0)>=1024*1024*1024?gb(Number(r.file_size_bytes||0)):(Number(r.file_size_bytes||0)/1024/1024).toFixed(1)+" MB"}</td>
      <td>{r.protected_from_deletion?<span className="softBadge softGreen">Protected</span>:when(r.retain_until)}</td>
      <td>{m.purpose==="class"?<button className="softBadge" disabled={busy} onClick={()=>recordingAction(r.id,"toggle-learner")}>{r.learner_visible?"Allowed":"Admin only"}</button>:"Admin only"}</td>
@@ -197,7 +198,7 @@ function Workspace(){
      </div></td>
     </tr>)}</tbody></table></div>
    </details>)}
-   {!recordings.length&&<div className="emptyState compact">No completed recordings yet.</div>}
+   {!recordings.length&&<div className="emptyState compact">No completed video recordings yet.</div>}
   </section>}
 
   {tab==="hosts"&&<section className="dataSection">
