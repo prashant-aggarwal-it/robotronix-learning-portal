@@ -25,6 +25,30 @@ Historical tests are **not** fresh reviewer acceptance results. Earlier HTTP 400
 
 Actual passwords must be privately set and independently tested by the owner. Email aliases by themselves are not adequate reviewer sign-in instructions.
 
+## Reviewer quick-start — follow these steps in order
+
+**Access and credentials (supplied privately in Zoom Marketplace):**
+1. Open https://portal.robotronixstemlab.com/login in a fresh private/incognito browser window.
+2. Select **Sign in with password** and enter the reviewer Admin email `robotronixstemlab+zoomadmin@gmail.com` and the corresponding password supplied **privately** to Zoom. No Gmail inbox access should be needed for normal password sign-in.
+3. Confirm the Admin dashboard loads. Navigate to **Admin → Zoom** (`/admin/zoom`). If a host is already connected, use the existing disposable reviewer host for meeting/recording cases; if Zoom authorization needs testing, click Connect/Reauthorize and complete Zoom's authorization-code consent with an **eligible Zoom user**. This is a *separate Zoom login*, not one of the four portal passwords.
+4. Verify the connected Zoom identity and run the host/meeting tests T02–T04 and T09–T16 below. Use only disposable meetings and recordings. **Never revoke or delete a production host or live class to run a reviewer test.**
+5. In separate clean sessions, sign in using the Trainer, Parent and Student emails and their **individual** privately supplied passwords. Run T05–T08 and T17; verify they cannot access Admin Zoom controls or another learner's recordings.
+6. Record results for each test (PASS, FAIL or BLOCKED), with date, deployed version and evidence. A BLOCKED test is not a PASS.
+
+**Prerequisites and limitations:** The reviewer needs the four independent portal passwords, a preconfigured sample class/enrollment/linked learner and disposable recording, plus a Zoom user eligible to authorize this app. Zoom cloud-recording tests require a cloud-recording-capable Zoom plan and processed MP4 file. The reviewer must be told separately if Zoom requires a particular approved test account, if 2FA/CAPTCHA is enforced, or if the sample recording is not yet available. Do not bypass authentication or disable protections globally.
+
+**Authorization expected outcome:** An eligible Zoom user completes Zoom consent, returns to the portal and is linked to the correct Zoom host; the portal must not expose access/refresh tokens. Reauthorization of an existing host must use the same Zoom user identity. Denied consent should not create a host or expose tokens.
+
+**Scope-by-scope verification:** Use the scope-to-test matrix in Section 3. Compare every scope against the *actual Production → Scopes* selection before submission. If any scope is optional, test the consent flow once with that permission granted and once denied, and document which features remain usable; do not claim an optional-scope denial test passed unless observed. A scope that is required for a feature may cause that feature to be unavailable when declined; this must be explained rather than treated as a successful operation.
+
+**Multi-user flow:** Admin schedules a disposable class with an authorized Zoom host; assigned Trainer can enter the corresponding classroom; linked Parent and Student can view their own class entry points; unrelated users cannot view the class, recordings or host administration. If the reviewer lacks a linked sample learner, mark this BLOCKED and supply the exact disposable QA enrollment details privately.
+
+**Recording flow:** Complete a disposable meeting, wait for Zoom to process the cloud MP4, refresh the portal library, play and seek as an authorized role, verify unauthorized access is rejected, and send a *different disposable recording file* to Zoom Trash. Confirm the selected file, not the entire meeting's recordings, was affected.
+
+**App removal:** In an authorized disposable Zoom installation, revoke the app and verify the matching host is disabled after the signed `app_deauthorized` notification. If the event is unavailable for this app distribution state, mark T16 BLOCKED and include the reason; do not represent backend unit/structural checks as a successful live uninstall test.
+
+**Security and data handling:** No real children's data, private customer records, Zoom tokens, reviewer passwords or recording bytes should be included in test-plan attachments or screenshots.
+
 ## 2. Reviewer steps
 For each case enter PASS / FAIL / BLOCKED with screenshot, date, deployed commit and tester.
 
