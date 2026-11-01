@@ -1,4 +1,5 @@
 import {logSystemEvent} from "@/lib/server/system-log";
+import {processZoomDeauthorization} from "@/lib/server/zoom-deauthorization";
 import crypto from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
 import {zoomServiceClient} from "@/lib/server/zoom";
@@ -116,6 +117,12 @@ export async function POST(request:NextRequest){
   stage="signature";
   if(!verify(raw,request))return NextResponse.json({ok:false,error:"Invalid Zoom webhook signature."},{status:401});
   stage="claim";
+  // Marketplace uninstall is a signed webhook, independent of meeting events.
+  if(body.event==="app_deauthorized"){
+   stage="deauthorize";
+   await processZoomDeauthorization(body);
+   return NextResponse.json({ok:true});
+  }
 
   const db=zoomServiceClient();
   const hash=eventHash(raw);
