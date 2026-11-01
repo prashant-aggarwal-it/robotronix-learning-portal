@@ -1,18 +1,4 @@
-import crypto from "node:crypto";
-import type {NextRequest} from "next/server";
 import {encryptZoomSecret,zoomClientId,zoomServiceClient} from "@/lib/server/zoom";
-
-/** Zoom Marketplace app_deauthorized. Do not trust the payload until HMAC verification. */
-export function verifyZoomDeauthorization(raw:string,request:NextRequest):boolean {
- const timestamp=request.headers.get("x-zm-request-timestamp")||"";
- const signature=request.headers.get("x-zm-signature")||"";
- if(!/^\\d{10}$/.test(timestamp)||!/^v0=[a-f0-9]{64}$/i.test(signature))return false;
- if(Math.abs(Date.now()/1000-Number(timestamp))>300)return false;
- const secret=process.env.ZOOM_WEBHOOK_SECRET_TOKEN?.trim();
- if(!secret)return false;
- const expected="v0="+crypto.createHmac("sha256",secret).update("v0:"+timestamp+":"+raw).digest("hex");
- return crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(signature));
-}
 
 /** Idempotently invalidate a single matching Zoom user, without affecting other hosts.
  * Existing learning, billing, and audit records are retained pending applicable retention policy.
