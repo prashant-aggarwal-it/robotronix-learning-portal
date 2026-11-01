@@ -61,7 +61,7 @@ function Workspace(){
  async function syncZoom(){if(busy)return;setBusy(true);setError("");setNotice("");try{const x=await adminApi("/api/zoom/reconcile",{method:"POST"});setNotice(`Synced with Zoom · ${x.meetingsSynced||0} meetings · ${x.recordingsSynced||0} recording files${x.errors?` · ${x.errors} item(s) need review`:""}`);await load()}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
  useEffect(()=>{void load()},[]);
  useLiveRefresh(["zoom_meetings","zoom_recordings","zoom_host_accounts"],load,"admin-zoom");
- useEffect(()=>{if(params.get("connected"))setNotice("Zoom account connected successfully"+(params.get("email")?" · "+params.get("email"):"")+".");if(params.get("zoom_error"))setError(String(params.get("zoom_error")))},[params]);
+ useEffect(()=>{if(params.get("connected"))setNotice((params.get("connected")==="renewed"?"Zoom host authorization renewed":"Zoom account connected successfully")+(params.get("email")?" · "+params.get("email"):"")+".");if(params.get("zoom_error"))setError(String(params.get("zoom_error")))},[params]);
 
  const classes=useMemo(()=>meetings.filter(m=>m.purpose==="class"),[meetings]);
  const general=useMemo(()=>meetings.filter(m=>m.purpose==="general"),[meetings]);
@@ -87,6 +87,14 @@ function Workspace(){
  const live=meetings.filter(m=>m.status==="started").length;
 
  async function connect(){if(busy)return;setBusy(true);setError("");try{const next=label.trim()||"Zoom Host "+(hosts.length+1);const x=await adminApi("/api/zoom/connect",{method:"POST",body:JSON.stringify({label:next})});window.location.assign(x.authorizationUrl)}catch(e){setError(readableSaveError(e));setBusy(false)}}
+ async function reauthorizeHost(id:string){
+  if(busy)return;
+  const host=hosts.find(h=>h.id===id);if(!host)return;
+  if(!window.confirm("Reauthorize "+host.zoomEmail+" with Zoom? Sign in to this SAME Zoom account. Existing meetings and recordings will be preserved."))return;
+  setBusy(true);setError("");setNotice("");
+  try{const x=await adminApi("/api/zoom/connect",{method:"POST",body:JSON.stringify({hostId:id})});window.location.assign(x.authorizationUrl)}
+  catch(e){setError(readableSaveError(e));setBusy(false)}
+ }
  async function patchHost(id:string,body:any){if(busy)return;setBusy(true);setError("");try{await adminApi("/api/zoom/hosts",{method:"PATCH",body:JSON.stringify(Object.assign({id},body))});await load()}catch(e){setError(readableSaveError(e))}finally{setBusy(false)}}
  async function createMeeting(){if(busy)return;
  const issues:FormIssue[]=[];
@@ -204,20 +212,20 @@ function Workspace(){
   {tab==="hosts"&&<section className="dataSection">
    <div className="panelHeader"><div><div className="eyebrow">HOST POOL</div><h2>Zoom accounts</h2><p>Add independent Zoom accounts as capacity grows. Lower priority numbers are selected first.</p><div className="cellSub">When adding Host 2 or later, first make sure the browser is signed in to that specific Zoom account. While the Zoom app is in Beta Test, that account must also be allowed as a beta/test user in Zoom Marketplace.</div></div></div>
    <div className="row"><input className="input" style={{maxWidth:260}} placeholder={"e.g. Zoom Host "+(hosts.length+1)} value={label} onChange={e=>setLabel(e.target.value)}/><button className="button" disabled={busy} onClick={connect}>+ Add Zoom Account</button></div>
-   <div className="tableWrap topGap"><table><thead><tr><th>Host</th><th>Account</th><th>Priority</th><th>Recording</th><th>Retention</th><th>Learner default</th><th>Storage tracked</th><th>Status</th></tr></thead><tbody>
-    {hosts.map(h=><HostRow key={h.id} host={h} busy={busy} bytes={storage.find(s=>s.hostId===h.id)?.bytes||0} patch={patchHost}/>)}
-    {!hosts.length&&<tr><td colSpan={8}><div className="emptyState compact">No Zoom account connected yet.</div></td></tr>}
+   <div className="tableWrap topGap"><table><thead><tr><th>Host</th><th>Account</th><th>Priority</th><th>Recording</th><th>Retention</th><th>Learner default</th><th>Storage tracked</th><th>Status</th><th>Authorization</th></tr></thead><tbody>
+    {hosts.map(h=><HostRow key={h.id} host={h} busy={busy} bytes={storage.find(s=>s.hostId===h.id)?.bytes||0} patch={patchHost} reauthorize={reauthorizeHost}/>)}
+    {!hosts.length&&<tr><td colSpan={9}><div className="emptyState compact">No Zoom account connected yet.</div></td></tr>}
    </tbody></table></div>
   </section>}
  </>;
 }
 
-function HostRow({host:h,busy,bytes,patch}:{host:Host;busy:boolean;bytes:number;patch:(id:string,body:any)=>Promise<void>}){
+function HostRow({host:h,busy,bytes,patch,reauthorize}:{host:Host;busy:boolean;bytes:number;patch:(id:string,body:any)=>Promise<void>;reauthorize:(id:string)=>Promise<void>}){
  const[p,setP]=useState(String(h.priority));useEffect(()=>setP(String(h.priority)),[h.priority]);
  return <tr><td><b>{h.label}</b><div className="cellSub">{h.enabled?"Enabled":"Disabled"}</div></td><td>{h.zoomEmail||"Zoom account"}<div className="cellSub">{h.lastSyncAt?"Synced "+when(h.lastSyncAt):"Not synced yet"}</div></td>
   <td><input className="input" type="number" min={1} max={9999} style={{width:90}} value={p} disabled={busy} onChange={e=>setP(e.target.value)} onBlur={()=>{const n=Number(p)||100;if(n!==h.priority)patch(h.id,{priority:n})}}/></td>
   <td><button className={"softBadge "+(h.recordingEnabled?"softGreen":"")} disabled={busy} onClick={()=>patch(h.id,{recordingEnabled:!h.recordingEnabled})}>{h.recordingEnabled?"Cloud recording ON":"Recording OFF"}</button></td>
   <td><select className="select" value={h.recordingRetentionDays} disabled={busy} onChange={e=>patch(h.id,{recordingRetentionDays:Number(e.target.value)})}><option value={30}>30 days</option><option value={60}>60 days</option><option value={90}>90 days</option><option value={180}>180 days</option></select></td>
   <td><button className="softBadge" disabled={busy} onClick={()=>patch(h.id,{learnerRecordingDefault:!h.learnerRecordingDefault})}>{h.learnerRecordingDefault?"Visible":"Admin only"}</button></td>
-  <td>{gb(bytes)}</td><td><button className={"statusBadge status-"+(h.enabled?"active":"inactive")} disabled={busy} onClick={()=>patch(h.id,{enabled:!h.enabled})}>{h.enabled?"Active":"Disabled"}</button></td></tr>;
+  <td>{gb(bytes)}</td><td><button className={"statusBadge status-"+(h.enabled?"active":"inactive")} disabled={busy} onClick={()=>patch(h.id,{enabled:!h.enabled})}>{h.enabled?"Active":"Disabled"}</button></td><td><button className="button secondary" disabled={busy} onClick={()=>void reauthorize(h.id)}>Reauthorize</button></td></tr>;
 }
