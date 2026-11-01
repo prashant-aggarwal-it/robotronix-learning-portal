@@ -5,7 +5,7 @@ const ZOOM_API="https://api.zoom.us/v2";
 const ZOOM_OAUTH="https://zoom.us/oauth/token";
 
 export class ZoomApiError extends Error {
- constructor(public readonly status:number,message:string){super(message);this.name="ZoomApiError";}
+ constructor(public readonly status:number,message:string,public readonly providerCode:number|null=null){super(message);this.name="ZoomApiError";}
 }
 
 export type ZoomHostSafe={id:string;label:string;zoomUserId:string;zoomEmail:string;zoomAccountId:string|null;status:string;enabled:boolean;priority:number;recordingEnabled:boolean;recordingRetentionDays:number;learnerRecordingDefault:boolean;connectedAt:string;lastSyncAt:string|null};
@@ -143,7 +143,12 @@ export async function zoomApi(hostId:string,path:string,init:RequestInit={}){
   }
  }
  const json=await response.json().catch(()=>({})) as any;
- if(!response.ok)throw new ZoomApiError(response.status,json?.message||json?.reason||`Zoom API request failed (${response.status}).`);
+ if(!response.ok){
+  // Zoom sends a numeric error code alongside HTTP status. Preserve the code
+  // for safe diagnostics, never the raw provider response or access tokens.
+  const providerCode=typeof json?.code==="number"&&Number.isSafeInteger(json.code)?json.code:null;
+  throw new ZoomApiError(response.status,json?.message||json?.reason||`Zoom API request failed (${response.status}).`,providerCode);
+ }
  await db.from("zoom_host_accounts").update({last_sync_at:new Date().toISOString()}).eq("id",hostId);
  return json;
 }
