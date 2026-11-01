@@ -68,8 +68,9 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
   return new NextResponse(upstream.body,{status:upstream.status,headers});
  }catch(error){
   const upstreamStatus=error instanceof ZoomApiError?error.status:null;
-  const referenceId=await logSystemEvent({source:"zoom-recording",action:"stream",code:"ZOOM_STREAM_"+stage.toUpperCase().replace(/-/g,"_")+(upstreamStatus?"_HTTP_"+upstreamStatus:""),message:"Recording playback could not be established"});
-  console.error("[zoom-recording] stream exception",{stage,upstreamStatus,referenceId});
+  const providerCode=error instanceof ZoomApiError?error.providerCode:null;
+  const referenceId=await logSystemEvent({source:"zoom-recording",action:"stream",code:"ZOOM_STREAM_"+stage.toUpperCase().replace(/-/g,"_")+(upstreamStatus?"_HTTP_"+upstreamStatus:"")+(providerCode!==null?"_Z"+providerCode:""),message:"Recording playback could not be established"});
+  console.error("[zoom-recording] stream exception",{stage,upstreamStatus,providerCode,referenceId});
   return new NextResponse("Recording stream unavailable. Reference: "+referenceId,{status:stage==="token"?403:502,headers:{"Cache-Control":"no-store"}});
  }
 }
