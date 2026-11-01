@@ -29,8 +29,8 @@ function encryptionKey(){
 function b64url(input:Buffer|string){return Buffer.from(input).toString("base64url")}
 function constantEqual(a:string,b:string){const aa=Buffer.from(a),bb=Buffer.from(b);return aa.length===bb.length&&crypto.timingSafeEqual(aa,bb)}
 
-export function createZoomState(actorId:string,label:string){
- const payload=b64url(JSON.stringify({actorId,label:label.slice(0,80),exp:Date.now()+10*60_000,nonce:crypto.randomBytes(16).toString("hex")}));
+export function createZoomState(actorId:string,label:string,hostId?:string){
+ const payload=b64url(JSON.stringify({actorId,label:label.slice(0,80),exp:Date.now()+10*60_000,nonce:crypto.randomBytes(16).toString("hex"),hostId:hostId||undefined}));
  const sig=crypto.createHmac("sha256",stateSecret()).update(payload).digest("base64url");
  return `${payload}.${sig}`;
 }
@@ -38,7 +38,7 @@ export function readZoomState(state:string){
  const [payload,sig]=state.split(".");if(!payload||!sig)throw new Error("Invalid Zoom OAuth state.");
  const expected=crypto.createHmac("sha256",stateSecret()).update(payload).digest("base64url");
  if(!constantEqual(sig,expected))throw new Error("Zoom OAuth state signature is invalid.");
- const parsed=JSON.parse(Buffer.from(payload,"base64url").toString("utf8")) as {actorId:string;label:string;exp:number;nonce:string};
+ const parsed=JSON.parse(Buffer.from(payload,"base64url").toString("utf8")) as {actorId:string;label:string;exp:number;nonce:string;hostId?:string};
  if(!parsed.actorId||!parsed.exp||parsed.exp<Date.now())throw new Error("Zoom OAuth state expired. Start the connection again.");
  return parsed;
 }
@@ -63,9 +63,9 @@ export function zoomServiceClient(){
  return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 }
 
-export function zoomAuthorizationUrl(actorId:string,label:string){
+export function zoomAuthorizationUrl(actorId:string,label:string,hostId?:string){
  const u=new URL("https://zoom.us/oauth/authorize");
- u.searchParams.set("response_type","code");u.searchParams.set("client_id",zoomClientId());u.searchParams.set("redirect_uri",zoomRedirectUri());u.searchParams.set("state",createZoomState(actorId,label));
+ u.searchParams.set("response_type","code");u.searchParams.set("client_id",zoomClientId());u.searchParams.set("redirect_uri",zoomRedirectUri());u.searchParams.set("state",createZoomState(actorId,label,hostId));
  return u.toString();
 }
 
