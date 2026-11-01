@@ -118,3 +118,16 @@
 @media(prefers-reduced-motion:reduce){
  .workspaceShell :is(.button,.zoomActionButton,.pageButton){transition:none}
 }
+
+/* Creation workflows: restraint in labels and a clear hierarchy. */
+.workspaceShell .rxDemoModeActions{gap:8px;align-items:center;flex-wrap:wrap}
+.workspaceShell .rxDemoModeActions .button{min-height:38px;padding:8px 13px;font-size:13px}
+.workspaceShell .rxDemoFields{align-items:start}
+.workspaceShell .rxDemoFields>label{align-self:start}
+.workspaceShell .rxDemoFields>label :is(input,select){font-weight:450!important}
+.workspaceShell .rxMeetingComposer{border:1px solid var(--rx-ui-border);border-radius:16px;padding:22px;background:#fff}
+.workspaceShell .rxMeetingFields{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:12px}
+.workspaceShell .rxMeetingFields>label{font-weight:600;font-size:13px}
+.workspaceShell .rxMeetingFields :is(input,select){margin-top:0;font-weight:450!important}
+.workspaceShell .rxMeetingComposer .formActions,.workspaceShell .rxMeetingComposer .row.topGap{margin-top:18px;gap:9px;flex-wrap:wrap}
+@media(max-width:670px){.workspaceShell .rxMeetingFields{grid-template-columns:1fr}.workspaceShell .rxMeetingComposer{padding:16px}}
