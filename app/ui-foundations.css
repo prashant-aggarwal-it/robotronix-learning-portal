@@ -1,0 +1,120 @@
+/* Robotronix UI Foundation v1 — cross-module operational controls.
+ * Imported after legacy typography/theme styles; avoids changing workflows.
+ * Admin, trainer, parent and student share sizing and accessible focus.
+ */
+:root{
+ --rx-ui-ink:#193550;--rx-ui-muted:#647b91;--rx-ui-border:#dce8f1;
+ --rx-ui-blue:#087fa7;--rx-ui-blue-hover:#066d92;--rx-ui-soft:#f2f8fc;
+ --rx-ui-danger:#b42336;--rx-ui-radius:11px;
+ --rx-ui-control-height:42px;--rx-ui-compact-height:34px;
+}
+.workspaceShell :is(.button,.zoomActionButton,.pageButton){
+ font-family:var(--rx-font-family);font-weight:650;letter-spacing:0;
+ border-radius:var(--rx-ui-radius);transition:background-color .15s,border-color .15s,box-shadow .15s;
+}
+.workspaceShell .button:not(.secondary):not(.ghost):not(.danger){
+ min-height:var(--rx-ui-control-height);padding:9px 15px;
+ background:linear-gradient(110deg,#235ce2,#078db3);border:1px solid transparent;
+ color:#fff;font-size:14px;font-weight:650;box-shadow:none;
+}
+.workspaceShell .button:not(.secondary):not(.ghost):not(.danger):hover:not(:disabled){background:linear-gradient(110deg,#164bc6,#077e9f);box-shadow:0 6px 16px rgba(21,92,158,.13)}
+.workspaceShell .button.secondary,.workspaceShell .button.ghost{
+ min-height:var(--rx-ui-control-height);padding:9px 14px;
+ border:1px solid var(--rx-ui-border);background:#fff;color:#254763;
+ font-size:14px;font-weight:650;box-shadow:none;
+}
+.workspaceShell .button.secondary:hover:not(:disabled),.workspaceShell .button.ghost:hover:not(:disabled){background:var(--rx-ui-soft);border-color:#adcfdf;box-shadow:none}
+.workspaceShell :is(.button,.zoomActionButton,.pageButton,.tabButton):focus-visible,
+.workspaceShell :is(.input,.select,input,textarea,select):focus-visible{
+ outline:2px solid #0894bc;outline-offset:2px;
+}
+.workspaceShell .button.small,.workspaceShell .smallButton,.workspaceShell .tableAction{
+ min-height:var(--rx-ui-compact-height);font-size:13px;padding:6px 11px;
+}
+/* Avoid bold form values. Clear labels carry hierarchy, not the user input. */
+.workspaceShell :is(.input,.select,.compactInput),
+.workspaceShell :is(.formGroup input,.formGroup select,.formGroup textarea){
+ font-size:14px;font-weight:450;line-height:1.4;color:var(--rx-ui-ink);
+ border-color:var(--rx-ui-border);border-radius:10px;
+}
+.workspaceShell :is(.input,.select)::placeholder{font-weight:400;color:#8493a3}
+.workspaceShell .formGroup>label,.workspaceShell .formGrid>label,
+.workspaceShell .demoAdminForm>label,.workspaceShell .formGroup label{
+ font-size:13px;font-weight:600;line-height:1.4;color:#526a81;letter-spacing:0;
+}
+.workspaceShell .formGrid>label,.workspaceShell .demoAdminForm>label{
+ display:flex;flex-direction:column;gap:7px;min-width:0;
+}
+.workspaceShell .formGrid>label>.input,.workspaceShell .formGrid>label>.select,
+.workspaceShell .demoAdminForm>label>.input,.workspaceShell .demoAdminForm>label>.select{
+ min-height:var(--rx-ui-control-height);width:100%;
+ font-size:14px;font-weight:450;padding:9px 12px;
+}
+.workspaceShell .demoAdminForm{gap:16px}
+.workspaceShell .demoAdminForm>label>span{
+ font-size:12px;font-weight:650;letter-spacing:.015em;color:#5b7086;
+ text-transform:none;
+}
+.workspaceShell .demoAdminForm :is(input,select){min-height:44px;font-size:14px;font-weight:450}
+.workspaceShell .demoAdminForm :is(input,select)::placeholder{font-size:14px;font-weight:400}
+.workspaceShell .panelHeader h2{font-size:21px;line-height:1.25;font-weight:700;letter-spacing:-.02em;color:var(--rx-ui-ink)}
+.workspaceShell .panelHeader p{font-size:13px;line-height:1.55;color:var(--rx-ui-muted)}
+.workspaceShell .eyebrow{font-size:11px;font-weight:700;letter-spacing:.085em}
+.workspaceShell .adminPageHeader h1{font-weight:720;letter-spacing:-.035em}
+.workspaceShell .adminPageHeader p{font-weight:400}
+.workspaceShell .dataToolbar{gap:10px}
+.workspaceShell :is(.professionalTable,.tableWrap) table{border-collapse:separate;border-spacing:0}
+.workspaceShell :is(.professionalTable,.tableWrap) th{
+ background:#f5f8fb;color:#5e7388;font-size:12px;font-weight:650;
+ letter-spacing:.01em;line-height:1.4;vertical-align:middle;
+}
+.workspaceShell :is(.professionalTable,.tableWrap) td{
+ font-size:13px;font-weight:450;line-height:1.5;vertical-align:middle;
+}
+.workspaceShell .professionalTable th{font-size:12px!important}
+.workspaceShell .professionalTable td{font-size:13.5px!important}
+.workspaceShell .professionalTable .cellSub{font-size:12px!important;color:#6d8192}
+.workspaceShell .professionalTable :is(td,th){padding:13px 14px}
+.workspaceShell :is(.professionalTable,.tableWrap) tbody tr:hover{background:#f6fbfd}
+.workspaceShell .professionalTable .tableAction,
+.workspaceShell .tableWrap a.tableAction{
+ display:inline-flex;align-items:center;min-height:32px;
+ font-size:13px!important;font-weight:650;color:#126c93;text-decoration:none;
+ background:transparent;border:0;padding:5px 0;box-shadow:none;
+}
+.workspaceShell .professionalTable .tableAction:hover{text-decoration:underline;color:#075b7f}
+.workspaceShell .primaryTableLink{font-weight:650;color:var(--rx-ui-ink)}
+.workspaceShell .primaryTableLink:hover{color:#087fa7}
+.workspaceShell :is(.statusBadge,.softBadge){font-size:12px;font-weight:600;letter-spacing:0;border-radius:8px}
+.workspaceShell .dashboardKpis .kpiCard{
+ border-radius:16px;box-shadow:0 5px 20px rgba(30,64,100,.04);
+ border-color:var(--rx-ui-border);
+}
+.workspaceShell .dashboardKpis .kpiCard:after{opacity:.45}
+.workspaceShell .dashboardKpis .kpiTop{font-size:11px;font-weight:650;letter-spacing:.045em;color:#63788d}
+.workspaceShell .dashboardKpis .kpiValue{font-size:29px;font-weight:730;color:var(--rx-ui-ink);line-height:1.18}
+.workspaceShell .dashboardKpis .kpiDetail{font-size:12.5px!important;font-weight:400;line-height:1.5!important}
+.workspaceShell .paginationBar .pageButton{min-width:34px;height:34px;padding:6px 10px;font-weight:650}
+.workspaceShell .paginationBar .pageButton.active{background:#176d9c;color:#fff}
+.workspaceShell .paginationBar .pageButton:disabled{opacity:.4}
+.workspaceShell .professionalTabs,.workspaceShell .zoomSegmentedTabs{border-color:var(--rx-ui-border);background:#f1f6fa;border-radius:11px}
+.workspaceShell .professionalTabs .tabButton{font-size:13px!important;font-weight:600;border-radius:8px}
+.workspaceShell .professionalTabs .tabButton.active{background:#fff;color:#135c84;box-shadow:0 1px 4px rgba(24,66,100,.1)}
+/* Schedule's previous/today/next controls were stacking into tall full-width slabs. */
+.workspaceShell .scheduleToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.workspaceShell .scheduleDateNavigator{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;min-width:0}
+.workspaceShell .scheduleDateNavigator .button{width:auto;min-width:0;min-height:36px;padding:7px 12px;font-size:13px}
+.workspaceShell .scheduleDateNavigator input[type="date"]{width:162px;min-height:36px}
+@media(max-width:900px){
+ .workspaceShell .scheduleToolbar{align-items:stretch}
+ .workspaceShell .scheduleDateNavigator{justify-content:flex-start}
+}
+@media(max-width:600px){
+ .workspaceShell .scheduleDateNavigator{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+ .workspaceShell .scheduleDateNavigator .button{width:100%;padding:7px}
+ .workspaceShell .scheduleDateNavigator input[type="date"]{width:100%;grid-column:1/-1}
+ .workspaceShell .demoAdminForm{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ .workspaceShell :is(.button,.zoomActionButton,.pageButton){transition:none}
+}
