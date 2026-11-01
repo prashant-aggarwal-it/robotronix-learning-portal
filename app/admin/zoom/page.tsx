@@ -1,5 +1,6 @@
-import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
 "use client";
+import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
+import "./zoom-admin.css";
 import {Suspense,useEffect,useMemo,useState} from "react";
 import {FormErrorSummary} from "@/components/admin/FormErrorSummary";
 import {readableSaveError,type FormIssue} from "@/lib/form-errors";
@@ -100,9 +101,9 @@ function Workspace(){
  async function watchRecording(id:string){window.open("/recordings/"+encodeURIComponent(id),"_blank","noopener,noreferrer")}
  async function copy(value?:string|null){if(!value)return;try{await navigator.clipboard.writeText(value);setNotice("Guest Zoom link copied.")}catch{setError("Unable to copy the link. Check clipboard permission and try again.")}}
 
- const tabButton=(id:typeof tab,title:string,count:number)=><button className={tab===id?"button":"button secondary"} onClick={()=>setTab(id)}>{title+" · "+count}</button>;
+ const tabButton=(id:typeof tab,title:string,count:number)=><button type="button" role="tab" aria-selected={tab===id} className={"zoomTab "+(tab===id?"zoomTabActive":"")} onClick={()=>setTab(id)}>{title}<span className="zoomTabCount">{count}</span></button>;
 
- return <>
+ return <div className="zoomAdminRefresh">
   <AdminPageHeader eyebrow="ONLINE CLASSROOM OPERATIONS" title="Zoom Classroom" description="Run classes, demos and client meetings, manage recordings and control every connected Zoom host from one Robotronix workspace."/>
   {error&&<p className="errorBanner" role="alert">{error}</p>}
   {notice&&<p className="successBanner" role="status">{notice}</p>}
@@ -115,8 +116,8 @@ function Workspace(){
   </section>
 
   <section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row zoomOperationsActions"><button className="button zoomUtilityButton" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New meeting</button><button className="button ghost zoomUtilityButton" disabled={busy} onClick={reconcileClasses}>Retry upcoming classrooms</button><button className="button secondary zoomUtilityButton" disabled={busy} onClick={syncZoom}>{busy?"Syncing…":"Sync with Zoom"}</button></div></div>
-   <div className="row" style={{gap:8,flexWrap:"wrap"}}>{tabButton("overview","Classes",classes.length)}{tabButton("meetings","Meetings",general.length)}{tabButton("recordings","Recordings",recordings.length)}{tabButton("hosts","Hosts",hosts.length)}</div>
+   <div className="panelHeader"><div><div className="eyebrow">CONTROL CENTRE</div><h2>Zoom operations</h2><p>Classes stay linked to learners. General meetings are for demos, parents, schools, clients and internal calls.</p></div><div className="row zoomOperationsActions"><button className="zoomActionButton zoomActionPrimary" onClick={()=>{setTab("meetings");setShowCreate(true)}}>+ New meeting</button><button className="zoomActionButton zoomActionOutline" disabled={busy} onClick={reconcileClasses}>Retry upcoming classrooms</button><button className="zoomActionButton zoomActionOutline" disabled={busy} onClick={syncZoom}>{busy?"Syncing…":"Sync with Zoom"}</button></div></div>
+   <div className="zoomSegmentedTabs" role="tablist" aria-label="Zoom operations">{tabButton("overview","Classes",classes.length)}{tabButton("meetings","Meetings",general.length)}{tabButton("recordings","Recordings",recordings.length)}{tabButton("hosts","Hosts",hosts.length)}</div>
   </section>
 
   {tab==="overview"&&<section className="dataSection">
@@ -178,46 +179,57 @@ function Workspace(){
    </section>
   </>}
 
-  {tab==="recordings"&&<section className="dataSection">
+  {tab==="recordings"&&<section className="dataSection zoomLibrarySection">
    <div className="panelHeader"><div><div className="eyebrow">SECURE RECORDING LIBRARY</div><h2>Cloud recordings by meeting</h2><p>Only completed MP4 video recordings are shown. Audio and timeline files remain retained in Zoom and the recording ledger.</p></div></div>
-   {meetings.filter(m=>m.recordings.some(r=>r.status==="completed"&&isPlayableZoomVideo(r))).map(m=><details key={m.id} className="panel historyPanel">
-    <summary style={{cursor:"pointer",display:"flex",gap:16,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap"}}>
+   {meetings.filter(m=>m.recordings.some(r=>r.status==="completed"&&isPlayableZoomVideo(r))).map(m=><details key={m.id} className="panel historyPanel zoomVideoMeeting" open>
+    <summary className="zoomVideoMeetingHeader">
      <span><b>{m.event?.title||m.topic}</b><span className="cellSub">{when(m.scheduled_start)} · {m.purpose==="class"?"Class":m.purpose==="demo"?"Demo":"Meeting"} · {m.host?.label||"Zoom host"}</span></span>
-     <span className="softBadge">{m.recordings.filter(r=>r.status==="completed"&&isPlayableZoomVideo(r)).length} videos</span>
+     <span className="zoomQuietCount">{m.recordings.filter(r=>r.status==="completed"&&isPlayableZoomVideo(r)).length} video(s)</span>
     </summary>
-    <div className="tableWrap topGap"><table><thead><tr><th>Video type</th><th>Recorded</th><th>Size</th><th>Retention</th><th>Learner access</th><th>Actions</th></tr></thead><tbody>
+    <div className="tableWrap topGap zoomVideoTable"><table><thead><tr><th>Video type</th><th>Recorded</th><th>Size</th><th>Retention</th><th>Learner access</th><th>Actions</th></tr></thead><tbody>
     {m.recordings.filter(r=>r.status==="completed"&&isPlayableZoomVideo(r)).map(r=><tr key={r.id}>
      <td>{r.recording_type||r.file_type||"Recording"}</td><td>{when(r.recording_start)}</td><td>{Number(r.file_size_bytes||0)>=1024*1024*1024?gb(Number(r.file_size_bytes||0)):(Number(r.file_size_bytes||0)/1024/1024).toFixed(1)+" MB"}</td>
      <td>{r.protected_from_deletion?<span className="softBadge softGreen">Protected</span>:when(r.retain_until)}</td>
      <td>{m.purpose==="class"?<button className="softBadge" disabled={busy} onClick={()=>recordingAction(r.id,"toggle-learner")}>{r.learner_visible?"Allowed":"Admin only"}</button>:"Admin only"}</td>
-     <td><div className="row" style={{flexWrap:"wrap"}}>
-      <button className="button small" onClick={()=>watchRecording(r.id)}>Watch</button>
-      <button className="button secondary small" disabled={busy} onClick={()=>recordingAction(r.id,"toggle-protect")}>{r.protected_from_deletion?"Unprotect":"Protect"}</button>
-      <button className="button secondary small" disabled={busy} onClick={()=>recordingAction(r.id,"extend",60)}>+60 days</button>
-      <button className="button secondary small" disabled={busy||r.protected_from_deletion} onClick={()=>recordingAction(r.id,"delete")}>Delete</button>
+     <td><div className="zoomRecordingActions">
+      <button type="button" className="zoomActionButton zoomActionPrimary zoomActionSmall" onClick={()=>watchRecording(r.id)}>Watch video</button>
+      <details className="zoomActionMenu"><summary aria-label="More recording actions" className="zoomActionButton zoomActionOutline zoomActionSmall">More ···</summary>
+       <div className="zoomActionMenuContent">
+        <button type="button" disabled={busy} onClick={e=>{e.currentTarget.closest("details")?.removeAttribute("open");void recordingAction(r.id,"toggle-protect")}}>{r.protected_from_deletion?"Unprotect recording":"Protect recording"}</button>
+        <button type="button" disabled={busy} onClick={e=>{e.currentTarget.closest("details")?.removeAttribute("open");void recordingAction(r.id,"extend",60)}}>Extend retention by 60 days</button>
+        <button type="button" className="zoomDestructiveAction" disabled={busy||r.protected_from_deletion} onClick={e=>{e.currentTarget.closest("details")?.removeAttribute("open");void recordingAction(r.id,"delete")}}>Move to Zoom trash</button>
+       </div>
+      </details>
      </div></td>
     </tr>)}</tbody></table></div>
    </details>)}
    {!recordings.length&&<div className="emptyState compact">No completed video recordings yet.</div>}
   </section>}
 
-  {tab==="hosts"&&<section className="dataSection">
-   <div className="panelHeader"><div><div className="eyebrow">HOST POOL</div><h2>Zoom accounts</h2><p>Add independent Zoom accounts as capacity grows. Lower priority numbers are selected first.</p><div className="cellSub">When adding Host 2 or later, first make sure the browser is signed in to that specific Zoom account. While the Zoom app is in Beta Test, that account must also be allowed as a beta/test user in Zoom Marketplace.</div></div></div>
-   <div className="row"><input className="input" style={{maxWidth:260}} placeholder={"e.g. Zoom Host "+(hosts.length+1)} value={label} onChange={e=>setLabel(e.target.value)}/><button className="button" disabled={busy} onClick={connect}>+ Add Zoom Account</button></div>
-   <div className="tableWrap topGap"><table><thead><tr><th>Host</th><th>Account</th><th>Priority</th><th>Recording</th><th>Retention</th><th>Learner default</th><th>Storage tracked</th><th>Status</th></tr></thead><tbody>
-    {hosts.map(h=><HostRow key={h.id} host={h} busy={busy} bytes={storage.find(s=>s.hostId===h.id)?.bytes||0} patch={patchHost}/>)}
-    {!hosts.length&&<tr><td colSpan={8}><div className="emptyState compact">No Zoom account connected yet.</div></td></tr>}
-   </tbody></table></div>
+  {tab==="hosts"&&<section className="dataSection zoomHostsSection">
+   <div className="panelHeader"><div><div className="eyebrow">HOST MANAGEMENT</div><h2>Zoom accounts</h2><p>Manage connected hosts, recording defaults and capacity in one place.</p></div></div>
+   <div className="zoomHostToolbar">
+    <div><strong>Connect another host</strong><span>Each Zoom account adds one simultaneous meeting slot.</span></div>
+    <div className="zoomHostConnectControls"><input className="input" aria-label="New Zoom host label" placeholder={"e.g. Zoom Host "+(hosts.length+1)} value={label} onChange={e=>setLabel(e.target.value)}/><button type="button" className="zoomActionButton zoomActionPrimary" disabled={busy} onClick={connect}>+ Add Zoom account</button></div>
+   </div>
+   {hosts.length>0?<div className="zoomHostCards">{hosts.map(h=><HostCard key={h.id} host={h} busy={busy} bytes={storage.find(s=>s.hostId===h.id)?.bytes||0} patch={patchHost}/>)}</div>:<div className="emptyState compact">No Zoom account connected yet.</div>}
+   <p className="zoomHostNote">When connecting another host, sign into that specific Zoom account first. During Beta Test, the account must also be authorized as a Zoom Marketplace test user.</p>
   </section>}
- </>;
+ </div>;
 }
 
-function HostRow({host:h,busy,bytes,patch}:{host:Host;busy:boolean;bytes:number;patch:(id:string,body:any)=>Promise<void>}){
+function HostCard({host:h,busy,bytes,patch}:{host:Host;busy:boolean;bytes:number;patch:(id:string,body:any)=>Promise<void>}){
  const[p,setP]=useState(String(h.priority));useEffect(()=>setP(String(h.priority)),[h.priority]);
- return <tr><td><b>{h.label}</b><div className="cellSub">{h.enabled?"Enabled":"Disabled"}</div></td><td>{h.zoomEmail||"Zoom account"}<div className="cellSub">{h.lastSyncAt?"Synced "+when(h.lastSyncAt):"Not synced yet"}</div></td>
-  <td><input className="input" type="number" min={1} max={9999} style={{width:90}} value={p} disabled={busy} onChange={e=>setP(e.target.value)} onBlur={()=>{const n=Number(p)||100;if(n!==h.priority)patch(h.id,{priority:n})}}/></td>
-  <td><button className={"softBadge "+(h.recordingEnabled?"softGreen":"")} disabled={busy} onClick={()=>patch(h.id,{recordingEnabled:!h.recordingEnabled})}>{h.recordingEnabled?"Cloud recording ON":"Recording OFF"}</button></td>
-  <td><select className="select" value={h.recordingRetentionDays} disabled={busy} onChange={e=>patch(h.id,{recordingRetentionDays:Number(e.target.value)})}><option value={30}>30 days</option><option value={60}>60 days</option><option value={90}>90 days</option><option value={180}>180 days</option></select></td>
-  <td><button className="softBadge" disabled={busy} onClick={()=>patch(h.id,{learnerRecordingDefault:!h.learnerRecordingDefault})}>{h.learnerRecordingDefault?"Visible":"Admin only"}</button></td>
-  <td>{gb(bytes)}</td><td><button className={"statusBadge status-"+(h.enabled?"active":"inactive")} disabled={busy} onClick={()=>patch(h.id,{enabled:!h.enabled})}>{h.enabled?"Active":"Disabled"}</button></td></tr>;
+ return <article className="zoomHostCard">
+  <div className="zoomHostCardTop"><div className="zoomHostIdentity"><span className="zoomHostAvatar" aria-hidden="true">Z</span><div><strong>{h.label}</strong><span>{h.zoomEmail||"Zoom account"}</span><small>{h.lastSyncAt?"Last synced "+when(h.lastSyncAt):"Not synced yet"}</small></div></div>
+   <div className="zoomHostStatus"><span className={"zoomStateIndicator "+(h.enabled?"zoomStateActive":"")}>{h.enabled?"Active":"Disabled"}</span><button type="button" className="zoomTextButton" disabled={busy} onClick={()=>void patch(h.id,{enabled:!h.enabled})}>{h.enabled?"Disable":"Enable"}</button></div>
+  </div>
+  <div className="zoomHostSettings">
+   <label><span>Priority</span><input className="input" type="number" min={1} max={9999} value={p} disabled={busy} onChange={e=>setP(e.target.value)} onBlur={()=>{const n=Number(p)||100;if(n!==h.priority)void patch(h.id,{priority:n})}}/></label>
+   <label><span>Recording</span><button type="button" className={"zoomSettingToggle "+(h.recordingEnabled?"zoomSettingOn":"")} disabled={busy} aria-pressed={h.recordingEnabled} onClick={()=>void patch(h.id,{recordingEnabled:!h.recordingEnabled})}>{h.recordingEnabled?"On":"Off"}</button></label>
+   <label><span>Retention</span><select className="select" value={h.recordingRetentionDays} disabled={busy} onChange={e=>void patch(h.id,{recordingRetentionDays:Number(e.target.value)})}><option value={30}>30 days</option><option value={60}>60 days</option><option value={90}>90 days</option><option value={180}>180 days</option></select></label>
+   <label><span>Learner default</span><button type="button" className="zoomSettingToggle" disabled={busy} aria-pressed={h.learnerRecordingDefault} onClick={()=>void patch(h.id,{learnerRecordingDefault:!h.learnerRecordingDefault})}>{h.learnerRecordingDefault?"Visible":"Admin only"}</button></label>
+   <div className="zoomHostStorage"><span>Storage tracked</span><strong>{gb(bytes)}</strong></div>
+  </div>
+ </article>;
 }
