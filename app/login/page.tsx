@@ -44,19 +44,24 @@ function LoginContent(){
  }
  return <main className="authPage"><section className="authCard">
   <Link href="/" className="authBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
-  <div className="formStepHead"><span>LEARNING PORTAL</span><h1>Sign in to Robotronix</h1><p>Use Google or an email sign-in code. Your existing account determines your portal role automatically.</p></div>
-  <button className="button fullButton" disabled={loading} onClick={google}>Continue with Google</button>
-  <div className="authDivider"><span>or use your email address</span></div>
+  <div className="formStepHead"><span>LEARNING PORTAL</span><h1>Sign in to Robotronix</h1><p>Sign in with your existing email and password, Google, or a one-time email code. Your account determines your portal role automatically.</p></div>
+  {error&&<div role="alert" className="errorBanner">{error}</div>}
+  <form className="formStack" onSubmit={passwordSignIn}>
+   <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
+   <label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/></label>
+   <button className="button fullButton" disabled={loading}>{loading?"Signing in…":"Sign in with password"}</button>
+  </form>
+  <div className="authDivider"><span>or</span></div>
+  <button className="button secondary fullButton" disabled={loading} onClick={google}>Continue with Google</button>
+  <details className="topGap"><summary>Sign in with a one-time email code</summary>
+  <p className="fieldHint">An email code requires access to the account inbox. Password sign-in above does not.</p>
   <form className="formStack" onSubmit={codeSent?verifyCode:sendCode}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
    {codeSent&&<label>Email code<input className="input" type="text" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e=>setCode(e.target.value)} placeholder="Enter the code from your email" required/></label>}
    {notice&&<p role="status" className="infoBanner">{notice}</p>}
-   {error&&<div role="alert" className="errorBanner">{error}</div>}
    <button className="button fullButton" disabled={loading}>{loading?"Please wait…":codeSent?"Verify code & sign in":"Email me a sign-in code"}</button>
    {codeSent&&<button type="button" className="button ghost" disabled={loading} onClick={()=>{setCodeSent(false);setCode("");setNotice("");}}>Request another code</button>}
   </form>
-  <details className="topGap"><summary>Have an existing password?</summary>
-   <form className="formStack topGap" onSubmit={passwordSignIn}><label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password" required/></label><button className="button secondary fullButton" disabled={loading}>Sign in with password</button></form>
   </details>
   <div className="entityBoundaryNote"><b>New family?</b><span>Start family onboarding to link your child. Trainers and existing students receive access from Admin.</span><Link href="/onboarding" className="tableAction">Start family onboarding →</Link></div>
   <p style={{textAlign:"center",margin:"18px 0 0",fontSize:13,color:"#66738c"}}><Link href="/privacy" style={{color:"#4537a5",textDecoration:"underline"}}>Privacy Policy</Link> · <Link href="/terms" style={{color:"#4537a5",textDecoration:"underline"}}>Terms of Use</Link> · <Link href="/support" style={{color:"#4537a5",textDecoration:"underline"}}>Support</Link> · <Link href="/zoom-guide" style={{color:"#4537a5",textDecoration:"underline"}}>Zoom Guide</Link></p>
