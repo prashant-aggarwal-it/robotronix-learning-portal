@@ -1,0 +1,71 @@
+/* Zoom admin UI refresh. Scoped to the Zoom workspace only. */
+.zoomAdminRefresh{--zoomInk:#1c3452;--zoomMuted:#647991;--zoomLine:#dce8f1;--zoomAccent:#087ea3;--zoomAccentDark:#075e86;color:var(--zoomInk)}
+.zoomAdminRefresh .experienceKpis{gap:12px;margin-bottom:15px}
+.zoomAdminRefresh .experienceKpi{border:1px solid var(--zoomLine);box-shadow:0 5px 18px rgba(26,68,110,.035);border-radius:16px}
+.zoomAdminRefresh .experienceKpi b{font-size:27px;font-weight:750;color:#1b3a58}
+.zoomAdminRefresh .dataSection{margin-bottom:17px}
+.zoomAdminRefresh .panelHeader h2{font-size:21px;letter-spacing:-.02em}
+.zoomAdminRefresh .zoomOperationsActions{gap:8px;flex-wrap:wrap}
+.zoomAdminRefresh .zoomActionButton{appearance:none;border:1px solid transparent;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:13px;font-weight:700;line-height:1.25;padding:10px 14px;min-height:39px;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+.zoomAdminRefresh .zoomActionButton:focus-visible,.zoomAdminRefresh .zoomTab:focus-visible,.zoomAdminRefresh .zoomTextButton:focus-visible,.zoomAdminRefresh .zoomActionMenuContent button:focus-visible{outline:3px solid #57b5d4;outline-offset:2px}
+.zoomAdminRefresh .zoomActionPrimary{background:#087ea3;color:white;box-shadow:none}
+.zoomAdminRefresh .zoomActionPrimary:hover{background:#066b92}
+.zoomAdminRefresh .zoomActionOutline{background:white;color:#28506d;border-color:#d6e3ee}
+.zoomAdminRefresh .zoomActionOutline:hover{background:#f1f8fc;border-color:#aacfe0}
+.zoomAdminRefresh button:disabled{opacity:.52;cursor:not-allowed}
+.zoomAdminRefresh .zoomActionSmall{padding:8px 11px;min-height:33px;font-size:12px}
+.zoomSegmentedTabs{display:flex;flex-wrap:wrap;gap:3px;align-items:center;width:max-content;max-width:100%;padding:4px;border:1px solid #dce8f1;background:#f2f6fa;border-radius:12px}
+.zoomAdminRefresh .zoomTab{appearance:none;display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:7px 14px;border:0;border-radius:8px;background:transparent;color:#57718a;cursor:pointer;font:inherit;font-size:13px;font-weight:700}
+.zoomAdminRefresh .zoomTab:hover{background:#e9f2f8;color:#234765}
+.zoomAdminRefresh .zoomTabActive{background:#fff;color:#163b58;box-shadow:0 1px 5px rgba(23,63,100,.1)}
+.zoomAdminRefresh .zoomTabCount{font-size:11px;font-weight:750;min-width:20px;text-align:center;padding:2px 5px;border-radius:6px;background:#e4edf3;color:#42627d}
+.zoomAdminRefresh .zoomTabActive .zoomTabCount{background:#daf1f9;color:#04739a}
+.zoomAdminRefresh .zoomVideoMeeting{border:1px solid #dfeaf2;border-radius:15px;background:white;box-shadow:none;margin-top:11px;padding:0;overflow:visible}
+.zoomAdminRefresh .zoomVideoMeetingHeader{cursor:pointer;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:15px 18px}
+.zoomAdminRefresh .zoomVideoMeetingHeader b{font-size:15px;color:#213d58}
+.zoomAdminRefresh .zoomVideoMeetingHeader .cellSub{display:block;margin-top:4px;font-size:12px}
+.zoomAdminRefresh .zoomQuietCount{font-size:12px;font-weight:700;padding:5px 10px;background:#edf6fa;color:#24667d;border-radius:7px}
+.zoomAdminRefresh .zoomVideoTable{margin:0 15px 14px;border:1px solid #e2eaf1;border-radius:11px;overflow:visible}
+.zoomAdminRefresh .zoomVideoTable table{width:100%;border-collapse:collapse}
+.zoomAdminRefresh .zoomVideoTable th{background:#f6f9fc;color:#708398;font-size:11px;letter-spacing:.03em}
+.zoomAdminRefresh .zoomVideoTable td{font-size:13px;color:#36536d;vertical-align:middle}
+.zoomRecordingActions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.zoomActionMenu{position:relative;display:inline-block}
+.zoomActionMenu>summary{list-style:none}
+.zoomActionMenu>summary::-webkit-details-marker{display:none}
+.zoomActionMenuContent{position:absolute;right:0;top:calc(100% + 5px);z-index:15;min-width:215px;background:white;border:1px solid #d8e7f0;border-radius:11px;padding:5px;box-shadow:0 12px 30px rgba(16,55,87,.16)}
+.zoomActionMenuContent button{appearance:none;width:100%;display:block;text-align:left;background:transparent;border:0;border-radius:7px;padding:10px 11px;font:inherit;font-size:12px;color:#284966;cursor:pointer}
+.zoomActionMenuContent button:hover:not(:disabled){background:#eff6fa}
+.zoomActionMenuContent .zoomDestructiveAction{color:#b42335}
+.zoomActionMenuContent .zoomDestructiveAction:hover:not(:disabled){background:#fff0f1}
+.zoomHostToolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:13px;margin:14px 0 16px;padding:15px;border:1px solid #dce9f1;border-radius:13px;background:#f7fbfd}
+.zoomHostToolbar>div:first-child{display:flex;flex-direction:column;gap:3px}
+.zoomHostToolbar strong{font-size:14px;color:#213f5a}
+.zoomHostToolbar span{font-size:12px;color:#6a8195}
+.zoomHostConnectControls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.zoomHostConnectControls input{width:205px;max-width:100%}
+.zoomHostCards{display:grid;gap:12px}
+.zoomHostCard{background:#fff;border:1px solid #dce9f1;border-radius:15px;box-shadow:0 5px 18px rgba(35,70,99,.035);overflow:hidden}
+.zoomHostCardTop{padding:17px 19px;display:flex;align-items:start;justify-content:space-between;gap:12px}
+.zoomHostIdentity{display:flex;align-items:center;gap:12px;min-width:0}
+.zoomHostAvatar{display:grid;place-items:center;width:39px;height:39px;flex-shrink:0;border-radius:11px;background:#e5f5fc;color:#067aa0;font-size:18px;font-weight:800}
+.zoomHostIdentity>div{display:flex;flex-direction:column;min-width:0;gap:3px}
+.zoomHostIdentity strong{font-size:15px;color:#1f3e58}
+.zoomHostIdentity span:not(.zoomHostAvatar){font-size:13px;color:#496780;overflow-wrap:anywhere}
+.zoomHostIdentity small{font-size:11px;color:#778ba0}
+.zoomHostStatus{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.zoomStateIndicator{font-size:12px;font-weight:750;color:#8c5f36;background:#fff5e9;padding:5px 9px;border-radius:7px}
+.zoomStateActive{background:#e7f7f0;color:#107a53}
+.zoomTextButton{border:0;background:transparent;color:#44647d;padding:5px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.zoomTextButton:hover{color:#075f87;text-decoration:underline}
+.zoomHostSettings{border-top:1px solid #e9f0f4;background:#fcfdfe;padding:13px 19px 17px;display:grid;grid-template-columns:minmax(85px,.7fr) minmax(110px,1fr) minmax(130px,1fr) minmax(128px,1fr) minmax(110px,.9fr);gap:16px;align-items:start}
+.zoomHostSettings>label,.zoomHostStorage{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0}
+.zoomHostSettings>label>span,.zoomHostStorage>span{font-size:11px;letter-spacing:.025em;font-weight:700;color:#73899b}
+.zoomHostSettings .input,.zoomHostSettings .select{height:36px;min-height:36px;max-width:100%;width:100%;padding:5px 9px;font-size:12px;border-radius:8px;background:#fff}
+.zoomHostSettings .zoomSettingToggle{border:1px solid #d7e5ee;background:white;color:#445f74;font:inherit;font-size:12px;font-weight:700;border-radius:8px;min-height:36px;padding:6px 12px;cursor:pointer}
+.zoomHostSettings .zoomSettingOn{background:#e9f7f2;color:#11714e;border-color:#cdebdc}
+.zoomHostStorage strong{font-size:14px;color:#2c4a62;margin-top:6px}
+.zoomHostNote{margin:13px 0 0;font-size:12px;line-height:1.5;color:#6b8195}
+@media(max-width:1050px){.zoomHostSettings{grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.zoomAdminRefresh .zoomVideoTable{overflow-x:auto}.zoomAdminRefresh .zoomVideoTable table{min-width:690px}}
+@media(max-width:700px){.zoomAdminRefresh .zoomOperationsActions{width:100%}.zoomHostToolbar{align-items:stretch}.zoomHostConnectControls{width:100%}.zoomHostConnectControls input{flex:1;min-width:130px}.zoomHostSettings{grid-template-columns:repeat(2,minmax(0,1fr))}.zoomHostCardTop{padding:14px}.zoomHostSettings{padding:13px}.zoomSegmentedTabs{width:100%}.zoomAdminRefresh .zoomTab{flex:1;justify-content:center;padding:7px 6px}.zoomAdminRefresh .zoomVideoMeetingHeader{padding:13px}}
+@media(max-width:420px){.zoomHostSettings{grid-template-columns:1fr 1fr}.zoomAdminRefresh .zoomTab{font-size:11px;gap:4px}.zoomAdminRefresh .zoomTabCount{min-width:17px}.zoomHostStatus{align-items:flex-end;flex-direction:column}}
