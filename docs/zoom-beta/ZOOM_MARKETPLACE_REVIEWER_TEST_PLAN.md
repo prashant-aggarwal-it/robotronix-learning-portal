@@ -1,112 +1,99 @@
 # Robotronix Classroom — Zoom Marketplace Reviewer Test Plan
-**Language:** English  
-**Application:** Robotronix Classroom (Robotronix Learning Portal)  
-**Review note:** Zoom Marketplace Admin, 28 October 2026 — Test Plan Requirements  
-**Reviewer portal:** https://portal.robotronixstemlab.com  
-**Document status:** Submission candidate — scope list and live recording flows must be reconciled and verified before final upload.
+Updated: 1 November 2026 | Status: **Ready for reviewer rehearsal, NOT yet certified for submission**
 
-## 1. Purpose and prerequisites
-Robotronix Classroom connects a Zoom host account to a learning operations portal so a trainer can conduct scheduled online classes and authorized parents/learners can join. Admins configure Zoom hosts, classes, recordings and applicable retention controls.
+App: Robotronix Classroom, integrated with Robotronix Learning Portal
+Portal: https://portal.robotronixstemlab.com
+Support: https://portal.robotronixstemlab.com/support
+Guide: https://portal.robotronixstemlab.com/zoom-guide
 
-Use Chrome or Edge with third-party cookie/pop-up behavior compatible with Zoom authorization. The reviewer needs internet access to the portal and ability to complete the portal login flow. Do not use real student data. All test data below should be disposable.
+## Important accuracy note
+Historical tests are **not** fresh reviewer acceptance results. Earlier HTTP 400 errors for MP4 playback and individual-file deletion were subsequently resolved after Zoom scope changes and host reauthorization. The owner observed successful MP4 playback and a successful deletion response before 1 November 2026. The present production deployment, exact scopes and credentials still require independent retesting.
 
-**Zoom requirement:** To exercise cloud recording operations, the connected Zoom host must have cloud recording enabled and a plan/license that supports it. If the review account lacks this entitlement, arrange a Zoom-approved reviewer testing path and note which cases cannot be run; never present an untested recording scenario as passed. If 2FA or SSO is required, provide a reviewer-usable approved login process through the confidential review channel (do not disable security silently).
+## 1. Reviewer prerequisites
+- A reviewer-accessible deployed build including password sign-in, host Reauthorize, MP4-only recording list and the deauthorization handler.
+- Four existing approved portal accounts, each with independently usable unique credentials delivered **only** through Zoom's confidential Test account and credentials field. Do not publish passwords or OTPs in GitHub.
+- Disposable records: active trainer, sample learner, sample course/enrollment, upcoming online class, a completed meeting with processed MP4 and **separate disposable recording** for Trash.
+- A Zoom user/account permitted to authorize this application, with cloud-recording entitlement for recording tests. Portal credentials and Zoom OAuth credentials are separate.
+- Do not supply real children's recordings, guardian contact details or customer billing data.
 
-**OAuth roles:** Only an authorized portal Admin should perform host connection. The reviewer may use their own Zoom account to grant scopes as permitted by the app's install model and Zoom's review process. **Portal test accounts are distinct from Zoom account credentials.**
+| Role | Existing login email | Expected access |
+|---|---|---|
+| Admin | robotronixstemlab+zoomadmin@gmail.com | Zoom host/meeting/recording administration |
+| Trainer | robotronixstemlab+zoomtrainer@gmail.com | Assigned class and permitted classroom entry |
+| Parent | robotronixstemlab+zoomparent@gmail.com | Only linked learner/class/authorized recordings |
+| Student | robotronixstemlab+zoomstudent@gmail.com | Only linked student learning/classroom data |
 
-## 2. Application reviewer identities
-The following four accounts were confirmed present in **Production Supabase Auth** on 31 October 2026 with active roles and past sign-ins (verification of live login and all related seed records still required):
+Actual passwords must be privately set and independently tested by the owner. Email aliases by themselves are not adequate reviewer sign-in instructions.
 
-| Role | Portal login email | Purpose |
-| --- | --- | --- |
-| Admin | robotronixstemlab+zoomadmin@gmail.com | Zoom host connection, host management, class and recording administration |
-| Trainer | robotronixstemlab+zoomtrainer@gmail.com | Scheduled class actions, host/meeting entry |
-| Parent | robotronixstemlab+zoomparent@gmail.com | View learner's scheduled class, join classroom, authorized recording access |
-| Student | robotronixstemlab+zoomstudent@gmail.com | Student learning view and permitted classroom access |
+## 2. Reviewer steps
+For each case enter PASS / FAIL / BLOCKED with screenshot, date, deployed commit and tester.
 
-**Credential delivery:** Add working role-specific sign-in instructions and any required temporary passwords/one-time-code procedures in Zoom Marketplace's secure **Test account and credentials** field. Do not publish passwords, OTPs, recovery codes, Zoom credentials, or access tokens in this document or GitHub. Gmail plus aliases deliver email to the same base inbox; that **does not independently give a reviewer access to each inbox or OTP**. If email sign-in requires the operator's mailbox, arrange independently accessible reviewer accounts or a supported approved reviewer authentication path.
+| ID | Role / route | Test | Expected result | Live status |
+|---|---|---|---|---|
+| T01 | Admin /login | Sign in with password in clean private session | Admin home opens without owner's mailbox access | Pending |
+| T02 | Admin /admin/zoom | Connect an authorized disposable Zoom user using consent | Correct host linked; tokens not shown | Pending |
+| T03 | Admin /admin/zoom | Inspect host; sync with Zoom | Host and recording/meeting metadata reconcile | Pending |
+| T04 | Admin schedule/class | Provision sample upcoming online class | Exactly one intended meeting; repeat is idempotent | Pending |
+| T05 | Trainer /trainer/classes | Sign in, open assigned sample class | Only assigned class, permitted controls | Pending |
+| T06 | Trainer classroom | Join/start sample meeting | Authorized Zoom host/classroom entry | Pending |
+| T07 | Parent /parent | Join linked learner's scheduled class | No cross-family or Admin access | Pending |
+| T08 | Student /student | View linked class and classroom link | Only assigned student data | Pending |
+| T09 | Admin /admin/zoom | End disposable meeting, await cloud recording, sync | MP4 visible after provider processing; audio/timeline hidden from portal gallery | Pending |
+| T10 | Admin/authorized learner | Open, play and seek disposable MP4 | Secure playback; authorization and byte seeking work | Pending |
+| T11 | Unauthorized user | Attempt cross-family recording / host admin API | Denied; media and tokens not revealed | Pending |
+| T12 | Admin recording controls | Protect, unprotect, modify retention on sample MP4 | Correct protection and retention behavior | Pending |
+| T13 | Admin recording controls | Send separate disposable file to Zoom Trash | Only selected file deleted; response and sync correct | Pending |
+| T14 | Admin Zoom host | Reauthorize **same** Zoom user, retry sync | Same host ID/meeting associations preserved | Pending |
+| T15 | Admin meeting controls | Update/cancel disposable meeting | Provider and portal reflect intended change | Pending |
+| T16 | Zoom Marketplace app management | Revoke disposable app installation; inspect host | Signed app_deauthorized event disables matching host, makes access unusable; other hosts unaffected | Pending |
+| T17 | All four roles | Open linked test dashboards after fresh login | Role boundaries maintained, no live customer data | Pending |
 
-## 3. Reviewer-ready seed data checklist
-Before submission, confirm the following **in the reviewer-accessible deployment**:
-- [ ] Admin, Trainer, Parent and Student log in successfully and reach the correct role dashboard.
-- [ ] Trainer is linked to an active trainer record and a test enrollment.
-- [ ] Parent is linked only to the authorized sample learner; Student account is linked to the intended learner.
-- [ ] Sample learner, course, enrollment, active trainer assignment and upcoming scheduled online class are visible to applicable test users.
-- [ ] One connected eligible Zoom host and, if multi-host testing is requested, a second independently authorized Zoom host.
-- [ ] At least one disposable **completed** Zoom meeting with a fully processed cloud recording for playback checks.
-- [ ] A second disposable recording for testing Zoom Trash, if the scope supports deletion.
-- [ ] All sample data and access are non-sensitive; tests cannot impact real student recordings.
+T16 can only be certified with an actual Zoom deauthorization notification for a published/external app or a suitably authorized integration test. Zoom may not emit these notifications for private/development app installs. The deauthorization backend has code and structural tests, not live event certification.
 
-**Record actual sample identifiers privately** in the secure reviewer instructions: learner display label, class date/time with timezone, course, meeting and recording identifiers as appropriate. Do not invent class times or present historic classes as upcoming.
+## 3. Production OAuth scopes — reconcile against current Zoom portal
+The list below is based on prior Marketplace screenshots/discussions, **not** an automatically retrieved current scope list. Verify exact spelling, required/optional selection and user/account permissions in the actual Production → Scopes screen.
 
-## 4. End-to-end reviewer walkthrough
+| Scope | Reviewer proof |
+|---|---|
+| `meeting:write:meeting` | T04 create a disposable meeting |
+| `meeting:update:meeting` | T15 update meeting metadata |
+| `meeting:delete:meeting` | T15 cancel/delete disposable meeting |
+| `meeting:read:meeting` | T03 read meeting details |
+| `meeting:read:participant` | T05–T09 participant/attendance synchronization |
+| `cloud_recording:read:recording` | T09–T10 secure recording metadata/playback |
+| `cloud_recording:read:list_recording_files` | T09–T10 locate the meeting's video file and refresh its URL (added after initial playback HTTP 400) |
+| `cloud_recording:delete:recording_file` | T13 single-file Zoom Trash |
+| `user:read:user` | T02 identity of authorized host |
+| `user:read:zak` | T06 authorized Zoom host-start workflow |
 
-| ID | Role and location | Reviewer action | Expected result |
-| --- | --- | --- | --- |
-| T01 | Admin — `/login` | Sign in with designated Admin account. | Admin dashboard loads; Zoom host configuration is available. |
-| T02 | Admin — `/admin/zoom` | Select the host connection/authorization action; complete Zoom OAuth consent for a permitted reviewer Zoom user. | Zoom consent shows the app identity and requested scopes; redirect returns to portal, displaying a connected Zoom host without exposing access tokens. |
-| T03 | Admin — `/admin/zoom` | Inspect host status and account details, then trigger supported host synchronization. | Host reports connected/enabled and authorized account identity; sync succeeds or reports a sanitized actionable error. |
-| T04 | Admin — scheduling/class flow | Open the supplied sample online class; use the supported action to provision/create its Zoom meeting. | Exactly one meeting is created for the intended class, with correct host and meeting reference; repeat action does not unintentionally create duplicate meetings. |
-| T05 | Trainer — `/trainer/classes` | Sign in independently and open the assigned test class. | Trainer sees the assigned class and permitted Zoom actions, but cannot manage arbitrary hosts or unrelated learners. |
-| T06 | Trainer — class/classroom | Start/join the permitted meeting using the in-portal workflow. | Authorized trainer enters the correct Zoom classroom. If a Zoom meeting SDK is used, browser permissions/SDK initialization behave correctly. |
-| T07 | Parent — parent dashboard | Sign in, open the linked learner, and join the assigned online lesson. | Parent sees the correct learner and class and joins through the permitted path without admin access. |
-| T08 | Student — student dashboard | Sign in and open the linked learner's scheduled session. | Student sees only permitted learning/class access. |
-| T09 | Zoom host/Admin — completed test class | End the disposable meeting and allow Zoom to process its cloud recording; use portal Zoom sync/reconciliation. | Meeting/recording metadata is visible to the authorized admin after provider processing; there is no claim of instantaneous availability. |
-| T10 | Admin / permitted Parent | Open the disposable recording using the secure portal player; seek and play beyond initial access lifetime. | Browser receives video (rather than a login HTML/JSON error); seek and renewed playback authorization work and access is role-restricted. |
-| T11 | Unauthorized account | Attempt to reach a different family's class/recording or protected admin view. | Access denied without disclosing recording media or tokens. |
-| T12 | Admin — recording controls | Protect and unprotect a disposable recording, then inspect displayed retention fields. | Intended protections/metadata change as supported; protected recordings are not eligible for scheduled deletion. |
-| T13 | Admin — disposable recording only | Move a separate test recording to Zoom Trash through the portal, then synchronize. | Zoom Trash operation returns a valid provider response and the portal marks only the intended recording deleted. Never test this using customer media. |
-| T14 | Admin — OAuth/session | Reconnect/re-authorize host if required and repeat a permitted API operation. | Refreshed authorization permits meeting operations; failure is presented clearly rather than exposing secrets. |
-| T15 | Admin — optional multi-host | Where a second licensed Zoom account has been prepared, connect Host 2 and schedule non-overlapping authorized class meetings. | Host assignments remain distinct; no cross-host credential leakage or accidental overlapping host allocation. |
-| T16 | Admin/Zoom user — deauthorization | If this app version supports a disconnect or Zoom-side revoke flow, revoke test authorization and inspect portal status. | App no longer uses revoked credentials; reconnection requires new authorization. Confirm exact UI procedure against deployed implementation before submission. |
+This is **10** historically discussed scopes. Remove any not genuinely necessary or not currently granted only after reconciling actual deployed API calls. If a scope is optional, test both consent granted and denied.
 
-**Portal route references:** `/admin/zoom`, `/admin/zoom-test`, `/trainer/classes`, `/trainer/demos`, and `/classroom/[scheduleEventId]` are recorded in the repository's integration guide. Other steps deliberately refer to in-app actions until the actual reviewer-facing labels and setup data have been checked on the deployed build.
+## 4. Zoom Marketplace setup / review entry
+- OAuth redirect URL: confirm `https://portal.robotronixstemlab.com/api/zoom/oauth/callback` matches the Zoom app configuration and actual `ZOOM_REDIRECT_URI`.
+- Meeting event webhook and deauthorization notification URL: `https://portal.robotronixstemlab.com/api/zoom/webhook`. Confirm HTTPS, URL validation, signature secret, enabled events, and separate Marketplace deauthorization notification configuration.
+- Public pages: Privacy `/privacy`, Terms `/terms`, Support `/support`, Guide `/zoom-guide`. Confirm public HTTP 200 and links in Zoom listing.
+- Provide exact reviewer steps and credentials in confidential fields. Never commit private test passwords, OAuth tokens, Zoom app secrets, or live child media.
+- Confirm listing screenshots, branding, domain verification, contact, installation audience, and technical design answers.
+- Include actual evidence for any Zoom-requested security scans or documents; do not describe GitHub's static checks as SAST/DAST scanner output.
+- After prior Zoom feedback, verify any outstanding Marketplace warnings before submission.
 
-## 5. Production OAuth scope-by-scope reviewer checklist
+## 5. Evidence log (fill after live rehearsal)
+| Test ID | Result | Date + timezone | Deployed commit | Evidence link/reference | Notes |
+|---|---|---|---|---|---|
+| T01–T17 | Pending | — | — | — | Must be tested; no invented passes |
 
-**Source:** Screenshot of Zoom Marketplace → Robotronix Classroom → Production → Scopes supplied by the app owner on 31 October 2026. **Nine scopes are configured according to the owner's subsequent update: eight originally shown in the screenshot plus `cloud_recording:delete:recording_file`. No optional scopes were selected in the original screenshot. Confirm the current Marketplace tab before submission.** Do not infer additional granted permissions from installed app behavior. Each row below must be marked PASS/FAIL/BLOCKED after the reviewer-accessible build is verified.
+Historical (not current reviewer evidence):
+- Host 1 OAuth authorization and meeting create/join were successfully exercised.
+- A disposable MP4 played in the portal after adding list-recording-files scope and renewing consent.
+- A disposable Zoom recording deletion returned `{"ok":true,"status":"deleted"}`.
+- The code was updated to show MP4 files only and add a Reauthorize action; merged to main on 1 November 2026.
+- These results do **not** certify the final deployment, all roles, data privacy, or deauthorization.
 
-| Exact requested Zoom scope | Required? | Reviewer test action | Expected result | Verification |
-| --- | --- | --- | --- | --- |
-| `meeting:write:meeting` | Yes | T04: Create a disposable Zoom meeting for the sample class. | Meeting created under connected host; correct class association. | Pending latest build |
-| `meeting:delete:meeting` | Yes | From the supported Admin meeting controls, cancel/delete a *disposable* meeting after reviewing it. | Only the intended Zoom meeting is deleted/cancelled and portal status is reconciled. | Pending latest build |
-| `meeting:update:meeting` | Yes | Edit a disposable meeting's permitted schedule/topic using the app's supported meeting update or rescheduling action. | Zoom meeting displays the updated information. | Pending latest build |
-| `meeting:read:meeting` | Yes | Open existing test class/meeting and request its Zoom details or sync. | Correct meeting status, ID and host displayed. | Pending latest build |
-| `meeting:read:participant` | Yes | After two approved participants attend the disposable meeting, run attendance/meeting sync. | Participant data is associated only with that test meeting, subject to Zoom availability. | Pending latest build |
-| `cloud_recording:read:recording` | Yes | T09–T10: Read the processed cloud recording details and stream a permitted recording. | Authorized player can access recording data; unauthorized roles are denied. | Pending latest build |
-| `cloud_recording:delete:recording_file` | Yes | T13: Move one fully processed, disposable recording file to Zoom Trash using the Admin recording controls. | Provider accepts the request for that specific file; unrelated recordings remain unchanged. | **Blocked — last observed HTTP 400, needs OAuth grant verification and instance-specific deletion fix/retest** |
-| `user:read:user` | Yes | T02–T03: Authorize Zoom host and view the connected account in Admin Zoom screen. | Connected host identity matches the authorizing Zoom user. | Pending latest build |
-| `user:read:zak` | Yes | T06: Launch the connected host's meeting using the supported host-start flow. | Host can start the intended meeting, without exposing the ZAK to unauthorized roles. | Pending latest build |
+## 6. Submission decision
+Do not mark the app ready until the owner verifies Production deployment, all reviewer logins, real Zoom permissions and eligible cloud recording, live T01–T17 outcomes, technical and security submission fields, and Zoom Marketplace's actual status. The optional security evidence package for **external beta Authorization URL approval** must not be confused with the standard Marketplace review, which separately checks security and technical design.
 
-### Recording-delete scope added; live provider test still failing
-
-The owner added `cloud_recording:delete:recording_file` and regenerated the OAuth authorization URL after the original eight-scope screenshot. The selected scope alone does **not** prove Host 1 granted it: verify the host completed the new consent flow. The last deletion test returned HTTP 400 at stage `zoom-trash`.
-
-Repository review of the current Zoom correction branch found the deletion endpoint still uses the numeric `zoom_meeting_id` rather than the stored meeting-instance UUID. Confirm the required meeting-occurrence identifier against the official Zoom API and correct/test the endpoint if necessary. Use only disposable recordings.
-
-Evidence still required: a fresh current scope screenshot (nine rows), successful new consent, exact deployed commit, recording playback, individual-file Trash operation, and correctly synchronized local state. **Never mark T13 passed until a controlled live test passes.**
-
-**Optional scopes:** None of the eight selected scopes are checked as Optional in the supplied screenshot. If this setting changes, add tests for consent granted, consent declined, and app fallback.
-
-## 6. Evidence and current results
-**Previously executed by the owner:** four distinct portal-role logins, Zoom Host 1 connection, meeting creation. These are historical results, not a fresh reviewer-ready certification of the latest deployment.
-
-**Code updated but live retest outstanding:** recording playback, cloud recording deletion/trash, token-refresh coordination, recording sync, post-deletion portal consistency. A successful GitHub build does not mean provider operations are validated.
-
-**Submission evidence to attach:** screenshots showing logged-in role landing screens (redact personal learner data), connected host, created test meeting, secure recording player, appropriate access denial, Zoom scope inventory, and test result date/deployed commit. A short narrated walkthrough can help but does not replace clear steps.
-
-## 7. Final release gates and reviewer notes
-- [ ] Confirm deployed commit and production DB migration compatibility (Zoom OAuth refresh leases and operational alerting).
-- [ ] Confirm expected Netlify and Supabase configuration; do not display secret values.
-- [ ] Verify all four reviewer accounts can authenticate **without assistance or access to the owner's personal mailbox**.
-- [ ] Verify preloaded classes and disposable recordings are available to reviewer roles.
-- [ ] Complete each Marketplace OAuth scope and optional-scope mapping with accurate test steps.
-- [ ] Run T01–T16 as applicable and record PASS/FAIL/BLOCKED with evidence and date.
-- [ ] Confirm any paid-plan/2FA/SAML/SSO prerequisites in the secure submission notes.
-- [ ] Recheck public privacy-policy URL and security-evidence readiness separately.
-- [ ] Provide this document's accessible link in **Zoom App Submission → Release Notes** and confidential credentials in **Test account and credentials**, as Zoom instructs.
-
-**Provider guidance:**
-- https://developers.zoom.us/blog/marketplace-app-test-plan/
-- https://developers.zoom.us/docs/distribute/app-submission/common-rejection-issues/
+Official docs:
+- https://developers.zoom.us/docs/distribute/app-review-process/
 - https://developers.zoom.us/docs/build-flow/submitting-apps-for-review/
+- https://developers.zoom.us/docs/integrations/end-user-auth/
+- https://developers.zoom.us/docs/api/webhooks/
