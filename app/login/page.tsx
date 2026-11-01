@@ -45,10 +45,10 @@ function LoginContent(){
  return <main className="authPage"><section className="authCard">
   <Link href="/" className="authBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
   <div className="formStepHead"><span>LEARNING PORTAL</span><h1>Sign in to Robotronix</h1><p>Sign in with your existing email and password, Google, or a one-time email code. Your account determines your portal role automatically.</p></div>
+  {error&&<div role="alert" className="errorBanner">{error}</div>}
   <form className="formStack" onSubmit={passwordSignIn}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
    <label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/></label>
-   {error&&<div role="alert" className="errorBanner">{error}</div>}
    <button className="button fullButton" disabled={loading}>{loading?"Signing in…":"Sign in with password"}</button>
   </form>
   <div className="authDivider"><span>or</span></div>
