@@ -101,9 +101,10 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{record
   return NextResponse.json({ok:false,error:"Unsupported recording action."},{status:400});
  }catch(error){
   const upstreamStatus=error instanceof ZoomApiError?error.status:null;
-  const code="ZOOM_UPDATE_"+stage.toUpperCase().replace(/-/g,"_")+(upstreamStatus?"_HTTP_"+upstreamStatus:"");
+  const providerCode=error instanceof ZoomApiError?error.providerCode:null;
+  const code="ZOOM_UPDATE_"+stage.toUpperCase().replace(/-/g,"_")+(upstreamStatus?"_HTTP_"+upstreamStatus:"")+(providerCode!==null?"_Z"+providerCode:"");
   const referenceId=await logSystemEvent({source:"zoom-recording",action:"update",code,message:"Recording update failed"});
-  console.error("[zoom-recording] update failed",{stage,upstreamStatus,referenceId});
+  console.error("[zoom-recording] update failed",{stage,upstreamStatus,providerCode,referenceId});
   return NextResponse.json({ok:false,error:"Unable to update recording.",referenceId},{status:stage==="zoom-trash"?502:500,headers:{"Cache-Control":"no-store"}});
  }
 }
