@@ -183,10 +183,10 @@ function Workspace(){
    {meetings.filter(m=>m.recordings.some(r=>r.status==="completed"&&isPlayableZoomVideo(r))).map(m=><details key={m.id} className="panel historyPanel">
     <summary style={{cursor:"pointer",display:"flex",gap:16,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap"}}>
      <span><b>{m.event?.title||m.topic}</b><span className="cellSub">{when(m.scheduled_start)} · {m.purpose==="class"?"Class":m.purpose==="demo"?"Demo":"Meeting"} · {m.host?.label||"Zoom host"}</span></span>
-     <span className="softBadge">{m.recordings.filter(r=>r.status!=="deleted").length} videos</span>
+     <span className="softBadge">{m.recordings.filter(r=>r.status==="completed"&&isPlayableZoomVideo(r)).length} videos</span>
     </summary>
     <div className="tableWrap topGap"><table><thead><tr><th>Video type</th><th>Recorded</th><th>Size</th><th>Retention</th><th>Learner access</th><th>Actions</th></tr></thead><tbody>
-    {m.recordings.filter(r=>r.status!=="deleted").map(r=><tr key={r.id}>
+    {m.recordings.filter(r=>r.status==="completed"&&isPlayableZoomVideo(r)).map(r=><tr key={r.id}>
      <td>{r.recording_type||r.file_type||"Recording"}</td><td>{when(r.recording_start)}</td><td>{Number(r.file_size_bytes||0)>=1024*1024*1024?gb(Number(r.file_size_bytes||0)):(Number(r.file_size_bytes||0)/1024/1024).toFixed(1)+" MB"}</td>
      <td>{r.protected_from_deletion?<span className="softBadge softGreen">Protected</span>:when(r.retain_until)}</td>
      <td>{m.purpose==="class"?<button className="softBadge" disabled={busy} onClick={()=>recordingAction(r.id,"toggle-learner")}>{r.learner_visible?"Allowed":"Admin only"}</button>:"Admin only"}</td>
