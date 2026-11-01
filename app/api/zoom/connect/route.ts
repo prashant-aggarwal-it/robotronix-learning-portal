@@ -4,7 +4,7 @@ import {zoomAuthorizationUrl} from "@/lib/server/zoom";
 export const dynamic="force-dynamic";
 export async function POST(request:NextRequest){
  const auth=await requireAdmin(request);if("error" in auth)return auth.error;
- try{const body=await request.json().catch(()=>({})) as {label?:string};const label=(body.label||"Zoom Host").trim().slice(0,80);
+ try{const body=await request.json().catch(()=>({})) as {label?:string;hostId?:string};const label=(body.label||"Zoom Host").trim().slice(0,80);
   if(body.hostId){
    const {data:host,error}=await auth.admin.from("zoom_host_accounts").select("id,label").eq("id",body.hostId).maybeSingle();
    if(error||!host)return NextResponse.json({ok:false,error:"Zoom host not found."},{status:404});
