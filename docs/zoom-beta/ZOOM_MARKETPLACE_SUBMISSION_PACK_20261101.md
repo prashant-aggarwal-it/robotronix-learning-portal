@@ -68,6 +68,42 @@ Robotronix Classroom uses Zoom OAuth 2.0 **authorization code**. An approved adu
 
 **Review caution:** Verify exact Production scopes, OAuth redirect URL, webhook configuration and live deployment before pasting any implementation claims as completed. Do not provide OAuth client secret, access tokens or reviewer passwords in public notes.
 
+## Final response to exact Zoom review feedback (28–29 October 2026)
+
+**Important:** Zoom's current **App Authorization Method** is incorrectly set to **From Marketplace**. A repository change cannot update this Marketplace configuration. The owner MUST change Production → **App Listing / Adding your app** to **From your site** and set the **Direct Landing URL** to `https://portal.robotronixstemlab.com/zoom/connect`. Save the setting; do not submit before it is done. Do not confuse this landing URL with the OAuth callback (`/api/zoom/oauth/callback`). The existing login page accepts `?next=%2Fzoom%2Fconnect` and returns authorized Admin users to the Zoom landing page after password login.
+
+### 1. Developer Contact Requirements — owner has updated
+Owner screenshot shows developer name and corporate email `info@robotronixstemlab.com`. Owner must ensure saved and mailbox monitored. Acknowledgement is not Zoom approval.
+
+### 2. Test Plan Requirements — paste into reviewer release notes after deployment
+Complete reviewer test plan (public, no passwords): https://portal.robotronixstemlab.com/zoom-review-plan
+
+The plan documents the portal Admin, Trainer, Parent and Student roles, private password sign-in, Zoom authorization steps, the 10 historically requested Zoom scopes with expected outcomes, 17 role-based functional cases, cross-user access controls, disposable sample meetings/recordings, cloud recording prerequisites, 2FA restrictions and deauthorization limitations. Portal passwords must be delivered to Zoom in an approved confidential review channel, not in GitHub or public documentation. The reviewer plan URL must return HTTP 200 in Production after explicit owner-approved deployment. Check actual Production scopes and provide seeded disposable class and recording details before submission.
+
+### 3. Documentation URL — field value
+https://portal.robotronixstemlab.com/zoom-guide
+
+The guide covers: app installation and eligible adult administrator authorization, trainer/parent/student use, Zoom host and cloud recording prerequisites, troubleshooting, removal via Zoom Marketplace → Manage → Added Apps → Remove, effects of revocation and retention/data requests. Owner must confirm URL is publicly reachable and reflects latest branch deployment.
+
+### 4. Education: User vs Admin App — reviewer reply
+Robotronix Classroom is an education integration, but the Zoom OAuth connection is **restricted to approved adult Robotronix administrators**, not children or parents. The application is user-managed because each designated administrator connects a specific authorized Zoom host identity for scheduled classes; trainers and linked families use permitted class entry points without installing or authorizing the Zoom app. The authorization entry `https://portal.robotronixstemlab.com/zoom/connect` requires an authenticated active Admin portal role and a confirmation that the administrator is at least 18 and authorized to connect the Zoom host. Signed-out users are directed to the portal login; non-Admin accounts are blocked from the Zoom connection page and the server's Zoom connect endpoint requires Admin authentication. The integration is not a self-service authorization path for student or parent accounts. We retain the user-managed design for individual authorized host accounts rather than account-wide school installation.
+
+**Caution:** The implemented age control is an **adult administrator confirmation plus role restriction**, not independent proof of age. Do not claim DOB or government-ID verification. If Zoom requires stronger age verification, obtain and implement the specific requirement before resubmission.
+
+### 5. App Authorization Method — reviewer reply
+We have changed the intended authorization flow to **From your site** (Marketplace setting must be saved by owner). Direct Landing URL: `https://portal.robotronixstemlab.com/zoom/connect`. Visitors who are not logged in are directed to `/login?next=%2Fzoom%2Fconnect`. Following successful Admin sign-in, they return to the Zoom landing page. Non-Admin roles cannot authorize. The adult Admin confirms eligibility and enters `/admin/zoom`, selects Connect Host, then reviews Zoom OAuth consent. Zoom redirects to `https://portal.robotronixstemlab.com/api/zoom/oauth/callback`, where signed state is verified, code exchanged server-side, Zoom user identity confirmed, and encrypted host tokens saved. Reauthorization requires the same Zoom user identity.
+
+**Caution:** Do not tell Zoom this Marketplace setting has already been changed until the owner actually saves it. A reviewer must be able to access the landing page without being signed in and see a clear sign-in route.
+
+### Owner's remaining steps after deployment approval
+1. Change **From Marketplace → From your site**, Direct Landing URL `https://portal.robotronixstemlab.com/zoom/connect`, in Production app configuration.
+2. Confirm Production Documentation URL `https://portal.robotronixstemlab.com/zoom-guide`; add reviewer test-plan URL to Release Notes/review response.
+3. Rotate the previously disclosed shared reviewer password; set four strong unique passwords and test each account independently. Deliver credentials through a confirmed private Zoom reviewer channel.
+4. Verify the actual Zoom Production scopes, OAuth callback, webhook/deauthorization endpoint and permission settings.
+5. Confirm disposable QA data, paid Zoom cloud recording eligibility, and tests T01–T17. Do not claim unobserved tests passed.
+6. Confirm PR branch deployment **only after explicit approval**; verify public URLs and smoke-test Zoom.
+7. Respond to five review notes and resubmit updates when everything above is complete.
+
 ## Owner-only Production and Marketplace checks
 - [ ] Screenshot current Marketplace submission warnings and Production Scopes.
 - [ ] Confirm Production OAuth Redirect URL and allowed domain; verify ownership and HTTPS.
