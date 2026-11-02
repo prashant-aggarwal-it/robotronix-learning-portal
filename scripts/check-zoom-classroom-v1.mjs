@@ -76,3 +76,17 @@ for(const marker of ['error.code==="23P01"','await deleteRemoteMeetingSafely(hos
 }
 
 console.log("Zoom Classroom V1 structure and production hardening: OK");
+
+// Marketplace deauthorization and reviewer instructions must remain part of release gate.
+
+const deauth=fs.readFileSync("lib/server/zoom-deauthorization.ts","utf8");
+for(const marker of ["app_deauthorized","zoomClientId()","zoom_user_id","zoom_account_id",'status:"disconnected"',"enabled:false","access_token_encrypted:cleared","refresh_token_encrypted:cleared"]){
+ if(!deauth.includes(marker))throw new Error("Zoom deauthorization protection missing: "+marker);
+}
+for(const marker of ['body.event==="app_deauthorized"','if(!verify(raw,request))','await processZoomDeauthorization(body)']){
+ if(!webhook.includes(marker))throw new Error("Zoom webhook deauthorization verification missing: "+marker);
+}
+const reviewerPlan=fs.readFileSync("docs/zoom-beta/ZOOM_MARKETPLACE_REVIEWER_TEST_PLAN.md","utf8");
+for(const marker of ["T16","cloud_recording:read:list_recording_files","Live status","Pending","Test account and credentials"]){
+ if(!reviewerPlan.includes(marker))throw new Error("Zoom Marketplace reviewer instructions missing: "+marker);
+}
