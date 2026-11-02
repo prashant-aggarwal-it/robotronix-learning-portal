@@ -67,7 +67,8 @@
     "qa:security-dev-all": "npm run qa:security-dev && npm run qa:security-dev-http",
     "check:zoom-jit": "node scripts/check-zoom-jit.mjs",
     "qa:all-roles-visual": "playwright test qa/all-roles-visual-audit.spec.ts --project=desktop-chromium",
-    "check:action-buttons": "node scripts/check-action-button-consistency.mjs"
+    "check:action-buttons": "node scripts/check-action-button-consistency.mjs",
+    "audit:portal-routes": "node scripts/audit-portal-route-inventory.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
