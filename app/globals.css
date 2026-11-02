@@ -1856,3 +1856,19 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .alertRowManageAction:hover:not(:disabled){background:#f3efff;text-decoration:underline}
 .alertRowManageAction:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .alertRowManageAction:disabled{opacity:.45;cursor:not-allowed}
+
+
+/* System Logs: keep selected event details in view rather than after a long table. */
+.systemLogIssueBackdrop{position:fixed;inset:0;z-index:1000;background:rgba(17,30,55,.46);display:flex;justify-content:flex-end;align-items:stretch;padding:16px;box-sizing:border-box}
+.systemLogIssueDialog{width:min(560px,100%);max-height:100%;margin:0;overflow-y:auto;overscroll-behavior:contain;border:1px solid #dce4f5;border-radius:18px;background:#fff;box-shadow:0 22px 65px rgba(12,25,56,.23)}
+.systemLogIssueBody{padding:4px 2px}
+.systemLogIssueDialog .panelHeader{position:sticky;top:-20px;z-index:2;background:#fff;padding:12px 0;border-bottom:1px solid #ebeff7;align-items:center}
+.systemLogIssueDialog .panelHeader h3{margin:0 0 5px;font-size:19px}
+.systemLogIssueDialog .summaryDefinitionGrid{display:grid;grid-template-columns:1fr;gap:0}
+.systemLogIssueDialog .summaryDefinitionGrid>div{min-width:0;display:grid;grid-template-columns:minmax(125px,.9fr) minmax(0,1.1fr);gap:12px;padding:11px 0;border-bottom:1px solid #eef1f6;align-items:start}
+.systemLogIssueDialog .summaryDefinitionGrid b,.systemLogIssueDialog code{overflow-wrap:anywhere;word-break:break-word}
+.systemLogIssueDialog .formGrid{grid-template-columns:1fr;gap:13px}
+.systemLogIssueDialog .formGrid>label{min-width:0}
+.systemLogIssueDialog .formGrid .input{font-size:14px;font-weight:500}
+.systemLogIssueDialog .fieldHint{line-height:1.6}
+@media(max-width:600px){.systemLogIssueBackdrop{padding:8px;align-items:flex-end}.systemLogIssueDialog{width:100%;max-height:94dvh;border-radius:16px 16px 8px 8px}.systemLogIssueDialog .summaryDefinitionGrid>div{grid-template-columns:1fr;gap:5px}}
