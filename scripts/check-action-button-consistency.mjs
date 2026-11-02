@@ -8,7 +8,6 @@ const common = read("app/globals.css");
 const theme = read("app/theme.css");
 const zoom = read("app/admin/zoom/zoom-admin.css");
 const alerts = read("app/admin/alerts/page.tsx");
-const connect = read("app/zoom/connect/page.tsx");
 assert.match(common, /\\.button\\s*\\{/);
 assert.match(common, /\\.button\\.ghost/);
 assert.match(theme, /\\[data-portal-theme="ai-flow"\\] \\.button:not\\(\\.ghost\\):not\\(\\.secondary\\)/);
