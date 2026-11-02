@@ -1850,3 +1850,9 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 @media(max-width:1050px){.trainerCommandColumns{grid-template-columns:1fr}}
 @media(max-width:760px){.trainerCommandColumns>.experienceCard{padding:16px}.trainerCommandNotice{align-items:start;flex-direction:column}.trainerCommandLine{grid-template-columns:auto minmax(0,1fr)}.trainerCommandLine strong{grid-column:2}.trainerCommandSectionTitle{flex-wrap:wrap}}
 @media(max-width:520px){.workspaceShell .trainerCommandMetrics{grid-template-columns:1fr}.trainerCommandHero{align-items:start}.trainerCommandTime{padding:7px 8px}}
+
+/* Shared table-row action: controls remain compact rather than inheriting page-header CTA sizing. */
+.alertRowManageAction{appearance:none;background:transparent;border:0;padding:4px 6px;border-radius:7px;font:inherit;font-size:13px;font-weight:800;color:var(--purple-dark);cursor:pointer;white-space:nowrap}
+.alertRowManageAction:hover:not(:disabled){background:#f3efff;text-decoration:underline}
+.alertRowManageAction:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.alertRowManageAction:disabled{opacity:.45;cursor:not-allowed}
