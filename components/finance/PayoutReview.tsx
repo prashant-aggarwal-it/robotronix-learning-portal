@@ -28,7 +28,7 @@ export function PayoutReview({request,approved,onDecision}:Props){
  const decisionLabels={approve:"Approve & verify payout details",request_correction:"Request correction",reject:"Reject change"} as const;
  async function submit(){
   if(!decision){setError("Choose a review decision first.");return;}
-  if((decision==="request_correction"||decision==="reject")&&!note.trim()){setError("Please explain what the trainer needs to correct.");return;}
+  if((decision==="request_correction"||decision==="reject")&&note.trim().length<5){setError("Please provide a reason of at least 5 characters.");return;}
   setBusy(true);setError("");
   try{
    const result=await onDecision(request.id,decision,note.trim());
