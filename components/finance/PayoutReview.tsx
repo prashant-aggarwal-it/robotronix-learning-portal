@@ -20,13 +20,12 @@ export function PayoutReview({request,approved,onDecision}:Props){
  const[note,setNote]=useState("");
  const[busy,setBusy]=useState(false);
  const[error,setError]=useState("");
- const[confirm,setConfirm]=useState(false);
  const[decision,setDecision]=useState<""|"approve"|"request_correction"|"reject">("");
  const changed=fields.filter(f=>String(approved?.[f.key]||"")!==String(request[f.key]||""));
  const pending=request.status==="pending";
  const historic=!pending;
  const statusLabel=request.status==="approved"?"Approved":request.status==="request_correction"?"Correction requested":request.status.replaceAll("_"," ").replace(/^./,ch=>ch.toUpperCase());
- const decisionLabels={approve:"Approve submitted details",request_correction:"Request correction",reject:"Reject change"} as const;
+ const decisionLabels={approve:"Approve & verify payout details",request_correction:"Request correction",reject:"Reject change"} as const;
  async function submit(){
   if(!decision){setError("Choose a review decision first.");return;}
   if((decision==="request_correction"||decision==="reject")&&!note.trim()){setError("Please explain what the trainer needs to correct.");return;}
@@ -34,7 +33,7 @@ export function PayoutReview({request,approved,onDecision}:Props){
   try{
    const result=await onDecision(request.id,decision,note.trim());
    if(!result.ok){setError(result.error||"Unable to save this decision");return;}
-   setConfirm(false);setNote("");
+   setNote("");
   }catch{setError("Request could not be reviewed. Try again.");}
   finally{setBusy(false);}
  }
@@ -63,15 +62,13 @@ export function PayoutReview({request,approved,onDecision}:Props){
   {request.status==="approved"&&request.effectivePayrollMonth&&<p className="cellSub">Effective payroll cycle: {request.effectivePayrollMonth}</p>}
   {request.adminNote&&<p className="cellSub">Previous Admin note: {request.adminNote}</p>}
   {pending&&<div className="formStack">
-    <p className="cellSub">Approval authorizes use of these details only under the configured payroll cutoff policy. It is not independent bank-account verification.</p>
-    <label>Review decision<select className="input" value={decision} onChange={e=>{setDecision(e.target.value as typeof decision);setConfirm(false);setError("");}}><option value="">Select a decision…</option><option value="approve">Approve submitted details</option><option value="request_correction">Request correction</option><option value="reject">Reject change</option></select></label>
+    <p className="cellSub">Approving also marks these payout details <b>Admin verified</b>, subject to payroll cutoff rules. This does not mean the bank independently verified the account.</p>
+    <label>Review decision<select className="input" value={decision} onChange={e=>{setDecision(e.target.value as typeof decision);setError("");}}><option value="">Select a decision…</option><option value="approve">Approve submitted details</option><option value="request_correction">Request correction</option><option value="reject">Reject change</option></select></label>
     <label>Reason / internal review note<textarea className="input" rows={2} value={note} onChange={e=>setNote(e.target.value)} placeholder={decision==="approve"?"Optional review note":"Required: what needs to be corrected?"}/></label>
     {error&&<div role="alert" className="errorBanner">{error}</div>}
-    {!confirm?<div className="formActions" style={{justifyContent:"flex-start"}}><button className="button smallButton" style={{width:"auto",minWidth:180}} type="button" disabled={!decision||busy} onClick={()=>{if(!decision)return;setConfirm(true);setError("");}}>Continue to confirmation</button></div>:<div className="formActions" style={{alignItems:"center"}}>
-     <strong>Confirm: {decision?decisionLabels[decision]:"Choose a decision"}</strong>
-     <button className="button smallButton" type="button" disabled={busy||!decision} onClick={submit}>{busy?"Saving…":"Confirm and submit"}</button>
-     <button className="button ghost smallButton" type="button" disabled={busy} onClick={()=>setConfirm(false)}>Cancel</button>
-    </div>}
+    <div className="formActions" style={{justifyContent:"flex-start"}}>
+     <button className="button smallButton" style={{width:"auto",minWidth:190}} type="button" disabled={busy||!decision} onClick={submit}>{busy?"Saving…":decision?decisionLabels[decision]:"Choose a decision"}</button>
+    </div>
    </div>}
  </section>;
 }
