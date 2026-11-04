@@ -1,43 +1,37 @@
-# Robotronix Connect — Phase 1 execution report
+# Robotronix Connect — Revised Phase 1 Execution Report (2026-11-05)
 
-Date: 2026-11-05
-Branch: `feature/robotronix-connect-crm`
-Environment: Supabase DEVELOPMENT only (`fflejkqcspivnhsmkdtn`)
-Production: **untouched**
-Merge to main: **none**
+**Canonical design:** [SAAS_ARCHITECTURE_DECISION.md](SAAS_ARCHITECTURE_DECISION.md)
+**Branch:** feature/robotronix-connect-crm
+**Environment changed:** Supabase Development fflejkqcspivnhsmkdtn only
+**Unchanged:** Production database, main Git branch, 80 existing Learning Portal tables and application code
 
-## Executed
-- Baseline inspection found 80 existing public tables. Core `profiles`, `parents`, `students`, `demo_leads`, `demo_session_participants`, `onboarding_submissions`, and `enrollments` contained zero rows.
-- Applied named Supabase migration `connect_crm_phase1_foundation_20261105`, version `20261104214649`.
-- 28 `public.crm_*` relational tables created: canonical people/contact methods, families/learners, guardians, institutions, configurable pipelines and stages, opportunities, enquiries, stage history, activities, tasks, demos/enrollment bridge links, channel accounts, conversations/messages, webhook receipts/outbox, consent, campaigns, attribution.
-- Existing 80 public tables preserved. No existing tables dropped or altered by this migration.
-- Added matching canonical fresh-install source: `database/01_install/modules/schema/12_connect_crm.sql` (automatically picked up by ordered installer generator).
-- Added read-only verification script: `database/connect/verification/01_phase1_integrity.sql`.
+## Installed in Development
+- Migration `connect_saas_v2_independent_foundation_20261105`: created independent `connect.*` SaaS schema.
+- Migration `retire_empty_crm_prototype_20261105`: after checking all 28 prior prototype tables had zero rows, dropped them using RESTRICT in a transaction, with no CASCADE.
+- Migration `connect_saas_v2_canonical_hardening_20261105`: introduced multiple person roles, removed redundant opportunity state, strengthened stage-history pipeline foreign keys.
 
-## Successful database tests
-1. Live migration succeeded.
-2. Found exactly 28 new CRM tables and all 28 with RLS enabled.
-3. Checked table PK and FK metadata; relationships were created.
-4. Completed a transaction inserting a test adult, learner, family, guardian relationship, opportunity, course-linked learner, task, channel account, conversation, message, and consent. Transaction was rolled back, leaving zero test CRM people, opportunities, or messages.
-5. Negative tests confirmed duplicate contact method, wrong-pipeline stage and duplicate provider webhook ID are rejected by DB constraints; tests rolled back.
-6. All 28 CRM tables have no direct SELECT permission for `anon` or `authenticated`; service role can access canonical person table. Existing 80 public tables remain.
-7. Migration recorded in Supabase migration history.
+### Verified current database
+- **35** standalone Connect tables; all have RLS enabled.
+- **0** foreign keys from Connect into any Learning Portal public table.
+- **0** leftover `public.crm_*` prototype tables.
+- **80** pre-existing public Learning Portal tables preserved.
+- No direct `anon` or `authenticated` database access to Connect schema; no tenant members can read CRM yet, by design.
+- Transactional smoke tests: two-tenant cross-tenant person relation rejected, invalid pipeline stage rejected, guardian+customer multi-role permitted, stage history from a different pipeline rejected, correctly scoped event permitted. QA transactions rolled back.
 
-## Deliberate compatibility approach
-- Portal remains operationally bound to legacy demo/onboarding/parent/student tables for now. This avoids breaking existing workflows while CRM services are not yet written.
-- Canonical identity and CRM data will become authoritative when application routes are migrated in later integration work.
-- Do **not** delete `demo_leads`, `student_guardians`, `parents`, `onboarding_submissions` or `family_introductions` until every dependent route and trigger has been migrated and tested.
-- Supabase's security advisor lists existing informational RLS-without-policy notices, including 28 new server-only CRM tables, plus unrelated pre-existing security warnings. No blanket read policies added.
-- The database has already been changed in Development. A Git branch does not isolate database changes.
+## Canonical deployment source
+- `database/connect/saas/01_connect_independent_schema.sql`: standalone fresh-install DDL, independent of Portal.
+- `database/connect/saas/02_retire_empty_prototype_dev_only.sql`: historical Dev-only cleanup, **never run on independent Connect installs or production**.
+- `database/connect/saas/03_harden_canonical_model_dev.sql`: historical Dev-only refinement (already folded into canonical fresh source).
+- `database/connect/saas/04_verify_foundation.sql`: read-only verification.
+- The former `database/01_install/modules/schema/12_connect_crm.sql` has been deleted, so Portal's generated installer no longer adds Connect.
+- Earlier Portal-coupled CRM design docs are marked historical/superseded.
 
-## Remaining acceptance gates (NOT yet verified)
-- Full local TypeScript, build, Playwright role/finance/demo/onboarding/Zoom regression suite against Development.
-- Fresh database installation generated from the amended canonical modules and fully executed on a separate disposable test database.
-- Authenticated server authorization tests for future Connect API endpoints (not yet built).
-- Reconcile canonical identity and replace remaining duplicate source-of-truth fields when CRM-to-portal application integration is implemented.
-- Benchmark real CRM workloads after services and indexes are exercised with representative test data.
-- Review remaining source schema compatibility and admin/staff permission model in Phase 2.
+## Not yet implemented / not certified
+- Independent deployed Connect Supabase project/app, product Auth workspace onboarding, secure user authorization/RLS membership rules and tenant staff invitations.
+- Full server APIs and RBAC tests; direct browser access intentionally denied until authorized endpoints exist.
+- Production-grade webhook signature verification, privacy controls, consent enforcement, events and audit immutability.
+- Fresh-install execution in a separate empty database and full Learning Portal Playwright regression tests. These must pass before release.
+- Portal integration adapter and standalone SaaS UI.
+- SaaS billing checkout/invoice integration, pricing configuration and subscription enforcement.
 
-## Current phase status
-**Database foundation implemented and database-side tests passed; Phase 1 release gate remains OPEN.**
-Do not claim 'no existing behavior breaks' until end-to-end portal regression and fresh-install tests pass.
+**Phase 1 redesign is installed and verified for its database invariants. Its release gate remains open pending independent-install and application/authorization tests. No merge/deployment approval requested.**
