@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { listNotifications, subscribeNotifications } from "@/lib/communication-repository";
 import type { UserRole } from "@/lib/types";
+import { activeUnreadCount } from "@/lib/notification-policy";
 
 export function NotificationBell({ role }: { role: UserRole }) {
   const [unread, setUnread] = useState(0);
@@ -12,7 +13,7 @@ export function NotificationBell({ role }: { role: UserRole }) {
     let active = true;
     const refresh = async () => {
       const rows = await listNotifications(role);
-      if (active) setUnread(rows.filter((n) => !n.readAt).length);
+      if (active) setUnread(activeUnreadCount(rows));
     };
     void refresh();
     const unsubscribe = subscribeNotifications(role, () => void refresh());

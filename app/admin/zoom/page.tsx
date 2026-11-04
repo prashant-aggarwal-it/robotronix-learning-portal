@@ -165,9 +165,9 @@ function Workspace(){
   </section>}
 
   {tab==="meetings"&&<>
-   {showCreate&&<section className="dataSection zoomCreateMeetingPanel">
-    <div className="panelHeader"><div><div className="eyebrow">NEW GENERAL MEETING</div><h2>Create without opening Zoom</h2><p>Robotronix automatically chooses an available host. Share the guest link with anyone you invite.</p></div><button className="button secondary" onClick={()=>setShowCreate(false)}>Close</button></div>
-    <div className="formGrid zoomMeetingFormGrid">
+   {showCreate&&<section className="dataSection zoomCreateMeetingPanel rxMeetingComposer">
+    <div className="panelHeader"><div><div className="eyebrow">NEW GENERAL MEETING</div><h2>Create a meeting</h2><p>Robotronix automatically chooses an available host. Share the guest link with anyone you invite.</p></div><button className="button secondary" onClick={()=>setShowCreate(false)}>Close</button></div>
+    <div className="formGrid zoomMeetingFormGrid rxMeetingFields">
      <label id="field-meetingTitle" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingTitle")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Meeting title *<input className="input" value={newMeeting.title} onChange={e=>setNewMeeting(v=>Object.assign({},v,{title:e.target.value}))} placeholder="e.g. Demo with ABC School"/></label>
      <label id="field-meetingStart" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingStart")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Start time (optional)<input className="input" type="datetime-local" value={newMeeting.startAt} onChange={e=>setNewMeeting(v=>Object.assign({},v,{startAt:e.target.value}))}/></label>
      <label id="field-meetingDuration" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingDuration")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Duration<select className="input" value={newMeeting.durationMinutes} onChange={e=>setNewMeeting(v=>Object.assign({},v,{durationMinutes:Number(e.target.value)}))}><option value={30}>30 minutes</option><option value={45}>45 minutes</option><option value={60}>60 minutes</option><option value={90}>90 minutes</option><option value={120}>2 hours</option></select></label>
