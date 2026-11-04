@@ -296,7 +296,7 @@ create table if not exists public.crm_attribution_touchpoints (
 create index if not exists crm_attribution_opportunity_idx on public.crm_attribution_touchpoints(opportunity_id,occurred_at);
 
 -- RLS and explicit grants. Browser roles cannot directly access CRM records.
-do $
+do $$
 declare t record;
 begin
  for t in select tablename from pg_tables where schemaname='public' and tablename like 'crm_%' loop
@@ -304,5 +304,5 @@ begin
    execute format('revoke all on table public.%I from public, anon, authenticated',t.tablename);
    execute format('grant select,insert,update,delete on table public.%I to service_role',t.tablename);
  end loop;
-end $;
+end $$;
 commit;
