@@ -792,18 +792,55 @@ create trigger communication_message_after_insert after insert on public.communi
 -- Important operational events create in-app notifications. These triggers are intentionally
 -- selective so parents are not notified about every low-value internal update.
 create or replace function public.notify_schedule_change() returns trigger language plpgsql security definer set search_path=public as $$
-declare event_type text; title_text text; msg text;
+declare
+  event_type text;
+  title_text text;
+  msg text;
+  severity text;
+  notification_key text;
 begin
+  -- Batch scheduling already produces one role-specific summary per generated plan.
   if tg_op='INSERT' and current_setting('robotronix.bulk_schedule_notifications',true)='on' then return new; end if;
-  if tg_op='INSERT' then event_type:='class_scheduled'; title_text:='Class scheduled'; msg:='A learning session has been scheduled.';
-  elsif new.status='cancelled' and old.status is distinct from new.status then event_type:='class_cancelled'; title_text:='Class cancelled'; msg:='A scheduled learning session has been cancelled.';
-  elsif new.status='rescheduled' or new.date is distinct from old.date or new.start_time is distinct from old.start_time then event_type:='class_rescheduled'; title_text:='Class schedule updated'; msg:='A learning session has a revised date or time.';
-  else return new; end if;
-  if new.student_id is not null then
-    insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href) values('parent',new.student_id,new.trainer_id,event_type,'action',title_text,msg,'/parent');
-    insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href) values('student',new.student_id,new.trainer_id,event_type,'info',title_text,msg,'/student');
+
+  if tg_op='INSERT' then
+    event_type:='class_scheduled'; title_text:='Class scheduled'; severity:='info';
+  elsif new.status='cancelled' and old.status is distinct from new.status then
+    event_type:='class_cancelled'; title_text:='Class cancelled'; severity:='important';
+  elsif new.date is distinct from old.date
+     or new.start_time is distinct from old.start_time
+     or new.end_time is distinct from old.end_time
+     or (new.status='rescheduled' and old.status is distinct from new.status) then
+    event_type:='class_rescheduled'; title_text:='Class schedule updated'; severity:='important';
+  else
+    return new;
   end if;
-  insert into public.portal_notifications(recipient_role,student_id,trainer_id,type,priority,title,message,href) values('trainer',new.student_id,new.trainer_id,event_type,'info',title_text,msg,'/trainer/schedule');
+
+  msg:=left(coalesce(nullif(trim(new.title),''),'Class'),120)||' · '||
+       to_char(new.date,'DD Mon YYYY')||' · '||
+       to_char(new.start_time,'HH24:MI')||' ('||coalesce(new.timezone,'Asia/Kolkata')||').';
+  -- Stable state-based key prevents repeated writes for the same schedule state.
+  notification_key:='schedule:'||new.id::text||':'||event_type||':'||
+    new.date::text||':'||new.start_time::text||':'||
+    new.end_time::text||':'||new.status;
+
+  if new.student_id is not null then
+    insert into public.portal_notifications
+      (recipient_role,student_id,trainer_id,type,priority,title,message,href,dedupe_key)
+    values
+      ('parent',new.student_id,new.trainer_id,event_type,severity,title_text,msg,
+       '/parent/calendar',notification_key||':parent'),
+      ('student',new.student_id,new.trainer_id,event_type,severity,title_text,msg,
+       '/student',notification_key||':student')
+    on conflict(dedupe_key) where dedupe_key is not null do nothing;
+  end if;
+  if new.trainer_id is not null then
+    insert into public.portal_notifications
+      (recipient_role,student_id,trainer_id,type,priority,title,message,href,dedupe_key)
+    values
+      ('trainer',new.student_id,new.trainer_id,event_type,severity,title_text,msg,
+       '/trainer/schedule',notification_key||':trainer')
+    on conflict(dedupe_key) where dedupe_key is not null do nothing;
+  end if;
   return new;
 end $$;
 drop trigger if exists schedule_notification_insert on public.schedule_events;
