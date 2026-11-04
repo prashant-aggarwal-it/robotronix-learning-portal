@@ -314,6 +314,21 @@ begin
  if target_status in ('rejected','correction_requested') and length(trim(coalesce(p_admin_note,'')))<5 then
   raise exception 'A meaningful correction/rejection reason is required'; end if;
  if target_status='approved' then
+  -- Approving a payout-change request is also the Admin's verification of the
+  -- submitted payout details. This does NOT independently validate a bank account.
+  -- Enforce the same required-field checks as the Admin finance editor.
+  if r.preferred_payout_method='bank' then
+   if nullif(trim(coalesce(r.account_holder_name,'')),'') is null
+      or nullif(trim(coalesce(r.bank_name,'')),'') is null
+      or nullif(trim(coalesce(r.account_number,'')),'') is null
+      or coalesce(upper(trim(r.ifsc)),'') !~ '^[A-Z]{4}0[A-Z0-9]{6}$' then
+    raise exception 'Complete bank holder, bank name, account number and a valid IFSC before approval';
+   end if;
+  elsif r.preferred_payout_method='upi' then
+   if coalesce(trim(r.upi_id),'') !~ '^[^[:space:]@]+@[^[:space:]@]+$' then
+    raise exception 'A valid UPI ID is required before approval';
+   end if;
+  end if;
   select least(28,greatest(1,coalesce(nullif(value_text,'')::int,25)))
     into v_cutoff from public.system_settings where key='trainer_payout_change_cutoff_day';
   v_cutoff:=coalesce(v_cutoff,25);
@@ -328,17 +343,20 @@ begin
    trainer_id,source_request_id,effective_payroll_month,
    account_holder_name,bank_name,account_number,ifsc,upi_id,pan,preferred_payout_method,approved_by)
   values(r.trainer_id,r.id,v_month,r.account_holder_name,r.bank_name,r.account_number,r.ifsc,r.upi_id,r.pan,r.preferred_payout_method,auth.uid());
-  -- Trainer Profile shows the latest approved bank details. Actual salary instructions
-  -- are separately snapshotted from the version applicable to each payroll month.
+  -- Payroll versions and approved/paid payout snapshots remain immutable.
+  -- Guarded setting avoids a second direct-change payout version in this RPC.
   perform set_config('robotronix.payout_review','1',true);
   insert into public.trainer_finance(
    trainer_id,account_holder_name,bank_name,account_number,ifsc,upi_id,preferred_payout_method,pan,compliance_status,updated_at)
-  values(r.trainer_id,r.account_holder_name,r.bank_name,r.account_number,r.ifsc,r.upi_id,r.preferred_payout_method,r.pan,'pending',now())
+  values(r.trainer_id,r.account_holder_name,r.bank_name,r.account_number,r.ifsc,r.upi_id,r.preferred_payout_method,r.pan,'verified',now())
   on conflict(trainer_id) do update set
    account_holder_name=excluded.account_holder_name,bank_name=excluded.bank_name,
    account_number=excluded.account_number,ifsc=excluded.ifsc,upi_id=excluded.upi_id,
-   preferred_payout_method=excluded.preferred_payout_method,pan=excluded.pan,updated_at=now();
+   preferred_payout_method=excluded.preferred_payout_method,pan=excluded.pan,
+   compliance_status='verified',updated_at=now();
  end if;
+ -- Correction/rejection never changes the existing approved payout details,
+ -- compliance status or approved payroll instructions.
  update public.trainer_finance_change_requests set status=target_status,
   admin_note=coalesce(p_admin_note,''),reviewed_at=now(),reviewed_by=auth.uid(),
   effective_payroll_month=case when target_status='approved' then v_month else null end
