@@ -29,12 +29,17 @@ create index connect_memberships_user_idx on connect.memberships(user_id,tenant_
 create table connect.people (
  id uuid primary key default gen_random_uuid(),tenant_id uuid not null references connect.tenants(id) on delete restrict,
  full_name text not null check(length(trim(full_name))>0),
- kind text not null default 'contact' check(kind in ('contact','learner','guardian','staff','other')),
  status text not null default 'active' check(status in ('active','archived')),
  created_at timestamptz not null default now(),updated_at timestamptz not null default now(),
  unique(tenant_id,id)
 );
 create index connect_people_name_idx on connect.people(tenant_id,lower(full_name));
+create table connect.person_roles (
+ tenant_id uuid not null references connect.tenants(id) on delete restrict,
+ person_id uuid not null,role text not null check(role in ('learner','guardian','staff','customer','contact','other')),
+ primary key(tenant_id,person_id,role),
+ foreign key(tenant_id,person_id) references connect.people(tenant_id,id) on delete restrict
+);
 create table connect.contact_methods (
  id uuid primary key default gen_random_uuid(),tenant_id uuid not null references connect.tenants(id) on delete restrict,
  person_id uuid not null, kind text not null check(kind in ('mobile','phone','whatsapp','email','social','other')),
@@ -105,7 +110,6 @@ create table connect.opportunities (
  contact_id uuid,organization_id uuid,owner_membership_id uuid,
  expected_value numeric(14,2) check(expected_value>=0),
  currency text not null default 'INR' check(currency ~ '^[A-Z]{3}$'),
- state text not null default 'open' check(state in ('open','won','lost')),
  closed_at timestamptz,created_at timestamptz not null default now(),updated_at timestamptz not null default now(),
  version integer not null default 1 check(version>0),
  foreign key(tenant_id,pipeline_id) references connect.pipelines(tenant_id,id) on delete restrict,
@@ -113,7 +117,7 @@ create table connect.opportunities (
  foreign key(tenant_id,contact_id) references connect.people(tenant_id,id) on delete restrict,
  foreign key(tenant_id,organization_id) references connect.organizations(tenant_id,id) on delete restrict,
  foreign key(tenant_id,owner_membership_id) references connect.memberships(tenant_id,id) on delete restrict,
- check(contact_id is not null or organization_id is not null),unique(tenant_id,id)
+ check(contact_id is not null or organization_id is not null),unique(tenant_id,id),unique(tenant_id,pipeline_id,id)
 );
 create index connect_opportunities_board_idx on connect.opportunities(tenant_id,pipeline_id,stage_id,updated_at desc);
 create table connect.opportunity_people (
@@ -131,11 +135,11 @@ create table connect.opportunity_programs (
 );
 create table connect.stage_events (
  id uuid primary key default gen_random_uuid(),tenant_id uuid not null,
- opportunity_id uuid not null,from_stage_id uuid,to_stage_id uuid not null,
+ opportunity_id uuid not null,pipeline_id uuid not null,from_stage_id uuid,to_stage_id uuid not null,
  changed_by_membership_id uuid,changed_at timestamptz not null default now(),note text,
- foreign key(tenant_id,opportunity_id) references connect.opportunities(tenant_id,id) on delete restrict,
- foreign key(tenant_id,from_stage_id) references connect.pipeline_stages(tenant_id,id) on delete restrict,
- foreign key(tenant_id,to_stage_id) references connect.pipeline_stages(tenant_id,id) on delete restrict,
+ foreign key(tenant_id,pipeline_id,opportunity_id) references connect.opportunities(tenant_id,pipeline_id,id) on delete restrict,
+ foreign key(tenant_id,pipeline_id,from_stage_id) references connect.pipeline_stages(tenant_id,pipeline_id,id) on delete restrict,
+ foreign key(tenant_id,pipeline_id,to_stage_id) references connect.pipeline_stages(tenant_id,pipeline_id,id) on delete restrict,
  foreign key(tenant_id,changed_by_membership_id) references connect.memberships(tenant_id,id) on delete restrict,
  unique(tenant_id,id)
 );
