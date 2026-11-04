@@ -1,6 +1,6 @@
 # UAT-FIN-01 — One-step payout approval and Admin verification
 
-**Branch:** `fix/finance-one-step-admin-verification-20261104`
+**Consolidated working branch:** `fix/role-notifications-lifecycle-20261104`
 **Status:** Committed on a separate branch. **Not merged, not deployed, and no database changed.**
 
 ## Decision model
