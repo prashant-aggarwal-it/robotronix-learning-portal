@@ -79,18 +79,19 @@ export function NotificationCenter({ role }: { role: UserRole }) {
   const actionCount = active.filter((g) => g.notification.priority === "action" && g.members.some((n) => !n.readAt)).length;
   const importantCount = active.filter((g) => g.notification.priority === "important" && g.members.some((n) => !n.readAt)).length;
 
-  async function openGroup(g: NotificationGroup) {
+  async function openGroup(g: NotificationGroup): Promise<boolean> {
     setError("");
     const toRead = g.members.filter((n) => !n.readAt);
-    if (!toRead.length) return;
+    if (!toRead.length) return true;
     const results = await Promise.all(toRead.map((n) => markNotificationRead(n.id)));
     if (results.some((result) => !result.ok)) {
       setError("Some notifications could not be marked as read. Please retry.");
-      return;
+      return false;
     }
     const ids = new Set(toRead.map((n) => n.id));
     const now = new Date().toISOString();
     setRows((prev) => prev.map((n) => ids.has(n.id) ? { ...n, readAt: now } : n));
+    return true;
   }
   async function readAll() {
     setError("");
@@ -139,7 +140,7 @@ export function NotificationCenter({ role }: { role: UserRole }) {
                 onClick={(e) => {
                   // Prevent navigation from interrupting marking all entries in a group.
                   e.preventDefault();
-                  void openGroup(g).then(() => router.push(href));
+                  void openGroup(g).then((ok) => { if (ok) router.push(href); });
                 }}>
                 <span className={`notificationType priority-${n.priority}`}>{n.priority === "action" ? "!" : n.priority === "important" ? "◆" : "•"}</span>
                 <div className="notificationBody">
