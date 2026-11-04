@@ -3,6 +3,8 @@ import "./globals.css";
 import "./theme.css";
 import "./schedule-unified.css";
 import "./typography.css";
+import "./ui-foundations.css";
+import "./ui-role-experiences.css";
 import {GridHorizontalScrollBridge} from "@/components/admin/GridHorizontalScrollBridge";
 import {productionConfigurationError} from "@/lib/config";
 

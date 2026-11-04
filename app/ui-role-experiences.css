@@ -1,0 +1,89 @@
+/* Role-wide UI language for Family and Learner experiences.
+ * Retains the friendly layouts and colors, but matches operational sizing,
+ * legibility and interaction states of the Admin/Trainer workspace.
+ */
+.experienceShell{
+ --rx-ui-ink:#193550;--rx-ui-muted:#647b91;--rx-ui-border:#dce8f1;
+ --rx-ui-blue:#087fa7;--rx-ui-blue-hover:#066d92;
+ --rx-ui-radius:11px;--rx-ui-control-height:42px;
+ color:var(--rx-ui-ink);
+}
+.experienceShell :is(button,input,select,textarea){font-family:var(--rx-font-family)}
+.experienceShell :is(button,a,input,select,textarea):focus-visible,
+.mobileExperienceNav a:focus-visible{outline:2px solid #0894bc;outline-offset:2px}
+.experienceShell button:disabled{opacity:.5;cursor:not-allowed}
+.experienceShell .button:not(.secondary):not(.ghost):not(.danger){
+ border:1px solid transparent;min-height:42px;padding:9px 15px;border-radius:11px;
+ background:linear-gradient(110deg,#235ce2,#078db3);color:white;
+ font-size:14px;font-weight:650;box-shadow:none;
+}
+.experienceShell .button.secondary,.experienceShell .button.ghost{
+ min-height:42px;padding:9px 14px;border:1px solid var(--rx-ui-border);
+ border-radius:11px;background:#fff;color:#254763;font-size:14px;font-weight:650;box-shadow:none;
+}
+.experienceShell .button.ghost:hover:not(:disabled),.experienceShell .button.secondary:hover:not(:disabled){background:#f2f8fc;border-color:#a5cfdf}
+.experienceShell .smallButton,.experienceShell .button.small{min-height:34px;font-size:13px;padding:6px 11px}
+.experienceShell .parentLinkButton,.experienceShell .parentBillingOutlineButton,
+.experienceShell .parentPortalAddLearner,.experienceShell .parentBillingPage .parentLinkButton{
+ min-height:40px;display:inline-flex;align-items:center;justify-content:center;
+ padding:8px 13px;border:1px solid #cddfec;border-radius:11px;
+ background:#fff;color:#126b8c;font-size:13px;font-weight:650;box-shadow:none;text-decoration:none;
+}
+.experienceShell .parentLinkButton:hover,.experienceShell .parentBillingOutlineButton:hover,
+.experienceShell .parentPortalAddLearner:hover{background:#eff8fc;border-color:#a5cfdf}
+.experienceShell .parentInlineLink,.experienceShell .parentLearnerJourneyLink,
+.experienceShell .textLink{font-size:13px;font-weight:650;color:#136f96;text-underline-offset:3px}
+.experienceShell .parentInlineLink:hover,.experienceShell .parentLearnerJourneyLink:hover{color:#075c80}
+.experienceShell .studentAction{
+ border-radius:12px;border:1px solid #d9e8f1;box-shadow:none;
+ font-size:14px;font-weight:650;transition:background .15s,border-color .15s;
+}
+.experienceShell .studentAction.primary{border-color:transparent}
+.experienceShell .studentAction:hover{transform:none;box-shadow:0 5px 15px rgba(30,65,100,.07)}
+.experienceShell :is(.input,.select,input,select,textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]){
+ font-size:14px;font-weight:450;color:#193550;
+}
+.experienceShell :is(.input,.select){border-color:#dce8f1;border-radius:10px}
+.experienceShell :is(.input,.select)::placeholder{font-weight:400;color:#8191a4}
+.experienceShell :is(.formGroup>label,.formGrid>label){
+ font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:#526a81;
+}
+.experienceShell .formGroup{gap:7px}
+.experienceShell .formGroup>.input,.experienceShell .formGrid>label>.input{min-height:42px}
+.experienceShell .experienceLabel,.experienceShell .parentEyebrow{
+ font-size:11px;font-weight:700;letter-spacing:.075em;
+}
+.experienceShell :is(.experienceCard,.parentBillingPackage,.parentBillingRecord){
+ border-color:#dce8f1;border-radius:16px;box-shadow:0 5px 20px rgba(30,64,100,.04);
+}
+.experienceShell .experienceCard h2,.experienceShell .parentSectionHeading h2{
+ font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.3;color:#193550;
+}
+.experienceShell :is(.experienceCard p,.parentSectionHeading p,.parentBillingDisclaimer,.parentRefresh p){
+ font-size:13px;line-height:1.55;font-weight:400;color:#62788c;
+}
+.experienceShell .parentBillingTabs{display:flex;gap:4px;padding:4px;border:1px solid #dce8f1;border-radius:11px;background:#f1f6fa}
+.experienceShell .parentBillingTabs button{
+ border:0;border-radius:8px;min-height:36px;padding:7px 13px;
+ font-size:13px;font-weight:600;color:#4e6880;background:transparent;
+}
+.experienceShell .parentBillingTabs button.active,
+.experienceShell .parentBillingTabs button[aria-selected="true"]{
+ background:#fff;color:#126b8c;box-shadow:0 1px 4px rgba(24,66,100,.1);
+}
+.experienceShell .parentPortalNavigation a,
+.experienceShell .experienceTopbar .nav a,
+.mobileExperienceNav a{font-size:13px;font-weight:600;line-height:1.4}
+.experienceShell .parentPortalNavigation a.active,
+.experienceShell .experienceTopbar .nav a.active,
+.mobileExperienceNav a.active{font-weight:700}
+.experienceShell .statusBadge,.experienceShell .softBadge{font-size:12px;font-weight:600;border-radius:8px}
+.experienceShell .parentBillingKpis strong,.experienceShell .studentMetric strong{font-weight:720}
+.experienceShell .paginationBar .pageButton{font-size:13px;font-weight:650;min-height:34px}
+@media(max-width:760px){
+ .experienceShell .parentPortalHeaderActions{gap:7px}
+ .experienceShell :is(.experienceCard,.parentBillingPackage){border-radius:14px}
+ .experienceShell .parentBillingTabs{max-width:100%;overflow-x:auto}
+ .experienceShell .parentBillingTabs button{white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){.experienceShell .studentAction{transition:none}}

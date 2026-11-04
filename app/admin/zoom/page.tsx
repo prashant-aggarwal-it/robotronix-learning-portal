@@ -165,16 +165,16 @@ function Workspace(){
   </section>}
 
   {tab==="meetings"&&<>
-   {showCreate&&<section className="dataSection">
-    <div className="panelHeader"><div><div className="eyebrow">NEW GENERAL MEETING</div><h2>Create without opening Zoom</h2><p>Robotronix automatically chooses an available host. Share the guest link with anyone you invite.</p></div><button className="button secondary" onClick={()=>setShowCreate(false)}>Close</button></div>
-    <div className="formGrid">
+   {showCreate&&<section className="dataSection zoomCreateMeetingPanel rxMeetingComposer">
+    <div className="panelHeader"><div><div className="eyebrow">NEW GENERAL MEETING</div><h2>Create a meeting</h2><p>Robotronix automatically chooses an available host. Share the guest link with anyone you invite.</p></div><button className="button secondary" onClick={()=>setShowCreate(false)}>Close</button></div>
+    <div className="formGrid zoomMeetingFormGrid rxMeetingFields">
      <label id="field-meetingTitle" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingTitle")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Meeting title *<input className="input" value={newMeeting.title} onChange={e=>setNewMeeting(v=>Object.assign({},v,{title:e.target.value}))} placeholder="e.g. Demo with ABC School"/></label>
      <label id="field-meetingStart" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingStart")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Start time (optional)<input className="input" type="datetime-local" value={newMeeting.startAt} onChange={e=>setNewMeeting(v=>Object.assign({},v,{startAt:e.target.value}))}/></label>
-     <label id="field-meetingDuration" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingDuration")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Duration<select className="select" value={newMeeting.durationMinutes} onChange={e=>setNewMeeting(v=>Object.assign({},v,{durationMinutes:Number(e.target.value)}))}><option value={30}>30 minutes</option><option value={45}>45 minutes</option><option value={60}>60 minutes</option><option value={90}>90 minutes</option><option value={120}>2 hours</option></select></label>
-     <label>Recording<select className="select" value={newMeeting.recording?"yes":"no"} onChange={e=>setNewMeeting(v=>Object.assign({},v,{recording:e.target.value==="yes"}))}><option value="yes">Cloud recording on</option><option value="no">Do not record</option></select></label>
+     <label id="field-meetingDuration" tabIndex={-1} style={meetingIssues.some(x=>x.field==="meetingDuration")?{outline:"2px solid #dc2626",outlineOffset:3}:undefined}>Duration<select className="input" value={newMeeting.durationMinutes} onChange={e=>setNewMeeting(v=>Object.assign({},v,{durationMinutes:Number(e.target.value)}))}><option value={30}>30 minutes</option><option value={45}>45 minutes</option><option value={60}>60 minutes</option><option value={90}>90 minutes</option><option value={120}>2 hours</option></select></label>
+     <label>Recording<select className="input" value={newMeeting.recording?"yes":"no"} onChange={e=>setNewMeeting(v=>Object.assign({},v,{recording:e.target.value==="yes"}))}><option value="yes">Cloud recording on</option><option value="no">Do not record</option></select></label>
      <label style={{gridColumn:"1 / -1"}}>Notes<input className="input" value={newMeeting.notes} onChange={e=>setNewMeeting(v=>Object.assign({},v,{notes:e.target.value}))} placeholder="Optional internal purpose or context"/></label>
     </div>
-    <FormErrorSummary issues={meetingIssues}/>{error&&<div className="errorBanner" role="alert">{error}</div>}<div className="row topGap"><button className="button" disabled={busy} onClick={createMeeting}>Create Meeting</button><button className="button secondary" onClick={()=>setShowCreate(false)}>Cancel</button></div>
+    <FormErrorSummary issues={meetingIssues}/>{error&&<div className="errorBanner" role="alert">{error}</div>}<div className="row topGap zoomMeetingFormActions"><button className="button" disabled={busy} onClick={createMeeting}>Create Meeting</button><button className="button secondary" onClick={()=>setShowCreate(false)}>Cancel</button></div>
    </section>}
    <section className="dataSection">
     <div className="panelHeader"><div><div className="eyebrow">DEMOS · CLIENTS · INTERNAL</div><h2>General meetings</h2><p>These meetings do not create learner attendance, progress or payroll records.</p></div><button className="button" onClick={()=>setShowCreate(true)}>+ New Meeting</button></div>

@@ -6,14 +6,15 @@
 .zoomAdminRefresh .dataSection{margin-bottom:17px}
 .zoomAdminRefresh .panelHeader h2{font-size:21px;letter-spacing:-.02em}
 .zoomAdminRefresh .zoomOperationsActions{gap:8px;flex-wrap:wrap}
-.zoomAdminRefresh .zoomActionButton{appearance:none;border:1px solid transparent;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:13px;font-weight:700;line-height:1.25;padding:10px 14px;min-height:39px;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+.zoomAdminRefresh .zoomActionButton{appearance:none;border:1px solid transparent;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:14px;font-weight:800;line-height:1.25;padding:12px 17px;min-height:44px;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
 .zoomAdminRefresh .zoomActionButton:focus-visible,.zoomAdminRefresh .zoomTab:focus-visible,.zoomAdminRefresh .zoomTextButton:focus-visible,.zoomAdminRefresh .zoomActionMenuContent button:focus-visible{outline:3px solid #57b5d4;outline-offset:2px}
-.zoomAdminRefresh .zoomActionPrimary{background:#087ea3;color:white;box-shadow:none}
-.zoomAdminRefresh .zoomActionPrimary:hover{background:#066b92}
-.zoomAdminRefresh .zoomActionOutline{background:white;color:#28506d;border-color:#d6e3ee}
-.zoomAdminRefresh .zoomActionOutline:hover{background:#f1f8fc;border-color:#aacfe0}
+.zoomAdminRefresh .zoomActionPrimary{background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;box-shadow:0 10px 25px rgba(109,60,201,.18)}
+.zoomAdminRefresh .zoomActionPrimary:hover:not(:disabled){filter:brightness(1.05);transform:translateY(-1px)}
+[data-portal-theme="ai-flow"] .zoomAdminRefresh .zoomActionPrimary{background:linear-gradient(105deg,#842df7,#3258ff 62%,#05bee7);box-shadow:0 10px 27px rgba(64,80,226,.18)}
+.zoomAdminRefresh .zoomActionOutline{background:#fff;color:#273553;border-color:#dce4f5}
+.zoomAdminRefresh .zoomActionOutline:hover:not(:disabled){background:#f7f4ff;border-color:#cfc9f2}
 .zoomAdminRefresh button:disabled{opacity:.52;cursor:not-allowed}
-.zoomAdminRefresh .zoomActionSmall{padding:8px 11px;min-height:33px;font-size:12px}
+.zoomAdminRefresh .zoomActionSmall{padding:8px 12px;min-height:34px;font-size:12px;border-radius:10px}
 .zoomSegmentedTabs{display:flex;flex-wrap:wrap;gap:3px;align-items:center;width:max-content;max-width:100%;padding:4px;border:1px solid #dce8f1;background:#f2f6fa;border-radius:12px}
 .zoomAdminRefresh .zoomTab{appearance:none;display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:7px 14px;border:0;border-radius:8px;background:transparent;color:#57718a;cursor:pointer;font:inherit;font-size:13px;font-weight:700}
 .zoomAdminRefresh .zoomTab:hover{background:#e9f2f8;color:#234765}
@@ -69,3 +70,19 @@
 @media(max-width:1050px){.zoomHostSettings{grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.zoomAdminRefresh .zoomVideoTable{overflow-x:auto}.zoomAdminRefresh .zoomVideoTable table{min-width:690px}}
 @media(max-width:700px){.zoomAdminRefresh .zoomOperationsActions{width:100%}.zoomHostToolbar{align-items:stretch}.zoomHostConnectControls{width:100%}.zoomHostConnectControls input{flex:1;min-width:130px}.zoomHostSettings{grid-template-columns:repeat(2,minmax(0,1fr))}.zoomHostCardTop{padding:14px}.zoomHostSettings{padding:13px}.zoomSegmentedTabs{width:100%}.zoomAdminRefresh .zoomTab{flex:1;justify-content:center;padding:7px 6px}.zoomAdminRefresh .zoomVideoMeetingHeader{padding:13px}}
 @media(max-width:420px){.zoomHostSettings{grid-template-columns:1fr 1fr}.zoomAdminRefresh .zoomTab{font-size:11px;gap:4px}.zoomAdminRefresh .zoomTabCount{min-width:17px}.zoomHostStatus{align-items:flex-end;flex-direction:column}}
+
+
+/* Zoom meeting creation: use the portal's form typography, control and spacing system. */
+.zoomAdminRefresh .zoomCreateMeetingPanel{padding:22px 24px;border:1px solid #e0e7f5;border-radius:20px;background:#fff;box-shadow:0 8px 28px rgba(27,52,91,.045)}
+.zoomAdminRefresh .zoomCreateMeetingPanel .panelHeader{align-items:flex-start;margin-bottom:22px;gap:16px}
+.zoomAdminRefresh .zoomCreateMeetingPanel .panelHeader h2{font-size:21px;line-height:1.25;margin:5px 0 7px}
+.zoomAdminRefresh .zoomCreateMeetingPanel .panelHeader p{font-size:13px;line-height:1.6;max-width:650px}
+.zoomAdminRefresh .zoomMeetingFormGrid{column-gap:18px;row-gap:18px}
+.zoomAdminRefresh .zoomMeetingFormGrid>label{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:7px;color:#33425e;font-size:13px;line-height:1.35;font-weight:700}
+.zoomAdminRefresh .zoomMeetingFormGrid :is(input.input,select.input){display:block;width:100%;box-sizing:border-box;min-width:0;min-height:44px;border:1px solid #dce4f5;border-radius:12px;background:#fff;color:#25344d;font-size:14px;font-weight:500;line-height:1.4;padding:10px 13px;box-shadow:none}
+.zoomAdminRefresh .zoomMeetingFormGrid :is(input.input,select.input)::placeholder{color:#8490a7;font-weight:400;opacity:1}
+.zoomAdminRefresh .zoomMeetingFormGrid :is(input.input,select.input):focus-visible{outline:2px solid #7455f5;outline-offset:1px;border-color:#7455f5}
+.zoomAdminRefresh .zoomMeetingFormGrid input[type="datetime-local"]{color-scheme:light}
+.zoomAdminRefresh .zoomMeetingFormActions{gap:10px;flex-wrap:wrap;margin-top:20px}
+.zoomAdminRefresh .zoomMeetingFormActions .button{min-height:43px}
+@media(max-width:700px){.zoomAdminRefresh .zoomCreateMeetingPanel{padding:16px}.zoomAdminRefresh .zoomMeetingFormGrid{grid-template-columns:1fr}.zoomAdminRefresh .zoomMeetingFormGrid>label{grid-column:1/-1}.zoomAdminRefresh .zoomMeetingFormActions .button{flex:1 1 135px}}
