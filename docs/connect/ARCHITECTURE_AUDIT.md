@@ -1,3 +1,5 @@
+> **Historical design (superseded 2026-11-05).** This document describes the former Portal-coupled CRM prototype and is retained as design history only. The current standalone multi-tenant Connect architecture is documented in [SAAS_ARCHITECTURE_DECISION.md](SAAS_ARCHITECTURE_DECISION.md). Do not implement or apply migrations from this historical specification.
+
 # Robotronix Connect — Architecture Audit & Implementation Gate
 
 Date: 2026-11-05
