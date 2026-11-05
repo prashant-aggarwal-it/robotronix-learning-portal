@@ -8,7 +8,7 @@ export const dynamic="force-dynamic";
 
 // Each mutation belongs to exactly one business resource; callers cannot invoke arbitrary SQL.
 const operations:Record<string,readonly string[]>={
- people:["create_person","update_person","add_person_role","add_contact_method","link_people"],
+ people:["create_contact","create_person","update_person","add_person_role","add_contact_method","link_people"],
  households:["create_household","link_household_member"],
  organizations:["create_organization","link_organization_contact"],
  programs:["create_program"],
