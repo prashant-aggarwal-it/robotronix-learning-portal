@@ -48,6 +48,8 @@ export default function ConnectPage(){
  const [showContactForm,setShowContactForm]=useState(false);
  const [selectedPerson,setSelectedPerson]=useState<string|null>(null);
  const [selectedOpportunity,setSelectedOpportunity]=useState<string|null>(null);
+ const [assignees,setAssignees]=useState<Array<{id:string;label:string;role:string}>>([]);
+ const [activityNote,setActivityNote]=useState("");
  const [overview,setOverview]=useState<ConnectOverview>(emptyOverview);
  const [people,setPeople]=useState<ConnectPerson[]>([]);
  const [inquiries,setInquiries]=useState<ConnectInquiry[]>([]);
@@ -132,6 +134,15 @@ export default function ConnectPage(){
  const tenant=workspaces.find(x=>x.tenant_id===tenantId);
  const canConfigure=["owner","admin","manager"].includes(tenant?.membership_role||"");
  const canWrite=Boolean(tenant&&tenant.membership_role!=="viewer");
+ useEffect(()=>{
+  let cancelled=false;
+  setAssignees([]);
+  if(!tenantId||!selectedOpportunity||!canConfigure)return;
+  void connectFetch<{assignees:Array<{id:string;label:string;role:string}>}>(
+   "/api/connect/workspaces/"+tenantId+"/assignees"
+  ).then(r=>{if(!cancelled)setAssignees(r.assignees||[]);}).catch(()=>{if(!cancelled)setAssignees([]);});
+  return ()=>{cancelled=true;};
+ },[tenantId,selectedOpportunity,canConfigure]);
  const [loginEmail,setLoginEmail]=useState("");
  const [loginPassword,setLoginPassword]=useState("");
  const [newWorkspace,setNewWorkspace]=useState("");
@@ -229,6 +240,22 @@ export default function ConnectPage(){
    });
    setAppointmentTitle("");setAppointmentStarts("");setAppointmentEnds("");
   },"Appointment scheduled.");
+ }
+ async function saveNote(e:FormEvent){
+  e.preventDefault();if(!activityNote.trim()||(!selectedOpportunity&&!selectedPerson))return;
+  await run(async()=>{
+   await crmCommand(tenantId,"activities","log_activity",{
+    opportunityId:selectedOpportunity||undefined,personId:selectedPerson||undefined,
+    kind:"note",summary:activityNote.trim()
+   });
+   setActivityNote("");
+  },"Activity note saved.");
+ }
+ async function updateAssignment(opp:ConnectOpportunity,memberId:string){
+  if(!memberId||memberId===opp.owner_membership_id)return;
+  await run(()=>crmCommand(tenantId,"opportunities","assign_opportunity",{
+   opportunityId:opp.id,ownerMemberId:memberId,version:opp.version
+  }),"Admission reassigned.");
  }
  async function updateStage(opp:ConnectOpportunity,stageId:string){
   if(opp.stage_id===stageId)return;
@@ -479,6 +506,12 @@ export default function ConnectPage(){
        {pipelines.find(p=>p.id===selectedLead.pipeline_id)?.stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
       </select></label>}
       {!canWrite&&<span className="cx-status">{selectedLead.stage_name}</span>}
+      {canConfigure&&<label>Assigned counsellor
+       <select value={selectedLead.owner_membership_id||""} disabled={busy||!assignees.length}
+        onChange={e=>void updateAssignment(selectedLead,e.target.value)}>
+        <option value="">Unassigned</option>
+        {assignees.map(a=><option key={a.id} value={a.id}>{a.label} · {shortLabel(a.role)}</option>)}
+       </select></label>}
      </section>}
      {selectedContact&&<section className="cx-detail-card"><h3>Recent enquiries</h3>
       {inquiries.filter(i=>i.person_id===selectedPerson).length?
@@ -489,6 +522,11 @@ export default function ConnectPage(){
      {selectedLead&&<section className="cx-detail-card"><h3>Activity timeline</h3>
        {timeline.length?timeline.map(x=><div className="cx-history-item" key={x.id}><span>●</span><div><strong>{shortLabel(x.title||x.kind||x.type||"Activity")}</strong><small>{x.summary||"Stage updated"} · {dateLabel(x.event_time||x.occurred_at)}</small></div></div>):
        <p className="cx-muted">No activities loaded yet.</p>}</section>}
+     {canWrite&&(selectedContact||selectedLead)&&<section className="cx-detail-card"><h3>Record a call or counselling note</h3>
+      <form className="cx-form" onSubmit={saveNote}><label>Note<textarea required rows={3} maxLength={3000} placeholder="What was discussed and what happens next?"
+       value={activityNote} onChange={e=>setActivityNote(e.target.value)}/></label>
+       <button className="cx-secondary" disabled={busy||!activityNote.trim()}>Save note</button>
+      </form></section>}
      {canWrite&&selectedContact&&pipelines.length>0&&<section className="cx-detail-card"><h3>Start a new admission</h3>
       <form className="cx-form" onSubmit={startAdmission}>
        <label>Admissions pipeline<select required value={newAdmissionPipeline} onChange={e=>setNewAdmissionPipeline(e.target.value)}><option value="">Choose a pipeline</option>
