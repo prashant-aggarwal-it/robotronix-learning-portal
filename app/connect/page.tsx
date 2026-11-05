@@ -484,7 +484,7 @@ export default function ConnectPage(){
      </section>
     </div>}
     {advanced&&<ConnectAutomationSettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
-    {advanced&&canConfigure&&<ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
+    {canConfigure&&<ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
     </>}
    </div>
   </div>
