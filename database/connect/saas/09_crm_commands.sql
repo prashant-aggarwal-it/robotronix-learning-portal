@@ -19,6 +19,51 @@ begin
   raise exception 'Management role required' using errcode='42501';end if;
 
  case p_action
+ when 'capture_lead' then
+  -- Single transaction: either contact, contact details, inquiry and optional opportunity all exist, or none do.
+  v_name:=nullif(btrim(p_data->>'name'),'');
+  v_source:=nullif(btrim(p_data->>'source'),'');
+  if v_name is null or length(v_name)>150 or v_source is null or length(v_source)>80 then
+   raise exception 'Name and enquiry source are required' using errcode='22023';end if;
+  v_id:=nullif(p_data->>'personId','')::uuid;
+  if v_id is null then
+   insert into connect.people(tenant_id,full_name) values(p_tenant_id,v_name) returning id into v_id;
+   insert into connect.person_roles(tenant_id,person_id,role) values(p_tenant_id,v_id,'contact');
+   if nullif(btrim(p_data->>'email'),'') is not null then
+    v_token:=lower(btrim(p_data->>'email'));
+    if length(v_token)>254 or position('@' in v_token)<2 then
+     raise exception 'Invalid email address' using errcode='22023';end if;
+    insert into connect.contact_methods(tenant_id,person_id,kind,normalized_value,display_value,is_primary)
+    values(p_tenant_id,v_id,'email',v_token,v_token,true);
+   end if;
+   if nullif(btrim(p_data->>'phone'),'') is not null then
+    v_token:=btrim(p_data->>'phone');
+    if length(v_token)>35 then raise exception 'Invalid phone' using errcode='22023';end if;
+    insert into connect.contact_methods(tenant_id,person_id,kind,normalized_value,display_value,is_primary)
+    values(p_tenant_id,v_id,'mobile',v_token,v_token,true);
+   end if;
+  elsif not exists(select 1 from connect.people where tenant_id=p_tenant_id and id=v_id and status='active') then
+   raise exception 'Contact not found' using errcode='42501';
+  end if;
+  v_extra:=null;
+  if nullif(p_data->>'pipelineId','') is not null then
+   v_pipeline:=(p_data->>'pipelineId')::uuid;v_stage:=(p_data->>'stageId')::uuid;
+   if not exists(select 1 from connect.pipeline_stages where tenant_id=p_tenant_id
+       and pipeline_id=v_pipeline and id=v_stage and outcome='open')
+   then raise exception 'Choose an open admissions stage' using errcode='22023';end if;
+   insert into connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id,owner_membership_id)
+   values(p_tenant_id,v_pipeline,v_stage,
+    coalesce(nullif(btrim(p_data->>'title'),''),v_name||' — enquiry'),v_id,v_member)
+   returning id into v_extra;
+   insert into connect.stage_events(tenant_id,opportunity_id,pipeline_id,to_stage_id,changed_by_membership_id,note)
+   values(p_tenant_id,v_extra,v_pipeline,v_stage,v_member,'Created from enquiry');
+  end if;
+  insert into connect.inquiries(tenant_id,person_id,opportunity_id,source,summary)
+  values(p_tenant_id,v_id,v_extra,v_source,left(p_data->>'summary',2000))
+  returning id into v_old;
+  insert into connect.audit_events(tenant_id,actor_membership_id,event_type,entity_type,entity_id,metadata)
+  values(p_tenant_id,v_member,'capture_lead','inquiry',v_old,jsonb_build_object('personId',v_id,'opportunityId',v_extra));
+  return jsonb_build_object('ok',true,'id',v_old,'personId',v_id,'opportunityId',v_extra);
  when 'create_person' then
   v_name:=nullif(btrim(p_data->>'name'),'');
   if v_name is null or length(v_name)>150 then raise exception 'Invalid contact name' using errcode='22023';end if;
