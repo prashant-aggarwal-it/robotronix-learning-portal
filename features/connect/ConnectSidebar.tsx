@@ -1,6 +1,6 @@
 "use client";
-import Link from "next/link";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import type {ConnectWorkspace} from "@/features/connect/api/client";
 import {initials,shortLabel,type Section} from "@/features/connect/model";
 
@@ -12,11 +12,7 @@ export function ConnectSidebar({showMobileNav,onToggleMobile,canOpenPortal,tenan
   <button className="cx-mobile-menu" onClick={onToggleMobile} aria-label="Toggle navigation">☰</button>
   <aside className={"cx-sidebar "+(showMobileNav?"cx-mobile-open":"")}>
    <div className="cx-logo"><span className="cx-logo-mark">C</span><span>Robotronix <b>Connect</b></span></div>
-   {canOpenPortal&&<div className="cx-app-switcher" aria-label="Application switcher">
-    <span className="cx-nav-label">APPLICATIONS</span>
-    <Link href="/admin" className="cx-app-switch-link">▦ <span>Learning Portal</span></Link>
-    <span className="cx-app-switch-current" aria-current="page">◎ <span>Connect CRM</span></span>
-   </div>}
+   {canOpenPortal&&<ApplicationSwitcher current="connect"/>}
    <div className="cx-workspace-picker">
     <span>INSTITUTE WORKSPACE</span>
     <select aria-label="Choose institute" value={tenantId} onChange={e=>onWorkspaceChange(e.target.value)}>
