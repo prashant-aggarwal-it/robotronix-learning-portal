@@ -31,7 +31,7 @@ begin
  join connect.tenants t on t.id=m.tenant_id
  where m.user_id=p_actor_id and m.tenant_id=p_tenant_id and m.status='active'
    and t.status in ('trial','active');
- if v_role not in ('owner','admin') then raise exception 'Channel administration required' using errcode='42501';end if;
+ if v_role is null or v_role not in ('owner','admin') then raise exception 'Channel administration required' using errcode='42501';end if;
  if p_provider not in ('whatsapp','meta_leads','email','website')
    or p_external_id is null or length(btrim(p_external_id)) not between 4 and 200
    or p_label is null or length(btrim(p_label)) not between 2 and 100 then
