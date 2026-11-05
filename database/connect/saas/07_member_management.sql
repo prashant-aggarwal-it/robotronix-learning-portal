@@ -6,6 +6,8 @@ create or replace function public.connect_update_member(
 as $fn$
 declare actor_role text; target_role text; target_user uuid;
 begin
+ -- Serialize membership changes within this tenant to protect the final owner.
+ perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(p_tenant_id::text,0));
  select m.role into actor_role from connect.memberships m
  join connect.tenants t on t.id=m.tenant_id
  where m.tenant_id=p_tenant_id and m.user_id=p_actor_id
