@@ -28,4 +28,4 @@ jobs:
         env:
           NEXT_PUBLIC_APP_ENV: demo
       - name: Structure and communication checks
-        run: npm run check:structure && npm run check:communication && node scripts/check-connect-db-layout.mjs
+        run: npm run check:structure && npm run check:communication && node scripts/check-connect-db-layout.mjs && node scripts/check-connect-code-layout.mjs
