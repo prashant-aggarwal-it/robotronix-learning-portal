@@ -10,6 +10,7 @@ export type ConnectPerson={
 };
 export type ConnectInquiry={
  id:string;person_id:string|null;opportunity_id:string|null;source:string;summary:string|null;
+ category_id:string|null;category_label:string|null;
  received_at:string;contact_name:string|null;contact_detail:string|null;
  opportunity_title:string|null;stage_name:string|null;outcome:string|null
 };
