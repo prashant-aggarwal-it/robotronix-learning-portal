@@ -14,13 +14,13 @@ const operations:Record<string,readonly string[]>={
  programs:["create_program"],
  pipelines:["create_pipeline","add_stage"],
  opportunities:["create_opportunity","link_opportunity_person","link_opportunity_program","move_opportunity","assign_opportunity"],
- inquiries:["create_inquiry"],
+ inquiries:["create_inquiry","capture_lead"],
  tasks:["create_task","update_task","complete_task"],
  activities:["log_activity"],
  appointments:["create_appointment","reschedule_appointment","finish_appointment"],
 };
 const resources=new Set([
- ...Object.keys(operations),"contact_matches","timeline"
+ ...Object.keys(operations),"contact_matches","timeline","overview"
 ]);
 
 type Ctx={params:Promise<{tenantId:string;resource:string}>};
