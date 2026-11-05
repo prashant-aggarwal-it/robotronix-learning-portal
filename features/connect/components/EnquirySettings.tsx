@@ -1,8 +1,7 @@
 "use client";
 import {FormEvent,useCallback,useEffect,useRef,useState} from "react";
 import {connectFetch} from "@/features/connect/api/client";
-export type EnquiryCategory={id:string;label:string;active:boolean;sortOrder:number};
-export type EnquiryPreferences={mode:"simple"|"advanced";categories:EnquiryCategory[]};
+import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
 export async function readEnquiryPreferences(tenantId:string){
  const r=await connectFetch<{preferences:EnquiryPreferences}>(`/api/connect/workspaces/${tenantId}/enquiry-preferences`);
  return r.preferences;
