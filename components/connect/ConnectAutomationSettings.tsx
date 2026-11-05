@@ -1,5 +1,5 @@
 "use client";
-import {FormEvent,useCallback,useEffect,useState} from "react";
+import {FormEvent,useCallback,useEffect,useRef,useState} from "react";
 import {connectFetch} from "@/lib/connect-client";
 export type Policy={assignmentEnabled:boolean;initialFollowupEnabled:boolean;followupDelayHours:number;remindersEnabled:boolean;reminderAdvanceMinutes:number};
 const defaults:Policy={assignmentEnabled:true,initialFollowupEnabled:true,followupDelayHours:24,remindersEnabled:true,reminderAdvanceMinutes:30};
@@ -9,24 +9,26 @@ export function ConnectAutomationSettings({tenantId,canManage}:{tenantId:string;
  const[busy,setBusy]=useState(false);
  const[error,setError]=useState("");
  const[notice,setNotice]=useState("");
+ const requestId=useRef(0);
  const load=useCallback(async()=>{
+  const id=++requestId.current;
   setLoading(true);setError("");
   try{
    const r=await connectFetch<{settings:Policy}>("/api/connect/workspaces/"+tenantId+"/automation");
-   setPolicy(r.settings);
-  }catch(e){setError(e instanceof Error?e.message:"Could not load automation settings.");}
-  finally{setLoading(false);}
+   if(requestId.current===id)setPolicy(r.settings);
+  }catch(e){if(requestId.current===id)setError(e instanceof Error?e.message:"Could not load automation settings.");}
+  finally{if(requestId.current===id)setLoading(false);}
  },[tenantId]);
- useEffect(()=>{void load();},[load]);
+ useEffect(()=>{setPolicy(defaults);setNotice("");setBusy(false);void load();return ()=>{requestId.current++;};},[load]);
  async function save(e:FormEvent){
-  e.preventDefault();if(busy)return;setBusy(true);setError("");setNotice("");
+  e.preventDefault();if(busy)return;const generation=++requestId.current;setBusy(true);setError("");setNotice("");
   try{
    const r=await connectFetch<{settings:Policy}>("/api/connect/workspaces/"+tenantId+"/automation",{
     method:"PATCH",body:JSON.stringify(policy)
    });
-   setPolicy(r.settings);setNotice("Automation settings saved.");
-  }catch(e){setError(e instanceof Error?e.message:"Unable to save automation settings.");}
-  finally{setBusy(false);}
+   if(requestId.current===generation){setPolicy(r.settings);setNotice("Automation settings saved.");}
+  }catch(e){if(requestId.current===generation)setError(e instanceof Error?e.message:"Unable to save automation settings.");}
+  finally{if(requestId.current===generation)setBusy(false);}
  }
  return <section className="cx-panel cx-integration-panel">
   <div className="cx-panel-header"><div><h2>Automation rules</h2><p>Assign new admissions, create follow-ups and remind your team. Messages are not sent to families automatically.</p></div></div>
