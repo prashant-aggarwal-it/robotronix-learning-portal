@@ -18,7 +18,7 @@ begin
  case p_resource
  when 'overview' then
   select jsonb_build_array(jsonb_build_object(
-   'newEnquiries',(select count(*) from connect.inquiries where tenant_id=p_tenant_id and received_at>=date_trunc('day',now())),
+   'newEnquiries',(select count(*) from connect.inquiries where tenant_id=p_tenant_id and received_at>=date_trunc('day',now(),(select t.timezone from connect.tenants t where t.id=p_tenant_id))),
    'totalEnquiries',(select count(*) from connect.inquiries where tenant_id=p_tenant_id),
    'openOpportunities',(select count(*) from connect.opportunities o join connect.pipeline_stages st on st.tenant_id=o.tenant_id and st.id=o.stage_id where o.tenant_id=p_tenant_id and st.outcome='open'),
    'wonOpportunities',(select count(*) from connect.opportunities o join connect.pipeline_stages st on st.tenant_id=o.tenant_id and st.id=o.stage_id where o.tenant_id=p_tenant_id and st.outcome='won'),
