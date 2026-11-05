@@ -1,0 +1,46 @@
+import {NextRequest} from "next/server";
+import {acceptedEvent,intakeError,invokeIngest,readRawLimited,verifySvix,safeString} from "@/lib/server/connect-ingestion";
+export const runtime="nodejs";
+export const dynamic="force-dynamic";
+
+function mailbox(value:string){
+ const match=value.match(/<([^<>\s]+@[^<>\s]+)>/);
+ return (match?.[1]||value).trim().toLowerCase();
+}
+function senderName(value:string){
+ const name=value.replace(/<[^<>]*>/g,"").replace(/^["']|["']$/g,"").trim();
+ return name||mailbox(value).split("@")[0]||"Email contact";
+}
+export async function POST(req:NextRequest){
+ const secret=process.env.CONNECT_RESEND_WEBHOOK_SECRET;
+ if(!secret)return intakeError("Inbound email is not configured",503);
+ const raw=await readRawLimited(req,64000);
+ if(raw===null)return intakeError("Payload too large",413);
+ if(!verifySvix(raw,req.headers,secret))return intakeError("Invalid email webhook signature",401);
+ let event:any;
+ try{event=JSON.parse(raw);}catch{return intakeError("Invalid email webhook event",400);}
+ // Resend inbound email webhooks contain metadata; the body requires a separate
+ // Receiving API call. Only sender, recipient and subject are ingested here.
+ if(event?.type!=="email.received"&&event?.type!=="inbox.email.received")
+  return acceptedEvent({ignored:true});
+ const data=event.data||{},emailId=safeString(data.email_id,250);
+ const from=safeString(data.from,350);
+ const recipients=Array.isArray(data.to)?data.to:[data.to].filter(Boolean);
+ if(!emailId||!from||!recipients.length)return intakeError("Incomplete email metadata",400);
+ let processed=0,duplicates=0,failed=0;
+ for(const rawTo of recipients.slice(0,10)){
+  const to=mailbox(safeString(rawTo,350));
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){failed++;continue;}
+  try{
+   const result:any=await invokeIngest("connect_ingest_channel",{
+    p_provider:"email",p_external_account_id:to,p_event_id:emailId,
+    p_name:senderName(from).slice(0,150),p_email:mailbox(from),p_phone:null,
+    p_summary:(safeString(data.subject,1500)||"New inbound email enquiry")
+   });
+   if(result?.duplicate)duplicates++;else processed++;
+  }catch{failed++;}
+ }
+ // Let Resend retry if one mapped inbox failed; idempotency protects the others.
+ if(failed)return intakeError("Email delivery could not be processed",503);
+ return acceptedEvent({processed,duplicates});
+}
