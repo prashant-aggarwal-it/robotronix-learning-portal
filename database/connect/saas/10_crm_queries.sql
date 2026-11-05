@@ -73,6 +73,11 @@ begin
   from (select id,title,status,person_id,opportunity_id,assignee_membership_id,due_at,completed_at,created_at
     from connect.tasks where tenant_id=p_tenant_id and (v_id is null or id=v_id)
     order by due_at nulls last,id limit v_limit offset v_offset) q;
+ when 'activities' then
+  select coalesce(jsonb_agg(to_jsonb(q) order by q.occurred_at desc),'[]'::jsonb) into v_result
+  from (select id,opportunity_id,person_id,actor_membership_id,kind,summary,occurred_at
+   from connect.activities where tenant_id=p_tenant_id and (v_id is null or id=v_id)
+   order by occurred_at desc,id limit v_limit offset v_offset) q;
  when 'appointments' then
   select coalesce(jsonb_agg(to_jsonb(q) order by q.starts_at),'[]'::jsonb) into v_result
   from (select id,title,kind,status,person_id,opportunity_id,owner_membership_id,starts_at,ends_at
