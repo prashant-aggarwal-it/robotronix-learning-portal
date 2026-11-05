@@ -1,0 +1,48 @@
+# Connect database: source, history and verification
+
+Connect owns the private PostgreSQL `connect` schema and service-only `public.connect_*` RPCs. The Learning Portal owns its separate `public` tables and installer. **Do not run Connect SQL through the Portal fresh-install generator.**
+
+## Directory guide
+
+- `saas/` — SQL definitions and **historical applied changes**. Preserve their content and ordering; these files are not a one-click migration runner.
+- `tests/` — read-only and rollback-only verification scripts. **Never apply these as migrations or ship them with production installation.**
+- `README.md` — current operating instructions and safety rules.
+
+## Source classification
+
+| File in `saas/` | Purpose | Status |
+| --- | --- | --- |
+| `01_connect_independent_schema.sql` | Foundation schema | Canonical initial source |
+| `02_retire_empty_prototype_dev_only.sql` | Remove empty legacy prototype tables | Historical DEV-only; **never rerun** |
+| `03_harden_canonical_model_dev.sql` | Early model correction | Historical DEV-only; folded into foundation |
+| `05_workspace_security.sql` | Workspace access and invitations | Active schema/RPC source |
+| `06_auth_user_permission_fix_dev.sql` | Early DEV compatibility correction | Historical; folded into current source |
+| `07_member_management.sql` | Staff membership RPCs | Active |
+| `09_crm_commands.sql` | CRM write RPCs | Active |
+| `10_crm_queries.sql` | CRM read RPCs | Active |
+| `12_multichannel_ingestion.sql` | Inbound integrations | Active |
+| `15_workflow_automation.sql` | Tasks, reminders and automation | Active |
+| `16_schedule_inapp_reminders_dev.sql` | Development cron scheduling | DEV-only; never automatically promote |
+| `18_admissions_analytics.sql` | Analytics and reporting | Active |
+| `20_simple_mode_enquiry_classification.sql` | Simple Mode and categories | Active |
+| `21_intake_first_inbound.sql` | Enquiry-first inbound policy | Active |
+| `23_unqualified_enquiry_followups.sql` | Initial follow-ups | Active |
+
+The numbers deliberately retain original order and gaps where verification files were relocated. **Do not renumber applied source files.**
+
+## Verification
+
+`tests/` contains `verify_foundation.sql`, `verify_workspace_security_dev.sql`, `verify_crm_phase2b_dev.sql`, `verify_multichannel_dev.sql`, `verify_phase3b_dev.sql`, `verify_analytics_dev.sql` and `verify_simple_mode_dev.sql`.
+
+Most tests need two confirmed DEV Auth accounts. Rollback-only tests should not leave fixture records. The foundation check reports live counts; do not assume historical counts remain current. Check RLS, privileges, tenant isolation and the application separately.
+
+## Migration safety
+
+1. Verify the exact Supabase project ID before executing any SQL. Current Connect work is DEV only; **do not touch Production without explicit approval**.
+2. Compare the repository SQL to `supabase_migrations.schema_migrations` / the Supabase migration history. The historical migration names are **not one-to-one** with numbered source files; later incremental fixes may have been applied directly.
+3. Never execute the full `saas/` directory in filename order: it contains historical DEV-only cleanup and cron operations.
+4. Never reapply an already applied migration, drop/recreate Connect tables, or reset Portal data as part of a file reorganization.
+5. Before a new environment is created, produce and test a reviewed **canonical installation sequence** in an isolated empty project, then run tests. The current source list is not yet certified as a fresh-install bundle.
+6. Preserve historical SQL needed to understand applied changes; remove only proven obsolete copies or stale references, not migration provenance.
+
+The Learning Portal's existing `database/01_install/`, `database/02_qa/` and related scripts remain unchanged during this Connect-only cleanup.
