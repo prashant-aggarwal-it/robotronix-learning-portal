@@ -7,11 +7,11 @@ import {connectFetch,crmCommand,crmList,
  type ConnectWorkspace,type ConnectPerson,type ConnectInquiry,type ConnectOpportunity,
  type ConnectPipeline,type ConnectTask,type ConnectAppointment,type ConnectOverview,
  type ConnectActivity,type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
-import {ChannelSettings} from "@/components/connect/ChannelSettings";
-import {ConnectAutomationSettings} from "@/components/connect/ConnectAutomationSettings";
-import {ConnectReminderInbox,ConnectConversationHistory} from "@/components/connect/ConnectCommunications";
-import {ConnectReports} from "@/components/connect/ConnectReports";
-import {EnquirySettings,readEnquiryPreferences,type EnquiryPreferences} from "@/components/connect/EnquirySettings";
+import {ChannelSettings} from "@/features/connect/components/ChannelSettings";
+import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAutomationSettings";
+import {ConnectReminderInbox,ConnectConversationHistory} from "@/features/connect/components/ConnectCommunications";
+import {ConnectReports} from "@/features/connect/components/ConnectReports";
+import {EnquirySettings,readEnquiryPreferences,type EnquiryPreferences} from "@/features/connect/components/EnquirySettings";
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
 import {ErrorMessage,EmptyState} from "@/features/connect/EmptyStates";
 import {ConnectSidebar} from "@/features/connect/ConnectSidebar";
