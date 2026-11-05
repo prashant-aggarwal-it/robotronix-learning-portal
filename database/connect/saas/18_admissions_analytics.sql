@@ -54,7 +54,7 @@ begin
  from connect.memberships m join connect.tenants t on t.id=m.tenant_id
  where m.tenant_id=p_tenant_id and m.user_id=p_actor_id
   and m.status='active' and t.status in ('trial','active');
- if v_role not in ('owner','admin','manager') then
+ if v_role is null or v_role not in ('owner','admin','manager') then
   raise exception 'Analytics finance management role required' using errcode='42501';end if;
  if p_data is null or jsonb_typeof(p_data)<>'object' then
   raise exception 'Invalid record payload' using errcode='22023';end if;
