@@ -15,6 +15,7 @@ import {EnquirySettings,readEnquiryPreferences,type EnquiryPreferences} from "@/
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
 import {ErrorMessage,EmptyState} from "@/features/connect/EmptyStates";
 import {ConnectSidebar} from "@/features/connect/ConnectSidebar";
+import {ConnectTopbar} from "@/features/connect/ConnectTopbar";
 
 export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
@@ -303,13 +304,7 @@ export default function ConnectPage(){
  return <main className="cx-app">
   <ConnectSidebar showMobileNav={showMobileNav} onToggleMobile={()=>setShowMobileNav(v=>!v)} canOpenPortal={canOpenPortal} tenantId={tenantId} tenantRole={tenant?.membership_role||"member"} workspaces={workspaces} accountEmail={accountEmail} section={section} visibleNavigation={visibleNavigation} onWorkspaceChange={value=>{setTenantId(value);setSelectedPerson(null);setSelectedOpportunity(null);}} onSectionChange={value=>{setSection(value);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setShowMobileNav(false);}}/>
   <div className="cx-main">
-   <header className="cx-topbar">
-    <div className="cx-breadcrumb"><span>Connect</span><span aria-hidden="true">/</span><strong>{navigation.find(n=>n.id===section)?.label}</strong></div>
-    <div className="cx-top-actions"><span className="cx-sync">{loading?"Refreshing…":"Development workspace"}</span>
-     <button className="cx-icon-button" aria-label="Refresh CRM data" title="Refresh data" onClick={()=>setRefreshCount(v=>v+1)}>↻</button>
-     {canOpenPortal&&<Link href="/admin" className="cx-portal-link">Learning Portal ↗</Link>}
-    </div>
-   </header>
+   <ConnectTopbar section={section} loading={loading} canOpenPortal={canOpenPortal} onRefresh={()=>setRefreshCount(v=>v+1)}/>
    <div className="cx-content">
     <ErrorMessage error={error}/>
     {notice&&<div className="cx-success" role="status">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss notice">×</button></div>}
