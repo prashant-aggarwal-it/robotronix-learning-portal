@@ -10,6 +10,7 @@ import {ChannelSettings} from "@/components/connect/ChannelSettings";
 import {ConnectAutomationSettings} from "@/components/connect/ConnectAutomationSettings";
 import {ConnectReminderInbox,ConnectConversationHistory} from "@/components/connect/ConnectCommunications";
 import {ConnectReports} from "@/components/connect/ConnectReports";
+import {EnquirySettings,readEnquiryPreferences,type EnquiryPreferences} from "@/components/connect/EnquirySettings";
 import "./connect.css";
 
 type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"communications"|"reports"|"settings";
@@ -38,6 +39,9 @@ export default function ConnectPage(){
  const [workspacesReady,setWorkspacesReady]=useState(false);
  const [tenantId,setTenantId]=useState("");
  const [section,setSection]=useState<Section>("overview");
+ const [enquiryPrefs,setEnquiryPrefs]=useState<EnquiryPreferences|null>(null);
+ const [categoryFilter,setCategoryFilter]=useState("");
+ const [leadCategory,setLeadCategory]=useState("");
  const [busy,setBusy]=useState(false);
  const [loading,setLoading]=useState(false);
  const requestGeneration=useRef(0);
@@ -136,6 +140,10 @@ export default function ConnectPage(){
  const tenant=workspaces.find(x=>x.tenant_id===tenantId);
  const canConfigure=["owner","admin","manager"].includes(tenant?.membership_role||"");
  const canWrite=Boolean(tenant&&tenant.membership_role!=="viewer");
+ const advanced=enquiryPrefs?.mode==="advanced";
+ const visibleNavigation=navigation.filter(n=>advanced||["overview","enquiries","contacts","followups","settings"].includes(n.id));
+ useEffect(()=>{let live=true;setEnquiryPrefs(null);setCategoryFilter("");setLeadCategory("");if(tenantId)void readEnquiryPreferences(tenantId).then(p=>{if(live)setEnquiryPrefs(p);}).catch(e=>{if(live)setError(e instanceof Error?e.message:"Unable to load enquiry preferences");});return()=>{live=false;};},[tenantId]);
+ useEffect(()=>{if(!advanced&&!["overview","enquiries","contacts","followups","settings"].includes(section))setSection("overview");},[advanced,section]);
  useEffect(()=>{
   let cancelled=false;
   setAssignees([]);
@@ -194,9 +202,9 @@ export default function ConnectPage(){
    await crmCommand(tenantId,"inquiries","capture_lead",{
     name:lead.name,phone:lead.phone,email:lead.email,source:lead.source,
     ...(lead.personId?{personId:lead.personId}:{}),
-    summary:lead.summary,...(pipeline&&stage?{pipelineId:pipeline.id,stageId:stage.id}:{})
+    summary:lead.summary,...(leadCategory?{categoryId:leadCategory}:{}),...(pipeline&&stage?{pipelineId:pipeline.id,stageId:stage.id}:{})
    });
-   setLead({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:"",personId:""});setShowLeadForm(false);
+   setLead({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:"",personId:""});setLeadCategory("");setShowLeadForm(false);
   },"Enquiry captured successfully.");
  }
  async function startAdmission(e:FormEvent){
@@ -268,8 +276,8 @@ export default function ConnectPage(){
  const selectedContact=people.find(x=>x.id===selectedPerson);
  const selectedLead=opportunities.find(x=>x.id===selectedOpportunity);
  const matchingInquiries=useMemo(()=>inquiries.filter(x=>
-  !search||[x.contact_name,x.summary,x.source,x.stage_name].some(v=>(v||"").toLowerCase().includes(search.toLowerCase()))
- ),[inquiries,search]);
+  (!categoryFilter||x.category_id===categoryFilter)&&(!search||[x.contact_name,x.summary,x.source,x.stage_name,x.category_label].some(v=>(v||"").toLowerCase().includes(search.toLowerCase())))
+ ),[inquiries,search,categoryFilter]);
  const matchingPeople=useMemo(()=>people.filter(x=>
   !search||[x.full_name,...x.contact_methods.map(m=>m.value)].some(v=>v.toLowerCase().includes(search.toLowerCase()))
  ),[people,search]);
@@ -313,7 +321,7 @@ export default function ConnectPage(){
    </div>
    <nav aria-label="Connect navigation" className="cx-navigation">
     <span className="cx-nav-label">WORKSPACE</span>
-    {navigation.map(n=><button key={n.id} className={"cx-nav-item "+(section===n.id?"active":"")} onClick={()=>{
+    {visibleNavigation.map(n=><button key={n.id} className={"cx-nav-item "+(section===n.id?"active":"")} onClick={()=>{
       setSection(n.id);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setShowMobileNav(false);
      }}><span aria-hidden="true">{n.icon}</span>{n.label}</button>)}
    </nav>
@@ -334,7 +342,7 @@ export default function ConnectPage(){
     <ErrorMessage error={error}/>
     {notice&&<div className="cx-success" role="status">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss notice">×</button></div>}
     <div className="cx-page-heading"><div><span className="cx-kicker">{tenant?.workspace_name}</span>
-     <h1>{section==="overview"?"Admissions overview":navigation.find(n=>n.id===section)?.label}</h1>
+     <h1>{section==="overview"?"Business overview":navigation.find(n=>n.id===section)?.label}</h1>
      <p>{section==="overview"?"Stay on top of every enquiry, follow-up and admission.":
      section==="enquiries"?"Capture, qualify and respond to every incoming enquiry.":
      section==="contacts"?"One place for people, families and their relationships.":
@@ -374,11 +382,12 @@ export default function ConnectPage(){
     {section==="enquiries"&&<section className="cx-panel cx-panel-full">
      <div className="cx-panel-header cx-toolbar"><div><h2>Enquiry inbox</h2><p>{inquiries.length} recent enquiries loaded</p></div>
       <input className="cx-search" type="search" aria-label="Search enquiries" placeholder="Search names, sources or notes…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
+     <div className="cx-category-filters"><button className={!categoryFilter?"active":""} onClick={()=>setCategoryFilter("")}>All enquiries</button>{enquiryPrefs?.categories.filter(c=>c.active).map(c=><button key={c.id} className={categoryFilter===c.id?"active":""} onClick={()=>setCategoryFilter(c.id)}>{c.label}</button>)}</div>
      {matchingInquiries.length===0?<EmptyState title="No matching enquiries" description="Try another search or capture a new enquiry."/>:
-      <div className="cx-table-wrap"><table className="cx-table"><thead><tr><th>Contact</th><th>Source</th><th>Interested in</th><th>Stage</th><th>Received</th><th></th></tr></thead>
+      <div className="cx-table-wrap"><table className="cx-table"><thead><tr><th>Contact</th><th>Source</th><th>Category</th><th>Interested in</th><th>Stage</th><th>Received</th><th></th></tr></thead>
        <tbody>{matchingInquiries.map(i=><tr key={i.id}>
         <td><span className="cx-cell-title">{i.contact_name||"Unknown contact"}</span><span className="cx-cell-secondary">{i.contact_detail||i.summary||"No contact detail"}</span></td>
-        <td><span className="cx-pill">{shortLabel(i.source)}</span></td><td>{i.opportunity_title||"Qualification pending"}</td>
+        <td><span className="cx-pill">{shortLabel(i.source)}</span></td><td><select aria-label={"Category for "+(i.contact_name||"enquiry")} disabled={!canWrite} value={i.category_id||""} onChange={e=>{const categoryId=e.target.value;if(!categoryId)return;void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId}})}),"Enquiry categorized.");}}><option value="">Unclassified</option>{enquiryPrefs?.categories.filter(c=>c.active||c.id===i.category_id).map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></td><td>{i.opportunity_title||"Not linked to admissions"}</td>
         <td><span className={"cx-status "+(i.outcome==="won"?"won":i.outcome==="lost"?"lost":"")}>{i.stage_name||"New enquiry"}</span></td>
         <td>{dateLabel(i.received_at)}</td>
         <td><button className="cx-link-button" onClick={()=>{setSelectedPerson(i.person_id);setSelectedOpportunity(i.opportunity_id);}}>View details →</button></td>
@@ -435,7 +444,8 @@ export default function ConnectPage(){
      <section className="cx-panel"><div className="cx-empty"><strong>Reporting access restricted</strong><p>Ask your institute manager for access.</p></div></section>)}
 
     {section==="settings"&&<>
-    <div className="cx-settings-grid">
+    <EnquirySettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")} onSaved={setEnquiryPrefs}/>
+    {advanced&&<div className="cx-settings-grid">
      <section className="cx-panel"><div className="cx-panel-header"><div><h2>Institute access</h2><p>Who can manage this workspace</p></div></div>
       <dl className="cx-settings-list"><div><dt>Institute</dt><dd>{tenant?.workspace_name}</dd></div><div><dt>Workspace</dt><dd>{tenant?.slug}</dd></div><div><dt>Your role</dt><dd>{shortLabel(tenant?.membership_role||"")}</dd></div></dl>
       {canConfigure&&<button className="cx-secondary" onClick={()=>void connectFetch<{members:ConnectMember[]}>("/api/connect/workspaces/"+tenantId+"/members").then(r=>setMembers(r.members)).catch(e=>setError(e instanceof Error?e.message:"Could not load members."))}>View team members</button>}
@@ -456,9 +466,9 @@ export default function ConnectPage(){
        <input required placeholder="New pipeline name" aria-label="Pipeline name" value={pipelineName} onChange={e=>setPipelineName(e.target.value)}/>
        <button disabled={busy} className="cx-secondary">Add</button></form>}
      </section>
-    </div>
-    <ConnectAutomationSettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>
-    {canConfigure&&<ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
+    </div>}
+    {advanced&&<ConnectAutomationSettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
+    {advanced&&canConfigure&&<ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
     </>}
    </div>
   </div>
@@ -491,6 +501,7 @@ export default function ConnectPage(){
     <label>Source <span>*</span><select value={lead.source} onChange={e=>setLead(v=>({...v,source:e.target.value}))}>
      {["whatsapp","phone","website","instagram","facebook","walk_in","referral","email","other"].map(x=><option key={x} value={x}>{shortLabel(x)}</option>)}
     </select></label>
+    <label>Enquiry category<select value={leadCategory} onChange={e=>setLeadCategory(e.target.value)}><option value="">Unclassified — decide later</option>{enquiryPrefs?.categories.filter(c=>c.active).map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
     <label>Admissions pipeline <small>(optional)</small><select value={lead.pipelineId} onChange={e=>setLead(v=>({...v,pipelineId:e.target.value}))}>
      <option value="">Capture enquiry only</option>{pipelines.filter(p=>p.stages.some(s=>s.outcome==="open")).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
     </select></label>
