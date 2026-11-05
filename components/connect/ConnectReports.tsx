@@ -47,6 +47,31 @@ export function ConnectReports({tenantId}:{tenantId:string}){
   }catch(e){if(tenantRef.current===scope)setError(e instanceof Error?e.message:"Unable to save reporting record.");}
   finally{if(tenantRef.current===scope)setBusy(false);}
  }
+ function exportCsv(){
+  if(!report)return;
+  const protect=(v:unknown)=>{
+   const raw=v===null||v===undefined?"":String(v);
+   const safe=/^[=+@\-\t\r]/.test(raw)?"'"+raw:raw;
+   return '"'+safe.replaceAll('"','""')+'"';
+  };
+  const lines:Array<string[]>=[
+   ["Section","Name","Enquiries","Opportunities","Won","Conversion %","Recorded spend","Recorded receipts","ROI %"],
+   ...report.sources.map(x=>["Source",x.source,String(x.inquiries),String(x.opportunities),String(x.won),
+    x.conversionRate?.toString()||"",pipelineId?"":x.spend?.toString()||"",x.revenue?.toString()||"",
+    pipelineId?"":x.roiPercent?.toString()||""]),
+   ...report.campaigns.map(x=>["Campaign",x.name,"",String(x.opportunities),String(x.won),"",
+    pipelineId?"":x.spend?.toString()||"",x.revenue?.toString()||"",
+    pipelineId?"":x.roiPercent?.toString()||""]),
+   ...report.staff.map(x=>["Counsellor",assignees.find(a=>a.id===x.memberId)?.label||x.memberId,"",
+    String(x.opportunities),String(x.won),x.conversionRate?.toString()||"","","",""])
+  ];
+  const csv=lines.map(row=>row.map(protect).join(",")).join("\r\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");link.href=url;link.download="connect-admissions-report-"+from+"-"+to+".csv";
+  document.body.appendChild(link);link.click();link.remove();
+  URL.revokeObjectURL(url);
+ }
  function createCampaign(e:FormEvent){e.preventDefault();void save("create_campaign",{name:form.campaignName,source:form.source});}
  function recordSpend(e:FormEvent){e.preventDefault();if(!form.campaignId)return;
   void save("record_spend",{campaignId:form.campaignId,date:form.date,amount:Number(form.spend),currency:report?.summary.currency});
@@ -68,6 +93,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
    <label>Pipeline<select value={pipelineId} onChange={e=>setPipelineId(e.target.value)}><option value="">All admissions pipelines</option>
     {pipelines.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
    <button type="button" className="cx-secondary" onClick={()=>void load()}>Refresh reports</button>
+   <button type="button" className="cx-secondary" disabled={!report||loading} onClick={exportCsv}>Export CSV</button>
   </section>
   {error&&<div className="cx-alert" role="alert">{error}</div>}
   {notice&&<div className="cx-success" role="status">{notice}</div>}
