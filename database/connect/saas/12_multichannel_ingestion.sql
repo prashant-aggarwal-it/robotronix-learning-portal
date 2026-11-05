@@ -94,6 +94,23 @@ begin
  return v_id;
 end $fn$;
 
+create or replace function public.connect_list_form_keys(
+ p_actor_id uuid,p_tenant_id uuid
+) returns jsonb language plpgsql stable security invoker set search_path=''
+as $fn$
+declare v_result jsonb;
+begin
+ if not exists(select 1 from connect.memberships m join connect.tenants t on t.id=m.tenant_id
+ where m.user_id=p_actor_id and m.tenant_id=p_tenant_id
+ and m.status='active' and m.role in ('owner','admin') and t.status in ('active','trial'))
+ then raise exception 'Form administration required' using errcode='42501';end if;
+ select coalesce(jsonb_agg(jsonb_build_object(
+  'id',k.id,'channelId',k.channel_account_id,'label',k.label,
+  'active',k.active,'createdAt',k.created_at) order by k.created_at desc),'[]'::jsonb)
+ into v_result from connect.form_keys k where k.tenant_id=p_tenant_id;
+ return v_result;
+end $fn$;
+
 create or replace function public.connect_disable_form_key(
  p_actor_id uuid,p_tenant_id uuid,p_key_id uuid
 ) returns boolean language plpgsql security invoker set search_path=''
@@ -261,6 +278,7 @@ begin
  'connect_set_channel_status(uuid,uuid,uuid,text)',
  'connect_list_channels(uuid,uuid)',
  'connect_create_form_key(uuid,uuid,uuid,text,text)',
+ 'connect_list_form_keys(uuid,uuid)',
  'connect_disable_form_key(uuid,uuid,uuid)',
  'connect_ingest_channel(text,text,text,text,text,text,text)',
  'connect_ingest_website(text,text,text,text,text,text)'
