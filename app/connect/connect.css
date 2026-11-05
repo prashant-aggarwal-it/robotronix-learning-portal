@@ -227,3 +227,18 @@
 .cx-suggestions>button span{font-size:11px;font-weight:400;color:#718c9b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .cx-selected-contact{display:flex;justify-content:space-between;align-items:center;padding:10px 11px;margin-top:-6px;border:1px solid #cbe9dc;border-radius:9px;background:#f0faf5;color:#237b5d;font-size:12px}
 .cx-selected-contact button{border:0;background:transparent;color:#0a756a;text-decoration:underline;font-weight:700}
+
+/* Integrations: matches existing Portal and Connect administration language. */
+.cx-integration-panel{margin-top:17px}
+.cx-integrations{padding:18px 21px 21px;display:flex;flex-direction:column;gap:13px}
+.cx-integration-item{display:flex;align-items:center;gap:12px;border:1px solid #e3edf3;border-radius:11px;padding:13px 14px;flex-wrap:wrap}
+.cx-integration-item>div{min-width:160px;flex:1;display:flex;flex-direction:column;gap:5px}
+.cx-integration-item strong{font-size:13px}
+.cx-integration-item small{overflow-wrap:anywhere}
+.cx-integration-form{max-width:560px;border-top:1px solid #e8eff4;padding-top:19px}
+.cx-integration-form h3{font-size:15px}
+.cx-generated-form{border:1px solid #c7e8db;border-radius:11px;background:#f1faf5;padding:15px;display:flex;align-items:flex-start;flex-direction:column;gap:9px}
+.cx-generated-form>strong{font-size:13px;color:#207559}
+.cx-generated-form>code{display:block;width:100%;overflow-wrap:anywhere;font-size:12px;background:#fff;border:1px solid #d8ebdf;border-radius:7px;padding:10px}
+.cx-generated-form>small{line-height:1.5}
+@media(max-width:730px){.cx-integrations{padding:15px}.cx-integration-item{align-items:flex-start}.cx-integration-item>div{flex-basis:100%}}
