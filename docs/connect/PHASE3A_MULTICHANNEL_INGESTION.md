@@ -101,7 +101,7 @@ In Connect > Institute settings > Lead capture channels:
 - `app/api/connect/public/forms/[formKey]/route.ts`: public website receiver, captcha, CORS and consent
 - `app/api/connect/workspaces/[tenantId]/channels/route.ts`: authenticated channel management
 - `app/api/connect/workspaces/[tenantId]/forms/route.ts`: form key create/list/revoke
-- `components/connect/ChannelSettings.tsx`: institute management UI
+- `features/connect/components/ChannelSettings.tsx`: institute management UI
 - `docs/connect/examples/website-lead-form.html`: example website form with placeholder keys
 
 ## Development verification actually executed
