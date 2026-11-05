@@ -12,7 +12,7 @@ const operations:Record<string,readonly string[]>={
  households:["create_household","link_household_member"],
  organizations:["create_organization","link_organization_contact"],
  programs:["create_program"],
- pipelines:["create_pipeline","add_stage"],
+ pipelines:["create_pipeline","bootstrap_pipeline","add_stage"],
  opportunities:["create_opportunity","link_opportunity_person","link_opportunity_program","move_opportunity","assign_opportunity"],
  inquiries:["create_inquiry","capture_lead"],
  tasks:["create_task","update_task","complete_task"],
