@@ -94,6 +94,10 @@ begin
    select 1 from connect.memberships where tenant_id=p_tenant_id
    and id=(p_data->>'ownerMemberId')::uuid and status='active'
   ) then raise exception 'Assignee must be an active member' using errcode='42501';end if;
+  if not exists (
+   select 1 from connect.pipeline_stages
+   where tenant_id=p_tenant_id and pipeline_id=v_pipeline and id=v_stage and outcome='open'
+  ) then raise exception 'New opportunities must begin at an open stage' using errcode='22023';end if;
   insert into connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id,organization_id,owner_membership_id,expected_value)
   values(p_tenant_id,v_pipeline,v_stage,v_name,
     nullif(p_data->>'contactId','')::uuid,nullif(p_data->>'organizationId','')::uuid,
@@ -135,6 +139,10 @@ begin
  when 'create_task' then
   v_name:=nullif(btrim(p_data->>'title'),'');
   if v_name is null or length(v_name)>250 then raise exception 'Invalid task title' using errcode='22023';end if;
+  if p_data->>'assigneeMemberId' is not null and not exists(
+   select 1 from connect.memberships where tenant_id=p_tenant_id
+    and id=(p_data->>'assigneeMemberId')::uuid and status='active'
+  ) then raise exception 'Task assignee must be an active member' using errcode='42501';end if;
   insert into connect.tasks(tenant_id,opportunity_id,person_id,assignee_membership_id,title,due_at)
   values(p_tenant_id,nullif(p_data->>'opportunityId','')::uuid,nullif(p_data->>'personId','')::uuid,
      coalesce(nullif(p_data->>'assigneeMemberId','')::uuid,v_member),v_name,
@@ -153,6 +161,8 @@ begin
  when 'create_appointment' then
   v_name:=nullif(btrim(p_data->>'title'),'');
   if v_name is null or length(v_name)>250 then raise exception 'Invalid appointment title' using errcode='22023';end if;
+  if p_data->>'opportunityId' is null and p_data->>'personId' is null
+  then raise exception 'Appointment requires a contact or opportunity' using errcode='22023';end if;
   insert into connect.appointments(tenant_id,opportunity_id,person_id,owner_membership_id,kind,title,starts_at,ends_at)
   values(p_tenant_id,nullif(p_data->>'opportunityId','')::uuid,nullif(p_data->>'personId','')::uuid,
     v_member,coalesce(nullif(p_data->>'kind',''),'counselling'),v_name,
