@@ -4,7 +4,7 @@ import path from "node:path";
 const root=process.cwd();
 const required=[
  "app/connect/page.tsx","app/connect/layout.tsx","app/connect/connect.css",
- "features/connect/api/client.ts","features/connect/model.ts","features/connect/EmptyStates.tsx",
+ "features/connect/api/client.ts","features/connect/model.ts","features/connect/types/enquiries.ts","features/connect/EmptyStates.tsx",
  "features/connect/ConnectSidebar.tsx","features/connect/ConnectTopbar.tsx",
  "features/connect/ConnectAuthGates.tsx",
  "features/connect/components/ChannelSettings.tsx",
@@ -18,7 +18,7 @@ for(const file of required){if(!fs.existsSync(path.join(root,file)))throw Error(
 if(fs.existsSync(path.join(root,"components/connect")))throw Error("Old Connect components folder must not coexist with consolidated feature module.");
 
 const inspect=[
- "app/connect/page.tsx","features/connect/model.ts","components/AppShell.tsx","components/ApplicationSwitcher.tsx",
+ "app/connect/page.tsx","features/connect/model.ts","features/connect/types/enquiries.ts","components/AppShell.tsx","components/ApplicationSwitcher.tsx",
  ...required.filter(f=>f.startsWith("features/connect/")&&f.endsWith(".tsx"))
 ];
 for(const file of inspect){
