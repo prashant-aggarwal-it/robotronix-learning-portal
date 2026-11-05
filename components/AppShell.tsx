@@ -7,6 +7,7 @@ import { NotificationBell } from "./NotificationBell";
 import { SignOutButton } from "./SignOutButton";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { AdminRecordHistory } from "./admin/AdminRecordHistory";
+import {connectFetch, type ConnectWorkspace} from "@/lib/connect-client";
 import type { UserRole } from "@/lib/types";
 
 const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}>> = {
@@ -82,6 +83,15 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
   const pathname=usePathname();
   const sidebarRef=useRef<HTMLElement|null>(null);
   const [sidebarCollapsed,setSidebarCollapsed]=useState(false);
+  const [canOpenConnect,setCanOpenConnect]=useState(false);
+  useEffect(()=>{
+    if(role!=="admin"){setCanOpenConnect(false);return;}
+    let active=true;
+    void connectFetch<{workspaces:ConnectWorkspace[]}>("/api/connect/workspaces")
+      .then(result=>{if(active)setCanOpenConnect((result.workspaces||[]).length>0);})
+      .catch(()=>{if(active)setCanOpenConnect(false);});
+    return()=>{active=false;};
+  },[role]);
   useEffect(()=>{try{setSidebarCollapsed(localStorage.getItem("robotronix-admin-sidebar-collapsed")==="true")}catch{}},[]);
   const toggleSidebar=()=>setSidebarCollapsed(previous=>{const next=!previous;try{localStorage.setItem("robotronix-admin-sidebar-collapsed",String(next))}catch{}return next});
   useEffect(()=>{
@@ -112,6 +122,11 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
       <aside className="workspaceSidebar">
         <Link href={`/${role}`} className="sidebarBrand" aria-label="Robotronix Learning Portal"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
         <div className="portalName">Learning Portal <span>{role==="admin"?"Admin":"Trainer"}</span></div>
+        {role==="admin"&&canOpenConnect&&<div className="portalWorkspaceSwitch" aria-label="Application switcher">
+          <span className="portalWorkspaceSwitchLabel">APPLICATIONS</span>
+          <span className="portalWorkspaceCurrent" aria-current="page" title="Learning Portal">▦ <span>Learning Portal</span></span>
+          <Link href="/connect" className="portalWorkspaceLink" title="Open Connect CRM">◎ <span>Connect CRM</span></Link>
+        </div>}
         {role==="admin"&&<button type="button" className="adminSidebarToggle" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed?"Expand admin navigation":"Collapse admin navigation"} title={sidebarCollapsed?"Expand navigation":"Collapse navigation"}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d={sidebarCollapsed?"m15 10 3 2-3 2":"m17 10-3 2 3 2"}/></svg><span>{sidebarCollapsed?"":"Collapse menu"}</span></button>}
         <nav className="sidebarNav" ref={sidebarRef}>{navByRole[role].map(item=>{
           const showGroup=role==="admin"&&item.group&&item.group!==lastGroup;
