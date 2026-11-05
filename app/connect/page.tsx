@@ -6,7 +6,7 @@ import {getCurrentProfile} from "@/lib/repository";
 import {connectFetch,crmCommand,crmList,
  type ConnectWorkspace,type ConnectPerson,type ConnectInquiry,type ConnectOpportunity,
  type ConnectPipeline,type ConnectTask,type ConnectAppointment,type ConnectOverview,
- type ConnectActivity,type ConnectProgram,type ConnectMember} from "@/lib/connect-client";
+ type ConnectActivity,type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
 import {ChannelSettings} from "@/components/connect/ChannelSettings";
 import {ConnectAutomationSettings} from "@/components/connect/ConnectAutomationSettings";
 import {ConnectReminderInbox,ConnectConversationHistory} from "@/components/connect/ConnectCommunications";
@@ -14,7 +14,6 @@ import {ConnectReports} from "@/components/connect/ConnectReports";
 import {EnquirySettings,readEnquiryPreferences,type EnquiryPreferences} from "@/components/connect/EnquirySettings";
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
 import {ErrorMessage,EmptyState} from "@/features/connect/EmptyStates";
-import "./connect.css";
 
 export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
