@@ -16,6 +16,7 @@ import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCat
 import {ErrorMessage,EmptyState} from "@/features/connect/EmptyStates";
 import {ConnectSidebar} from "@/features/connect/ConnectSidebar";
 import {ConnectTopbar} from "@/features/connect/ConnectTopbar";
+import {ConnectSignInGate,ConnectWorkspaceSetupGate} from "@/features/connect/ConnectAuthGates";
 
 export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
@@ -276,32 +277,11 @@ export default function ConnectPage(){
  ),[people,search]);
 
  if(signedIn===null)return <main className="cx-gate">Checking your Connect session…</main>;
- if(!signedIn)return <main className="cx-gate"><section className="cx-auth">
-  <div className="cx-logo"><span className="cx-logo-mark">C</span><span>Robotronix <b>Connect</b></span></div>
-  <span className="cx-kicker">ADMISSIONS & RELATIONSHIPS</span>
-  <h1>A clearer way to manage admissions.</h1>
-  <p>Sign in with your existing Robotronix account. Connect uses the same authentication system as the Learning Portal, with separate institute permissions.</p>
-  <ErrorMessage error={error}/>
-  <form onSubmit={signIn} className="cx-form"><label>Email<input type="email" required autoComplete="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)}/></label>
-  <label>Password<input type="password" required autoComplete="current-password" value={loginPassword} onChange={e=>setLoginPassword(e.target.value)}/></label>
-  <button className="cx-primary" disabled={busy}>{busy?"Signing in…":"Sign in to Connect"}</button></form>
-  <Link href="/login" className="cx-link">Go to Learning Portal sign-in</Link>
- </section></main>;
+ if(!signedIn)return <ConnectSignInGate error={error} busy={busy} email={loginEmail} password={loginPassword} onEmailChange={setLoginEmail} onPasswordChange={setLoginPassword} onSubmit={signIn}/>;
  if(!workspacesReady)return <main className="cx-gate">Loading your institute workspace…</main>;
- if(!workspaces.length)return <main className="cx-gate"><section className="cx-auth">
-  <div className="cx-logo"><span className="cx-logo-mark">C</span><span>Robotronix <b>Connect</b></span></div>
-  <span className="cx-kicker">GETTING STARTED</span><h1>Create your institute workspace</h1>
-  <p>Every institute manages its own contacts, admissions and staff. You will be the workspace owner.</p>
-  <ErrorMessage error={error}/><form onSubmit={createWorkspace} className="cx-form">
-   <label>Institute name<input required minLength={2} maxLength={120} placeholder="e.g. Bright Minds Academy" value={newWorkspace}
-   onChange={e=>{setNewWorkspace(e.target.value);setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""));}}/></label>
-   <label>Workspace identifier<input required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={newSlug} onChange={e=>setNewSlug(e.target.value)}/></label>
-   <button className="cx-primary" disabled={busy}>{busy?"Creating…":"Create institute workspace"}</button>
-  </form>
-  <button className="cx-text-button" onClick={()=>{setSignedIn(false);void getSupabaseBrowserClient()?.auth.signOut();}}>Sign out</button>
- </section></main>;
-
- return <main className="cx-app">
+ if(!workspaces.length)return <ConnectWorkspaceSetupGate error={error} busy={busy} name={newWorkspace} slug={newSlug} onNameChange={value=>{setNewWorkspace(value);setNewSlug(value.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""));}} onSlugChange={setNewSlug} onSubmit={createWorkspace} onSignOut={()=>{setSignedIn(false);void getSupabaseBrowserClient()?.auth.signOut();}}/>;
+ 
+  return <main className="cx-app">
   <ConnectSidebar showMobileNav={showMobileNav} onToggleMobile={()=>setShowMobileNav(v=>!v)} canOpenPortal={canOpenPortal} tenantId={tenantId} tenantRole={tenant?.membership_role||"member"} workspaces={workspaces} accountEmail={accountEmail} section={section} visibleNavigation={visibleNavigation} onWorkspaceChange={value=>{setTenantId(value);setSelectedPerson(null);setSelectedOpportunity(null);}} onSectionChange={value=>{setSection(value);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setShowMobileNav(false);}}/>
   <div className="cx-main">
    <ConnectTopbar section={section} loading={loading} canOpenPortal={canOpenPortal} onRefresh={()=>setRefreshCount(v=>v+1)}/>
