@@ -305,3 +305,5 @@
 .cx-enquiry-config{padding:20px;display:flex;flex-direction:column;gap:13px}
 .cx-enquiry-config>label{max-width:440px}
 .cx-enquiry-config h3{margin:8px 0 0;font-size:14px}
+
+.cx-category-suggestion{display:block;margin:0 0 5px;border:1px solid #9dd5da;background:#e8f9f8;color:#086b70;border-radius:6px;padding:4px 7px;font-size:10px;text-align:left;cursor:pointer}
