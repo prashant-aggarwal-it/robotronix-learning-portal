@@ -12,7 +12,7 @@ const required=[
  "features/connect/components/ConnectCommunications.tsx",
  "features/connect/components/ConnectReports.tsx",
  "features/connect/components/EnquirySettings.tsx",
- "lib/connect-client.ts","components/ApplicationSwitcher.tsx"
+ "components/ApplicationSwitcher.tsx"
 ];
 for(const file of required){if(!fs.existsSync(path.join(root,file)))throw Error("Missing Connect module: "+file);}
 if(fs.existsSync(path.join(root,"components/connect")))throw Error("Old Connect components folder must not coexist with consolidated feature module.");
@@ -32,8 +32,7 @@ for(const file of inspect){
 }
 const page=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
 if(!page.includes("<ConnectSidebar")||!page.includes("<ConnectTopbar")||!page.includes("<ConnectSignInGate"))throw Error("Connect page is missing an extracted shell component.");
-const shim=fs.readFileSync(path.join(root,"lib/connect-client.ts"),"utf8");
-if(!shim.includes('export * from "@/features/connect/api/client"'))throw Error("Legacy Connect import compatibility has been lost.");
+if(fs.existsSync(path.join(root,"lib/connect-client.ts")))throw Error("Redundant legacy Connect API shim has been reintroduced.");
 console.log("Connect code organization and local import paths OK.");
 
 const portal=fs.readFileSync(path.join(root,"components/AppShell.tsx"),"utf8");
