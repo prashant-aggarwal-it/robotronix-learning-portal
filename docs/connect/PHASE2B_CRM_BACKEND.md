@@ -23,7 +23,7 @@ Connect remains a standalone institute CRM inside the **private `connect` schema
 - `database/connect/saas/10_crm_queries.sql`: restricted `public.connect_crm_read` RPC. Every query filters tenant records. Pagination capped to 100 records and 10,000 offset.
 - `app/api/connect/workspaces/[tenantId]/crm/[resource]/route.ts`: authenticated GET and POST. Only explicitly whitelisted resources/actions accepted. The caller ID comes from Supabase `auth.getUser(token)`, never request body. Database RPC execution is service-only; neither `anon` nor `authenticated` can invoke RPC directly.
 - `lib/server/connect-auth.ts`: safe HTTP error mapping (conflict, authorization, validation).
-- `database/connect/saas/11_verify_crm_phase2b_dev.sql`: complete rollback-only CRM journey and isolation test.
+- `database/connect/tests/verify_crm_phase2b_dev.sql`: complete rollback-only CRM journey and isolation test.
 
 ## HTTP API usage
 Use `Authorization: Bearer <Supabase user access token>`, and a tenant UUID previously returned by `GET /api/connect/workspaces`.
