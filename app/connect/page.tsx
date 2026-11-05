@@ -2,6 +2,7 @@
 import {FormEvent,useCallback,useEffect,useMemo,useRef,useState} from "react";
 import Link from "next/link";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {getCurrentProfile} from "@/lib/repository";
 import {connectFetch,crmCommand,crmList,
  type ConnectWorkspace,type ConnectPerson,type ConnectInquiry,type ConnectOpportunity,
  type ConnectPipeline,type ConnectTask,type ConnectAppointment,type ConnectOverview,
@@ -50,6 +51,7 @@ function EmptyState({title,description}:{title:string;description:string}){retur
 
 export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
+ const [canOpenPortal,setCanOpenPortal]=useState(false);
  const [accountEmail,setAccountEmail]=useState("");
  const [workspaces,setWorkspaces]=useState<ConnectWorkspace[]>([]);
  const [workspacesReady,setWorkspacesReady]=useState(false);
@@ -98,6 +100,13 @@ export default function ConnectPage(){
   });
   return()=>{mounted=false;subscription.unsubscribe();};
  },[]);
+
+ useEffect(()=>{
+  if(!signedIn){setCanOpenPortal(false);return;}
+  let active=true;
+  void getCurrentProfile().then(profile=>{if(active)setCanOpenPortal(profile?.role==="admin");}).catch(()=>{if(active)setCanOpenPortal(false);});
+  return()=>{active=false;};
+ },[signedIn]);
 
  const loadWorkspaces=useCallback(async()=>{
   const result=await connectFetch<{workspaces:ConnectWorkspace[]}>("/api/connect/workspaces");
@@ -328,6 +337,11 @@ export default function ConnectPage(){
   <button className="cx-mobile-menu" onClick={()=>setShowMobileNav(!showMobileNav)} aria-label="Toggle navigation">☰</button>
   <aside className={"cx-sidebar "+(showMobileNav?"cx-mobile-open":"")}>
    <div className="cx-logo"><span className="cx-logo-mark">C</span><span>Robotronix <b>Connect</b></span></div>
+   {canOpenPortal&&<div className="cx-app-switcher" aria-label="Application switcher">
+    <span className="cx-nav-label">APPLICATIONS</span>
+    <Link href="/admin" className="cx-app-switch-link">▦ <span>Learning Portal</span></Link>
+    <span className="cx-app-switch-current" aria-current="page">◎ <span>Connect CRM</span></span>
+   </div>}
    <div className="cx-workspace-picker">
     <span>INSTITUTE WORKSPACE</span>
     <select aria-label="Choose institute" value={tenantId} onChange={e=>{setTenantId(e.target.value);setSelectedPerson(null);setSelectedOpportunity(null);}}>
@@ -351,7 +365,7 @@ export default function ConnectPage(){
     <div className="cx-breadcrumb"><span>Connect</span><span aria-hidden="true">/</span><strong>{navigation.find(n=>n.id===section)?.label}</strong></div>
     <div className="cx-top-actions"><span className="cx-sync">{loading?"Refreshing…":"Development workspace"}</span>
      <button className="cx-icon-button" aria-label="Refresh CRM data" title="Refresh data" onClick={()=>setRefreshCount(v=>v+1)}>↻</button>
-     <Link href="/" className="cx-portal-link">Learning Portal ↗</Link>
+     {canOpenPortal&&<Link href="/admin" className="cx-portal-link">Learning Portal ↗</Link>}
     </div>
    </header>
    <div className="cx-content">
