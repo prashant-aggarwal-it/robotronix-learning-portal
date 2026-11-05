@@ -119,6 +119,8 @@ export default function ConnectPage(){
  const [taskDue,setTaskDue]=useState("");
  const [pipelineName,setPipelineName]=useState("");
  const [programName,setProgramName]=useState("");
+ const [newAdmissionTitle,setNewAdmissionTitle]=useState("");
+ const [newAdmissionPipeline,setNewAdmissionPipeline]=useState("");
  const [appointmentTitle,setAppointmentTitle]=useState("");
  const [appointmentStarts,setAppointmentStarts]=useState("");
  const [appointmentEnds,setAppointmentEnds]=useState("");
@@ -159,6 +161,21 @@ export default function ConnectPage(){
    });
    setLead({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:""});setShowLeadForm(false);
   },"Enquiry captured successfully.");
+ }
+ async function startAdmission(e:FormEvent){
+  e.preventDefault();
+  if(!selectedPerson)return;
+  const pipeline=pipelines.find(p=>p.id===newAdmissionPipeline);
+  const initial=pipeline?.stages.filter(x=>x.outcome==="open").sort((a,b)=>a.order-b.order)[0];
+  if(!pipeline||!initial){setError("Choose a pipeline with an open stage.");return;}
+  await run(async()=>{
+   const outcome=await crmCommand(tenantId,"opportunities","create_opportunity",{
+    title:newAdmissionTitle.trim()||(selectedContact?.full_name||"New")+" — admission",
+    contactId:selectedPerson,pipelineId:pipeline.id,stageId:initial.id
+   });
+   setNewAdmissionTitle("");setNewAdmissionPipeline("");
+   if(outcome.id)setSelectedOpportunity(outcome.id);
+  },"Admission opportunity created.");
  }
  async function saveTask(e:FormEvent){
   e.preventDefault();
@@ -319,7 +336,7 @@ export default function ConnectPage(){
       <div className="cx-panel-header"><div><h2>{p.name}</h2><p>{p.stages.length} stages · {opportunities.filter(o=>o.pipeline_id===p.id).length} opportunities</p></div></div>
       <div className="cx-kanban">{[...p.stages].sort((a,b)=>a.order-b.order).map(stage=><div className="cx-kanban-column" key={stage.id}>
        <div className="cx-column-heading"><span className={"cx-stage-dot "+stage.outcome}/><strong>{stage.name}</strong><span>{opportunities.filter(o=>o.stage_id===stage.id).length}</span></div>
-       {opportunities.filter(o=>o.stage_id===stage.id).map(o=><button key={o.id} className="cx-deal" onClick={()=>setSelectedOpportunity(o.id)}>
+       {opportunities.filter(o=>o.stage_id===stage.id).map(o=><button key={o.id} className="cx-deal" onClick={()=>{setSelectedOpportunity(o.id);setSelectedPerson(o.contact_id);}}>
         <strong>{o.title}</strong><small>{people.find(x=>x.id===o.contact_id)?.full_name||"Institutional opportunity"}</small>
         <span className="cx-deal-foot"><span>{o.expected_value==null?"No value specified":o.currency+" "+o.expected_value.toLocaleString("en-IN")}</span><span>View →</span></span></button>)}
        {!opportunities.some(o=>o.stage_id===stage.id)&&<span className="cx-stage-empty">No opportunities</span>}
@@ -412,6 +429,14 @@ export default function ConnectPage(){
      {selectedLead&&<section className="cx-detail-card"><h3>Activity timeline</h3>
        {timeline.length?timeline.map(x=><div className="cx-history-item" key={x.id}><span>●</span><div><strong>{shortLabel(x.title||x.kind||x.type||"Activity")}</strong><small>{x.summary||"Stage updated"} · {dateLabel(x.event_time||x.occurred_at)}</small></div></div>):
        <p className="cx-muted">No activities loaded yet.</p>}</section>}
+     {canWrite&&selectedContact&&pipelines.length>0&&<section className="cx-detail-card"><h3>Start a new admission</h3>
+      <form className="cx-form" onSubmit={startAdmission}>
+       <label>Admissions pipeline<select required value={newAdmissionPipeline} onChange={e=>setNewAdmissionPipeline(e.target.value)}><option value="">Choose a pipeline</option>
+        {pipelines.filter(p=>p.stages.some(st=>st.outcome==="open")).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+       </select></label>
+       <label>Admission title<input value={newAdmissionTitle} maxLength={200} onChange={e=>setNewAdmissionTitle(e.target.value)} placeholder="e.g. Python Beginner Course"/></label>
+       <button className="cx-secondary" disabled={busy}>Start admission</button>
+      </form></section>}
      {canWrite&&<section className="cx-detail-card"><h3>Schedule a follow-up</h3>
       <form className="cx-form" onSubmit={saveTask}><label>Next action<input required maxLength={250} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} placeholder="Call to discuss programme"/></label>
        <label>Due at<input type="datetime-local" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/></label><button className="cx-primary" disabled={busy}>Save follow-up</button></form></section>}
