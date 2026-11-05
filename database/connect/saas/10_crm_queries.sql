@@ -76,13 +76,14 @@ begin
    order by o.updated_at desc,o.id limit v_limit offset v_offset) q;
  when 'inquiries' then
   select coalesce(jsonb_agg(to_jsonb(q) order by q.received_at desc),'[]'::jsonb) into v_result
-  from (select i.id,i.person_id,i.opportunity_id,i.source,i.summary,i.received_at,
+  from (select i.id,i.person_id,i.opportunity_id,i.source,i.summary,i.received_at,i.category_id,ec.label as category_label,
     p.full_name as contact_name,
     (select cm.display_value from connect.contact_methods cm
      where cm.tenant_id=i.tenant_id and cm.person_id=i.person_id
      order by cm.is_primary desc,cm.created_at limit 1) as contact_detail,
     o.title as opportunity_title,o.stage_id,s.name as stage_name,s.outcome
     from connect.inquiries i
+    left join connect.enquiry_categories ec on ec.tenant_id=i.tenant_id and ec.id=i.category_id
     left join connect.people p on p.tenant_id=i.tenant_id and p.id=i.person_id
     left join connect.opportunities o on o.tenant_id=i.tenant_id and o.id=i.opportunity_id
     left join connect.pipeline_stages s on s.tenant_id=i.tenant_id and s.id=o.stage_id
