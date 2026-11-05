@@ -5,11 +5,11 @@ Implemented on `feature/robotronix-connect-crm`, Development Supabase only.
 ## Delivered
 - `database/connect/saas/20_simple_mode_enquiry_classification.sql`: tenant defaults (simple mode and nine categories), isolated category IDs, category-linked enquiries, audited tenant-scoped RPC with owner/admin settings permissions and staff classification permissions.
 - `app/api/connect/workspaces/[tenantId]/enquiry-preferences/route.ts`: authenticated GET/PATCH.
-- `components/connect/EnquirySettings.tsx`: Simple/Advanced toggle, add/rename/activate/deactivate categories.
+- `features/connect/components/EnquirySettings.tsx`: Simple/Advanced toggle, add/rename/activate/deactivate categories.
 - `app/connect/page.tsx`: Simple navigation by default (Overview, Enquiries, Contacts, Follow-ups, Settings); Advanced retains pipelines, calendar, communications, reports and advanced settings. Enquiry category filter, editable classification, category selection at capture and conservative keyword suggestions requiring human confirmation.
 - `database/connect/saas/09_crm_commands.sql`: atomic category on manual capture; optional pipeline remains optional.
 - `database/connect/saas/10_crm_queries.sql`: category ID and label in list results.
-- `lib/connect-client.ts`: typed enquiry category fields.
+- `features/connect/api/client.ts`: typed enquiry category fields.
 
 ## Validation
 - Rollback-only SQL test passed for 9 defaults, Simple initial mode, Advanced/Simple toggle persistence, manual trainer capture without opportunity, unauthorized read/write isolation, provider intake without admissions deal, and deduplicated initial follow-up tasks.
