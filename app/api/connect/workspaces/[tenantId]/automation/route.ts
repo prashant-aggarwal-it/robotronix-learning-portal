@@ -29,7 +29,7 @@ export async function PATCH(request:NextRequest,{params}:Ctx){
  for(const key of Object.keys(b)){
   if(!bools.includes(key)&&!ints.includes(key))return connectFailure("Unknown automation option",400);
   if(bools.includes(key)&&typeof b[key]!=="boolean")return connectFailure("Invalid automation option",400);
-  if(ints.includes(key)&&(!Number.isInteger(b[key])||
+  if(ints.includes(key)&&(!Number.isInteger(b[key] as number)||
     (key==="followupDelayHours"&&((b[key] as number)<1||(b[key] as number)>168))||
     (key==="reminderAdvanceMinutes"&&((b[key] as number)<5||(b[key] as number)>1440))))
     return connectFailure("Invalid reminder interval",400);
