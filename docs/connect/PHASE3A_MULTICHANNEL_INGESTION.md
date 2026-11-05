@@ -94,7 +94,7 @@ In Connect > Institute settings > Lead capture channels:
 ## Files
 
 - `database/connect/saas/12_multichannel_ingestion.sql`: first-install database schema, restricted channel and event RPCs
-- `database/connect/saas/14_verify_multichannel_dev.sql`: transactional four-channel QA test
+- `database/connect/tests/verify_multichannel_dev.sql`: transactional four-channel QA test
 - `lib/server/connect-ingestion.ts`: raw signatures, bounded input, service-only ingestion client
 - `app/api/connect/webhooks/meta/route.ts`: WhatsApp + Meta Lead Ads adapter
 - `app/api/connect/webhooks/email/route.ts`: signed inbound email adapter
@@ -106,7 +106,7 @@ In Connect > Institute settings > Lead capture channels:
 
 ## Development verification actually executed
 
-Executed `database/connect/saas/14_verify_multichannel_dev.sql` successfully under the PostgreSQL `service_role`:
+Executed `database/connect/tests/verify_multichannel_dev.sql` successfully under the PostgreSQL `service_role`:
 - Created all four provider registrations in a temporary institute.
 - Ingested events and verified five enquiries, three people, three opportunities, three inbound messages and five processed receipts.
 - Verified a repeated WhatsApp delivery was idempotent.
