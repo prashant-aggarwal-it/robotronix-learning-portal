@@ -12,13 +12,15 @@ Implemented on `feature/robotronix-connect-crm`, Development Supabase only.
 - `lib/connect-client.ts`: typed enquiry category fields.
 
 ## Validation
-- Rollback-only SQL test passed for 9 defaults, Simple initial mode, Advanced/Simple toggle persistence, manual trainer capture without opportunity, and unauthorized read/write isolation.
+- Rollback-only SQL test passed for 9 defaults, Simple initial mode, Advanced/Simple toggle persistence, manual trainer capture without opportunity, unauthorized read/write isolation, provider intake without admissions deal, and deduplicated initial follow-up tasks.
+- Re-ran Phase 2A workspace security, Phase 2B CRM, Phase 3A ingestion, Phase 3B automation and Phase 3C analytics SQL suites after intake-first changes; all passed.
 - Re-ran Phase 2B CRM, Phase 3A ingestion and Phase 3B automation SQL suites; all passed.
 - No main merge or production deployment.
 
 ## Known limitations
 - Rule-based suggestions are intentionally conservative and require human confirmation; **not AI classification**.
-- Existing provider ingestion currently creates opportunities for incoming leads; an inbound trainer enquiry may still generate an opportunity before classification. Manual trainer capture without pipeline does not.
+- FIXED by migration 21: verified inbound messages now create enquiries only; no admissions opportunity is automatically created. Admissions must be deliberately created after qualification.
+- FIXED by migration 23: new enquiries without admissions opportunities get one open follow-up task per contact, respecting institute automation settings, without duplicate tasks on repeated messages.
 - Existing inbound provider webhook setup requires credentials and real signed HTTP tests.
 - No confirmed Next.js build, TypeScript CI result or authenticated browser UAT. Treat feature as development-stage.
 - Default Simple navigation hides advanced features but staff permissions remain enforced server-side.
