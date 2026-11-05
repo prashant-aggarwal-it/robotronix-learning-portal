@@ -9,14 +9,16 @@ import {connectFetch,crmCommand,crmList,
 import {ChannelSettings} from "@/components/connect/ChannelSettings";
 import {ConnectAutomationSettings} from "@/components/connect/ConnectAutomationSettings";
 import {ConnectReminderInbox,ConnectConversationHistory} from "@/components/connect/ConnectCommunications";
+import {ConnectReports} from "@/components/connect/ConnectReports";
 import "./connect.css";
 
-type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"communications"|"settings";
+type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"communications"|"reports"|"settings";
 const navigation:Array<{id:Section;label:string;icon:string}>= [
  {id:"overview",label:"Overview",icon:"◫"},{id:"enquiries",label:"Enquiries",icon:"◎"},
  {id:"contacts",label:"Contacts",icon:"♙"},{id:"pipeline",label:"Admissions pipeline",icon:"▥"},
  {id:"followups",label:"Follow-ups",icon:"☑"},{id:"calendar",label:"Calendar",icon:"▦"},
  {id:"communications",label:"Communications",icon:"✉"},
+ {id:"reports",label:"Reports & ROI",icon:"▤"},
  {id:"settings",label:"Institute settings",icon:"⚙"}
 ];
 const emptyOverview:ConnectOverview={
@@ -339,7 +341,8 @@ export default function ConnectPage(){
      section==="pipeline"?"Track every admission from first conversation to enrolment.":
      section==="followups"?"Your team's calls, tasks and next actions.":
      section==="calendar"?"Counselling, demo and trial appointments.":
-     section==="communications"?"Review verified inbound messages and conversation history.":"Manage institute programmes and access."}</p></div>
+     section==="communications"?"Review verified inbound messages and conversation history.":
+     section==="reports"?"Track conversion, counsellor performance and real recorded marketing ROI.":"Manage institute programmes and access."}</p></div>
      {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>＋ New enquiry</button>}
      {section==="contacts"&&canWrite&&<button className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
     </div>
@@ -427,6 +430,9 @@ export default function ConnectPage(){
     </section>}
 
     {section==="communications"&&<ConnectConversationHistory key={tenantId} tenantId={tenantId}/>}
+
+    {section==="reports"&&(canConfigure?<ConnectReports key={tenantId} tenantId={tenantId}/>:
+     <section className="cx-panel"><div className="cx-empty"><strong>Reporting access restricted</strong><p>Ask your institute manager for access.</p></div></section>)}
 
     {section==="settings"&&<>
     <div className="cx-settings-grid">
