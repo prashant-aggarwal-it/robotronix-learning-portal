@@ -15,7 +15,7 @@ begin
   raise exception 'Workspace write access denied' using errcode='42501';end if;
  if p_data is null or jsonb_typeof(p_data)<>'object'
  then raise exception 'An object payload is required' using errcode='22023';end if;
- if p_action in ('create_program','create_pipeline','add_stage') and v_role not in ('owner','admin','manager') then
+ if p_action in ('create_program','create_pipeline','bootstrap_pipeline','add_stage') and v_role not in ('owner','admin','manager') then
   raise exception 'Management role required' using errcode='42501';end if;
 
  case p_action
@@ -118,6 +118,17 @@ begin
   if v_name is null or length(v_name)>180 then raise exception 'Invalid programme name' using errcode='22023';end if;
   insert into connect.programs(tenant_id,name,code)
   values(p_tenant_id,v_name,nullif(btrim(p_data->>'code'),'')) returning id into v_id;
+ when 'bootstrap_pipeline' then
+  v_name:=nullif(btrim(p_data->>'name'),'');
+  if v_name is null or length(v_name)>150 then raise exception 'Invalid pipeline name' using errcode='22023';end if;
+  insert into connect.pipelines(tenant_id,name,kind) values(p_tenant_id,v_name,'admissions') returning id into v_id;
+  insert into connect.pipeline_stages(tenant_id,pipeline_id,name,sort_order,outcome)
+  values
+   (p_tenant_id,v_id,'New',0,'open'),
+   (p_tenant_id,v_id,'Contacted',1,'open'),
+   (p_tenant_id,v_id,'Trial / Counselling',2,'open'),
+   (p_tenant_id,v_id,'Won',3,'won'),
+   (p_tenant_id,v_id,'Lost',4,'lost');
  when 'create_pipeline' then
   v_name:=nullif(btrim(p_data->>'name'),'');
   if v_name is null or length(v_name)>150 then raise exception 'Invalid pipeline name' using errcode='22023';end if;
