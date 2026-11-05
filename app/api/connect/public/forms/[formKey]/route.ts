@@ -29,6 +29,7 @@ export async function POST(req:NextRequest,{params}:Ctx){
   const verdict=await response.json() as {success?:boolean};
   if(!verdict.success)return intakeError("Form verification failed",403);
  }catch{return intakeError("Form verification unavailable",503);}
+ if(b.consent!==true)return intakeError("Please confirm consent to submit this enquiry",400);
  const name=safeString(b.name,151),email=safeString(b.email,255),phone=safeString(b.phone,36);
  const summary=safeString(b.message,2001),eventId=safeString(b.eventId,100);
  if(name.length<2||(!email&&!phone)||summary.length>2000||
