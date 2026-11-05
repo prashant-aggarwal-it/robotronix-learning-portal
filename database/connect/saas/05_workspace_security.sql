@@ -29,9 +29,8 @@ create or replace function public.connect_create_workspace(
 as $fn$
 declare v_tenant uuid;
 begin
- if p_actor_id is null or not exists(select 1 from auth.users where id=p_actor_id) then
-  raise exception 'Authenticated user required' using errcode='28000';
- end if;
+ -- The server validates p_actor_id with auth.getUser(token).
+ -- A membership FK to auth.users enforces that the user exists.
  if p_slug is null or p_slug !~ '^[a-z0-9]+(-[a-z0-9]+)*$' or
     p_name is null or length(btrim(p_name)) not between 2 and 120 then
   raise exception 'Invalid workspace details' using errcode='22023';
@@ -92,13 +91,16 @@ begin
 end $fn$;
 
 create or replace function public.connect_accept_invitation(
- p_actor_id uuid,p_token_sha256 text
+ p_actor_id uuid,p_actor_email text,p_token_sha256 text
 ) returns uuid language plpgsql security invoker set search_path = ''
 as $fn$
 declare v_inv connect.invitations%rowtype;v_email text;v_member uuid;
 begin
- select lower(email) into v_email from auth.users where id=p_actor_id;
- if v_email is null then raise exception 'Sign in to accept invitation' using errcode='28000';end if;
+ -- The server MUST pass the email returned from a validated auth.getUser(token).
+ v_email:=lower(btrim(p_actor_email));
+ if p_actor_id is null or v_email is null or v_email='' then
+  raise exception 'Sign in to accept invitation' using errcode='28000';
+ end if;
  select * into v_inv from connect.invitations where token_sha256=p_token_sha256 for update;
  if not found or v_inv.accepted_at is not null or v_inv.revoked_at is not null or v_inv.expires_at<=now()
    or v_inv.email<>v_email then raise exception 'Invitation invalid or expired' using errcode='42501';end if;
@@ -136,12 +138,12 @@ revoke all on function public.connect_create_workspace(uuid,text,text) from publ
 revoke all on function public.connect_my_workspaces(uuid) from public,anon,authenticated;
 revoke all on function public.connect_workspace_members(uuid,uuid) from public,anon,authenticated;
 revoke all on function public.connect_create_invitation(uuid,uuid,text,text,text) from public,anon,authenticated;
-revoke all on function public.connect_accept_invitation(uuid,text) from public,anon,authenticated;
+revoke all on function public.connect_accept_invitation(uuid,text,text) from public,anon,authenticated;
 revoke all on function public.connect_revoke_invitation(uuid,uuid,uuid) from public,anon,authenticated;
 grant execute on function public.connect_create_workspace(uuid,text,text) to service_role;
 grant execute on function public.connect_my_workspaces(uuid) to service_role;
 grant execute on function public.connect_workspace_members(uuid,uuid) to service_role;
 grant execute on function public.connect_create_invitation(uuid,uuid,text,text,text) to service_role;
-grant execute on function public.connect_accept_invitation(uuid,text) to service_role;
+grant execute on function public.connect_accept_invitation(uuid,text,text) to service_role;
 grant execute on function public.connect_revoke_invitation(uuid,uuid,uuid) to service_role;
 commit;
