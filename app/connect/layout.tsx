@@ -2,7 +2,7 @@ import type {Metadata} from "next";
 import "./connect.css";
 
 export const metadata:Metadata={
- title:"Connect CRM | Robotronix",
+ title:{absolute:"Robotronix Connect | CRM"},
  description:"Robotronix Connect — enquiries, contacts and follow-ups.",
  robots:{index:false,follow:false},
 };
