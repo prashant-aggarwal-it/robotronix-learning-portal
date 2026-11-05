@@ -30,16 +30,16 @@ Main, Production Supabase and Netlify live deployment: **unchanged**.
 - TypeScript-sensitive issue in Phase 3B automation route corrected (`Number.isInteger` unknown value).
 - Branch-specific GitHub Actions workflow `.github/workflows/connect-branch-validation.yml` added to request `npm ci`, `npm run typecheck`, demo `npm run build`, structure and communication-security checks on Connect branch pushes. **Run result not accessible/confirmed through currently available GitHub connection.**
 - Date-range reporting, currency-safeguards, duplicate payment reference rejection, campaign attribution checks, pipeline-only ROI suppression and early empty-state reports all regression-tested.
-- Added repeatable rollback-only analytics suite `database/connect/saas/19_verify_analytics_dev.sql`.
+- Added repeatable rollback-only analytics suite `database/connect/tests/verify_analytics_dev.sql`.
 
 ## Tests executed in Development
 
 Five canonical SQL QA scripts **all passed** on combined current schema, every test rolled back:
-1. `08_verify_workspace_security_dev.sql`: workspace memberships, invitations, permissions, last-owner safety
-2. `11_verify_crm_phase2b_dev.sql`: enquiry/contact/admission lifecycle, stage history, tasks, tenant boundaries
-3. `14_verify_multichannel_dev.sql`: four inbound channels, webhook idempotency, cross-tenant routing, form revocation
-4. `17_verify_phase3b_dev.sql`: assignment/follow-ups/reminders, scheduled-job semantics, conversation history
-5. `19_verify_analytics_dev.sql`: revenue/spend ROI, stage reached count, empty reports, cross-institute read/write denial, mismatched currency, duplicate receipt reference, unallocated spend
+1. `verify_workspace_security_dev.sql`: workspace memberships, invitations, permissions, last-owner safety
+2. `verify_crm_phase2b_dev.sql`: enquiry/contact/admission lifecycle, stage history, tasks, tenant boundaries
+3. `verify_multichannel_dev.sql`: four inbound channels, webhook idempotency, cross-tenant routing, form revocation
+4. `verify_phase3b_dev.sql`: assignment/follow-ups/reminders, scheduled-job semantics, conversation history
+5. `verify_analytics_dev.sql`: revenue/spend ROI, stage reached count, empty reports, cross-institute read/write denial, mismatched currency, duplicate receipt reference, unallocated spend
 
 Additional final DB check:
 - 41 Connect private tables, 80 existing Portal tables.
