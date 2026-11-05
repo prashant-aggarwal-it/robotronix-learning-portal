@@ -29,6 +29,7 @@ export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
  const [accountEmail,setAccountEmail]=useState("");
  const [workspaces,setWorkspaces]=useState<ConnectWorkspace[]>([]);
+ const [workspacesReady,setWorkspacesReady]=useState(false);
  const [tenantId,setTenantId]=useState("");
  const [section,setSection]=useState<Section>("overview");
  const [busy,setBusy]=useState(false);
@@ -69,12 +70,13 @@ export default function ConnectPage(){
 
  const loadWorkspaces=useCallback(async()=>{
   const result=await connectFetch<{workspaces:ConnectWorkspace[]}>("/api/connect/workspaces");
-  setWorkspaces(result.workspaces||[]);
+  setWorkspaces(result.workspaces||[]);setWorkspacesReady(true);
   setTenantId(previous=>result.workspaces.some(x=>x.tenant_id===previous)?previous:(result.workspaces[0]?.tenant_id||""));
  },[]);
  useEffect(()=>{
-  if(!signedIn){setWorkspaces([]);setTenantId("");return;}
-  void loadWorkspaces().catch(e=>setError(e instanceof Error?e.message:"Could not load your institutes."));
+  if(!signedIn){setWorkspaces([]);setTenantId("");setWorkspacesReady(false);return;}
+  setWorkspacesReady(false);
+  void loadWorkspaces().catch(e=>{setError(e instanceof Error?e.message:"Could not load your institutes.");setWorkspacesReady(true);});
  },[signedIn,loadWorkspaces]);
 
  const loadData=useCallback(async()=>{
@@ -206,6 +208,7 @@ export default function ConnectPage(){
   <button className="cx-primary" disabled={busy}>{busy?"Signing in…":"Sign in to Connect"}</button></form>
   <Link href="/login" className="cx-link">Go to Learning Portal sign-in</Link>
  </section></main>;
+ if(!workspacesReady)return <main className="cx-gate">Loading your institute workspace…</main>;
  if(!workspaces.length)return <main className="cx-gate"><section className="cx-auth">
   <div className="cx-logo"><span className="cx-logo-mark">C</span><span>Robotronix <b>Connect</b></span></div>
   <span className="cx-kicker">GETTING STARTED</span><h1>Create your institute workspace</h1>
