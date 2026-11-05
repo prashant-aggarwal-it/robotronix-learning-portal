@@ -58,8 +58,12 @@ begin
    insert into connect.stage_events(tenant_id,opportunity_id,pipeline_id,to_stage_id,changed_by_membership_id,note)
    values(p_tenant_id,v_extra,v_pipeline,v_stage,v_member,'Created from enquiry');
   end if;
-  insert into connect.inquiries(tenant_id,person_id,opportunity_id,source,summary)
-  values(p_tenant_id,v_id,v_extra,v_source,left(p_data->>'summary',2000))
+  if nullif(p_data->>'categoryId','') is not null and not exists(
+    select 1 from connect.enquiry_categories where tenant_id=p_tenant_id
+    and id=(p_data->>'categoryId')::uuid and active
+  ) then raise exception 'Invalid enquiry category' using errcode='22023';end if;
+  insert into connect.inquiries(tenant_id,person_id,opportunity_id,source,summary,category_id)
+  values(p_tenant_id,v_id,v_extra,v_source,left(p_data->>'summary',2000),nullif(p_data->>'categoryId','')::uuid)
   returning id into v_old;
   insert into connect.audit_events(tenant_id,actor_membership_id,event_type,entity_type,entity_id,metadata)
   values(p_tenant_id,v_member,'capture_lead','inquiry',v_old,jsonb_build_object('personId',v_id,'opportunityId',v_extra));
