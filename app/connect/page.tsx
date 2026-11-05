@@ -1,6 +1,5 @@
 "use client";
 import {FormEvent,useCallback,useEffect,useMemo,useRef,useState} from "react";
-import Link from "next/link";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {getCurrentProfile} from "@/lib/repository";
 import {connectFetch,crmCommand,crmList,
