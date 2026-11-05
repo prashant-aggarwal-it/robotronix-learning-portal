@@ -363,12 +363,7 @@ export default function ConnectPage(){
      <section className="cx-panel"><div className="cx-panel-header"><div><h2>Admissions pipelines</h2><p>{pipelines.length} configured pipelines</p></div></div>
       <div className="cx-chip-row">{pipelines.map(p=><span className="cx-pill" key={p.id}>{p.name}</span>)}</div>
       {canConfigure&&<form className="cx-inline-form" onSubmit={e=>{e.preventDefault();void run(async()=>{
-       const result=await crmCommand(tenantId,"pipelines","create_pipeline",{name:pipelineName});
-       if(result.id){
-        for(const [index,name,outcome] of [["0","New","open"],["1","Contacted","open"],["2","Trial / Counselling","open"],["3","Won","won"],["4","Lost","lost"]]){
-         await crmCommand(tenantId,"pipelines","add_stage",{pipelineId:result.id,name,order:Number(index),outcome});
-        }
-       }
+       await crmCommand(tenantId,"pipelines","bootstrap_pipeline",{name:pipelineName});
        setPipelineName("");
       },"Pipeline created with five default stages.");}}>
        <input required placeholder="New pipeline name" aria-label="Pipeline name" value={pipelineName} onChange={e=>setPipelineName(e.target.value)}/>
