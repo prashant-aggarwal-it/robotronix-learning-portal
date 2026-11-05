@@ -13,11 +13,11 @@ const operations:Record<string,readonly string[]>={
  organizations:["create_organization","link_organization_contact"],
  programs:["create_program"],
  pipelines:["create_pipeline","add_stage"],
- opportunities:["create_opportunity","link_opportunity_person","link_opportunity_program","move_opportunity"],
+ opportunities:["create_opportunity","link_opportunity_person","link_opportunity_program","move_opportunity","assign_opportunity"],
  inquiries:["create_inquiry"],
- tasks:["create_task","complete_task"],
+ tasks:["create_task","update_task","complete_task"],
  activities:["log_activity"],
- appointments:["create_appointment","finish_appointment"],
+ appointments:["create_appointment","reschedule_appointment","finish_appointment"],
 };
 const resources=new Set([
  ...Object.keys(operations),"contact_matches","timeline"
