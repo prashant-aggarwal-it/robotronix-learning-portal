@@ -12,7 +12,7 @@ begin
  join connect.tenants t on t.id=m.tenant_id
  where m.tenant_id=p_tenant_id and m.user_id=p_actor_id
  and m.status='active' and t.status in ('active','trial');
- if actor_role not in ('owner','admin') then
+ if actor_role is null or actor_role not in ('owner','admin') then
   raise exception 'Workspace administrator required' using errcode='42501';
  end if;
  select m.role,m.user_id into target_role,target_user from connect.memberships m
