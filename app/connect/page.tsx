@@ -405,7 +405,7 @@ export default function ConnectPage(){
      </section>)}
     </div>}
 
-    {section==="followups"&&<><ConnectReminderInbox tenantId={tenantId}/><section className="cx-panel cx-panel-full">
+    {section==="followups"&&<><ConnectReminderInbox key={tenantId} tenantId={tenantId}/><section className="cx-panel cx-panel-full">
      <div className="cx-panel-header"><div><h2>Team follow-ups</h2><p>Prioritize overdue and open tasks</p></div></div>
      {!tasks.length?<EmptyState title="No follow-ups scheduled" description="Open a contact or opportunity to add a follow-up task."/>:
       <div className="cx-task-list">{[...tasks].sort((a,b)=>Number(a.status==="done")-Number(b.status==="done")).map(t=><div className="cx-task-row" key={t.id}>
@@ -426,7 +426,7 @@ export default function ConnectPage(){
       </div>)}</div>}
     </section>}
 
-    {section==="communications"&&<ConnectConversationHistory tenantId={tenantId}/>}
+    {section==="communications"&&<ConnectConversationHistory key={tenantId} tenantId={tenantId}/>}
 
     {section==="settings"&&<>
     <div className="cx-settings-grid">
@@ -451,7 +451,7 @@ export default function ConnectPage(){
        <button disabled={busy} className="cx-secondary">Add</button></form>}
      </section>
     </div>
-    <ConnectAutomationSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>
+    <ConnectAutomationSettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>
     {canConfigure&&<ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
     </>}
    </div>
@@ -535,7 +535,7 @@ export default function ConnectPage(){
        <label>Admission title<input value={newAdmissionTitle} maxLength={200} onChange={e=>setNewAdmissionTitle(e.target.value)} placeholder="e.g. Python Beginner Course"/></label>
        <button className="cx-secondary" disabled={busy}>Start admission</button>
       </form></section>}
-     {selectedContact&&<ConnectConversationHistory tenantId={tenantId} personId={selectedPerson} compact/>}
+     {selectedContact&&<ConnectConversationHistory key={tenantId+"-"+selectedPerson} tenantId={tenantId} personId={selectedPerson} compact/>}
      {canWrite&&<section className="cx-detail-card"><h3>Schedule a follow-up</h3>
       <form className="cx-form" onSubmit={saveTask}><label>Next action<input required maxLength={250} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} placeholder="Call to discuss programme"/></label>
        <label>Due at<input type="datetime-local" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/></label><button className="cx-primary" disabled={busy}>Save follow-up</button></form></section>}
