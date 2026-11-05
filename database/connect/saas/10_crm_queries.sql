@@ -16,6 +16,16 @@ begin
  v_search:=left(coalesce(p_options->>'search',''),100);
  v_id:=nullif(p_options->>'id','')::uuid;
  case p_resource
+ when 'overview' then
+  select jsonb_build_array(jsonb_build_object(
+   'newEnquiries',(select count(*) from connect.inquiries where tenant_id=p_tenant_id and received_at>=date_trunc('day',now())),
+   'totalEnquiries',(select count(*) from connect.inquiries where tenant_id=p_tenant_id),
+   'openOpportunities',(select count(*) from connect.opportunities o join connect.pipeline_stages st on st.tenant_id=o.tenant_id and st.id=o.stage_id where o.tenant_id=p_tenant_id and st.outcome='open'),
+   'wonOpportunities',(select count(*) from connect.opportunities o join connect.pipeline_stages st on st.tenant_id=o.tenant_id and st.id=o.stage_id where o.tenant_id=p_tenant_id and st.outcome='won'),
+   'overdueTasks',(select count(*) from connect.tasks where tenant_id=p_tenant_id and status='open' and due_at<now()),
+   'openTasks',(select count(*) from connect.tasks where tenant_id=p_tenant_id and status='open'),
+   'scheduledAppointments',(select count(*) from connect.appointments where tenant_id=p_tenant_id and status='scheduled' and starts_at>=now())
+  )) into v_result;
  when 'people' then
   select coalesce(jsonb_agg(to_jsonb(q) order by q.full_name,q.id),'[]'::jsonb) into v_result
   from (select p.id,p.full_name,p.status,p.created_at,
@@ -66,8 +76,19 @@ begin
    order by o.updated_at desc,o.id limit v_limit offset v_offset) q;
  when 'inquiries' then
   select coalesce(jsonb_agg(to_jsonb(q) order by q.received_at desc),'[]'::jsonb) into v_result
-  from (select id,person_id,opportunity_id,source,summary,received_at from connect.inquiries
-    where tenant_id=p_tenant_id order by received_at desc,id limit v_limit offset v_offset) q;
+  from (select i.id,i.person_id,i.opportunity_id,i.source,i.summary,i.received_at,
+    p.full_name as contact_name,
+    (select cm.display_value from connect.contact_methods cm
+     where cm.tenant_id=i.tenant_id and cm.person_id=i.person_id
+     order by cm.is_primary desc,cm.created_at limit 1) as contact_detail,
+    o.title as opportunity_title,o.stage_id,s.name as stage_name,s.outcome
+    from connect.inquiries i
+    left join connect.people p on p.tenant_id=i.tenant_id and p.id=i.person_id
+    left join connect.opportunities o on o.tenant_id=i.tenant_id and o.id=i.opportunity_id
+    left join connect.pipeline_stages s on s.tenant_id=i.tenant_id and s.id=o.stage_id
+    where i.tenant_id=p_tenant_id and (v_id is null or i.id=v_id)
+    and (v_search='' or p.full_name ilike '%'||v_search||'%' or i.summary ilike '%'||v_search||'%')
+    order by i.received_at desc,i.id limit v_limit offset v_offset) q;
  when 'tasks' then
   select coalesce(jsonb_agg(to_jsonb(q) order by q.due_at nulls last),'[]'::jsonb) into v_result
   from (select id,title,status,person_id,opportunity_id,assignee_membership_id,due_at,completed_at,created_at
