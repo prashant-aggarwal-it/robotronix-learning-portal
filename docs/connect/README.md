@@ -19,7 +19,6 @@
 - `features/connect/model.ts`, `EmptyStates.tsx` — navigation, basic formatting, category suggestions, feedback UI.
 - `features/connect/components/` — CRM settings, communications, reports and channel UI.
 - `features/connect/api/client.ts` — browser API client, data contracts and commands.
-- `lib/connect-client.ts` — compatibility re-export, retained temporarily for existing imports; it contains no duplicate implementation.
 - `lib/server/connect-auth.ts`, `connect-ingestion.ts` — server-only authentication and signed provider ingestion.
 - `app/api/connect/` — independent authenticated HTTP routes.
 
