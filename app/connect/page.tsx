@@ -14,6 +14,7 @@ import {ConnectReports} from "@/components/connect/ConnectReports";
 import {EnquirySettings,readEnquiryPreferences,type EnquiryPreferences} from "@/components/connect/EnquirySettings";
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
 import {ErrorMessage,EmptyState} from "@/features/connect/EmptyStates";
+import {ConnectSidebar} from "@/features/connect/ConnectSidebar";
 
 export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
@@ -300,32 +301,7 @@ export default function ConnectPage(){
  </section></main>;
 
  return <main className="cx-app">
-  <button className="cx-mobile-menu" onClick={()=>setShowMobileNav(!showMobileNav)} aria-label="Toggle navigation">☰</button>
-  <aside className={"cx-sidebar "+(showMobileNav?"cx-mobile-open":"")}>
-   <div className="cx-logo"><span className="cx-logo-mark">C</span><span>Robotronix <b>Connect</b></span></div>
-   {canOpenPortal&&<div className="cx-app-switcher" aria-label="Application switcher">
-    <span className="cx-nav-label">APPLICATIONS</span>
-    <Link href="/admin" className="cx-app-switch-link">▦ <span>Learning Portal</span></Link>
-    <span className="cx-app-switch-current" aria-current="page">◎ <span>Connect CRM</span></span>
-   </div>}
-   <div className="cx-workspace-picker">
-    <span>INSTITUTE WORKSPACE</span>
-    <select aria-label="Choose institute" value={tenantId} onChange={e=>{setTenantId(e.target.value);setSelectedPerson(null);setSelectedOpportunity(null);}}>
-     {workspaces.map(w=><option key={w.tenant_id} value={w.tenant_id}>{w.workspace_name}</option>)}
-    </select>
-    <small>{shortLabel(tenant?.membership_role||"member")} access</small>
-   </div>
-   <nav aria-label="Connect navigation" className="cx-navigation">
-    <span className="cx-nav-label">WORKSPACE</span>
-    {visibleNavigation.map(n=><button key={n.id} className={"cx-nav-item "+(section===n.id?"active":"")} onClick={()=>{
-      setSection(n.id);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setShowMobileNav(false);
-     }}><span aria-hidden="true">{n.icon}</span>{n.label}</button>)}
-   </nav>
-   <div className="cx-sidebar-footer"><div className="cx-persona">{initials(accountEmail)}</div>
-    <div className="cx-sidebar-account"><strong>{accountEmail.split("@")[0]}</strong><small>{accountEmail}</small></div>
-    <button title="Sign out" aria-label="Sign out" className="cx-signout" onClick={()=>void getSupabaseBrowserClient()?.auth.signOut()}>↪</button>
-   </div>
-  </aside>
+  <ConnectSidebar showMobileNav={showMobileNav} onToggleMobile={()=>setShowMobileNav(v=>!v)} canOpenPortal={canOpenPortal} tenantId={tenantId} tenantRole={tenant?.membership_role||"member"} workspaces={workspaces} accountEmail={accountEmail} section={section} visibleNavigation={visibleNavigation} onWorkspaceChange={value=>{setTenantId(value);setSelectedPerson(null);setSelectedOpportunity(null);}} onSectionChange={value=>{setSection(value);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setShowMobileNav(false);}}/>
   <div className="cx-main">
    <header className="cx-topbar">
     <div className="cx-breadcrumb"><span>Connect</span><span aria-hidden="true">/</span><strong>{navigation.find(n=>n.id===section)?.label}</strong></div>
