@@ -22,7 +22,7 @@
 - `database/connect/saas/01_connect_independent_schema.sql`: standalone fresh-install DDL, independent of Portal.
 - `database/connect/saas/02_retire_empty_prototype_dev_only.sql`: historical Dev-only cleanup, **never run on independent Connect installs or production**.
 - `database/connect/saas/03_harden_canonical_model_dev.sql`: historical Dev-only refinement (already folded into canonical fresh source).
-- `database/connect/saas/04_verify_foundation.sql`: read-only verification.
+- `database/connect/tests/verify_foundation.sql`: read-only verification.
 - The former `database/01_install/modules/schema/12_connect_crm.sql` has been deleted, so Portal's generated installer no longer adds Connect.
 - Earlier Portal-coupled CRM design docs are marked historical/superseded.
 
