@@ -23,6 +23,11 @@ begin
  result:=public.connect_ingest_channel('whatsapp','qa-simple-test-1','qa-message-001','Applicant',null,'+910000000123','Seeking an instructor position');
  if result->>'opportunityId' is not null then raise exception 'Inbound created an admissions opportunity';end if;
  if (select count(*) from connect.inquiries where tenant_id=t)<>2 then raise exception 'Expected 2 enquiries';end if;
+ if (select count(*) from connect.tasks where tenant_id=t and status='open')<>2 then
+  raise exception 'Expected follow-up tasks for both people';end if;
+ perform public.connect_ingest_channel('whatsapp','qa-simple-test-1','qa-message-002','Applicant',null,'+910000000123','Following up on enquiry');
+ if (select count(*) from connect.tasks where tenant_id=t and status='open')<>2 then
+  raise exception 'Repeated message created a duplicate follow-up';end if;
  begin
   perform public.connect_enquiry_preferences(other_actor,t,'set_mode','{"mode":"advanced"}');
   raise exception 'Cross-workspace mode change not blocked';
