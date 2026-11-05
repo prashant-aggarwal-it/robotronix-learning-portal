@@ -35,8 +35,8 @@ Status: **Implemented and database-tested; Next.js build/browser regression not 
 
 ## UI
 
-- `components/connect/ConnectAutomationSettings.tsx`: simple owner/admin policy controls.
-- `components/connect/ConnectCommunications.tsx`: in-app alerts and conversation history.
+- `features/connect/components/ConnectAutomationSettings.tsx`: simple owner/admin policy controls.
+- `features/connect/components/ConnectCommunications.tsx`: in-app alerts and conversation history.
 - `app/connect/page.tsx`: new Communications navigation, personal reminders under Follow-ups, per-contact history, staff-assignment selector, notes.
 - `app/connect/connect.css`: scoped styling compatible with Portal UI foundations.
 
