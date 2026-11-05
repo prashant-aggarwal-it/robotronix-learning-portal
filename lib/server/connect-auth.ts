@@ -31,8 +31,9 @@ export async function invokeConnect<T>(
 export function connectRpcFailure(error:string,code?:string){
  // Avoid returning database internals to callers.
  if(code==="23505")return connectFailure("An entry with these details already exists.",409);
+ if(code==="40001")return connectFailure("This record has changed. Refresh it and try again.",409);
  if(code==="42501"||code==="28000")return connectFailure("Not authorized for this workspace or invitation.",403);
- if(code==="22023"||code==="23514")return connectFailure("Please check the supplied details.",400);
+ if(code==="22023"||code==="23514"||code==="23503"||code==="23502"||code==="22P02"||code==="22007"||code==="22008")return connectFailure("Please check the supplied details.",400);
  return connectFailure("Unable to complete Connect request.",500);
 }
 export function uuid(value:unknown):value is string{
