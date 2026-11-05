@@ -6,6 +6,7 @@ import {connectFetch,crmCommand,crmList,
  type ConnectWorkspace,type ConnectPerson,type ConnectInquiry,type ConnectOpportunity,
  type ConnectPipeline,type ConnectTask,type ConnectAppointment,type ConnectOverview,
  type ConnectActivity,type ConnectProgram,type ConnectMember} from "@/lib/connect-client";
+import {ChannelSettings} from "@/components/connect/ChannelSettings";
 import "./connect.css";
 
 type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"settings";
@@ -394,7 +395,8 @@ export default function ConnectPage(){
       </div>)}</div>}
     </section>}
 
-    {section==="settings"&&<div className="cx-settings-grid">
+    {section==="settings"&&<>
+    <div className="cx-settings-grid">
      <section className="cx-panel"><div className="cx-panel-header"><div><h2>Institute access</h2><p>Who can manage this workspace</p></div></div>
       <dl className="cx-settings-list"><div><dt>Institute</dt><dd>{tenant?.workspace_name}</dd></div><div><dt>Workspace</dt><dd>{tenant?.slug}</dd></div><div><dt>Your role</dt><dd>{shortLabel(tenant?.membership_role||"")}</dd></div></dl>
       {canConfigure&&<button className="cx-secondary" onClick={()=>void connectFetch<{members:ConnectMember[]}>("/api/connect/workspaces/"+tenantId+"/members").then(r=>setMembers(r.members)).catch(e=>setError(e instanceof Error?e.message:"Could not load members."))}>View team members</button>}
@@ -415,7 +417,9 @@ export default function ConnectPage(){
        <input required placeholder="New pipeline name" aria-label="Pipeline name" value={pipelineName} onChange={e=>setPipelineName(e.target.value)}/>
        <button disabled={busy} className="cx-secondary">Add</button></form>}
      </section>
-    </div>}
+    </div>
+    {canConfigure&&<ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
+    </>}
    </div>
   </div>
 
