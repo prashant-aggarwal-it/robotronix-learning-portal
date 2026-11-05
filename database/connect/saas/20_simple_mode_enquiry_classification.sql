@@ -51,7 +51,7 @@ begin
  join connect.tenants t on t.id=m.tenant_id
  where m.tenant_id=p_tenant_id and m.user_id=p_actor_id and m.status='active' and t.status in ('trial','active');
  if v_member is null then raise exception 'Institute access denied' using errcode='42501';end if;
- if p_action<>'read' and v_role not in ('owner','admin') then raise exception 'Institute owner/admin required' using errcode='42501';end if;
+ if p_action not in ('read','classify_inquiry') and v_role not in ('owner','admin') then raise exception 'Institute owner/admin required' using errcode='42501';end if;
  if p_action='set_mode' then
   v_mode:=p_data->>'mode';
   if v_mode not in ('simple','advanced') or v_mode is null then raise exception 'Invalid interface mode' using errcode='22023';end if;
