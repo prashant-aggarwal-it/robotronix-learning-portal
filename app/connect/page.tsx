@@ -39,6 +39,7 @@ export default function ConnectPage(){
  const [refreshCount,setRefreshCount]=useState(0);
  const [search,setSearch]=useState("");
  const [showLeadForm,setShowLeadForm]=useState(false);
+ const [showContactForm,setShowContactForm]=useState(false);
  const [selectedPerson,setSelectedPerson]=useState<string|null>(null);
  const [selectedOpportunity,setSelectedOpportunity]=useState<string|null>(null);
  const [overview,setOverview]=useState<ConnectOverview>(emptyOverview);
@@ -115,6 +116,7 @@ export default function ConnectPage(){
  const [newWorkspace,setNewWorkspace]=useState("");
  const [newSlug,setNewSlug]=useState("");
  const [lead,setLead]=useState({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:""});
+ const [newContact,setNewContact]=useState({name:"",email:"",phone:"",role:"contact"});
  const [taskTitle,setTaskTitle]=useState("");
  const [taskDue,setTaskDue]=useState("");
  const [pipelineName,setPipelineName]=useState("");
@@ -176,6 +178,14 @@ export default function ConnectPage(){
    setNewAdmissionTitle("");setNewAdmissionPipeline("");
    if(outcome.id)setSelectedOpportunity(outcome.id);
   },"Admission opportunity created.");
+ }
+ async function createContact(e:FormEvent){
+  e.preventDefault();
+  await run(async()=>{
+   const result=await crmCommand(tenantId,"people","create_contact",newContact);
+   setNewContact({name:"",email:"",phone:"",role:"contact"});setShowContactForm(false);
+   if(result.id)setSelectedPerson(result.id);
+  },"Contact created.");
  }
  async function saveTask(e:FormEvent){
   e.preventDefault();
@@ -266,7 +276,7 @@ export default function ConnectPage(){
     <div className="cx-breadcrumb"><span>Connect</span><span aria-hidden="true">/</span><strong>{navigation.find(n=>n.id===section)?.label}</strong></div>
     <div className="cx-top-actions"><span className="cx-sync">{loading?"Refreshing…":"Development workspace"}</span>
      <button className="cx-icon-button" aria-label="Refresh CRM data" title="Refresh data" onClick={()=>setRefreshCount(v=>v+1)}>↻</button>
-     <Link href="/admin" className="cx-portal-link">Learning Portal ↗</Link>
+     <Link href="/" className="cx-portal-link">Learning Portal ↗</Link>
     </div>
    </header>
    <div className="cx-content">
@@ -281,6 +291,7 @@ export default function ConnectPage(){
      section==="followups"?"Your team's calls, tasks and next actions.":
      section==="calendar"?"Counselling, demo and trial appointments.":"Manage institute programmes and access."}</p></div>
      {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>＋ New enquiry</button>}
+     {section==="contacts"&&canWrite&&<button className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
     </div>
 
     {section==="overview"&&<>
@@ -390,6 +401,17 @@ export default function ConnectPage(){
    </div>
   </div>
 
+  {showContactForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowContactForm(false);}}><section className="cx-modal" role="dialog" aria-modal="true" aria-labelledby="cx-new-contact-title">
+   <div className="cx-modal-header"><div><span className="cx-kicker">CONTACT DIRECTORY</span><h2 id="cx-new-contact-title">New contact</h2><p>Add a person without generating an enquiry.</p></div><button aria-label="Close new contact" onClick={()=>setShowContactForm(false)}>×</button></div>
+   <form className="cx-form" onSubmit={createContact}>
+    <label>Full name <span>*</span><input required autoFocus maxLength={150} value={newContact.name} onChange={e=>setNewContact(v=>({...v,name:e.target.value}))}/></label>
+    <label>Relationship<select value={newContact.role} onChange={e=>setNewContact(v=>({...v,role:e.target.value}))}>
+     {["contact","guardian","learner","customer","staff","other"].map(r=><option key={r} value={r}>{shortLabel(r)}</option>)}
+    </select></label>
+    <div className="cx-form-columns"><label>Phone<input type="tel" maxLength={35} value={newContact.phone} onChange={e=>setNewContact(v=>({...v,phone:e.target.value}))}/></label>
+     <label>Email<input type="email" value={newContact.email} onChange={e=>setNewContact(v=>({...v,email:e.target.value}))}/></label></div>
+    <div className="cx-form-actions"><button type="button" className="cx-secondary" onClick={()=>setShowContactForm(false)}>Cancel</button><button disabled={busy} className="cx-primary">Save contact</button></div>
+   </form></section></div>}
   {showLeadForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowLeadForm(false);}}><section className="cx-modal" role="dialog" aria-modal="true" aria-labelledby="cx-new-lead-title">
    <div className="cx-modal-header"><div><span className="cx-kicker">QUICK CAPTURE</span><h2 id="cx-new-lead-title">New enquiry</h2><p>Capture the important details now. Qualify the lead later.</p></div><button aria-label="Close new enquiry" onClick={()=>setShowLeadForm(false)}>×</button></div>
    <form onSubmit={captureLead} className="cx-form"><label>Contact name <span>*</span><input required maxLength={150} autoFocus value={lead.name} onChange={e=>setLead(v=>({...v,name:e.target.value}))} placeholder="Parent or contact name"/></label>
