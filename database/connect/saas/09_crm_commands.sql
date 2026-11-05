@@ -64,6 +64,24 @@ begin
   insert into connect.audit_events(tenant_id,actor_membership_id,event_type,entity_type,entity_id,metadata)
   values(p_tenant_id,v_member,'capture_lead','inquiry',v_old,jsonb_build_object('personId',v_id,'opportunityId',v_extra));
   return jsonb_build_object('ok',true,'id',v_old,'personId',v_id,'opportunityId',v_extra);
+ when 'create_contact' then
+  v_name:=nullif(btrim(p_data->>'name'),'');
+  if v_name is null or length(v_name)>150 then raise exception 'Invalid contact name' using errcode='22023';end if;
+  insert into connect.people(tenant_id,full_name) values(p_tenant_id,v_name) returning id into v_id;
+  insert into connect.person_roles(tenant_id,person_id,role)
+   values(p_tenant_id,v_id,coalesce(nullif(p_data->>'role',''),'contact'));
+  if nullif(btrim(p_data->>'email'),'') is not null then
+   v_token:=lower(btrim(p_data->>'email'));
+   if length(v_token)>254 or position('@' in v_token)<2 then raise exception 'Invalid contact email' using errcode='22023';end if;
+   insert into connect.contact_methods(tenant_id,person_id,kind,normalized_value,display_value,is_primary)
+   values(p_tenant_id,v_id,'email',v_token,v_token,true);
+  end if;
+  if nullif(btrim(p_data->>'phone'),'') is not null then
+   v_token:=btrim(p_data->>'phone');
+   if length(v_token)>35 then raise exception 'Invalid contact phone' using errcode='22023';end if;
+   insert into connect.contact_methods(tenant_id,person_id,kind,normalized_value,display_value,is_primary)
+   values(p_tenant_id,v_id,'mobile',v_token,v_token,true);
+  end if;
  when 'create_person' then
   v_name:=nullif(btrim(p_data->>'name'),'');
   if v_name is null or length(v_name)>150 then raise exception 'Invalid contact name' using errcode='22023';end if;
