@@ -180,6 +180,12 @@ begin
   where t.status='open' and t.due_at is not null
     and t.due_at<=now()+pg_catalog.make_interval(mins=>p.reminder_advance_minutes)
     and t.due_at>=now()-interval '30 days'
+    and not exists (
+      select 1 from connect.staff_notifications n
+      where n.tenant_id=t.tenant_id and n.task_id=t.id
+        and n.member_id=t.assignee_membership_id
+        and n.kind=case when t.due_at<=now() then 'overdue' else 'upcoming' end
+    )
   order by t.due_at,t.id
   limit least(1000,greatest(1,coalesce(p_batch_size,250)))
  )
