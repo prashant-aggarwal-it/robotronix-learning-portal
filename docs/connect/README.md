@@ -2,6 +2,8 @@
 
 **Current decisions:** [SAAS_ARCHITECTURE_DECISION.md](SAAS_ARCHITECTURE_DECISION.md), [CANONICAL_DATA_MODEL.md](CANONICAL_DATA_MODEL.md), [ROBOTRONIX_PRODUCTION_GO_LIVE_GATE.md](ROBOTRONIX_PRODUCTION_GO_LIVE_GATE.md).
 
+**Source consolidation and release checks:** [CONSOLIDATION_AUDIT.md](CONSOLIDATION_AUDIT.md).
+
 **Database operations:** [database/connect/README.md](../../database/connect/README.md). SQL verification scripts now live in `database/connect/tests/`; only schema/source and historical applied SQL remain in `database/connect/saas/`.
 
 **Historical implementation reports:** `PHASE1_EXECUTION_REPORT.md`, `PHASE2A_WORKSPACE_SECURITY.md`, `PHASE2B_CRM_BACKEND.md`, `PHASE2C_UI_EXECUTION_REPORT.md`, `PHASE2D_QA_EXECUTION_LOG.md`, and `PHASE3A`–`PHASE3D` reports. They describe completed development phases, not necessarily the current deployment state.
