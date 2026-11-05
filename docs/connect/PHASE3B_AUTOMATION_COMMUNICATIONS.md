@@ -22,7 +22,7 @@ Status: **Implemented and database-tested; Next.js build/browser regression not 
 
 - `database/connect/saas/15_workflow_automation.sql`: two new tenant-scoped RLS tables, one trigger, four service-only RPCs.
 - `database/connect/saas/16_schedule_inapp_reminders_dev.sql`: installs `pg_cron` in Dev and activates `robotronix-connect-inapp-reminders`, every five minutes.
-- `database/connect/saas/17_verify_phase3b_dev.sql`: complete rollback-only SQL test.
+- `database/connect/tests/verify_phase3b_dev.sql`: complete rollback-only SQL test.
 - Canonical `database/connect/saas/09_crm_commands.sql` updated so manual lead capture participates in automatic assignment.
 
 ## APIs
