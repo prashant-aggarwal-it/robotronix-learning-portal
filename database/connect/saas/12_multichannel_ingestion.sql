@@ -199,26 +199,9 @@ begin
       and person_id=v_person and kind='mobile'));
  end if;
 
- -- Auto-assign the first open stage only when an institute has a configured admissions pipeline.
- select p.id,s.id into v_pipeline,v_stage
- from connect.pipelines p join connect.pipeline_stages s on s.tenant_id=p.tenant_id and s.pipeline_id=p.id
- where p.tenant_id=v_account.tenant_id and p.active and s.outcome='open'
- order by p.name,s.sort_order limit 1;
- if v_pipeline is not null then
-  -- A new WhatsApp/email message must not generate a brand new deal each time.
-  select o.id into v_opp from connect.opportunities o
-  join connect.pipeline_stages st on st.tenant_id=o.tenant_id and st.id=o.stage_id
-  where o.tenant_id=v_account.tenant_id and o.pipeline_id=v_pipeline
-    and o.contact_id=v_person and st.outcome='open'
-  order by o.updated_at desc,o.id limit 1;
-  if v_opp is null then
-   insert into connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id)
-   values(v_account.tenant_id,v_pipeline,v_stage,
-    left(v_name||' — '||p_source,200),v_person) returning id into v_opp;
-   insert into connect.stage_events(tenant_id,opportunity_id,pipeline_id,to_stage_id,note)
-   values(v_account.tenant_id,v_opp,v_pipeline,v_stage,'Automatically captured');
-  end if;
- end if;
+ -- Intake-first policy: a message from a trainer, supplier or collaborator is not an admission.
+ -- Review/classify the enquiry before opening any pipeline opportunity.
+ -- Deliberately do not create or reuse an admissions deal during channel ingestion.
  if v_account.provider in ('whatsapp','email') then
   insert into connect.conversations(tenant_id,channel_account_id,person_id,external_thread_id)
   values(v_account.tenant_id,v_account.id,v_person,v_person::text)
