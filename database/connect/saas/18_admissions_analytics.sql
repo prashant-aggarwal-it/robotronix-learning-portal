@@ -92,6 +92,11 @@ begin
   else
    if length(btrim(coalesce(p_data->>'reference',''))) not between 3 and 180 then
     raise exception 'A unique payment reference is required to avoid duplicate receipts' using errcode='22023';end if;
+   if not exists(select 1 from connect.opportunities
+     where tenant_id=p_tenant_id and id=(p_data->>'opportunityId')::uuid
+       and currency=v_currency) then
+    raise exception 'Admission currency must match the reporting base currency' using errcode='22023';
+   end if;
    insert into connect.realized_revenue(tenant_id,opportunity_id,received_on,amount,currency,
     external_reference,note,recorded_by)
    values(p_tenant_id,(p_data->>'opportunityId')::uuid,(p_data->>'date')::date,v_amount,v_currency,
@@ -149,7 +154,12 @@ begin
      and o.pipeline_id=p_pipeline_id))),
   'expectedValue',(select coalesce(sum(o.expected_value),0) from connect.opportunities o
    where o.tenant_id=p_tenant_id and o.created_at>=v_start and o.created_at<v_end
+   and o.currency=v_currency
    and (p_pipeline_id is null or o.pipeline_id=p_pipeline_id)),
+  'excludedCurrencyOpportunities',(select count(*) from connect.opportunities o
+   where o.tenant_id=p_tenant_id and o.created_at>=v_start and o.created_at<v_end
+    and o.currency<>v_currency and o.expected_value is not null
+    and (p_pipeline_id is null or o.pipeline_id=p_pipeline_id)),
   'currency',v_currency,'fromDate',p_from,'toDate',p_to
  ) into v_summary;
 
