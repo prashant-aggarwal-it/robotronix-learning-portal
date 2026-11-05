@@ -7,13 +7,16 @@ import {connectFetch,crmCommand,crmList,
  type ConnectPipeline,type ConnectTask,type ConnectAppointment,type ConnectOverview,
  type ConnectActivity,type ConnectProgram,type ConnectMember} from "@/lib/connect-client";
 import {ChannelSettings} from "@/components/connect/ChannelSettings";
+import {ConnectAutomationSettings} from "@/components/connect/ConnectAutomationSettings";
+import {ConnectReminderInbox,ConnectConversationHistory} from "@/components/connect/ConnectCommunications";
 import "./connect.css";
 
-type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"settings";
+type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"communications"|"settings";
 const navigation:Array<{id:Section;label:string;icon:string}>= [
  {id:"overview",label:"Overview",icon:"◫"},{id:"enquiries",label:"Enquiries",icon:"◎"},
  {id:"contacts",label:"Contacts",icon:"♙"},{id:"pipeline",label:"Admissions pipeline",icon:"▥"},
  {id:"followups",label:"Follow-ups",icon:"☑"},{id:"calendar",label:"Calendar",icon:"▦"},
+ {id:"communications",label:"Communications",icon:"✉"},
  {id:"settings",label:"Institute settings",icon:"⚙"}
 ];
 const emptyOverview:ConnectOverview={
@@ -308,7 +311,8 @@ export default function ConnectPage(){
      section==="contacts"?"One place for people, families and their relationships.":
      section==="pipeline"?"Track every admission from first conversation to enrolment.":
      section==="followups"?"Your team's calls, tasks and next actions.":
-     section==="calendar"?"Counselling, demo and trial appointments.":"Manage institute programmes and access."}</p></div>
+     section==="calendar"?"Counselling, demo and trial appointments.":
+     section==="communications"?"Review verified inbound messages and conversation history.":"Manage institute programmes and access."}</p></div>
      {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>＋ New enquiry</button>}
      {section==="contacts"&&canWrite&&<button className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
     </div>
@@ -374,7 +378,7 @@ export default function ConnectPage(){
      </section>)}
     </div>}
 
-    {section==="followups"&&<section className="cx-panel cx-panel-full">
+    {section==="followups"&&<><ConnectReminderInbox tenantId={tenantId}/><section className="cx-panel cx-panel-full">
      <div className="cx-panel-header"><div><h2>Team follow-ups</h2><p>Prioritize overdue and open tasks</p></div></div>
      {!tasks.length?<EmptyState title="No follow-ups scheduled" description="Open a contact or opportunity to add a follow-up task."/>:
       <div className="cx-task-list">{[...tasks].sort((a,b)=>Number(a.status==="done")-Number(b.status==="done")).map(t=><div className="cx-task-row" key={t.id}>
@@ -383,7 +387,7 @@ export default function ConnectPage(){
        <span className={"cx-status "+(t.status==="done"?"won":"")}>{shortLabel(t.status)}</span>
        {canWrite&&t.status==="open"&&<button className="cx-secondary" disabled={busy} onClick={()=>void run(()=>crmCommand(tenantId,"tasks","complete_task",{taskId:t.id}),"Follow-up completed.")}>Mark done</button>}
       </div>)}</div>}
-    </section>}
+    </section></>}
 
     {section==="calendar"&&<section className="cx-panel cx-panel-full">
      <div className="cx-panel-header"><div><h2>Counselling & trial appointments</h2><p>Scheduled, completed and cancelled sessions</p></div></div>
@@ -394,6 +398,8 @@ export default function ConnectPage(){
        {canWrite&&a.status==="scheduled"&&<button className="cx-secondary" disabled={busy} onClick={()=>void run(()=>crmCommand(tenantId,"appointments","finish_appointment",{appointmentId:a.id,status:"completed"}),"Appointment completed.")}>Complete</button>}
       </div>)}</div>}
     </section>}
+
+    {section==="communications"&&<ConnectConversationHistory tenantId={tenantId}/>}
 
     {section==="settings"&&<>
     <div className="cx-settings-grid">
@@ -418,6 +424,7 @@ export default function ConnectPage(){
        <button disabled={busy} className="cx-secondary">Add</button></form>}
      </section>
     </div>
+    <ConnectAutomationSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>
     {canConfigure&&<ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
     </>}
    </div>
@@ -490,6 +497,7 @@ export default function ConnectPage(){
        <label>Admission title<input value={newAdmissionTitle} maxLength={200} onChange={e=>setNewAdmissionTitle(e.target.value)} placeholder="e.g. Python Beginner Course"/></label>
        <button className="cx-secondary" disabled={busy}>Start admission</button>
       </form></section>}
+     {selectedContact&&<ConnectConversationHistory tenantId={tenantId} personId={selectedPerson} compact/>}
      {canWrite&&<section className="cx-detail-card"><h3>Schedule a follow-up</h3>
       <form className="cx-form" onSubmit={saveTask}><label>Next action<input required maxLength={250} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} placeholder="Call to discuss programme"/></label>
        <label>Due at<input type="datetime-local" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/></label><button className="cx-primary" disabled={busy}>Save follow-up</button></form></section>}
