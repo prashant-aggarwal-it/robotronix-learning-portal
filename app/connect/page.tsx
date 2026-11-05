@@ -32,14 +32,14 @@ function shortLabel(v:string){return v.replaceAll("_"," ").replace(/\b\w/g,c=>c.
 function suggestEnquiryCategory(message:string,categories:EnquiryPreferences["categories"]){
  const text=message.toLowerCase();
  const rules:Array<[string,RegExp]>=[
-  ["Trainer / Job Applicant",/\\b(trainer|instructor|teacher|resume|cv|job|hiring|vacancy|apply for)\\b/i],
-  ["Vendor / Supplier",/\\b(supplier|wholesale|distributor|vendor|quotation for supply)\\b/i],
-  ["School Programs",/\\b(school|stem lab|school workshop|principal|school robotics)\\b/i],
-  ["Kits & Components",/\\b(arduino kit|robotics kit|sensor|component|motor|breadboard|buy a kit)\\b/i],
-  ["Partnerships",/\\b(franchise|partnership|partner with|reseller)\\b/i],
-  ["Collaborations",/\\b(collaborat|joint event|ngo|joint workshop)\\b/i],
-  ["Online Courses",/\\b(online class|online course|virtual class)\\b/i],
-  ["Offline Courses",/\\b(offline class|offline course|in.person class|classroom course)\\b/i]
+  ["Trainer / Job Applicant",/\b(trainer|instructor|teacher|resume|cv|job|hiring|vacancy|apply for)\b/i],
+  ["Vendor / Supplier",/\b(supplier|wholesale|distributor|vendor|quotation for supply)\b/i],
+  ["School Programs",/\b(school|stem lab|school workshop|principal|school robotics)\b/i],
+  ["Kits & Components",/\b(arduino kit|robotics kit|sensor|component|motor|breadboard|buy a kit)\b/i],
+  ["Partnerships",/\b(franchise|partnership|partner with|reseller)\b/i],
+  ["Collaborations",/\b(collaboration|collaborate|joint event|ngo|joint workshop)\b/i],
+  ["Online Courses",/\b(online class|online course|virtual class)\b/i],
+  ["Offline Courses",/\b(offline class|offline course|in.person class|classroom course)\b/i]
  ];
  const matches=rules.filter(([,regex])=>regex.test(text));
  if(matches.length!==1)return null;
