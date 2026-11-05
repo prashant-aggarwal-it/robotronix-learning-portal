@@ -51,9 +51,9 @@ begin
    if not exists(select 1 from connect.pipeline_stages where tenant_id=p_tenant_id
        and pipeline_id=v_pipeline and id=v_stage and outcome='open')
    then raise exception 'Choose an open admissions stage' using errcode='22023';end if;
-   insert into connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id,owner_membership_id)
+   insert into connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id)
    values(p_tenant_id,v_pipeline,v_stage,
-    coalesce(nullif(btrim(p_data->>'title'),''),v_name||' — enquiry'),v_id,v_member)
+    coalesce(nullif(btrim(p_data->>'title'),''),v_name||' — enquiry'),v_id)
    returning id into v_extra;
    insert into connect.stage_events(tenant_id,opportunity_id,pipeline_id,to_stage_id,changed_by_membership_id,note)
    values(p_tenant_id,v_extra,v_pipeline,v_stage,v_member,'Created from enquiry');
