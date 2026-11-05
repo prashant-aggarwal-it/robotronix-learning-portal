@@ -111,7 +111,7 @@ create or replace function public.connect_report_read(
 ) returns jsonb language plpgsql stable security invoker set search_path=''
 as $fn$
 declare v_member uuid;v_role text;v_tz text;v_currency text;v_start timestamptz;v_end timestamptz;
- v_summary jsonb;v_funnel jsonb;v_staff jsonb;v_sources jsonb;v_campaigns jsonb;
+ v_summary jsonb;v_funnel jsonb;v_journey jsonb;v_staff jsonb;v_sources jsonb;v_campaigns jsonb;
  v_opps bigint;v_won bigint;v_spend numeric;v_revenue numeric;v_opportunity_revenue numeric;
 begin
  select m.id,m.role,t.timezone,t.default_currency into v_member,v_role,v_tz,v_currency
@@ -166,6 +166,27 @@ begin
    and o.pipeline_id=p.id and o.stage_id=s.id and o.created_at>=v_start and o.created_at<v_end
   where p.tenant_id=p_tenant_id and (p_pipeline_id is null or p.id=p_pipeline_id)
   group by p.id,p.name,s.id,s.name,s.sort_order,s.outcome) q;
+
+ -- Historical reach: each opportunity counted once per stage it has ever entered.
+ -- Denominator remains the same created-during-period opportunity cohort, not stage-to-stage.
+ select coalesce(jsonb_agg(jsonb_build_object(
+  'pipelineId',q.pipeline_id,'pipeline',q.pipeline,'stageId',q.stage_id,'stage',q.stage,
+  'sortOrder',q.sort_order,'outcome',q.outcome,
+  'reached',q.reached,
+  'cohort',q.cohort,
+  'reachPercent',case when q.cohort=0 then null else round(100.0*q.reached/q.cohort,2) end)
+  order by q.pipeline,q.sort_order),'[]'::jsonb) into v_journey
+ from (
+  select p.id as pipeline_id,p.name as pipeline,s.id as stage_id,s.name as stage,s.sort_order,s.outcome,
+   (select count(distinct e.opportunity_id)
+    from connect.stage_events e join connect.opportunities o on o.tenant_id=e.tenant_id and o.id=e.opportunity_id
+    where e.tenant_id=p_tenant_id and e.pipeline_id=p.id and e.to_stage_id=s.id
+      and o.created_at>=v_start and o.created_at<v_end) as reached,
+   (select count(*) from connect.opportunities o where o.tenant_id=p_tenant_id
+      and o.pipeline_id=p.id and o.created_at>=v_start and o.created_at<v_end) as cohort
+  from connect.pipelines p join connect.pipeline_stages s on s.tenant_id=p.tenant_id and s.pipeline_id=p.id
+  where p.tenant_id=p_tenant_id and (p_pipeline_id is null or p.id=p_pipeline_id)
+ ) q;
 
  -- Current assignee attribution. Unknown/unassigned excluded from person rows but shown separately.
  select coalesce(jsonb_agg(to_jsonb(q) order by q.won desc,q.opportunities desc),'[]'::jsonb)
@@ -272,12 +293,13 @@ begin
  left join performance pf on pf.campaign_id=c.id
  where c.tenant_id=p_tenant_id;
 
- return jsonb_build_object('summary',v_summary,'funnel',v_funnel,'staff',v_staff,
+ return jsonb_build_object('summary',v_summary,'funnel',v_funnel,'stageJourney',v_journey,'staff',v_staff,
   'sources',v_sources,'campaigns',v_campaigns,
   'definitions',jsonb_build_object(
     'conversion','Currently-won opportunities created during selected period / all opportunities created during that period',
     'staff','Current opportunity owner, not historical closer',
     'funnel','Current stage of opportunities created in selected period, not historical funnel stage-entry counts',
+    'stageJourney','Count of distinct opportunities from the creation cohort that entered each stage, based on stage events; percentages use the full pipeline cohort',
     'sources','Earliest linked enquiry per opportunity; missing source is Unattributed',
     'roi','(Recorded paid revenue minus recorded campaign spend) / campaign spend, by ledger dates',
     'revenue','Only manually recorded receipts; expected pipeline value is not paid revenue',
