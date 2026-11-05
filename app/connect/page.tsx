@@ -115,7 +115,7 @@ export default function ConnectPage(){
  const [loginPassword,setLoginPassword]=useState("");
  const [newWorkspace,setNewWorkspace]=useState("");
  const [newSlug,setNewSlug]=useState("");
- const [lead,setLead]=useState({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:""});
+ const [lead,setLead]=useState({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:"",personId:""});
  const [newContact,setNewContact]=useState({name:"",email:"",phone:"",role:"contact"});
  const [taskTitle,setTaskTitle]=useState("");
  const [taskDue,setTaskDue]=useState("");
@@ -159,9 +159,10 @@ export default function ConnectPage(){
   await run(async()=>{
    await crmCommand(tenantId,"inquiries","capture_lead",{
     name:lead.name,phone:lead.phone,email:lead.email,source:lead.source,
+    ...(lead.personId?{personId:lead.personId}:{}),
     summary:lead.summary,...(pipeline&&stage?{pipelineId:pipeline.id,stageId:stage.id}:{})
    });
-   setLead({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:""});setShowLeadForm(false);
+   setLead({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:"",personId:""});setShowLeadForm(false);
   },"Enquiry captured successfully.");
  }
  async function startAdmission(e:FormEvent){
@@ -414,9 +415,18 @@ export default function ConnectPage(){
    </form></section></div>}
   {showLeadForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowLeadForm(false);}}><section className="cx-modal" role="dialog" aria-modal="true" aria-labelledby="cx-new-lead-title">
    <div className="cx-modal-header"><div><span className="cx-kicker">QUICK CAPTURE</span><h2 id="cx-new-lead-title">New enquiry</h2><p>Capture the important details now. Qualify the lead later.</p></div><button aria-label="Close new enquiry" onClick={()=>setShowLeadForm(false)}>×</button></div>
-   <form onSubmit={captureLead} className="cx-form"><label>Contact name <span>*</span><input required maxLength={150} autoFocus value={lead.name} onChange={e=>setLead(v=>({...v,name:e.target.value}))} placeholder="Parent or contact name"/></label>
-    <div className="cx-form-columns"><label>Phone<input type="tel" maxLength={35} value={lead.phone} onChange={e=>setLead(v=>({...v,phone:e.target.value}))} placeholder="+91 …"/></label>
-    <label>Email<input type="email" value={lead.email} onChange={e=>setLead(v=>({...v,email:e.target.value}))} placeholder="name@example.com"/></label></div>
+   <form onSubmit={captureLead} className="cx-form"><label>Contact name <span>*</span><input required maxLength={150} autoFocus value={lead.name} readOnly={Boolean(lead.personId)}
+     onChange={e=>setLead(v=>({...v,name:e.target.value,personId:""}))} placeholder="Parent or contact name"/></label>
+    {!lead.personId&&lead.name.trim().length>=2&&people.filter(p=>p.full_name.toLowerCase().includes(lead.name.trim().toLowerCase())).slice(0,5).length>0&&
+    <div className="cx-suggestions"><small>Existing contacts — select one to avoid duplicates</small>
+     {people.filter(p=>p.full_name.toLowerCase().includes(lead.name.trim().toLowerCase())).slice(0,5).map(p=><button type="button" key={p.id}
+      onClick={()=>setLead(v=>({...v,personId:p.id,name:p.full_name,email:p.contact_methods.find(m=>m.kind==="email")?.value||"",phone:p.contact_methods.find(m=>m.kind==="mobile")?.value||""}))}>
+      {p.full_name}<span>{p.contact_methods.map(m=>m.value).join(" · ")||"Existing contact"}</span></button>)}
+    </div>}
+    {lead.personId&&<div className="cx-selected-contact"><span>Using existing contact — no duplicate will be created.</span>
+      <button type="button" onClick={()=>setLead(v=>({...v,personId:""}))}>Change</button></div>}
+    <div className="cx-form-columns"><label>Phone<input type="tel" maxLength={35} readOnly={Boolean(lead.personId)} value={lead.phone} onChange={e=>setLead(v=>({...v,phone:e.target.value}))} placeholder="+91 …"/></label>
+    <label>Email<input type="email" readOnly={Boolean(lead.personId)} value={lead.email} onChange={e=>setLead(v=>({...v,email:e.target.value}))} placeholder="name@example.com"/></label></div>
     <label>Source <span>*</span><select value={lead.source} onChange={e=>setLead(v=>({...v,source:e.target.value}))}>
      {["whatsapp","phone","website","instagram","facebook","walk_in","referral","email","other"].map(x=><option key={x} value={x}>{shortLabel(x)}</option>)}
     </select></label>
