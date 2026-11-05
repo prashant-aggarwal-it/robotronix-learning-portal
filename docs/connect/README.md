@@ -15,6 +15,7 @@
 - `app/connect/page.tsx` — Connect orchestration and feature-screen rendering (still relatively large; future screen-by-screen extraction should be regression-tested).
 - `app/connect/layout.tsx` + `connect.css` — Connect route metadata and scoped theme.
 - `features/connect/ConnectSidebar.tsx`, `ConnectTopbar.tsx`, `ConnectAuthGates.tsx` — product shell and entry flows.
+- `components/ApplicationSwitcher.tsx` — one shared Portal / Connect application switcher, rendered only in allowed contexts.
 - `features/connect/model.ts`, `EmptyStates.tsx` — navigation, basic formatting, category suggestions, feedback UI.
 - `features/connect/components/` — CRM settings, communications, reports and channel UI.
 - `features/connect/api/client.ts` — browser API client, data contracts and commands.
