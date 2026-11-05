@@ -1,4 +1,4 @@
-import type {ConnectOverview} from "@/lib/connect-client";
+import type {ConnectOverview} from "@/features/connect/api/client";
 import type {EnquiryPreferences} from "@/features/connect/components/EnquirySettings";
 
 export type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"communications"|"reports"|"settings";
