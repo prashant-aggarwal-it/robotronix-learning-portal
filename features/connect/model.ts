@@ -1,5 +1,5 @@
 import type {ConnectOverview} from "@/features/connect/api/client";
-import type {EnquiryPreferences} from "@/features/connect/components/EnquirySettings";
+import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
 
 export type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"communications"|"reports"|"settings";
 export const navigation:Array<{id:Section;label:string;icon:string}>= [
