@@ -2,6 +2,7 @@
 import {FormEvent,useCallback,useEffect,useState} from "react";
 import {connectFetch} from "@/lib/connect-client";
 type Channel={id:string;provider:string;externalId:string;name:string;status:"active"|"inactive"|"disabled"};
+type FormKey={id:string;channelId:string;label:string;active:boolean;createdAt:string};
 const types=[
  {id:"website",label:"Website form",hint:"Choose any unique site identifier, e.g. academy-main-website"},
  {id:"whatsapp",label:"WhatsApp Cloud API",hint:"Enter the exact Meta phone_number_id, not the visible phone number"},
@@ -10,6 +11,7 @@ const types=[
 ];
 export function ChannelSettings({tenantId,canManage}:{tenantId:string;canManage:boolean}){
  const[channels,setChannels]=useState<Channel[]>([]);
+ const[forms,setForms]=useState<FormKey[]>([]);
  const[provider,setProvider]=useState("website");
  const[externalId,setExternalId]=useState("");
  const[name,setName]=useState("");
@@ -21,8 +23,9 @@ export function ChannelSettings({tenantId,canManage}:{tenantId:string;canManage:
  const reload=useCallback(async()=>{
   const r=await connectFetch<{channels:Channel[]}>("/api/connect/workspaces/"+tenantId+"/channels");
   setChannels(r.channels||[]);
- },[tenantId]);
- useEffect(()=>{setChannels([]);setGenerated(null);setNotice("");setError("");void reload().catch(e=>setError(e instanceof Error?e.message:"Could not load integrations."));},[reload]);
+  if(canManage){const f=await connectFetch<{forms:FormKey[]}>("/api/connect/workspaces/"+tenantId+"/forms");setForms(f.forms||[]);}
+ },[tenantId,canManage]);
+ useEffect(()=>{setChannels([]);setForms([]);setGenerated(null);setNotice("");setError("");void reload().catch(e=>setError(e instanceof Error?e.message:"Could not load integrations."));},[reload]);
  async function act(task:()=>Promise<unknown>,message:string){
   if(busy)return;setBusy(true);setError("");setNotice("");
   try{await task();await reload();setNotice(message);}
@@ -43,6 +46,11 @@ export function ChannelSettings({tenantId,canManage}:{tenantId:string;canManage:
   await act(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/channels",{
    method:"PATCH",body:JSON.stringify({channelId:channel.id,status:next})
   }),next==="active"?"Channel activated. Verify the provider webhook configuration.":"Channel disabled.");
+ }
+ async function revokeForm(form:FormKey){
+  await act(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/forms",{
+   method:"DELETE",body:JSON.stringify({formId:form.id})
+  }),"Form revoked. New submissions using its identifier will be rejected.");
  }
  async function createFormKey(channel:Channel){
   await act(async()=>{
@@ -65,11 +73,16 @@ export function ChannelSettings({tenantId,canManage}:{tenantId:string;canManage:
      {c.status==="active"?"Disable":"Activate"}</button>}
     {canManage&&c.provider==="website"&&<button type="button" className="cx-secondary" disabled={busy} onClick={()=>void createFormKey(c)}>Generate form key</button>}
    </div>)}
+   {canManage&&forms.length>0&&<div className="cx-form-inventory"><h3>Website forms</h3>
+    {forms.map(f=><div className="cx-integration-item" key={f.id}><div><strong>{f.label}</strong><small>{f.active?"Active":"Revoked"} · {new Date(f.createdAt).toLocaleDateString("en-IN")}</small></div>
+     {f.active&&<button type="button" className="cx-secondary" disabled={busy} onClick={()=>void revokeForm(f)}>Revoke form</button>}</div>)}
+   </div>}
    {generated&&<div className="cx-generated-form" role="status">
     <strong>Website form identifier — copy this now</strong>
     <code>{generated.key}</code>
     <small>POST your verified form to {generated.endpoint}. Public form intake requires Cloudflare Turnstile configuration.</small>
     <button type="button" className="cx-secondary" onClick={()=>void navigator.clipboard.writeText(generated.endpoint)}>Copy endpoint path</button>
+    <button type="button" className="cx-secondary" onClick={()=>void navigator.clipboard.writeText(generated.key)}>Copy form identifier</button>
     <button type="button" className="cx-secondary" onClick={()=>setGenerated(null)}>Dismiss</button>
    </div>}
    {canManage&&<form className="cx-form cx-integration-form" onSubmit={create}>
