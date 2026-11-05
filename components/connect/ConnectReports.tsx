@@ -6,7 +6,8 @@ type Stage={pipelineId:string;pipeline:string;stageId:string;stage:string;sortOr
 type Staff={memberId:string;role:string;opportunities:number;won:number;open:number;lost:number;conversionRate:number|null;tasksCompleted:number};
 type Source={source:string;inquiries:number;opportunities:number;won:number;conversionRate:number|null;spend:number|null;revenue:number|null;roiPercent:number|null};
 type Campaign={id:string;name:string;source:string|null;spend:number|null;revenue:number|null;opportunities:number;won:number;costPerAcquisition:number|null;roiPercent:number|null};
-type Report={summary:Summary;funnel:Stage[];staff:Staff[];sources:Source[];campaigns:Campaign[];definitions:Record<string,string>};
+type StageReach=Stage & {reached:number;cohort:number;reachPercent:number|null};
+type Report={summary:Summary;funnel:Stage[];stageJourney:StageReach[];staff:Staff[];sources:Source[];campaigns:Campaign[];definitions:Record<string,string>};
 type Assignee={id:string;label:string;role:string};
 function iso(d:Date){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return [y,m,day].join("-");}
 function money(v:number|null|undefined,currency:string){if(v===null||v===undefined)return "Not recorded";return new Intl.NumberFormat("en-IN",{style:"currency",currency,maximumFractionDigits:0}).format(v);}
@@ -96,6 +97,18 @@ export function ConnectReports({tenantId}:{tenantId:string}){
         <span>{stage.opportunities}</span>
        </div>;
       })}
+    </div>
+   </section>
+   <section className="cx-panel">
+    <div className="cx-panel-header"><div><h2>Stage reach & funnel progression</h2>
+     <p>Unique admissions from the selected creation cohort that have reached each stage, including historical moves.</p></div></div>
+    <div className="cx-report-bars">
+     {(report.stageJourney||[]).length===0?<p className="cx-muted">No pipeline history available.</p>:
+      report.stageJourney.map(stage=><div className="cx-report-bar-row" key={stage.stageId}>
+       <div><strong>{stage.stage}</strong><small>{stage.pipeline} · {stage.outcome}</small></div>
+       <div className="cx-bar-track"><div style={{width:(stage.reachPercent||0)+"%"}}/></div>
+       <span>{stage.reached} / {stage.cohort} ({pct(stage.reachPercent)})</span>
+      </div>)}
     </div>
    </section>
    <section className="cx-panel">
