@@ -218,3 +218,12 @@
  .cx-panel-header{padding:16px}
 }
 @media(prefers-reduced-motion:reduce){.cx-sidebar{transition:none}.cx-app *,.cx-gate *{scroll-behavior:auto}}
+
+/* Duplicate-aware lead capture: explicit matching rather than silent auto-merging. */
+.cx-suggestions{margin-top:-8px;border:1px solid #c9e3ed;border-radius:10px;background:#f9fdff;padding:8px}
+.cx-suggestions>small{display:block;padding:3px 6px 7px;color:#557c90;font-weight:650}
+.cx-suggestions>button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:0;border-radius:7px;background:#fff;text-align:left;padding:9px 10px;font-size:12px;font-weight:700;color:#214960}
+.cx-suggestions>button:hover{background:#edf7fa}
+.cx-suggestions>button span{font-size:11px;font-weight:400;color:#718c9b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cx-selected-contact{display:flex;justify-content:space-between;align-items:center;padding:10px 11px;margin-top:-6px;border:1px solid #cbe9dc;border-radius:9px;background:#f0faf5;color:#237b5d;font-size:12px}
+.cx-selected-contact button{border:0;background:transparent;color:#0a756a;text-decoration:underline;font-weight:700}
