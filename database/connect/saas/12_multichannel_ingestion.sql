@@ -112,7 +112,7 @@ create or replace function connect.ingest_event(
 ) returns jsonb language plpgsql volatile security invoker set search_path=''
 as $fn$
 declare v_account connect.channel_accounts%rowtype;v_person uuid;v_inquiry uuid;v_opp uuid;
- v_pipeline uuid;v_stage uuid;v_email text;v_phone text;v_name text;v_receipt uuid;
+ v_pipeline uuid;v_stage uuid;v_email text;v_phone text;v_name text;v_receipt uuid;v_conversation uuid;
 begin
  select * into v_account from connect.channel_accounts c
   where c.id=p_account_id and c.status='active' for share;
@@ -188,11 +188,29 @@ begin
  where p.tenant_id=v_account.tenant_id and p.active and s.outcome='open'
  order by p.name,s.sort_order limit 1;
  if v_pipeline is not null then
-  insert into connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id)
-  values(v_account.tenant_id,v_pipeline,v_stage,
+  -- A new WhatsApp/email message must not generate a brand new deal each time.
+  select o.id into v_opp from connect.opportunities o
+  join connect.pipeline_stages st on st.tenant_id=o.tenant_id and st.id=o.stage_id
+  where o.tenant_id=v_account.tenant_id and o.pipeline_id=v_pipeline
+    and o.contact_id=v_person and st.outcome='open'
+  order by o.updated_at desc,o.id limit 1;
+  if v_opp is null then
+   insert into connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id)
+   values(v_account.tenant_id,v_pipeline,v_stage,
     left(v_name||' — '||p_source,200),v_person) returning id into v_opp;
-  insert into connect.stage_events(tenant_id,opportunity_id,pipeline_id,to_stage_id,note)
-  values(v_account.tenant_id,v_opp,v_pipeline,v_stage,'Automatically captured');
+   insert into connect.stage_events(tenant_id,opportunity_id,pipeline_id,to_stage_id,note)
+   values(v_account.tenant_id,v_opp,v_pipeline,v_stage,'Automatically captured');
+  end if;
+ end if;
+ if v_account.provider in ('whatsapp','email') then
+  insert into connect.conversations(tenant_id,channel_account_id,person_id,external_thread_id)
+  values(v_account.tenant_id,v_account.id,v_person,v_person::text)
+  on conflict(tenant_id,channel_account_id,external_thread_id) where external_thread_id is not null
+    do update set person_id=excluded.person_id
+  returning id into v_conversation;
+  insert into connect.messages(tenant_id,conversation_id,external_message_id,direction,body)
+  values(v_account.tenant_id,v_conversation,p_event_id,'inbound',left(p_summary,2000))
+  on conflict(tenant_id,conversation_id,external_message_id) where external_message_id is not null do nothing;
  end if;
  insert into connect.inquiries(tenant_id,person_id,opportunity_id,
   channel_account_id,external_event_id,source,summary)
