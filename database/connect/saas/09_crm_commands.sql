@@ -127,6 +127,19 @@ begin
   where o.tenant_id=p_tenant_id and o.id=v_id;
   insert into connect.stage_events(tenant_id,opportunity_id,pipeline_id,from_stage_id,to_stage_id,changed_by_membership_id,note)
   values(p_tenant_id,v_id,v_pipeline,v_old,v_stage,v_member,left(p_data->>'note',1000));
+ when 'assign_opportunity' then
+  v_id:=(p_data->>'opportunityId')::uuid;
+  v_extra:=(p_data->>'ownerMemberId')::uuid;
+  if not exists(select 1 from connect.memberships where tenant_id=p_tenant_id
+    and id=v_extra and status='active') then
+    raise exception 'Assignee must be an active member' using errcode='42501';end if;
+  if v_role not in ('owner','admin','manager') and v_extra<>v_member then
+    raise exception 'Only managers may assign leads to other staff' using errcode='42501';end if;
+  update connect.opportunities o set owner_membership_id=v_extra,
+    version=o.version+1,updated_at=now()
+  where o.tenant_id=p_tenant_id and o.id=v_id
+    and o.version=(p_data->>'version')::int;
+  if not found then raise exception 'Opportunity missing or outdated' using errcode='40001';end if;
  when 'create_inquiry' then
   v_source:=nullif(btrim(p_data->>'source'),'');
   if v_source is null or length(v_source)>80 then raise exception 'Invalid enquiry source' using errcode='22023';end if;
@@ -147,6 +160,25 @@ begin
   values(p_tenant_id,nullif(p_data->>'opportunityId','')::uuid,nullif(p_data->>'personId','')::uuid,
      coalesce(nullif(p_data->>'assigneeMemberId','')::uuid,v_member),v_name,
      nullif(p_data->>'dueAt','')::timestamptz) returning id into v_id;
+ when 'update_task' then
+  v_id:=(p_data->>'taskId')::uuid;
+  v_extra:=nullif(p_data->>'assigneeMemberId','')::uuid;
+  if v_extra is not null and not exists(select 1 from connect.memberships where tenant_id=p_tenant_id
+    and id=v_extra and status='active') then
+    raise exception 'Task assignee must be an active member' using errcode='42501';end if;
+  if v_extra is not null and v_extra<>v_member and v_role not in ('owner','admin','manager') then
+    raise exception 'Only managers may reassign tasks' using errcode='42501';end if;
+  if p_data ? 'status' and p_data->>'status' not in ('open','cancelled') then
+    raise exception 'Use complete_task to finish a task' using errcode='22023';end if;
+  update connect.tasks t set
+    title=case when p_data ? 'title' then nullif(btrim(p_data->>'title'),'') else t.title end,
+    due_at=case when p_data ? 'dueAt' then nullif(p_data->>'dueAt','')::timestamptz else t.due_at end,
+    assignee_membership_id=coalesce(v_extra,t.assignee_membership_id),
+    status=coalesce(p_data->>'status',t.status),
+    completed_at=null
+  where t.tenant_id=p_tenant_id and t.id=v_id and t.status='open'
+    and (t.assignee_membership_id=v_member or v_role in ('owner','admin','manager'));
+  if not found then raise exception 'Task unavailable' using errcode='42501';end if;
  when 'complete_task' then
   v_id:=(p_data->>'taskId')::uuid;
   update connect.tasks set status='done',completed_at=now()
@@ -168,6 +200,13 @@ begin
     v_member,coalesce(nullif(p_data->>'kind',''),'counselling'),v_name,
     (p_data->>'startsAt')::timestamptz,(p_data->>'endsAt')::timestamptz)
   returning id into v_id;
+ when 'reschedule_appointment' then
+  v_id:=(p_data->>'appointmentId')::uuid;
+  update connect.appointments a set starts_at=(p_data->>'startsAt')::timestamptz,
+    ends_at=(p_data->>'endsAt')::timestamptz
+  where a.tenant_id=p_tenant_id and a.id=v_id and a.status='scheduled'
+    and (a.owner_membership_id=v_member or v_role in ('owner','admin','manager'));
+  if not found then raise exception 'Appointment unavailable' using errcode='42501';end if;
  when 'finish_appointment' then
   v_id:=(p_data->>'appointmentId')::uuid;
   v_kind:=p_data->>'status';
