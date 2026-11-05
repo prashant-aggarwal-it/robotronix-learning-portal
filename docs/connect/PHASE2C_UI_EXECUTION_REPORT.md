@@ -32,7 +32,7 @@ Production database, main branch, Netlify deployment and original Portal UI rema
 ## Source of truth
 - `app/connect/page.tsx` — app UI wired to private Connect APIs.
 - `app/connect/connect.css` — scoped responsive UI styles.
-- `lib/connect-client.ts` — typed browser API client and data contracts.
+- `features/connect/api/client.ts` — typed browser API client and data contracts.
 - `app/api/connect/workspaces/[tenantId]/crm/[resource]/route.ts` — restricted authenticated HTTP contract.
 - `database/connect/saas/09_crm_commands.sql` and `10_crm_queries.sql` — canonical new-install CRM functions.
 - Existing Learning Portal `public` tables are not used directly by the Connect UI.
