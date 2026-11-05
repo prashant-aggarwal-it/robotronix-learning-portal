@@ -1,7 +1,7 @@
 "use client";
 import {FormEvent,useCallback,useEffect,useRef,useState} from "react";
 import {connectFetch,type ConnectOpportunity,type ConnectPipeline} from "@/lib/connect-client";
-type Summary={opportunities:number;won:number;conversionRate:number|null;inquiries:number;expectedValue:number;currency:string;fromDate:string;toDate:string};
+type Summary={opportunities:number;won:number;conversionRate:number|null;inquiries:number;expectedValue:number;excludedCurrencyOpportunities:number;currency:string;fromDate:string;toDate:string};
 type Stage={pipelineId:string;pipeline:string;stageId:string;stage:string;sortOrder:number;outcome:string;opportunities:number};
 type Staff={memberId:string;role:string;opportunities:number;won:number;open:number;lost:number;conversionRate:number|null;tasksCompleted:number};
 type Source={source:string;inquiries:number;opportunities:number;won:number;conversionRate:number|null;spend:number|null;revenue:number|null;roiPercent:number|null};
@@ -81,7 +81,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
     ].map(item=><article className="cx-metric" key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.foot}</small></article>)}
    </div>
    <div className="cx-report-financials">
-    <div><span>Expected opportunity value</span><strong>{money(report.summary.expectedValue,currency)}</strong><small>Not actual revenue</small></div>
+    <div><span>Expected opportunity value</span><strong>{money(report.summary.expectedValue,currency)}</strong><small>Not actual revenue{report.summary.excludedCurrencyOpportunities>0?` · ${report.summary.excludedCurrencyOpportunities} other-currency admissions excluded`:""}</small></div>
     <div><span>Recorded receipts</span><strong>{money(availableRevenue,currency)}</strong><small>Cash entered for the selected dates</small></div>
     <div><span>Recorded campaign spend</span><strong>{pipelineId?"Not allocated":money(availableSpend,currency)}</strong><small>Only manually recorded spend</small></div>
    </div>
@@ -150,7 +150,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
       <label>Admission<select required value={form.opportunityId} onChange={e=>setForm(v=>({...v,opportunityId:e.target.value}))}><option value="">Choose admission (recent 100)</option>
        {opportunities.map(o=><option key={o.id} value={o.id}>{o.title}</option>)}</select></label>
       <label>Amount ({currency})<input required type="number" min="0.01" step="0.01" value={form.revenue} onChange={e=>setForm(v=>({...v,revenue:e.target.value}))}/></label>
-      <label>Payment reference (unique)<input value={form.reference} maxLength={180} onChange={e=>setForm(v=>({...v,reference:e.target.value}))}/></label>
+      <label>Payment reference (unique)<input required minLength={3} value={form.reference} maxLength={180} onChange={e=>setForm(v=>({...v,reference:e.target.value}))}/></label>
       <button className="cx-secondary" disabled={busy}>Record receipt</button></form>
      <form className="cx-form" onSubmit={assignCampaign}><h3>Link admission to campaign</h3>
       <label>Admission<select required value={form.opportunityId} onChange={e=>setForm(v=>({...v,opportunityId:e.target.value}))}><option value="">Choose admission (recent 100)</option>
