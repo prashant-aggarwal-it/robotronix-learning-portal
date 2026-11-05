@@ -1,5 +1,5 @@
 "use client";
-import {FormEvent,useCallback,useEffect,useMemo,useState} from "react";
+import {FormEvent,useCallback,useEffect,useMemo,useRef,useState} from "react";
 import Link from "next/link";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {connectFetch,crmCommand,crmList,
@@ -34,6 +34,8 @@ export default function ConnectPage(){
  const [section,setSection]=useState<Section>("overview");
  const [busy,setBusy]=useState(false);
  const [loading,setLoading]=useState(false);
+ const requestGeneration=useRef(0);
+ const timelineGeneration=useRef(0);
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const [refreshCount,setRefreshCount]=useState(0);
@@ -80,37 +82,52 @@ export default function ConnectPage(){
   void loadWorkspaces().catch(e=>{setError(e instanceof Error?e.message:"Could not load your institutes.");setWorkspacesReady(true);});
  },[signedIn,loadWorkspaces]);
 
- const loadData=useCallback(async()=>{
-  if(!tenantId)return;
-  setLoading(true);setError("");
-  try{
-   const r=await Promise.all([
-    crmList<ConnectOverview>(tenantId,"overview"),
-    crmList<ConnectInquiry>(tenantId,"inquiries",{limit:"100"}),
-    crmList<ConnectPerson>(tenantId,"people",{limit:"100"}),
-    crmList<ConnectOpportunity>(tenantId,"opportunities",{limit:"100"}),
-    crmList<ConnectPipeline>(tenantId,"pipelines",{limit:"100"}),
-    crmList<ConnectTask>(tenantId,"tasks",{limit:"100"}),
-    crmList<ConnectAppointment>(tenantId,"appointments",{limit:"100"}),
-    crmList<ConnectProgram>(tenantId,"programs",{limit:"100"})
-   ]);
-   setOverview(r[0].items[0]||emptyOverview);setInquiries(r[1].items);setPeople(r[2].items);
-   setOpportunities(r[3].items);setPipelines(r[4].items);setTasks(r[5].items);
-   setAppointments(r[6].items);setPrograms(r[7].items);
-  }catch(e){setError(e instanceof Error?e.message:"Unable to load Connect workspace.");}
-  finally{setLoading(false);}
- },[tenantId,refreshCount]);
- useEffect(()=>{void loadData();},[loadData]);
+ // Ignore responses from a previous institute, refresh or logged-out session.
+ // Clear old data immediately on institute switching so it can never flash on the new screen.
+ useEffect(()=>{
+  const generation=++requestGeneration.current;
+  setOverview(emptyOverview);setInquiries([]);setPeople([]);setOpportunities([]);
+  setPipelines([]);setTasks([]);setAppointments([]);setPrograms([]);setMembers([]);
+  setTimeline([]);setLoading(Boolean(tenantId&&signedIn));setError("");
+  if(!tenantId||!signedIn)return ()=>{requestGeneration.current++;};
+  void (async()=>{
+   try{
+    const r=await Promise.all([
+     crmList<ConnectOverview>(tenantId,"overview"),
+     crmList<ConnectInquiry>(tenantId,"inquiries",{limit:"100"}),
+     crmList<ConnectPerson>(tenantId,"people",{limit:"100"}),
+     crmList<ConnectOpportunity>(tenantId,"opportunities",{limit:"100"}),
+     crmList<ConnectPipeline>(tenantId,"pipelines",{limit:"100"}),
+     crmList<ConnectTask>(tenantId,"tasks",{limit:"100"}),
+     crmList<ConnectAppointment>(tenantId,"appointments",{limit:"100"}),
+     crmList<ConnectProgram>(tenantId,"programs",{limit:"100"})
+    ]);
+    if(requestGeneration.current!==generation)return;
+    setOverview(r[0].items[0]||emptyOverview);setInquiries(r[1].items);setPeople(r[2].items);
+    setOpportunities(r[3].items);setPipelines(r[4].items);setTasks(r[5].items);
+    setAppointments(r[6].items);setPrograms(r[7].items);
+   }catch(e){
+    if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Unable to load Connect workspace.");
+   }finally{
+    if(requestGeneration.current===generation)setLoading(false);
+   }
+  })();
+  return ()=>{requestGeneration.current++;};
+ },[tenantId,refreshCount,signedIn]);
 
  useEffect(()=>{
-  if(!tenantId||!selectedOpportunity){setTimeline([]);return;}
+  const generation=++timelineGeneration.current;
+  setTimeline([]);
+  if(!tenantId||!selectedOpportunity||!signedIn)return ()=>{timelineGeneration.current++;};
   void crmList<ConnectActivity>(tenantId,"timeline",{id:selectedOpportunity,limit:"100"})
-   .then(r=>setTimeline(r.items)).catch(()=>setTimeline([]));
- },[tenantId,selectedOpportunity,refreshCount]);
+   .then(r=>{if(timelineGeneration.current===generation)setTimeline(r.items);})
+   .catch(()=>{if(timelineGeneration.current===generation)setTimeline([]);});
+  return ()=>{timelineGeneration.current++;};
+ },[tenantId,selectedOpportunity,refreshCount,signedIn]);
 
  const tenant=workspaces.find(x=>x.tenant_id===tenantId);
  const canConfigure=["owner","admin","manager"].includes(tenant?.membership_role||"");
- const canWrite=tenant?.membership_role!=="viewer";
+ const canWrite=Boolean(tenant&&tenant.membership_role!=="viewer");
  const [loginEmail,setLoginEmail]=useState("");
  const [loginPassword,setLoginPassword]=useState("");
  const [newWorkspace,setNewWorkspace]=useState("");
