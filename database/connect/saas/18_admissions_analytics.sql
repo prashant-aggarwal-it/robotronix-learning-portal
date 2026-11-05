@@ -90,8 +90,8 @@ begin
    values(p_tenant_id,(p_data->>'campaignId')::uuid,(p_data->>'date')::date,v_amount,v_currency,
     nullif(p_data->>'note',''),v_member) returning id into v_id;
   else
-   if length(coalesce(p_data->>'reference',''))>180 then
-    raise exception 'Invalid payment reference' using errcode='22023';end if;
+   if length(btrim(coalesce(p_data->>'reference',''))) not between 3 and 180 then
+    raise exception 'A unique payment reference is required to avoid duplicate receipts' using errcode='22023';end if;
    insert into connect.realized_revenue(tenant_id,opportunity_id,received_on,amount,currency,
     external_reference,note,recorded_by)
    values(p_tenant_id,(p_data->>'opportunityId')::uuid,(p_data->>'date')::date,v_amount,v_currency,
@@ -259,11 +259,11 @@ begin
  )
  select coalesce(jsonb_agg(jsonb_build_object(
   'id',c.id,'name',c.name,'source',c.source,
-  'spend',sp.amount,'revenue',rv.amount,'opportunities',coalesce(pf.opportunities,0),
+  'spend',case when p_pipeline_id is null then sp.amount else null end,'revenue',rv.amount,'opportunities',coalesce(pf.opportunities,0),
   'won',coalesce(pf.won,0),
   'costPerAcquisition',case when coalesce(pf.won,0)=0 or sp.amount is null then null
-   else round(sp.amount/pf.won,2) end,
-  'roiPercent',case when coalesce(sp.amount,0)<=0 then null
+   else case when p_pipeline_id is null then round(sp.amount/pf.won,2) else null end end,
+  'roiPercent',case when p_pipeline_id is not null or coalesce(sp.amount,0)<=0 then null
    else round(100*(coalesce(rv.amount,0)-sp.amount)/sp.amount,2) end)
  order by c.name),'[]'::jsonb) into v_campaigns
  from connect.campaigns c
@@ -281,7 +281,7 @@ begin
     'sources','Earliest linked enquiry per opportunity; missing source is Unattributed',
     'roi','(Recorded paid revenue minus recorded campaign spend) / campaign spend, by ledger dates',
     'revenue','Only manually recorded receipts; expected pipeline value is not paid revenue',
-    'currency',v_currency,'pipelineSpend','Spend is not allocated across pipelines; source ROI is suppressed for pipeline-specific reports'
+    'currency',v_currency,'pipelineSpend','Spend is not allocated across pipelines; source and campaign ROI are suppressed for pipeline-specific reports'
   ));
 end $fn$;
 revoke all on function public.connect_report_write(uuid,uuid,text,jsonb) from public,anon,authenticated;
