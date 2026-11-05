@@ -12,42 +12,9 @@ import {ConnectAutomationSettings} from "@/components/connect/ConnectAutomationS
 import {ConnectReminderInbox,ConnectConversationHistory} from "@/components/connect/ConnectCommunications";
 import {ConnectReports} from "@/components/connect/ConnectReports";
 import {EnquirySettings,readEnquiryPreferences,type EnquiryPreferences} from "@/components/connect/EnquirySettings";
+import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
+import {ErrorMessage,EmptyState} from "@/features/connect/EmptyStates";
 import "./connect.css";
-
-type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"communications"|"reports"|"settings";
-const navigation:Array<{id:Section;label:string;icon:string}>= [
- {id:"overview",label:"Overview",icon:"◫"},{id:"enquiries",label:"Enquiries",icon:"◎"},
- {id:"contacts",label:"Contacts",icon:"♙"},{id:"pipeline",label:"Admissions pipeline",icon:"▥"},
- {id:"followups",label:"Follow-ups",icon:"☑"},{id:"calendar",label:"Calendar",icon:"▦"},
- {id:"communications",label:"Communications",icon:"✉"},
- {id:"reports",label:"Reports & ROI",icon:"▤"},
- {id:"settings",label:"Institute settings",icon:"⚙"}
-];
-const emptyOverview:ConnectOverview={
- newEnquiries:0,totalEnquiries:0,openOpportunities:0,wonOpportunities:0,
- overdueTasks:0,openTasks:0,scheduledAppointments:0
-};
-function dateLabel(v:string|null|undefined){if(!v)return "Not scheduled";const d=new Date(v);return Number.isNaN(d.getTime())?"—":d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});}
-function initials(v:string){return v.trim().split(/\s+/).slice(0,2).map(x=>x.charAt(0).toUpperCase()).join("")||"—";}
-function shortLabel(v:string){return v.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase());}
-function suggestEnquiryCategory(message:string,categories:EnquiryPreferences["categories"]){
- const text=message.toLowerCase();
- const rules:Array<[string,RegExp]>=[
-  ["Trainer / Job Applicant",/\b(trainer|instructor|teacher|resume|cv|job|hiring|vacancy|apply for)\b/i],
-  ["Vendor / Supplier",/\b(supplier|wholesale|distributor|vendor|quotation for supply)\b/i],
-  ["School Programs",/\b(school|stem lab|school workshop|principal|school robotics)\b/i],
-  ["Kits & Components",/\b(arduino kit|robotics kit|sensor|component|motor|breadboard|buy a kit)\b/i],
-  ["Partnerships",/\b(franchise|partnership|partner with|reseller)\b/i],
-  ["Collaborations",/\b(collaboration|collaborate|joint event|ngo|joint workshop)\b/i],
-  ["Online Courses",/\b(online class|online course|virtual class)\b/i],
-  ["Offline Courses",/\b(offline class|offline course|in.person class|classroom course)\b/i]
- ];
- const matches=rules.filter(([,regex])=>regex.test(text));
- if(matches.length!==1)return null;
- return categories.find(c=>c.active&&c.label===matches[0][0])||null;
-}
-function ErrorMessage({error}:{error:string}){return error?<div className="cx-alert" role="alert">{error}</div>:null;}
-function EmptyState({title,description}:{title:string;description:string}){return <div className="cx-empty"><div className="cx-empty-icon">◎</div><strong>{title}</strong><p>{description}</p></div>;}
 
 export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
