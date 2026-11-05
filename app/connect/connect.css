@@ -266,3 +266,30 @@
 .cx-content>.cx-panel+.cx-panel{margin-top:16px}
 .cx-content .cx-panel:has(.cx-alert-item)+.cx-panel{margin-top:16px}
 @media(max-width:730px){.cx-automation-form{padding:16px}.cx-automation-list{padding:13px}.cx-alert-item{align-items:flex-start;flex-wrap:wrap}}
+
+/* Phase 3C — reporting surfaces follow Connect's compact blue-teal UI foundation. */
+.cx-reports{display:flex;flex-direction:column;gap:18px}
+.cx-report-filters{display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;background:#fff;border:1px solid #dce8f1;border-radius:13px;padding:16px 18px}
+.cx-report-filters label{min-width:145px;flex:0 1 220px}
+.cx-report-filters button{margin-bottom:1px}
+.cx-report-financials{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.cx-report-financials>div{border:1px solid #dce8f1;border-radius:12px;background:#fff;display:flex;flex-direction:column;gap:7px;padding:17px}
+.cx-report-financials>div>span{font-size:12px;color:#617a8c;font-weight:650}
+.cx-report-financials>div>strong{font-size:20px;color:#194c6a;font-weight:750}
+.cx-report-financials>div>small{font-size:11px;color:#718a99}
+.cx-report-bars{padding:19px;display:flex;flex-direction:column;gap:15px}
+.cx-report-bar-row{display:grid;grid-template-columns:minmax(125px,1fr) minmax(50px,2fr) 125px;gap:16px;align-items:center}
+.cx-report-bar-row>div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cx-report-bar-row strong{font-size:12px}
+.cx-report-bar-row small{font-size:10.5px;color:#7d91a0}
+.cx-report-bar-row>span{text-align:right;font-size:12px;font-weight:650}
+.cx-bar-track{height:12px;border-radius:20px;background:#eaf2f6;overflow:hidden}
+.cx-bar-track>div{height:100%;border-radius:20px;background:linear-gradient(90deg,#2476cb,#10a3b9);min-width:0}
+.cx-report-forms{padding:20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.cx-report-forms>form{padding:16px;border:1px solid #e4edf2;border-radius:11px;background:#fcfeff;align-self:start}
+.cx-report-forms h3{margin:0 0 5px}
+.cx-report-footnote{padding:0 3px;line-height:1.5}
+@media(max-width:960px){.cx-report-financials{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:730px){.cx-report-financials,.cx-report-forms{grid-template-columns:1fr}
+.cx-report-filters label{flex:1 1 145px}.cx-report-bar-row{grid-template-columns:minmax(105px,1fr) 1fr 90px;gap:8px}
+.cx-report-bar-row>span{font-size:10px}.cx-report-forms{padding:13px}}
