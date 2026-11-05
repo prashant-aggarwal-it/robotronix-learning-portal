@@ -9,14 +9,14 @@ Branch: `feature/robotronix-connect-crm`. Production project and `main` must rem
 3. Non-admissions enquiries can receive initial follow-up tasks (one open task per person, respecting automation configuration).
 4. Channel setup remains available in Simple Settings for institute admins.
 5. Enquiry inbox filters, category edits and review-before-apply heuristic suggestions.
-6. Dev SQL acceptance: workspace security, CRM, multichannel ingestion, automation, analytics and `22_verify_simple_mode_dev.sql` PASSED with rollback. No QA fixtures remain by design.
+6. Dev SQL acceptance: workspace security, CRM, multichannel ingestion, automation, analytics and `verify_simple_mode_dev.sql` PASSED with rollback. No QA fixtures remain by design.
 7. All checked `connect` tables have RLS enabled; they are private tables using service-only RPC endpoints, which intentionally do not expose direct RLS policies to regular users.
 
 ## Blockers before any production deployment
 1. **Verified build:** GitHub/runner must execute `npm ci`, `npm run typecheck`, `npm run build`; inspect logs and resolve failures. No successful run is yet confirmed. Never call build green based only on source review.
 2. **Browser UAT with real auth**: owner, counsellor and viewer; verify navigation, category CRUD, manual lead capture, duplicate matching, non-admission followups, category change, tasks completion, mobile layout, tenant switches, authorization failure scenarios. Confirm existing Portal functions (four roles, scheduling, Zoom, payroll, finance) are unaffected.
 3. **Test signed provider webhooks** on a non-production/approved development Meta setup before live number cutover; verify signature, replay, contact dedupe, inbound conversation, routing and fail-safe. Verify whether existing business number can be connected without disrupting WhatsApp Business usage; this is provider/account-specific and not proven here.
-4. **Production migration rehearsal** against sanitized copy of target DB schema. Review all Connect migrations in order. Important follow-on scripts: `20_simple_mode_enquiry_classification.sql`, `21_intake_first_inbound.sql`, `23_unqualified_enquiry_followups.sql`. Tests `22_verify_simple_mode_dev.sql` must **never** be shipped as a production migration.
+4. **Production migration rehearsal** against sanitized copy of target DB schema. Review all Connect migrations in order. Important follow-on scripts: `20_simple_mode_enquiry_classification.sql`, `21_intake_first_inbound.sql`, `23_unqualified_enquiry_followups.sql`. Tests `verify_simple_mode_dev.sql` must **never** be shipped as a production migration.
 5. **Backups/recovery**: check backup coverage, schedule, restore drill and owner approval before migrations. No destructive Portal table changes.
 6. **Configure Netlify server-only secret values** (service credentials/webhook verification) in approved environment; no secrets in source or public `NEXT_PUBLIC_` variables. Confirm inbound URL and firewall/rate limits; ensure legal/privacy consent and staff access.
 7. **Observability**: review webhook failure/retry counts, task creation, logs and alerts; establish a way to identify delivery gaps and outages. Existing in-app reminder cron has Dev configuration only and needs separate Production scheduling decision.
