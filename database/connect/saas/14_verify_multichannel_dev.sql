@@ -48,8 +48,8 @@ begin
  perform public.connect_ingest_channel('whatsapp','qa-phone-id-001','wamid.trainer-001',
   'Trainer Applicant',null,'+919999999999','I am a robotics trainer applying for a job');
  if (select count(*) from connect.opportunities where tenant_id=t)<>0 then raise exception 'Trainer message created an admissions deal';end if;
- if (select count(*) from connect.messages where tenant_id=t)<>3 then raise exception 'Messages missing';end if;
- if (select count(*) from connect.webhook_receipts where tenant_id=t and status='processed')<>5 then raise exception 'Receipts incorrect';end if;
+ if (select count(*) from connect.messages where tenant_id=t)<>4 then raise exception 'Messages missing';end if;
+ if (select count(*) from connect.webhook_receipts where tenant_id=t and status='processed')<>6 then raise exception 'Receipts incorrect';end if;
  begin
   perform public.connect_register_channel(b,t2,'whatsapp','qa-phone-id-001','Hijack');
   raise exception 'Cross tenant channel takeover accepted';
