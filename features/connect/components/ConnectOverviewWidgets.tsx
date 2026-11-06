@@ -25,9 +25,9 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,a
  const todayTasks=tasks.filter(t=>t.due_at&&new Date(t.due_at).toDateString()===today&&t.status!=="completed").length;
  const metrics=[
   {label:"New enquiries today",value:overview.newEnquiries,detail:"Captured today",icon:"✉",target:"enquiries" as Section},
-  {label:"Active admissions",value:overview.openOpportunities,detail:"Open opportunities",icon:"▥",target:"pipeline" as Section},
+  {label:"Active admissions",value:overview.openOpportunities,detail:"Open opportunities",icon:"▥",target:(advanced?"pipeline":"enquiries") as Section},
   {label:"Overdue follow-ups",value:overview.overdueTasks,detail:"Need your attention",icon:"◷",target:"followups" as Section,warning:true},
-  {label:"Admissions won",value:overview.wonOpportunities,detail:"Completed conversions",icon:"✓",target:"pipeline" as Section}
+  {label:"Admissions won",value:overview.wonOpportunities,detail:"Completed conversions",icon:"✓",target:(advanced?"pipeline":"enquiries") as Section}
  ];
  return <div className="cx-insights">
   <div className="cx-insights-intro"><div><span className="cx-kicker">AT A GLANCE</span><h2>Your business, clearly in view</h2><p>Real enquiries, admissions and next actions from this workspace.</p></div><span className="cx-live-pill"><span/> Workspace data</span></div>
@@ -47,7 +47,7 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,a
    <section className="cx-insight-panel"><div className="cx-insight-panel-heading"><div><h3>Today's priorities</h3><p>Stay ahead of your next actions</p></div><button type="button" onClick={()=>onNavigate("followups")}>View tasks ↗</button></div>
     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-2">◷</span><span><strong>{overview.overdueTasks} overdue</strong><small>Follow-ups needing action</small></span><span aria-hidden="true">›</span></button>
     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-0">☑</span><span><strong>{todayTasks} due today</strong><small>From the latest {tasks.length} loaded tasks</small></span><span aria-hidden="true">›</span></button>
-    <button type="button" className="cx-priority-row" onClick={()=>onNavigate("calendar")}><span className="cx-priority-symbol cx-insight-color-1">▦</span><span><strong>{overview.scheduledAppointments} upcoming appointments</strong><small>Demo and counselling schedule</small></span><span aria-hidden="true">›</span></button>
+    <button type="button" className="cx-priority-row" onClick={()=>onNavigate(advanced?"calendar":"followups")}><span className="cx-priority-symbol cx-insight-color-1">▦</span><span><strong>{overview.scheduledAppointments} upcoming appointments</strong><small>Demo and counselling schedule</small></span><span aria-hidden="true">›</span></button>
    </section>
   </div>
   {advanced&&<section className="cx-insight-panel cx-stages-panel"><div className="cx-insight-panel-heading"><div><h3>Admissions pipeline snapshot</h3><p>Current stages across the latest {opportunities.length} loaded opportunities</p></div><button type="button" onClick={()=>onNavigate("pipeline")}>Open pipeline ↗</button></div>
