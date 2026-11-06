@@ -8,7 +8,8 @@ import {connectFetch,crmCommand,crmList,
  type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
 import {ChannelSettings} from "@/features/connect/components/ChannelSettings";
 import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAutomationSettings";
-import {ConnectReminderInbox,ConnectConversationHistory} from "@/features/connect/components/ConnectCommunications";
+import {ConnectReminderInbox} from "@/features/connect/components/ConnectCommunications";
+import {ConnectWhatsAppInbox} from "@/features/connect/components/ConnectWhatsAppInbox";
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
 import {ContactProfile} from "@/features/connect/components/contact/ContactProfile";
@@ -128,9 +129,9 @@ export default function ConnectPage(){
  const canConfigure=["owner","admin","manager"].includes(tenant?.membership_role||"");
  const canWrite=Boolean(tenant&&tenant.membership_role!=="viewer");
  const advanced=enquiryPrefs?.mode==="advanced";
- const visibleNavigation=navigation.filter(n=>advanced||["overview","enquiries","contacts","followups","settings"].includes(n.id));
+ const visibleNavigation=navigation.filter(n=>advanced||["overview","enquiries","contacts","followups","communications","settings"].includes(n.id));
  useEffect(()=>{let live=true;setEnquiryPrefs(null);setCategoryFilter("");setLeadCategory("");if(tenantId)void readEnquiryPreferences(tenantId).then(p=>{if(live)setEnquiryPrefs(p);}).catch(e=>{if(live)setError(e instanceof Error?e.message:"Unable to load enquiry preferences");});return()=>{live=false;};},[tenantId]);
- useEffect(()=>{if(!advanced&&!["overview","enquiries","contacts","followups","settings"].includes(section))setSection("overview");},[advanced,section]);
+ useEffect(()=>{if(!advanced&&!["overview","enquiries","contacts","followups","communications","settings"].includes(section))setSection("overview");},[advanced,section]);
  useEffect(()=>{
   let cancelled=false;
   setAssignees([]);
@@ -278,7 +279,7 @@ export default function ConnectPage(){
      section==="pipeline"?"Track every admission from first conversation to enrolment.":
      section==="followups"?"Your team's calls, tasks and next actions.":
      section==="calendar"?"Counselling, demo and trial appointments.":
-     section==="communications"?"Review verified inbound messages and conversation history.":
+     section==="communications"?"Read conversations, manage contacts and prepare WhatsApp replies.":
      section==="reports"?"Track conversion, counsellor performance and real recorded marketing ROI.":"Manage institute programmes and access."}</p></div>
      {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>＋ New enquiry</button>}
      {section==="contacts"&&canWrite&&<button className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
@@ -372,7 +373,7 @@ export default function ConnectPage(){
       </div>)}</div>}
     </section>}
 
-    {section==="communications"&&<ConnectConversationHistory key={tenantId} tenantId={tenantId}/>}
+    {section==="communications"&&<ConnectWhatsAppInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} onOpenContact={personId=>{setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}}/>}
 
     {section==="reports"&&(canConfigure?<ConnectReports key={tenantId} tenantId={tenantId}/>:
      <section className="cx-panel"><div className="cx-empty"><strong>Reporting access restricted</strong><p>Ask your institute manager for access.</p></div></section>)}
