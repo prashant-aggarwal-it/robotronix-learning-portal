@@ -82,3 +82,12 @@ Validation still needed: npm typecheck/build, mobile-width visual review, zero-d
 ## DEV timeline activation — 2026-11-06
 
 The user explicitly approved DEV database changes. Migration `connect_contact_360_unified_timeline` was successfully applied to project `fflejkqcspivnhsmkdtn` (Development DB – Robotronix Learning Portal). Verification: `connect_contact_timeline` exists; service_role EXECUTE true, anon/authenticated EXECUTE false, security_definer false; invalid actor rejected with SQLSTATE 42501. No contacts existed at verification, so event content, pagination and browser checks remain to be tested with actual contacts. No Production change, merge or deployment. The historical source file still uses `_PENDING` in its filename; its content now records the DEV-applied state.
+
+## Contact 360 Phase 3 — implemented and DEV activated (2026-11-06)
+
+- Added Contact 360 `Relationships` tab with person-to-person links (parent/student, guardian, sibling, colleague, referral, custom), organization association/position, and contact owner assignment.
+- Added dedicated reusable `features/connect/components/contact/ContactRelationships.tsx` with reusable controls, empty states, refresh and role-appropriate read/write actions; linked organization creation reuses the existing CRM command.
+- Added Next.js `GET`/`POST` route `/api/connect/workspaces/[tenantId]/contacts/[personId]/relations` with session, UUID and action validation, using two limited service-only RPCs.
+- DEV migrations `connect_contact_relationships_phase3` and `connect_contact_owners_rls` applied successfully to `fflejkqcspivnhsmkdtn`. Added private `connect.contact_owners` for accountable contact-level ownership; kept the existing opportunity owner and the canonical `person_relations`/`organization_contacts` tables.
+- Database verified two RPCs are service-role-only, not SECURITY DEFINER. Transactional DEV test verified link/read/unlink/assign/unassign; SQL transaction was rolled back. Forged-actor read and write calls rejected. New owner table RLS enabled; its underlying private data is not exposed to `anon`/`authenticated`.
+- `main`, production database and deployments remain unchanged. A successful Next.js typecheck/build and browser end-to-end regression test with real contacts are not yet evidenced; do not claim those passed.
