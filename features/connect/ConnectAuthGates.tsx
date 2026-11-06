@@ -21,21 +21,16 @@ export function ConnectSignInGate({error,busy,email,password,onEmailChange,onPas
  </section></main>;
 }
 
-export function ConnectWorkspaceSetupGate({error,busy,name,slug,onNameChange,onSlugChange,onSubmit,onSignOut}:{
- error:string;busy:boolean;name:string;slug:string;
- onNameChange:(value:string)=>void;onSlugChange:(value:string)=>void;
- onSubmit:(event:FormEvent)=>void;onSignOut:()=>void;
+export function ConnectNoWorkspaceGate({error,onRetry,onSignOut}:{
+ error:string;onRetry:()=>void;onSignOut:()=>void;
 }){
  return <main className="cx-gate"><section className="cx-auth">
   <ConnectBrand/>
-  <span className="cx-kicker">GETTING STARTED</span><h1>Create your institute workspace</h1>
-  <p>Every institute manages its own contacts, admissions and staff. You will be the workspace owner.</p>
-  <ErrorMessage error={error}/><form onSubmit={onSubmit} className="cx-form">
-   <label>Institute name<input required minLength={2} maxLength={120} placeholder="e.g. Bright Minds Academy" value={name}
-   onChange={e=>onNameChange(e.target.value)}/></label>
-   <label>Workspace identifier<input required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={e=>onSlugChange(e.target.value)}/></label>
-   <button className="cx-primary" disabled={busy}>{busy?"Creating…":"Create institute workspace"}</button>
-  </form>
-  <button className="cx-text-button" onClick={onSignOut}>Sign out</button>
+  <span className="cx-kicker">WORKSPACE ACCESS</span>
+  <h1>No Connect workspace assigned</h1>
+  <p>Your account is signed in, but it does not currently have access to a Connect workspace. Ask your administrator to add you to Robotronix Connect.</p>
+  <ErrorMessage error={error}/>
+  <button className="cx-primary" type="button" onClick={onRetry}>Check access again</button>
+  <button className="cx-text-button" type="button" onClick={onSignOut}>Sign out</button>
  </section></main>;
 }
