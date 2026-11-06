@@ -16,7 +16,7 @@ import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCat
 import {ErrorMessage,EmptyState} from "@/features/connect/EmptyStates";
 import {ConnectSidebar} from "@/features/connect/ConnectSidebar";
 import {ConnectTopbar} from "@/features/connect/ConnectTopbar";
-import {ConnectSignInGate,ConnectWorkspaceSetupGate} from "@/features/connect/ConnectAuthGates";
+import {ConnectSignInGate,ConnectNoWorkspaceGate} from "@/features/connect/ConnectAuthGates";
 
 export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
@@ -149,8 +149,6 @@ export default function ConnectPage(){
  },[tenantId,selectedOpportunity,canConfigure]);
  const [loginEmail,setLoginEmail]=useState("");
  const [loginPassword,setLoginPassword]=useState("");
- const [newWorkspace,setNewWorkspace]=useState("");
- const [newSlug,setNewSlug]=useState("");
  const [lead,setLead]=useState({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:"",personId:""});
  const [newContact,setNewContact]=useState({name:"",email:"",phone:"",role:"contact"});
  const [taskTitle,setTaskTitle]=useState("");
@@ -178,15 +176,6 @@ export default function ConnectPage(){
    if(authError)throw new Error(authError.message);
   }catch(e){setError(e instanceof Error?e.message:"Could not sign in.");}
   finally{setBusy(false);}
- }
- async function createWorkspace(e:FormEvent){
-  e.preventDefault();
-  await run(async()=>{
-   const result=await connectFetch<{workspaceId:string}>("/api/connect/workspaces",{
-    method:"POST",body:JSON.stringify({name:newWorkspace,slug:newSlug})
-   });
-   await loadWorkspaces();setTenantId(result.workspaceId);
-  },"Institute workspace created.");
  }
  async function captureLead(e:FormEvent){
   e.preventDefault();
@@ -278,8 +267,8 @@ export default function ConnectPage(){
 
  if(signedIn===null)return <main className="cx-gate">Checking your Connect session…</main>;
  if(!signedIn)return <ConnectSignInGate error={error} busy={busy} email={loginEmail} password={loginPassword} onEmailChange={setLoginEmail} onPasswordChange={setLoginPassword} onSubmit={signIn}/>;
- if(!workspacesReady)return <main className="cx-gate">Loading your institute workspace…</main>;
- if(!workspaces.length)return <ConnectWorkspaceSetupGate error={error} busy={busy} name={newWorkspace} slug={newSlug} onNameChange={value=>{setNewWorkspace(value);setNewSlug(value.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""));}} onSlugChange={setNewSlug} onSubmit={createWorkspace} onSignOut={()=>{setSignedIn(false);void getSupabaseBrowserClient()?.auth.signOut();}}/>;
+ if(!workspacesReady)return <main className="cx-gate">Loading your Connect workspace…</main>;
+ if(!workspaces.length)return <ConnectNoWorkspaceGate error={error} onRetry={()=>{setWorkspacesReady(false);void loadWorkspaces().catch(e=>{setError(e instanceof Error?e.message:"Unable to check workspace access.");setWorkspacesReady(true);});}} onSignOut={()=>{setSignedIn(false);void getSupabaseBrowserClient()?.auth.signOut();}}/>;
  
   return <main className="cx-app">
   <ConnectSidebar showMobileNav={showMobileNav} onToggleMobile={()=>setShowMobileNav(v=>!v)} canOpenPortal={canOpenPortal} tenantId={tenantId} tenantRole={tenant?.membership_role||"member"} workspaces={workspaces} accountEmail={accountEmail} section={section} visibleNavigation={visibleNavigation} onWorkspaceChange={value=>{setTenantId(value);setSelectedPerson(null);setSelectedOpportunity(null);}} onSectionChange={value=>{setSection(value);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setShowMobileNav(false);}}/>
