@@ -20,7 +20,8 @@
 .cx-app label small{font-weight:450}
 .cx-app .cx-logo,.cx-gate .cx-logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:750;white-space:nowrap;letter-spacing:-.02em}
 .cx-logo b{color:#087fa7}
-.cx-logo-mark{width:35px;height:35px;background:linear-gradient(140deg,#235ce2,#079db7);color:#fff;border-radius:11px;display:grid;place-items:center;font-size:20px;font-weight:800;box-shadow:0 7px 16px rgba(22,116,175,.16)}
+.cx-logo-image{display:block;width:auto;max-width:170px;height:38px;object-fit:contain;object-position:left center;flex-shrink:1;min-width:0}
+.cx-logo-product{font-size:17px;font-weight:800;color:#087fa7;letter-spacing:-.025em;flex-shrink:0}
 .cx-sidebar{width:248px;flex:0 0 248px;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;padding:23px 14px 13px;background:#fff;border-right:1px solid var(--cx-border);z-index:25}
 .cx-sidebar>.cx-logo{padding:3px 10px 23px}
 .cx-workspace-picker{border:1px solid #dfebf2;background:#f8fbfd;padding:12px;border-radius:13px;margin-bottom:18px}
@@ -156,7 +157,7 @@
 .cx-success button{border:0;color:inherit;background:transparent;font-size:18px}
 .cx-gate{display:grid;place-items:center;min-height:100vh;background:linear-gradient(140deg,#f6fbff,#eff8fb);padding:30px 16px}
 .cx-auth{width:min(100%,480px);background:#fff;border:1px solid #deedf3;border-radius:19px;padding:34px;box-shadow:0 16px 56px rgba(30,74,115,.08)}
-.cx-auth>.cx-logo{margin-bottom:36px}
+.cx-auth>.cx-logo{margin-bottom:22px}
 .cx-auth h1{font-size:30px;margin-bottom:12px}
 .cx-auth>p{font-size:13px;color:#617b8c;margin-bottom:22px}
 .cx-form{display:flex;flex-direction:column;gap:15px}
