@@ -286,7 +286,18 @@ export default function ConnectPage(){
 
     {section==="overview"&&<>
      <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}/>
-     <WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onOpenContact={personId=>{setSection("contacts");setSelectedPerson(personId);setSelectedOpportunity(null);}}/>
+     <WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onOpenContact={personId=>{const generation=requestGeneration.current;void (async()=>{
+      try{
+       if(!people.some(p=>p.id===personId)){
+        const response=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});
+        if(requestGeneration.current!==generation)return;
+        if(!response.items.length){setError("Contact is not available in this workspace.");return;}
+        setPeople(current=>current.some(p=>p.id===personId)?current:[...current,response.items[0]]);
+       }
+       if(requestGeneration.current!==generation)return;
+       setSection("contacts");setSelectedPerson(personId);setSelectedOpportunity(null);
+      }catch(e){if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Unable to open contact.");}
+     })();}}/>
      <div className="cx-overview-grid">
       <section className="cx-panel"><div className="cx-panel-header"><div><h2>Recent enquiries</h2><p>Latest enquiries across your channels</p></div><button className="cx-link-button" onClick={()=>setSection("enquiries")}>View all →</button></div>
        {inquiries.length===0?<EmptyState title="No enquiries yet" description="Capture the first enquiry to start building your admissions pipeline."/>:
