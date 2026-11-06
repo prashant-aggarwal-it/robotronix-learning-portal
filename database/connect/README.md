@@ -27,7 +27,7 @@ Connect owns the private PostgreSQL `connect` schema and service-only `public.co
 | `20_simple_mode_enquiry_classification.sql` | Simple Mode and categories | Active |
 | `21_intake_first_inbound.sql` | Enquiry-first inbound policy | Active |
 | `23_unqualified_enquiry_followups.sql` | Initial follow-ups | Active |
-| `24_contact_360_timeline_PENDING.sql` | Unified contact-wide timeline RPC | **Pending / not applied** |
+| `24_contact_360_timeline_PENDING.sql` | Unified contact-wide timeline RPC | **Applied in DEV 2026-11-06; not applied in Production** |
 
 The numbers deliberately retain original order and gaps where verification files were relocated. **Do not renumber applied source files.**
 
