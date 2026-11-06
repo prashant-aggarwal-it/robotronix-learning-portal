@@ -14,13 +14,13 @@ export function ConnectSidebar({showMobileNav,onToggleMobile,canOpenPortal,tenan
   <aside className={"cx-sidebar "+(showMobileNav?"cx-mobile-open":"")}>
    <ConnectBrand/>
    {canOpenPortal&&<ApplicationSwitcher current="connect"/>}
-   <div className="cx-workspace-picker">
-    <span>INSTITUTE WORKSPACE</span>
-    <select aria-label="Choose institute" value={tenantId} onChange={e=>onWorkspaceChange(e.target.value)}>
+   {workspaces.length>1&&<div className="cx-workspace-picker">
+    <span>ORGANIZATION</span>
+    <select aria-label="Choose organization" value={tenantId} onChange={e=>onWorkspaceChange(e.target.value)}>
      {workspaces.map(w=><option key={w.tenant_id} value={w.tenant_id}>{w.workspace_name}</option>)}
     </select>
     <small>{shortLabel(tenantRole||"member")} access</small>
-   </div>
+   </div>}
    <nav aria-label="Connect navigation" className="cx-navigation">
     <span className="cx-nav-label">WORKSPACE</span>
     {visibleNavigation.map(n=><button key={n.id} className={"cx-nav-item "+(section===n.id?"active":"")} onClick={()=>onSectionChange(n.id)}><span aria-hidden="true">{n.icon}</span>{n.label}</button>)}
