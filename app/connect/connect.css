@@ -367,3 +367,34 @@
 @media(max-width:1180px){.cx-insight-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.cx-insight-panels{grid-template-columns:1fr}}
 @media(max-width:650px){.cx-insights-intro{align-items:flex-start}.cx-insights-intro h2{font-size:19px}.cx-live-pill{display:none}.cx-insight-metrics{gap:9px}.cx-insight-metric{padding:13px}.cx-insight-number{font-size:26px}.cx-insight-label{font-size:11px}.cx-insight-panel{padding:14px}.cx-source-row{grid-template-columns:minmax(95px,1fr) minmax(35px,1fr) 24px 30px;gap:5px}.cx-stage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.cx-insight-metric{transition:none}.cx-insight-metric:hover{transform:none}}
+
+
+/* Contact 360: modern consolidated profile (scoped to Connect). */
+.cx-drawer:has(.cx-contact360){width:min(100%,700px);background:#f6f9fd}
+.cx-drawer:has(.cx-contact360) .cx-drawer-body{padding:0 22px 35px}
+.cx-contact360{color:#1b324d}
+.cx-contact360-hero{margin:18px 0 13px;border:1px solid #dae8f2;border-radius:18px;background:linear-gradient(120deg,#fff 40%,#edf8ff);padding:19px 20px;box-shadow:0 10px 26px rgba(30,71,109,.045)}
+.cx-contact360-identity{display:flex;align-items:center;gap:13px;min-width:0}
+.cx-contact360-avatar{height:58px;width:58px;flex-shrink:0;border-radius:17px;background:linear-gradient(140deg,#176fbb,#16a7ae);display:grid;place-items:center;font-size:21px;color:#fff;font-weight:850;box-shadow:0 8px 18px rgba(23,111,187,.15)}
+.cx-contact360-identity>div{min-width:0}.cx-contact360-identity h2{font-size:22px;line-height:1.2;font-weight:850;letter-spacing:-.035em;margin:5px 0 4px;overflow-wrap:anywhere}
+.cx-contact360-eyebrow{font-size:10px;letter-spacing:.12em;font-weight:850;color:#1682ad}
+.cx-contact360-identity p{font-size:12px;color:#688095;margin:0}
+.cx-contact360-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:17px}
+.cx-contact360-action{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 12px;border:1px solid #cfe4ef;background:#fff;border-radius:10px;font-size:12px;font-weight:750;text-decoration:none;color:#166d92;cursor:pointer}
+.cx-contact360-action:hover{background:#e8f6fc;border-color:#96cce2}
+.cx-contact360-action:focus-visible,.cx-contact360-stats button:focus-visible,.cx-contact360-tabs button:focus-visible{outline:3px solid #31a2d1;outline-offset:2px}
+.cx-contact360-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:15px}
+.cx-contact360-stats button{background:#fff;border:1px solid #e0eaf2;border-radius:13px;padding:14px 15px;text-align:left;display:flex;flex-direction:column;gap:5px;cursor:pointer;min-width:0}
+.cx-contact360-stats button:hover{border-color:#9dcee4;background:#fafdff}
+.cx-contact360-stats span{font-size:11px;font-weight:700;color:#5b7286}.cx-contact360-stats strong{font-size:25px;font-weight:850;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.cx-contact360-stats small{font-size:10px;color:#8193a2}
+.cx-contact360-tabs{display:flex;overflow-x:auto;gap:5px;padding:5px;background:#eaf1f7;border-radius:13px;margin-bottom:15px;scrollbar-width:thin}
+.cx-contact360-tabs button{flex:1;min-width:93px;border:0;border-radius:9px;background:transparent;color:#5b7589;padding:11px 9px;font-weight:750;font-size:12px;cursor:pointer}
+.cx-contact360-tabs button.active{background:#fff;color:#0d719c;box-shadow:0 4px 13px rgba(22,70,106,.09)}
+.cx-contact360-tabpanel{min-height:150px}.cx-contact360-tabpanel .cx-detail-card{border-radius:14px;box-shadow:0 5px 17px rgba(30,71,109,.035)}
+.cx-contact360-list-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf1f5}
+.cx-contact360-list-row:last-child{border-bottom:0}.cx-contact360-list-row>span:first-child{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cx-contact360-list-row strong{font-size:12px;overflow-wrap:anywhere}.cx-contact360-list-row small{font-size:11px;color:#758b9d}
+.cx-contact360-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#8296a5;font-size:10px;margin:14px 0}
+.cx-contact360-footer button{border:0;background:transparent;color:#0d719c;font-weight:750;cursor:pointer;white-space:nowrap}
+@media(max-width:650px){.cx-drawer:has(.cx-contact360) .cx-drawer-body{padding:0 12px 25px}.cx-contact360-hero{padding:15px}.cx-contact360-identity h2{font-size:19px}.cx-contact360-avatar{width:49px;height:49px;border-radius:14px}.cx-contact360-stats{gap:6px}.cx-contact360-stats button{padding:11px}.cx-contact360-stats strong{font-size:23px}.cx-contact360-stats span{font-size:10px}.cx-contact360-action{padding:8px 10px}.cx-contact360-footer{align-items:flex-start}}
