@@ -13,6 +13,7 @@ import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
 import {ContactProfile} from "@/features/connect/components/contact/ContactProfile";
 import {ContactTimeline} from "@/features/connect/components/contact/ContactTimeline";
+import {ContactRelationships} from "@/features/connect/components/contact/ContactRelationships";
 import {EnquirySettings,readEnquiryPreferences} from "@/features/connect/components/EnquirySettings";
 import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
@@ -468,6 +469,7 @@ export default function ConnectPage(){
        <div className="cx-form-columns"><label>Starts<input required type="datetime-local" value={appointmentStarts} onChange={e=>setAppointmentStarts(e.target.value)}/></label>
        <label>Ends<input required type="datetime-local" value={appointmentEnds} onChange={e=>setAppointmentEnds(e.target.value)}/></label></div>
        <button className="cx-secondary" disabled={busy}>Schedule appointment</button></form></section>}</>}
+      relationsContent={<>{selectedContact&&<ContactRelationships key={tenantId+"-"+selectedContact.id} tenantId={tenantId} personId={selectedContact.id} canWrite={canWrite} canManage={["owner","admin","manager"].includes(tenant?.membership_role||"")}/>}</>}
       detailsContent={<>{selectedContact&&<section className="cx-detail-card"><h3>Contact details</h3>{selectedContact.contact_methods.length?
       selectedContact.contact_methods.map((m,i)=><div className="cx-detail-row" key={i}><span>{shortLabel(m.kind)}</span><strong>{m.value}</strong></div>):
       <p className="cx-muted">No contact methods recorded.</p>}</section>}
