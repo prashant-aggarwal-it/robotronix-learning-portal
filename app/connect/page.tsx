@@ -11,6 +11,7 @@ import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAu
 import {ConnectReminderInbox,ConnectConversationHistory} from "@/features/connect/components/ConnectCommunications";
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
+import {ContactProfile} from "@/features/connect/components/contact/ContactProfile";
 import {EnquirySettings,readEnquiryPreferences} from "@/features/connect/components/EnquirySettings";
 import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
@@ -440,14 +441,11 @@ export default function ConnectPage(){
    </form></section></div>}
 
   {(selectedContact||selectedLead)&&<div className="cx-drawer-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget){setSelectedPerson(null);setSelectedOpportunity(null);}}}>
-   <aside className="cx-drawer" role="dialog" aria-modal="true" aria-label="Lead details">
-    <div className="cx-drawer-header"><span>360° LEAD WORKSPACE</span><button aria-label="Close details" onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>×</button></div>
+   <aside className="cx-drawer" role="dialog" aria-modal="true" aria-label="Contact 360 profile">
+    <div className="cx-drawer-header"><span>CONTACT WORKSPACE</span><button aria-label="Close details" onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>×</button></div>
     <div className="cx-drawer-body">
-     {selectedContact&&<div className="cx-person-heading"><span className="cx-avatar large">{initials(selectedContact.full_name)}</span><div><h2>{selectedContact.full_name}</h2><p>{selectedContact.roles.map(shortLabel).join(" · ")||"Contact"}</p></div></div>}
-     {selectedContact&&<section className="cx-detail-card"><h3>Contact details</h3>{selectedContact.contact_methods.length?
-      selectedContact.contact_methods.map((m,i)=><div className="cx-detail-row" key={i}><span>{shortLabel(m.kind)}</span><strong>{m.value}</strong></div>):
-      <p className="cx-muted">No contact methods recorded.</p>}</section>}
-     {selectedLead&&<section className="cx-detail-card"><h3>Admission opportunity</h3><strong className="cx-detail-title">{selectedLead.title}</strong>
+     <ContactProfile person={selectedContact} opportunity={selectedLead} inquiries={inquiries} tasks={tasks} appointments={appointments} canWrite={canWrite} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
+      overviewContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Admission opportunity</h3><strong className="cx-detail-title">{selectedLead.title}</strong>
       <p className="cx-muted">Current stage: {selectedLead.stage_name} · Version {selectedLead.version}</p>
       {canWrite&&<label>Move to stage<select value={selectedLead.stage_id} disabled={busy} onChange={e=>void updateStage(selectedLead,e.target.value)}>
        {pipelines.find(p=>p.id===selectedLead.pipeline_id)?.stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
@@ -460,37 +458,41 @@ export default function ConnectPage(){
         {assignees.map(a=><option key={a.id} value={a.id}>{a.label} · {shortLabel(a.role)}</option>)}
        </select></label>}
      </section>}
-     {selectedContact&&<section className="cx-detail-card"><h3>Recent enquiries</h3>
+{selectedContact&&opportunities.filter(o=>o.contact_id===selectedPerson).length>0&&<section className="cx-detail-card"><h3>Admissions</h3>
+      {opportunities.filter(o=>o.contact_id===selectedPerson).map(o=><button className="cx-detail-link" key={o.id} onClick={()=>setSelectedOpportunity(o.id)}>{o.title} <span>{o.stage_name} →</span></button>)}</section>}</>}
+      enquiriesContent={<>{selectedContact&&<section className="cx-detail-card"><h3>Recent enquiries</h3>
       {inquiries.filter(i=>i.person_id===selectedPerson).length?
        inquiries.filter(i=>i.person_id===selectedPerson).map(i=><div className="cx-detail-row" key={i.id}><span>{shortLabel(i.source)}</span><strong>{dateLabel(i.received_at)}</strong></div>):
-       <p className="cx-muted">No linked enquiries loaded.</p>}</section>}
-     {selectedContact&&opportunities.filter(o=>o.contact_id===selectedPerson).length>0&&<section className="cx-detail-card"><h3>Admissions</h3>
-      {opportunities.filter(o=>o.contact_id===selectedPerson).map(o=><button className="cx-detail-link" key={o.id} onClick={()=>setSelectedOpportunity(o.id)}>{o.title} <span>{o.stage_name} →</span></button>)}</section>}
-     {selectedLead&&<section className="cx-detail-card"><h3>Activity timeline</h3>
+       <p className="cx-muted">No linked enquiries loaded.</p>}</section>}</>}
+      timelineContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Activity timeline</h3>
        {timeline.length?timeline.map(x=><div className="cx-history-item" key={x.id}><span>●</span><div><strong>{shortLabel(x.title||x.kind||x.type||"Activity")}</strong><small>{x.summary||"Stage updated"} · {dateLabel(x.event_time||x.occurred_at)}</small></div></div>):
        <p className="cx-muted">No activities loaded yet.</p>}</section>}
-     {canWrite&&(selectedContact||selectedLead)&&<section className="cx-detail-card"><h3>Record a call or counselling note</h3>
+{canWrite&&(selectedContact||selectedLead)&&<section className="cx-detail-card"><h3>Record a call or counselling note</h3>
       <form className="cx-form" onSubmit={saveNote}><label>Note<textarea required rows={3} maxLength={3000} placeholder="What was discussed and what happens next?"
        value={activityNote} onChange={e=>setActivityNote(e.target.value)}/></label>
        <button className="cx-secondary" disabled={busy||!activityNote.trim()}>Save note</button>
       </form></section>}
-     {canWrite&&selectedContact&&pipelines.length>0&&<section className="cx-detail-card"><h3>Start a new admission</h3>
+{selectedContact&&<ConnectConversationHistory key={tenantId+"-"+selectedPerson} tenantId={tenantId} personId={selectedPerson} compact/>}</>}
+      followupsContent={<>{canWrite&&<section className="cx-detail-card"><h3>Schedule a follow-up</h3>
+      <form className="cx-form" onSubmit={saveTask}><label>Next action<input required maxLength={250} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} placeholder="Call to discuss programme"/></label>
+       <label>Due at<input type="datetime-local" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/></label><button className="cx-primary" disabled={busy}>Save follow-up</button></form></section>}
+{canWrite&&<section className="cx-detail-card"><h3>Book counselling / demo</h3>
+      <form className="cx-form" onSubmit={saveAppointment}><label>Title<input required value={appointmentTitle} onChange={e=>setAppointmentTitle(e.target.value)} placeholder="Introductory counselling"/></label>
+       <div className="cx-form-columns"><label>Starts<input required type="datetime-local" value={appointmentStarts} onChange={e=>setAppointmentStarts(e.target.value)}/></label>
+       <label>Ends<input required type="datetime-local" value={appointmentEnds} onChange={e=>setAppointmentEnds(e.target.value)}/></label></div>
+       <button className="cx-secondary" disabled={busy}>Schedule appointment</button></form></section>}</>}
+      detailsContent={<>{selectedContact&&<section className="cx-detail-card"><h3>Contact details</h3>{selectedContact.contact_methods.length?
+      selectedContact.contact_methods.map((m,i)=><div className="cx-detail-row" key={i}><span>{shortLabel(m.kind)}</span><strong>{m.value}</strong></div>):
+      <p className="cx-muted">No contact methods recorded.</p>}</section>}
+{canWrite&&selectedContact&&pipelines.length>0&&<section className="cx-detail-card"><h3>Start a new admission</h3>
       <form className="cx-form" onSubmit={startAdmission}>
        <label>Admissions pipeline<select required value={newAdmissionPipeline} onChange={e=>setNewAdmissionPipeline(e.target.value)}><option value="">Choose a pipeline</option>
         {pipelines.filter(p=>p.stages.some(st=>st.outcome==="open")).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
        </select></label>
        <label>Admission title<input value={newAdmissionTitle} maxLength={200} onChange={e=>setNewAdmissionTitle(e.target.value)} placeholder="e.g. Python Beginner Course"/></label>
        <button className="cx-secondary" disabled={busy}>Start admission</button>
-      </form></section>}
-     {selectedContact&&<ConnectConversationHistory key={tenantId+"-"+selectedPerson} tenantId={tenantId} personId={selectedPerson} compact/>}
-     {canWrite&&<section className="cx-detail-card"><h3>Schedule a follow-up</h3>
-      <form className="cx-form" onSubmit={saveTask}><label>Next action<input required maxLength={250} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} placeholder="Call to discuss programme"/></label>
-       <label>Due at<input type="datetime-local" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/></label><button className="cx-primary" disabled={busy}>Save follow-up</button></form></section>}
-     {canWrite&&<section className="cx-detail-card"><h3>Book counselling / demo</h3>
-      <form className="cx-form" onSubmit={saveAppointment}><label>Title<input required value={appointmentTitle} onChange={e=>setAppointmentTitle(e.target.value)} placeholder="Introductory counselling"/></label>
-       <div className="cx-form-columns"><label>Starts<input required type="datetime-local" value={appointmentStarts} onChange={e=>setAppointmentStarts(e.target.value)}/></label>
-       <label>Ends<input required type="datetime-local" value={appointmentEnds} onChange={e=>setAppointmentEnds(e.target.value)}/></label></div>
-       <button className="cx-secondary" disabled={busy}>Schedule appointment</button></form></section>}
+      </form></section>}</>}
+     />
     </div>
    </aside>
   </div>}
