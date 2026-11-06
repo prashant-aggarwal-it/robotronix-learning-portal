@@ -78,3 +78,7 @@ Validation still needed: npm typecheck/build, mobile-width visual review, zero-d
 - Corrected the pre-existing ContactProfile TypeScript mismatch (`opportunities` and `canWrite` missing from its Props type).
 - **Operational status:** No Supabase SQL has been executed, no deploy, no merge. DEV inspection on 2026-11-06 confirmed the new RPC is absent; the API returns 503 "Contact timeline is not yet enabled in this environment" until a separately approved DEV activation. GitHub build and real UI tests are still outstanding.
 - Required QA after approval: function permissions (service_role only), no access for inactive or different-tenant users, nonexistent contact, independent opportunity links, stable pagination for same-time entries, all event types, live note/task updates, viewer mode, mobile and cross-workspace navigation.
+
+## DEV timeline activation — 2026-11-06
+
+The user explicitly approved DEV database changes. Migration `connect_contact_360_unified_timeline` was successfully applied to project `fflejkqcspivnhsmkdtn` (Development DB – Robotronix Learning Portal). Verification: `connect_contact_timeline` exists; service_role EXECUTE true, anon/authenticated EXECUTE false, security_definer false; invalid actor rejected with SQLSTATE 42501. No contacts existed at verification, so event content, pagination and browser checks remain to be tested with actual contacts. No Production change, merge or deployment. The historical source file still uses `_PENDING` in its filename; its content now records the DEV-applied state.
