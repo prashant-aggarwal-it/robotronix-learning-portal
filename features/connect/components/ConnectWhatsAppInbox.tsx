@@ -19,6 +19,7 @@ type Member={id:string;label:string;role:string};
 type Details={conversationId:string;personId:string|null;status:"open"|"pending"|"closed";
  assignedMemberId:string|null;draft:string;lastReadAt:string|null;canWrite:boolean;canAssign:boolean;team:Member[]};
 type ContactOption={id:string;name:string;phone:string|null};
+type SendReady={ok:true;canSend:boolean;testMode:boolean;reason:string|null;lastInboundAt:string|null};
 const base=(tenantId:string)=>"/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/whatsapp";
 function shortDate(value:string){const date=new Date(value);return Number.isNaN(date.getTime())?"—":
  date.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});}
@@ -40,6 +41,8 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
  const [draft,setDraft]=useState(""),[error,setError]=useState(""),[chatError,setChatError]=useState(""),[notice,setNotice]=useState("");
  const [contactQuery,setContactQuery]=useState(""),[contactMatches,setContactMatches]=useState<ContactOption[]>([]);
  const [contactSearching,setContactSearching]=useState(false),[linkOpen,setLinkOpen]=useState(false);
+ const [sendReady,setSendReady]=useState<SendReady|null>(null),[sending,setSending]=useState(false);
+ const sendRequestId=useRef<string|null>(null);
  const threadGeneration=useRef(0),chatGeneration=useRef(0),searchGeneration=useRef(0);
  const selectedRef=useRef<string|null>(null);
  selectedRef.current=selected;
@@ -68,14 +71,16 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
    const params=new URLSearchParams({limit:"50"});
    if(cursor){params.set("beforeAt",cursor.at);params.set("beforeId",cursor.id);}
    const path=api+"/conversations/"+encodeURIComponent(conversationId);
-   const [page,information]=await Promise.all([
+   const [page,information,ready]=await Promise.all([
     connectFetch<Page<ChatMessage>>(path+"/messages?"+params.toString()),
-    append?Promise.resolve(null):connectFetch<{ok:true;details:Details}>(path)
+    append?Promise.resolve(null):connectFetch<{ok:true;details:Details}>(path),
+    append?Promise.resolve(null):connectFetch<SendReady>(path+"/send")
    ]);
    if(generation!==chatGeneration.current||selectedRef.current!==conversationId)return;
    setMessages(previous=>append?addUnique(previous,page.items):page.items);
    setMessageCursor(page.nextCursor);
    if(information){setDetails(information.details);setDraft(information.details.draft);}
+   if(ready)setSendReady(ready);
   }catch(e){if(generation===chatGeneration.current)setChatError(e instanceof Error?e.message:"Could not load messages.");}
   finally{if(generation===chatGeneration.current){setChatLoading(false);setMessageMore(false);}}
  },[api]);
@@ -83,13 +88,13 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
  useEffect(()=>{
   threadGeneration.current++;chatGeneration.current++;searchGeneration.current++;
   setThreads([]);setThreadCursor(null);setSelected(null);setMessages([]);setDetails(null);
-  setDraft("");setError("");setChatError("");setQuery("");setFilter("all");setNumber("all");setLinkOpen(false);
+  setDraft("");setSendReady(null);sendRequestId.current=null;setError("");setChatError("");setQuery("");setFilter("all");setNumber("all");setLinkOpen(false);
   void loadThreads();return()=>{threadGeneration.current++;chatGeneration.current++;searchGeneration.current++;};
  },[loadThreads]);
 
  function choose(id:string){
   if(selected===id)return;
-  setSelected(id);selectedRef.current=id;setLinkOpen(false);setContactMatches([]);
+  setSelected(id);selectedRef.current=id;setLinkOpen(false);setContactMatches([]);setSendReady(null);sendRequestId.current=null;
   setNotice("");void loadMessages(id);
   // Mark-read is per agent. Failing to acknowledge does not block history.
   void connectFetch(api+"/conversations/"+encodeURIComponent(id),{
@@ -113,6 +118,27 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
    if(action==="assign"||action==="set_status"||action==="link_contact")void loadThreads();
   }catch(e){if(selectedRef.current===conversationId)setChatError(e instanceof Error?e.message:"Could not save changes.");}
   finally{setBusy(false);}
+ }
+ async function sendTestReply(e:FormEvent){
+  e.preventDefault();
+  if(!selected||!canWrite||!details?.canWrite||!sendReady?.canSend||!draft.trim()||sending||busy)return;
+  const conversation=selected;const content=draft.trim();
+  const id=sendRequestId.current||crypto.randomUUID();sendRequestId.current=id;
+  setSending(true);setChatError("");setNotice("");
+  try{
+   await connectFetch(api+"/conversations/"+encodeURIComponent(conversation)+"/send",{
+    method:"POST",body:JSON.stringify({text:content,clientRequestId:id})
+   });
+   if(selectedRef.current!==conversation)return;
+   setNotice("Meta accepted the test message. Delivery status will be updated by webhook.");
+   sendRequestId.current=null;setDraft("");
+   await connectFetch(api+"/conversations/"+encodeURIComponent(conversation),{
+    method:"PATCH",body:JSON.stringify({action:"save_draft",data:{text:""}})
+   });
+   await Promise.all([loadMessages(conversation),loadThreads()]);
+  }catch(e){
+   if(selectedRef.current===conversation)setChatError(e instanceof Error?e.message:"Could not confirm test send.");
+  }finally{setSending(false);}
  }
  async function searchContacts(e:FormEvent){
   e.preventDefault();const q=contactQuery.trim();if(q.length<2)return;
@@ -141,9 +167,9 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
    <button className="cx-secondary" type="button" onClick={()=>void loadThreads()} disabled={threadLoading||threadMore}>↻ Refresh</button>
   </div>
   <div className="cx-wa-safety" role="note">
-   <strong>DEV inbox preview</strong> · Viewing recorded WhatsApp conversations works with CRM data.
-   Sending new messages and fetching media files require the Meta integration in Phase 3.
-   Drafts are saved internally and are <strong>not sent</strong> to WhatsApp.
+   <strong>Meta test integration</strong> · Recorded conversations can be read in DEV.
+   Sending is allowed only to configured test recipients, using the approved Meta test sender, inside an open customer-service reply window.
+   The real WhatsApp Business App and WA Simple remain untouched.
   </div>
   {error&&<div className="cx-alert" role="alert">{error}</div>}
   <div className={"cx-wa-layout "+(selected?"cx-wa-has-selection":"")}>
@@ -235,15 +261,15 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
        </article>)}
      </div>
      <div className="cx-wa-composer">
-      <form onSubmit={e=>{e.preventDefault();void mutate("save_draft",{text:draft},"Draft saved privately. It has not been sent.");}}>
-       <label htmlFor="cx-wa-compose">Draft a reply</label>
+      <form onSubmit={e=>void sendTestReply(e)}>
+       <label htmlFor="cx-wa-compose">Reply via Meta test number</label>
        <textarea id="cx-wa-compose" rows={3} maxLength={3000} value={draft} disabled={!canEdit||busy}
-        placeholder={canEdit?"Write a reply to save as a draft…":"Your role has read-only access."}
-        onChange={e=>setDraft(e.target.value)}/>
+        placeholder={canEdit?"Write a test reply…":"Your role has read-only access."}
+        onChange={e=>{setDraft(e.target.value);sendRequestId.current=null;}}/>
        <div className="cx-wa-compose-actions">
-        <small>Draft only · No WhatsApp messages will be sent from DEV.</small>
-        <button type="submit" className="cx-secondary" disabled={!canEdit||busy}>{busy?"Saving…":"Save draft"}</button>
-        <button className="cx-primary" type="button" disabled title="Enable official Meta sending in Phase 3">Send (Phase 3)</button>
+        <small>{sendReady?.canSend?"Meta test recipient verified in configuration.":"Sending disabled: "+(sendReady?.reason||"Checking Meta test setup…")}</small>
+        <button type="button" className="cx-secondary" onClick={()=>void mutate("save_draft",{text:draft},"Draft saved privately.")} disabled={!canEdit||busy||sending}>{busy?"Saving…":"Save draft"}</button>
+        <button className="cx-primary" type="submit" disabled={!canEdit||!sendReady?.canSend||!draft.trim()||sending||busy}>{sending?"Sending…":"Send test reply"}</button>
        </div>
       </form>
      </div>
