@@ -2,17 +2,14 @@
 import type {FormEvent} from "react";
 import Link from "next/link";
 import {ErrorMessage} from "@/features/connect/EmptyStates";
-
-function ConnectGateBrand(){
- return <div className="cx-logo"><span className="cx-logo-mark">C</span><span>Robotronix <b>Connect</b></span></div>;
-}
+import {ConnectBrand} from "@/features/connect/ConnectBrand";
 
 export function ConnectSignInGate({error,busy,email,password,onEmailChange,onPasswordChange,onSubmit}:{
  error:string;busy:boolean;email:string;password:string;
  onEmailChange:(value:string)=>void;onPasswordChange:(value:string)=>void;onSubmit:(event:FormEvent)=>void;
 }){
  return <main className="cx-gate"><section className="cx-auth">
-  <ConnectGateBrand/>
+  <ConnectBrand/>
   <span className="cx-kicker">ADMISSIONS & RELATIONSHIPS</span>
   <h1>A clearer way to manage admissions.</h1>
   <p>Sign in with your existing Robotronix account. Connect uses the same authentication system as the Learning Portal, with separate institute permissions.</p>
@@ -30,7 +27,7 @@ export function ConnectWorkspaceSetupGate({error,busy,name,slug,onNameChange,onS
  onSubmit:(event:FormEvent)=>void;onSignOut:()=>void;
 }){
  return <main className="cx-gate"><section className="cx-auth">
-  <ConnectGateBrand/>
+  <ConnectBrand/>
   <span className="cx-kicker">GETTING STARTED</span><h1>Create your institute workspace</h1>
   <p>Every institute manages its own contacts, admissions and staff. You will be the workspace owner.</p>
   <ErrorMessage error={error}/><form onSubmit={onSubmit} className="cx-form">
