@@ -497,6 +497,10 @@
 .cx-wa-intro h2{font-size:19px;font-weight:850;letter-spacing:-.025em;color:#1b3952;margin:4px 0}
 .cx-wa-intro p{font-size:12px;color:#778b9b;margin:0}
 .cx-wa-safety{border:1px solid #cee8eb;background:#f2fbfc;border-radius:11px;padding:10px 14px;color:#3b6776;font-size:12px;line-height:1.5}
+.cx-wa-readiness{margin-top:7px}
+.cx-wa-readiness summary{cursor:pointer;font-weight:750;color:#225971}
+.cx-wa-readiness ul{padding-left:20px;margin:7px 0 0}
+.cx-wa-readiness li+li{margin-top:3px}
 .cx-wa-layout{display:grid;grid-template-columns:minmax(270px,34%) minmax(0,1fr);height:min(74vh,780px);min-height:490px;border-radius:15px;overflow:hidden;border:1px solid #dce7ee;background:#fff;box-shadow:0 6px 24px rgba(24,68,97,.05)}
 .cx-wa-list{display:flex;flex-direction:column;min-height:0;border-right:1px solid #e4edf3;background:#fff}
 .cx-wa-list-controls{padding:14px;border-bottom:1px solid #eaf0f5}

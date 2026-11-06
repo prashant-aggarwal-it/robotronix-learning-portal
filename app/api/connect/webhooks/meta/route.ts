@@ -15,7 +15,7 @@ export async function GET(req:NextRequest){
  return new NextResponse(challenge,{status:200,headers:{"Content-Type":"text/plain","Cache-Control":"no-store"}});
 }
 function validMetaTime(value:unknown):string|null{
- const time=typeof value==="string"&&/^\\d{10,11}$/.test(value)?Number(value):NaN;
+ const time=typeof value==="string"&&/^\d{10,11}$/.test(value)?Number(value):NaN;
  if(!Number.isFinite(time)||time<946684800||time>Date.now()/1000+86400)return null;
  return new Date(time*1000).toISOString();
 }
@@ -30,6 +30,19 @@ function messageParts(msg:any){
  const media=["image","video","audio","document","sticker"].includes(kind)?msg?.[kind]:null;
  return {kind,body,mediaId:safeString(media?.id,250)||null,mimeType:safeString(media?.mime_type,150)||null,
   filename:safeString(media?.filename,255)||null,replyToId:safeString(msg?.context?.id,250)||null};
+}
+async function ingestRevision(phoneId:string,msg:any,contact:string){
+ const action=msg?.type;
+ const original=safeString(msg?.[action]?.original_message_id,250);
+ const edited=msg?.edit?.message;
+ const revisedBody=edited?.type==="text"?safeString(edited?.text?.body,3000):
+  safeString(edited?.[edited?.type]?.caption,3000);
+ if(!original||!safeString(msg?.id,250)||!contact)throw new Error("Invalid WhatsApp revision");
+ return await invokeIngest("connect_revise_whatsapp_message",{
+  p_external_account_id:phoneId,p_original_message_id:original,p_event_id:msg.id,
+  p_contact_wa_id:contact,p_action:action,p_body:action==="revoke"?"":revisedBody,
+  p_occurred_at:validMetaTime(msg?.timestamp)
+ });
 }
 type GraphLead={id?:string;field_data?:Array<{name?:string;values?:unknown[]}>};
 function extractLead(data:GraphLead){
@@ -61,7 +74,8 @@ async function fetchLead(leadId:string):Promise<GraphLead>{
 export async function POST(req:NextRequest){
  const secret=process.env.CONNECT_META_APP_SECRET;
  if(!secret)return intakeError("Meta integration unavailable",503);
- const raw=await readRawLimited(req,128000);
+ // History sync can contain many threads; keep a hard limit to avoid unbounded memory.
+ const raw=await readRawLimited(req,2_000_000);
  if(raw===null)return intakeError("Payload too large",413);
  if(!checkHmacSha256(raw,req.headers.get("x-hub-signature-256"),secret))
   return intakeError("Invalid webhook signature",401);
@@ -73,6 +87,48 @@ export async function POST(req:NextRequest){
  for(const entry of payload.entry.slice(0,30)){
   for(const change of (Array.isArray(entry.changes)?entry.changes:[]).slice(0,50)){
    const value=change?.value;
+   if(change?.field==="smb_app_state_sync"){
+    const phoneId=safeString(value?.metadata?.phone_number_id,200);
+    const items=Array.isArray(value?.state_sync)?value.state_sync:[];
+    if(!phoneId||!Array.isArray(value?.state_sync)||items.length>1000){failures++;continue;}
+    for(const item of items){
+     if(item?.type!=="contact"||!["add","remove"].includes(item?.action)){ignored++;continue;}
+     try{
+      const result:any=await invokeIngest("connect_sync_whatsapp_app_contact",{
+       p_external_account_id:phoneId,p_phone:safeString(item?.contact?.phone_number,35),
+       p_name:safeString(item?.contact?.full_name||item?.contact?.first_name,150),
+       p_action:item.action,p_occurred_at:validMetaTime(item?.metadata?.timestamp)
+      });
+      if(result?.applied)processed++;else duplicate++;
+     }catch{failures++;}
+    }
+    continue;
+   }
+   if(change?.field==="history"){
+    const phoneId=safeString(value?.metadata?.phone_number_id,200);
+    const chunks=Array.isArray(value?.history)?value.history:[];
+    if(!phoneId||!Array.isArray(value?.history)||chunks.length>50){failures++;continue;}
+    for(const chunk of chunks){
+     if(Array.isArray(chunk?.errors)){ignored++;continue;} // History sharing declined by owner.
+     const threads=Array.isArray(chunk?.threads)?chunk.threads:null;
+     if(!threads||threads.length>500){failures++;continue;}
+     for(const thread of threads){
+      const contact=safeString(thread?.id,35),items=thread?.messages;
+      if(!contact||!Array.isArray(items)||items.length>5000){failures++;continue;}
+      // Bounded, idempotent batches allow safe retries after partial success.
+      for(let i=0;i<items.length;i+=200){
+       try{
+        const result:any=await invokeIngest("connect_import_whatsapp_history_thread",{
+         p_external_account_id:phoneId,p_contact_wa_id:contact,
+         p_messages:items.slice(i,i+200)
+        });
+        processed+=Number(result?.imported)||0;
+       }catch{failures++;break;}
+      }
+     }
+    }
+    continue;
+   }
    if(change.field==="messages"||Array.isArray(value?.messages)){
     const phoneId=safeString(value?.metadata?.phone_number_id,200);
     const profiles=new Map<string,string>();
@@ -81,6 +137,11 @@ export async function POST(req:NextRequest){
     for(const msg of (Array.isArray(value?.messages)?value.messages:[]).slice(0,50)){
      const id=safeString(msg?.id,250),waId=safeString(msg?.from,35);
      if(!phoneId||!id||!waId){ignored++;continue;}
+     if(msg?.type==="edit"||msg?.type==="revoke"){
+      try{const result:any=await ingestRevision(phoneId,msg,waId);
+       if(result?.applied)processed++;else duplicate++;
+      }catch{failures++;}continue;
+     }
      const parts=messageParts(msg);
      try{
       const result:any=await invokeIngest("connect_ingest_whatsapp_message",{
@@ -112,6 +173,11 @@ export async function POST(req:NextRequest){
     for(const msg of (Array.isArray(value?.message_echoes)?value.message_echoes:[]).slice(0,50)){
      const id=safeString(msg?.id,250),waId=safeString(msg?.to,35);
      if(!phoneId||!id||!waId){ignored++;continue;}
+     if(msg?.type==="edit"||msg?.type==="revoke"){
+      try{const result:any=await ingestRevision(phoneId,msg,waId);
+       if(result?.applied)processed++;else duplicate++;
+      }catch{failures++;}continue;
+     }
      const parts=messageParts(msg);
      try{
       const result:any=await invokeIngest("connect_ingest_whatsapp_message",{
@@ -145,6 +211,10 @@ export async function POST(req:NextRequest){
  }
  // Do not acknowledge failed valid events as successful: Meta retries. Completed
  // individual events are idempotent and will be skipped on the retry.
- if(failures)return intakeError("Some events could not be processed; retry delivery",503);
+ if(failures){
+  // Never log contact names, message content, access tokens or the raw webhook.
+  console.warn("[connect-meta] Signed webhook processing incomplete",{failures,processed,duplicate,ignored});
+  return intakeError("Some events could not be processed; retry delivery",503);
+ }
  return acceptedEvent({processed,duplicate,ignored});
 }

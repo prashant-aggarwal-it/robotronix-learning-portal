@@ -20,6 +20,7 @@ type Details={conversationId:string;personId:string|null;status:"open"|"pending"
  assignedMemberId:string|null;draft:string;lastReadAt:string|null;canWrite:boolean;canAssign:boolean;team:Member[]};
 type ContactOption={id:string;name:string;phone:string|null};
 type SendReady={ok:true;canSend:boolean;testMode:boolean;reason:string|null;lastInboundAt:string|null};
+type ChannelHealth={channelId:string;name:string;status:string;syncContacts:number;historicalMessages:number;lastMessageAt:string|null};
 const base=(tenantId:string)=>"/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/whatsapp";
 function shortDate(value:string){const date=new Date(value);return Number.isNaN(date.getTime())?"—":
  date.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});}
@@ -42,11 +43,18 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
  const [contactQuery,setContactQuery]=useState(""),[contactMatches,setContactMatches]=useState<ContactOption[]>([]);
  const [contactSearching,setContactSearching]=useState(false),[linkOpen,setLinkOpen]=useState(false);
  const [sendReady,setSendReady]=useState<SendReady|null>(null),[sending,setSending]=useState(false);
+ const [channelHealth,setChannelHealth]=useState<ChannelHealth[]>([]),[healthError,setHealthError]=useState("");
  const sendRequestId=useRef<string|null>(null);
  const threadGeneration=useRef(0),chatGeneration=useRef(0),searchGeneration=useRef(0);
  const selectedRef=useRef<string|null>(null);
  selectedRef.current=selected;
  const api=base(tenantId);
+ const loadHealth=useCallback(async()=>{
+  try{
+   const r=await connectFetch<{ok:true;channels:ChannelHealth[]}>(api+"/health");
+   setChannelHealth(r.channels);setHealthError("");
+  }catch{setHealthError("Connection diagnostics unavailable.");}
+ },[api]);
 
  const loadThreads=useCallback(async(cursor:Cursor|null=null,append=false)=>{
   const generation=++threadGeneration.current;
@@ -89,8 +97,9 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
   threadGeneration.current++;chatGeneration.current++;searchGeneration.current++;
   setThreads([]);setThreadCursor(null);setSelected(null);setMessages([]);setDetails(null);
   setDraft("");setSendReady(null);sendRequestId.current=null;setError("");setChatError("");setQuery("");setFilter("all");setNumber("all");setLinkOpen(false);
-  void loadThreads();return()=>{threadGeneration.current++;chatGeneration.current++;searchGeneration.current++;};
- },[loadThreads]);
+  setChannelHealth([]);setHealthError("");
+  void loadThreads();void loadHealth();return()=>{threadGeneration.current++;chatGeneration.current++;searchGeneration.current++;};
+ },[loadThreads,loadHealth]);
 
  function choose(id:string){
   if(selected===id)return;
@@ -164,12 +173,29 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
   <div className="cx-wa-intro">
    <div><span className="cx-kicker">WHATSAPP WORKSPACE</span><h2>Messages & conversations</h2>
     <p>Organize WhatsApp threads across your connected business numbers.</p></div>
-   <button className="cx-secondary" type="button" onClick={()=>void loadThreads()} disabled={threadLoading||threadMore}>↻ Refresh</button>
+   <button className="cx-secondary" type="button" onClick={()=>{void loadThreads();void loadHealth();}} disabled={threadLoading||threadMore}>↻ Refresh</button>
   </div>
   <div className="cx-wa-safety" role="note">
-   <strong>Meta test integration</strong> · Recorded conversations can be read in DEV.
-   Sending is allowed only to configured test recipients, using the approved Meta test sender, inside an open customer-service reply window.
-   The real WhatsApp Business App and WA Simple remain untouched.
+   <strong>Business App coexistence — preparing integration</strong> · The priority is +91 85957 72008, currently used on the WhatsApp Business mobile app.
+   No live number has been connected. The Meta test-send capability below remains restricted to configured test recipients;
+   +91 92179 06540 (WA Simple) remains out of scope.
+   <details className="cx-wa-readiness">
+    <summary>Connection readiness &amp; safeguards</summary>
+    <ul>
+     <li>Ready in code: signed inbound-message webhook, mobile-app sent-message echoes and CRM conversation view.</li>
+     <li>Pending: approved Meta Business App Coexistence onboarding and account authorization.</li>
+     <li>Pending: historical chat and mobile-contact synchronization, plus live receive/reply/delivery tests.</li>
+     <li>Do not register, transfer, disconnect or scan a QR code for either live number until onboarding is verified.</li>
+    </ul>
+    {healthError&&<p role="status">{healthError}</p>}
+    {!healthError&&<div className="cx-wa-health-list">
+     {channelHealth.length===0?<p>No WhatsApp channel registered for this workspace in DEV.</p>:
+      channelHealth.map(h=><p key={h.channelId}><strong>{h.name}</strong> · {h.status} channel ·
+       {" "+h.syncContacts} synced contacts · {h.historicalMessages} historical messages
+       {h.lastMessageAt?" · Latest message "+shortDate(h.lastMessageAt):" · No messages yet"}
+      </p>)}
+    </div>}
+   </details>
   </div>
   {error&&<div className="cx-alert" role="alert">{error}</div>}
   <div className={"cx-wa-layout "+(selected?"cx-wa-has-selection":"")}>

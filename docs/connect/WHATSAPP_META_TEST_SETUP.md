@@ -50,4 +50,6 @@ This stage enables **text replies to one Meta test sender**, only to explicitly 
 
 **Completed in DEV**, inside rolled-back SQL transactions (no messages sent): inbound fixture, reservation, duplicate suppression, accepted send persistence, completion idempotency, forbidden actor rejection, expired reply window, and per-conversation send limit. Server-only RPC grants also verified. PostgREST schema refreshed by each migration.
 
-**Remaining:** CI/TypeScript/Next.js build; real Meta app credentials; HTTPS DEV webhook verification; signed inbound test; real Meta test-number send and delivery callback; multi-agent/browser/mobile QA; production deployment and coexistence (separate approvals). If no test Meta credential has been provided, do **not** claim Phase 3 has passed end-to-end.
+**Verification update (2026-11-06):** `npx tsc --noEmit`, `node scripts/check-connect-code-layout.mjs`, and `npm run build` passed. Fixed Meta Unix timestamp validation so inbound and delivery events retain their supplied timestamps rather than falling back to database receipt time.
+
+**Remaining:** real Meta app credentials; HTTPS DEV webhook verification; signed inbound test; real Meta test-number send and delivery callback; browser/mobile QA; production deployment and coexistence (separate approvals). If no test Meta credential has been provided, do **not** claim Phase 3 has passed end-to-end.
