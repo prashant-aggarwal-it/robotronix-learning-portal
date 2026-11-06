@@ -31,7 +31,7 @@ for(const file of inspect){
  }
 }
 const page=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
-if(!page.includes("<ConnectSidebar")||!page.includes("<ConnectTopbar")||!page.includes("<ConnectSignInGate"))throw Error("Connect page is missing an extracted shell component.");
+if(!page.includes("<ConnectSidebar")||!page.includes("<ConnectTopbar")||!page.includes("<ConnectSignInGate")||!page.includes("<ConnectNoWorkspaceGate"))throw Error("Connect page is missing an extracted shell component.");
 if(fs.existsSync(path.join(root,"lib/connect-client.ts")))throw Error("Redundant legacy Connect API shim has been reintroduced.");
 console.log("Connect code organization and local import paths OK.");
 
@@ -42,3 +42,6 @@ if(!portal.includes('<ApplicationSwitcher current="portal"')||!sidebar.includes(
 const brand=fs.readFileSync(path.join(root,"features/connect/ConnectBrand.tsx"),"utf8");
 if(!brand.includes('/brand/robotronix-horizontal.png'))throw Error("Connect brand must reuse the existing Portal logo.");
 if(!sidebar.includes("<ConnectBrand")||!fs.readFileSync(path.join(root,"features/connect/ConnectAuthGates.tsx"),"utf8").includes("<ConnectBrand"))throw Error("Connect entry and sidebar must use the shared brand component.");
+
+if(page.includes("ConnectWorkspaceSetupGate")||page.includes("createWorkspace("))throw Error("Self-service workspace creation must not be shown in Connect UI.");
+if(!sidebar.includes("workspaces.length>1"))throw Error("Workspace selector must be hidden for single-organization users.");
