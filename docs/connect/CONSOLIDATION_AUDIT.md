@@ -55,3 +55,14 @@ The CRM overview now has clickable KPI cards, a source-distribution summary of t
 Further product candidates to assess separately before implementation: omnichannel inbox with verified WhatsApp provider support; a consolidated contact journey; role-specific productivity metrics; payments only when actual payment integration and tenant permissions are verified; funnel analytics with appropriate dedicated aggregate endpoints for accurate historical reporting. Keep all new reporting tenant-scoped, clear about date ranges, and honest about sampling/pagination.
 
 Validation still needed: npm typecheck/build, mobile-width visual review, zero-data and large-data rendering, all section links in Simple and Advanced modes, permissions and a real DEV account. No schema, Production or deployed service was changed by this UI work.
+
+
+## Contact 360 Phase 1 — implemented on feature branch
+
+- Extracted reusable `features/connect/components/contact/ContactProfile.tsx` from the long in-page profile UI.
+- Wider responsive drawer, Robotronix-consistent identity header, contact status and role, tap-to-call / email links when a valid contact method exists, new enquiry with existing-contact prefill, and quick access to Activity / Follow-ups.
+- New tabbed layout: Overview (admissions and enquiries), Activity (existing opportunity timeline, counselling notes, conversation component), Follow-ups (contact and opportunity-linked tasks/appointments, existing create forms), Details (contact methods and existing admission creation).
+- Three summary cards reflect **currently loaded** records only; do not claim database-wide totals. All linked record queries remain bounded by existing API pagination; full contact history is Phase 2.
+- Preserved existing CRM write commands, membership permissions, source data, and error/notice handling; no schema or RPC mutations introduced.
+- Existing activity timeline is still opportunity-scoped, not a true contact-wide timeline. Combined historical activity requires Phase 2 backend work.
+- Regression tests to run locally: TypeScript, production build, drawer opening from Contacts/Enquiries/Pipeline, tab actions, new enquiry prefill and back/cancel, note/task/appointment/admission creation, viewer read-only behavior, cross-tenant switching and mobile layout. No GitHub workflow run has confirmed these yet.
