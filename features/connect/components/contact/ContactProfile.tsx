@@ -14,14 +14,15 @@ const tabs:Array<{id:ProfileTab;label:string}>= [
  {id:"overview",label:"Overview"},{id:"timeline",label:"Activity"},{id:"followups",label:"Follow-ups"},{id:"details",label:"Details"}
 ];
 function phoneNumber(value:string){const cleaned=value.replace(/[^+\d]/g,"");return /^\+?\d{7,15}$/.test(cleaned)?cleaned:null;}
-export function ContactProfile({person,opportunity,inquiries,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,detailsContent,onClose}:Props){
+export function ContactProfile({person,opportunity,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,detailsContent,onClose}:Props){
  const [tab,setTab]=useState<ProfileTab>("overview");
  useEffect(()=>setTab("overview"),[person?.id,opportunity?.id]);
  const contactId=person?.id;
  const relatedInquiries=contactId?inquiries.filter(i=>i.person_id===contactId):[];
- const relatedTasks=tasks.filter(t=>contactId?t.person_id===contactId:(opportunity&&t.opportunity_id===opportunity.id));
+ const opportunityIds=new Set(opportunities.filter(o=>contactId?o.contact_id===contactId:o.id===opportunity?.id).map(o=>o.id));
+ const relatedTasks=tasks.filter(t=>(Boolean(contactId)&&t.person_id===contactId)||(Boolean(t.opportunity_id)&&opportunityIds.has(t.opportunity_id!)));
  const openTasks=relatedTasks.filter(t=>!["done","completed","cancelled"].includes(t.status.toLowerCase()));
- const relatedAppointments=appointments.filter(a=>contactId?a.person_id===contactId:(opportunity&&a.opportunity_id===opportunity.id));
+ const relatedAppointments=appointments.filter(a=>(Boolean(contactId)&&a.person_id===contactId)||(Boolean(a.opportunity_id)&&opportunityIds.has(a.opportunity_id!)));
  const phone=person?.contact_methods.find(m=>m.kind.toLowerCase().includes("phone")||m.kind.toLowerCase().includes("mobile"))?.value;
  const email=person?.contact_methods.find(m=>m.kind.toLowerCase().includes("email"))?.value;
  const validPhone=phone?phoneNumber(phone):null;
