@@ -444,7 +444,7 @@ export default function ConnectPage(){
    <aside className="cx-drawer" role="dialog" aria-modal="true" aria-label="Contact 360 profile">
     <div className="cx-drawer-header"><span>CONTACT WORKSPACE</span><button aria-label="Close details" onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>×</button></div>
     <div className="cx-drawer-body">
-     <ContactProfile person={selectedContact} opportunity={selectedLead} inquiries={inquiries} tasks={tasks} appointments={appointments} canWrite={canWrite} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
+     <ContactProfile person={selectedContact} opportunity={selectedLead} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
       overviewContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Admission opportunity</h3><strong className="cx-detail-title">{selectedLead.title}</strong>
       <p className="cx-muted">Current stage: {selectedLead.stage_name} · Version {selectedLead.version}</p>
       {canWrite&&<label>Move to stage<select value={selectedLead.stage_id} disabled={busy} onChange={e=>void updateStage(selectedLead,e.target.value)}>
