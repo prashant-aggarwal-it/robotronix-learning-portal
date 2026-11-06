@@ -2,19 +2,20 @@
 import {useEffect,useState,type ReactNode} from "react";
 import type {ConnectPerson,ConnectOpportunity,ConnectInquiry,ConnectTask,ConnectAppointment} from "@/features/connect/api/client";
 import {dateLabel,initials,shortLabel} from "@/features/connect/model";
+import {ContactIntelligence} from "@/features/connect/components/contact/ContactIntelligence";
 
 type ProfileTab="overview"|"insights"|"timeline"|"followups"|"relations"|"details";
 type Props={
- person:ConnectPerson|null|undefined;opportunity:ConnectOpportunity|null|undefined;
+ person:ConnectPerson|null|undefined;opportunity:ConnectOpportunity|null|undefined;tenantId:string;refreshKey:number;
  inquiries:ConnectInquiry[];opportunities:ConnectOpportunity[];tasks:ConnectTask[];appointments:ConnectAppointment[];canWrite:boolean;
- overviewContent:ReactNode;enquiriesContent:ReactNode;insightsContent:ReactNode;timelineContent:ReactNode;
+ overviewContent:ReactNode;enquiriesContent:ReactNode;timelineContent:ReactNode;
  followupsContent:ReactNode;relationsContent:ReactNode;detailsContent:ReactNode;onCreateEnquiry:()=>void;onClose:()=>void;
 };
 const tabs:Array<{id:ProfileTab;label:string}>= [
  {id:"overview",label:"Overview"},{id:"insights",label:"Insights"},{id:"timeline",label:"Activity"},{id:"followups",label:"Follow-ups"},{id:"relations",label:"Relationships"},{id:"details",label:"Details"}
 ];
 function phoneNumber(value:string){const cleaned=value.replace(/[^+\d]/g,"");return /^\+?\d{7,15}$/.test(cleaned)?cleaned:null;}
-export function ContactProfile({person,opportunity,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,insightsContent,timelineContent,followupsContent,relationsContent,detailsContent,onCreateEnquiry,onClose}:Props){
+export function ContactProfile({person,opportunity,tenantId,refreshKey,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,relationsContent,detailsContent,onCreateEnquiry,onClose}:Props){
  const [tab,setTab]=useState<ProfileTab>("overview");
  useEffect(()=>setTab("overview"),[person?.id,opportunity?.id]);
  const contactId=person?.id;
@@ -51,7 +52,7 @@ export function ContactProfile({person,opportunity,inquiries,opportunities,tasks
   </div>
   <div className="cx-contact360-tabpanel" id="cx-contact-tabpanel" role="tabpanel" aria-labelledby={"cx-contact-tab-"+tab}>
    {tab==="overview"&&<>{overviewContent}{enquiriesContent}</>}
-   {tab==="insights"&&insightsContent}
+   {tab==="insights"&&(person?.id||opportunity?.contact_id)&&<ContactIntelligence tenantId={tenantId} personId={(person?.id||opportunity?.contact_id)!} refreshKey={refreshKey} onOpenFollowups={()=>setTab("followups")} onOpenRelations={()=>setTab("relations")}/>}
    {tab==="timeline"&&timelineContent}
    {tab==="followups"&&<>
     <section className="cx-detail-card"><h3>Contact follow-ups</h3>
