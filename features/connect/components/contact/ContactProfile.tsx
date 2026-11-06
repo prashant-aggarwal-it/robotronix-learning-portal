@@ -8,13 +8,13 @@ type Props={
  person:ConnectPerson|null|undefined;opportunity:ConnectOpportunity|null|undefined;
  inquiries:ConnectInquiry[];tasks:ConnectTask[];appointments:ConnectAppointment[];
  overviewContent:ReactNode;enquiriesContent:ReactNode;timelineContent:ReactNode;
- followupsContent:ReactNode;detailsContent:ReactNode;onClose:()=>void;
+ followupsContent:ReactNode;detailsContent:ReactNode;onCreateEnquiry:()=>void;onClose:()=>void;
 };
 const tabs:Array<{id:ProfileTab;label:string}>= [
  {id:"overview",label:"Overview"},{id:"timeline",label:"Activity"},{id:"followups",label:"Follow-ups"},{id:"details",label:"Details"}
 ];
 function phoneNumber(value:string){const cleaned=value.replace(/[^+\d]/g,"");return /^\+?\d{7,15}$/.test(cleaned)?cleaned:null;}
-export function ContactProfile({person,opportunity,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,detailsContent,onClose}:Props){
+export function ContactProfile({person,opportunity,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,detailsContent,onCreateEnquiry,onClose}:Props){
  const [tab,setTab]=useState<ProfileTab>("overview");
  useEffect(()=>setTab("overview"),[person?.id,opportunity?.id]);
  const contactId=person?.id;
@@ -31,11 +31,12 @@ export function ContactProfile({person,opportunity,inquiries,opportunities,tasks
    <div className="cx-contact360-identity">
     <span className="cx-contact360-avatar" aria-hidden="true">{initials(person?.full_name||opportunity?.title||"Contact")}</span>
     <div><span className="cx-contact360-eyebrow">CONTACT 360°</span><h2>{person?.full_name||opportunity?.title||"Contact profile"}</h2>
-    <p>{person?.roles.map(shortLabel).join(" · ")||"Opportunity"}{opportunity?.stage_name?" · "+opportunity.stage_name:""}</p></div>
+    <p>{person?.roles.map(shortLabel).join(" · ")||"Opportunity"}{person?.status?" · "+shortLabel(person.status):""}{opportunity?.stage_name?" · "+opportunity.stage_name:""}</p></div>
    </div>
    <div className="cx-contact360-actions">
     {validPhone&&<a href={"tel:"+validPhone} className="cx-contact360-action" aria-label="Call contact">☎ Call</a>}
     {email&&<a href={"mailto:"+email} className="cx-contact360-action" aria-label="Email contact">✉ Email</a>}
+    {person&&canWrite&&<button type="button" className="cx-contact360-action" onClick={onCreateEnquiry}>＋ Enquiry</button>}
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("followups")}>{canWrite?"＋ Follow-up":"Follow-ups"}</button>
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("timeline")}>▤ Activity</button>
    </div>
