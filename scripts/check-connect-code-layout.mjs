@@ -17,6 +17,9 @@ const required=[
  "app/api/connect/workspaces/[tenantId]/contacts/[personId]/relations/route.ts",
  "app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts",
  "features/connect/components/ChannelSettings.tsx",
+ "features/connect/components/ConnectWhatsAppInbox.tsx",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/route.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/contacts/route.ts",
  "features/connect/components/ConnectAutomationSettings.tsx",
  "features/connect/components/ConnectCommunications.tsx",
  "features/connect/components/ConnectReports.tsx",
@@ -101,3 +104,17 @@ if(!waReadMigration.includes('connect_whatsapp_threads')||
  !waReadMigration.includes('connect_whatsapp_conversation_messages')||
  !waThreads.includes('connectSession')||!waMessages.includes('connectSession'))
  throw Error("Protected paginated WhatsApp inbox read APIs are required.");
+
+const inbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectWhatsAppInbox.tsx"),"utf8");
+const inboxWorkflow=fs.readFileSync(path.join(root,"database/connect/saas/30_whatsapp_inbox_workflow.sql"),"utf8");
+const identityFix=fs.readFileSync(path.join(root,"database/connect/saas/31_whatsapp_preserve_contact_links.sql"),"utf8");
+const inboxApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/route.ts"),"utf8");
+const contactSearchApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/contacts/route.ts"),"utf8");
+if(!page.includes("<ConnectWhatsAppInbox")||!inbox.includes("Load older messages")||
+ !inbox.includes("Link CRM contact")||!inbox.includes("Save draft")||!inbox.includes("disabled title="))
+ throw Error("Phase 2 WhatsApp conversation UI, pagination and safe draft-only composer missing.");
+if(!inboxApi.includes("connectSession")||!inboxApi.includes("connect_whatsapp_manage_thread")||
+ !contactSearchApi.includes("connect_whatsapp_contact_search")||
+ !inboxWorkflow.includes("whatsapp_thread_state")||!inboxWorkflow.includes("enable row level security")||
+ !identityFix.includes("Preserve explicitly linked CRM contact"))
+ throw Error("Phase 2 WhatsApp agent state or access control missing.");
