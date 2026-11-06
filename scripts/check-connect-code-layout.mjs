@@ -12,6 +12,8 @@ const required=[
  "features/connect/components/contact/ContactRelationships.tsx",
  "features/connect/components/contact/ContactIntelligence.tsx",
  "app/api/connect/workspaces/[tenantId]/intelligence/route.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/threads/route.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/messages/route.ts",
  "app/api/connect/workspaces/[tenantId]/contacts/[personId]/relations/route.ts",
  "app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts",
  "features/connect/components/ChannelSettings.tsx",
@@ -81,3 +83,21 @@ const intelligenceMigration=fs.readFileSync(path.join(root,"database/connect/saa
 if(!page.includes("<WorkspaceIntelligence")||!contactProfile.includes('tab==="insights"')||!intelligence.includes("ContactIntelligence"))throw Error("Contact intelligence UI and dashboard attention board must be present.");
 if(!intelligenceApi.includes("connect_contact_insights")||!intelligenceApi.includes("isConnectSession")||!intelligenceMigration.includes("m.user_id=p_actor_id")||!intelligenceMigration.includes("revoke all on function public.connect_contact_insights"))throw Error("Contact intelligence authorization and private RPC missing.");
 if(intelligence.includes("AI-powered")||intelligence.includes("predictive score"))throw Error("Do not claim unimplemented AI predictions.");
+
+const waWebhook=fs.readFileSync(path.join(root,"app/api/connect/webhooks/meta/route.ts"),"utf8");
+const waIngestion=fs.readFileSync(path.join(root,"lib/server/connect-ingestion.ts"),"utf8");
+const waMigration=fs.readFileSync(path.join(root,"database/connect/saas/28_whatsapp_messaging_foundation.sql"),"utf8");
+const waReadMigration=fs.readFileSync(path.join(root,"database/connect/saas/29_whatsapp_inbox_read_apis.sql"),"utf8");
+const waThreads=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/threads/route.ts"),"utf8");
+const waMessages=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/messages/route.ts"),"utf8");
+if(!waWebhook.includes('connect_ingest_whatsapp_message')||!waWebhook.includes('connect_ingest_whatsapp_status')
+ ||!waWebhook.includes('smb_message_echoes')||!waWebhook.includes('checkHmacSha256'))
+ throw Error("Verified WhatsApp inbound, status and coexistence echo adapters are required.");
+if(!waIngestion.includes('connect_ingest_whatsapp_message')||!waMigration.includes('v_created and p_direction=\'inbound\'')
+ ||!waMigration.includes('create unique index if not exists idx_connect_msg_external_id')
+ ||!waMigration.includes('enable row level security'))
+ throw Error("WhatsApp-only message capture, deduplication and private status storage missing.");
+if(!waReadMigration.includes('connect_whatsapp_threads')||
+ !waReadMigration.includes('connect_whatsapp_conversation_messages')||
+ !waThreads.includes('connectSession')||!waMessages.includes('connectSession'))
+ throw Error("Protected paginated WhatsApp inbox read APIs are required.");
