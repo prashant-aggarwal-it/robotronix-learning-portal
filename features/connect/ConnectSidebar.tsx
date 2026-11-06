@@ -1,7 +1,6 @@
 "use client";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
-import {ConnectBrand} from "@/features/connect/ConnectBrand";
 import type {ConnectWorkspace} from "@/features/connect/api/client";
 import {initials,shortLabel,type Section} from "@/features/connect/model";
 
@@ -12,7 +11,7 @@ export function ConnectSidebar({showMobileNav,onToggleMobile,canOpenPortal,tenan
  return <>
   <button className="cx-mobile-menu" onClick={onToggleMobile} aria-label="Toggle navigation">☰</button>
   <aside className={"cx-sidebar "+(showMobileNav?"cx-mobile-open":"")}>
-   <ConnectBrand/>
+   <div className="cx-sidebar-brand"><div className="sidebarBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></div><div className="portalName">Connect CRM <span>Workspace</span></div></div>
    {canOpenPortal&&<ApplicationSwitcher current="connect"/>}
    {workspaces.length>1&&<div className="cx-workspace-picker">
     <span>ORGANIZATION</span>
