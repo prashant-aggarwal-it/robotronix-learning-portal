@@ -66,3 +66,15 @@ Validation still needed: npm typecheck/build, mobile-width visual review, zero-d
 - Preserved existing CRM write commands, membership permissions, source data, and error/notice handling; no schema or RPC mutations introduced.
 - Existing activity timeline is still opportunity-scoped, not a true contact-wide timeline. Combined historical activity requires Phase 2 backend work.
 - Regression tests to run locally: TypeScript, production build, drawer opening from Contacts/Enquiries/Pipeline, tab actions, new enquiry prefill and back/cancel, note/task/appointment/admission creation, viewer read-only behavior, cross-tenant switching and mobile layout. No GitHub workflow run has confirmed these yet.
+
+
+## Contact 360 Phase 2 — feature branch implementation (database activation pending)
+
+- Added `features/connect/components/contact/ContactTimeline.tsx`: merged newest-first event feed, event-type filter, page-by-page loading, responsive entry styling, refresh/retry, zero-state, and protection against stale asynchronous responses on contact/workspace changes.
+- Replaced the old opportunity-only timeline in `app/connect/page.tsx`. Notes remain writable with existing permission checks; conversations now display as message events within the unified feed.
+- Added `GET /api/connect/workspaces/[tenantId]/contacts/[personId]/timeline`. Requires a valid authenticated session, validates UUIDs and cursors, sets no-store, and calls a service-role-only RPC.
+- Added **NOT APPLIED** `database/connect/saas/24_contact_360_timeline_PENDING.sql`. The function explicitly verifies active workspace membership and contact tenant ownership; its rows include enquiries, notes/activities, admissions created, real stage history, task creation/completion, appointment scheduling, and recorded inbound/outbound messages.
+- Cursor pagination is ordered by (record timestamp, deterministic prefixed ID), avoiding offsets on heavily mixed event streams. Historical record changes without timestamps cannot be reconstructed; do not invent past calls or appointment completions.
+- Corrected the pre-existing ContactProfile TypeScript mismatch (`opportunities` and `canWrite` missing from its Props type).
+- **Operational status:** No Supabase SQL has been executed, no deploy, no merge. DEV inspection on 2026-11-06 confirmed the new RPC is absent; the API returns 503 "Contact timeline is not yet enabled in this environment" until a separately approved DEV activation. GitHub build and real UI tests are still outstanding.
+- Required QA after approval: function permissions (service_role only), no access for inactive or different-tenant users, nonexistent contact, independent opportunity links, stable pagination for same-time entries, all event types, live note/task updates, viewer mode, mobile and cross-workspace navigation.
