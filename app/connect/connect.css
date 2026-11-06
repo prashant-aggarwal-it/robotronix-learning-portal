@@ -450,3 +450,35 @@
 .cx-relations-create summary{font-size:12px;font-weight:750;color:#0d799f;cursor:pointer}
 .cx-contact-relations-notice{font-size:12px;color:#167d65;background:#eaf9f2;padding:11px 13px;border-radius:10px}
 @media(max-width:650px){.cx-relations-form{grid-template-columns:1fr}.cx-contact-relations-heading{align-items:flex-start}.cx-contact360-tabs button{min-width:87px}}
+
+
+/* Phase 4: factual CRM intelligence, no simulated AI metrics. */
+.cx-contact-intelligence{background:#fff;border:1px solid #dceaf3;border-radius:15px;padding:19px;margin-bottom:14px}
+.cx-intel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:15px}
+.cx-intel-head h3{font-size:17px;letter-spacing:-.025em;font-weight:850;margin:6px 0 4px;color:#183651}
+.cx-intel-head p{font-size:11px;color:#72889c;margin:0;line-height:1.5}
+.cx-intel-head>button{flex-shrink:0}
+.cx-intel-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
+.cx-intel-facts span{background:#f5f9fd;border:1px solid #e7eff5;border-radius:10px;padding:12px;font-size:11px;color:#657c8f;display:flex;flex-direction:column;gap:4px}
+.cx-intel-facts strong{font-size:23px;font-variant-numeric:tabular-nums;color:#133c60}
+.cx-intel-digest{padding:14px 16px;background:linear-gradient(120deg,#f1f9ff,#f1fbf9);border:1px solid #d8eaf0;border-radius:12px;margin-bottom:15px}
+.cx-intel-digest strong{font-size:12px;color:#185c78}.cx-intel-digest p{font-size:12px;color:#48697c;line-height:1.65;margin:7px 0 0}
+.cx-intel-advice{display:flex;flex-direction:column;gap:9px}
+.cx-intel-advice-item{border-left:3px solid #3296cc;background:#f8fbfe;border-radius:8px;padding:13px 15px}
+.cx-intel-advice-item.cx-intel-urgent{border-left-color:#e29c39;background:#fffaf3}
+.cx-intel-advice-item.cx-intel-attention{border-left-color:#16a69e;background:#f5fbfa}
+.cx-intel-advice-item strong{font-size:12px;color:#23445d}
+.cx-intel-advice-item p{margin:5px 0;font-size:11px;color:#638092;line-height:1.5}
+.cx-intel-advice-item small{font-size:11px;font-weight:650;color:#16759d}
+.cx-intel-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.cx-intelligence-board{margin-bottom:18px}
+.cx-intel-board-rows{display:flex;flex-direction:column;gap:7px}
+.cx-intel-board-row{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#f8fbfd;border:1px solid #edf2f6;border-radius:10px;padding:11px;cursor:pointer}
+.cx-intel-board-row:hover{background:#edf8ff;border-color:#c2e1ee}
+.cx-intel-board-row>span:nth-child(2){display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.cx-intel-board-row strong{font-size:12px;color:#274259}
+.cx-intel-board-row small{font-size:11px;color:#698398;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-intel-board-row>span:last-child{font-size:19px;color:#7197ac}
+.cx-intel-dot{height:10px;width:10px;flex:0 0 10px;background:#20a3ad;border-radius:50%}
+.cx-intel-dot.urgent{background:#e39d3d}
+@media(max-width:650px){.cx-contact-intelligence{padding:13px}.cx-intel-facts{gap:7px}.cx-intel-facts span{padding:10px}.cx-intel-head{gap:8px}.cx-intelligence-board{margin-bottom:13px}}
