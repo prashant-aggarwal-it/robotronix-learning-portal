@@ -7,6 +7,7 @@ const required=[
  "features/connect/api/client.ts","features/connect/model.ts","features/connect/types/enquiries.ts","features/connect/EmptyStates.tsx",
  "features/connect/ConnectSidebar.tsx","features/connect/ConnectTopbar.tsx","features/connect/ConnectBrand.tsx",
  "features/connect/ConnectAuthGates.tsx",
+ "features/connect/components/contact/ContactProfile.tsx",
  "features/connect/components/ChannelSettings.tsx",
  "features/connect/components/ConnectAutomationSettings.tsx",
  "features/connect/components/ConnectCommunications.tsx",
@@ -41,7 +42,11 @@ if(!portal.includes('<ApplicationSwitcher current="portal"')||!sidebar.includes(
 
 const brand=fs.readFileSync(path.join(root,"features/connect/ConnectBrand.tsx"),"utf8");
 if(!brand.includes('/brand/robotronix-horizontal.png'))throw Error("Connect brand must reuse the existing Portal logo.");
-if(!sidebar.includes("<ConnectBrand")||!fs.readFileSync(path.join(root,"features/connect/ConnectAuthGates.tsx"),"utf8").includes("<ConnectBrand"))throw Error("Connect entry and sidebar must use the shared brand component.");
+if(!sidebar.includes("/brand/robotronix-horizontal.png")||!fs.readFileSync(path.join(root,"features/connect/ConnectAuthGates.tsx"),"utf8").includes("<ConnectBrand"))throw Error("Connect entry and sidebar must use the Portal logo.");
 
 if(page.includes("ConnectWorkspaceSetupGate")||page.includes("createWorkspace("))throw Error("Self-service workspace creation must not be shown in Connect UI.");
 if(!sidebar.includes("workspaces.length>1"))throw Error("Workspace selector must be hidden for single-organization users.");
+
+const contact=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+if(!page.includes("<ContactProfile")||!contact.includes('role="tablist"')||!contact.includes("Contact follow-ups")||!contact.includes("Related appointments"))throw Error("Contact 360 profile must contain its navigation and linked records.");
+if(!page.includes("onSubmit={saveTask}")||!page.includes("onSubmit={saveAppointment}")||!page.includes("onSubmit={saveNote}")||!page.includes("onSubmit={startAdmission}"))throw Error("Contact 360 must retain its existing action forms.");
