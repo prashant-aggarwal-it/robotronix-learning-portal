@@ -1,4 +1,4 @@
--- PENDING / NOT APPLIED. Execute only on explicitly approved DEV Supabase project.
+-- Applied to DEV project fflejkqcspivnhsmkdtn on 2026-11-06 (migration: connect_contact_360_unified_timeline).\n-- Do not apply to Production without a separate approval.
 -- Contact 360 unified timeline: keyset pagination, strict tenant membership, cross-opportunity history.
 create or replace function public.connect_contact_timeline(
  p_actor_id uuid,p_tenant_id uuid,p_person_id uuid,
@@ -75,5 +75,5 @@ end $function$;
 revoke all on function public.connect_contact_timeline(uuid,uuid,uuid,timestamptz,text,int) from public,anon,authenticated;
 grant execute on function public.connect_contact_timeline(uuid,uuid,uuid,timestamptz,text,int) to service_role;
 
--- Refresh PostgREST RPC discovery after separately approved application.
+-- Refresh PostgREST RPC discovery after installing this function in an approved environment.
 notify pgrst, 'reload schema';
