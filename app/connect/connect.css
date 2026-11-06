@@ -488,3 +488,84 @@
 .cx-intel-health-pill{border-radius:999px;padding:7px 11px;font-size:11px;font-weight:800;background:#eaf6f0;color:#14805d}
 .cx-intel-health-pill.needs-action{background:#fff0dc;color:#ab6817}
 .cx-intel-health-pill.review{background:#e9f5ff;color:#146e9c}
+
+
+/* WhatsApp Inbox Phase 2 — contained and responsive, never a fake live chat. */
+.cx-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.cx-wa-inbox{display:flex;flex-direction:column;gap:13px;min-width:0}
+.cx-wa-intro{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cx-wa-intro h2{font-size:19px;font-weight:850;letter-spacing:-.025em;color:#1b3952;margin:4px 0}
+.cx-wa-intro p{font-size:12px;color:#778b9b;margin:0}
+.cx-wa-safety{border:1px solid #cee8eb;background:#f2fbfc;border-radius:11px;padding:10px 14px;color:#3b6776;font-size:12px;line-height:1.5}
+.cx-wa-layout{display:grid;grid-template-columns:minmax(270px,34%) minmax(0,1fr);height:min(74vh,780px);min-height:490px;border-radius:15px;overflow:hidden;border:1px solid #dce7ee;background:#fff;box-shadow:0 6px 24px rgba(24,68,97,.05)}
+.cx-wa-list{display:flex;flex-direction:column;min-height:0;border-right:1px solid #e4edf3;background:#fff}
+.cx-wa-list-controls{padding:14px;border-bottom:1px solid #eaf0f5}
+.cx-wa-list-controls input,.cx-wa-list-controls select,.cx-wa-tools select,.cx-wa-link-panel input,.cx-wa-composer textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid #d9e5ee;border-radius:9px;background:#fff;color:#27455e;font:inherit;font-size:12px;padding:9px 11px}
+.cx-wa-search input{padding:11px 12px}
+.cx-wa-select-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.cx-wa-list-count{font-size:10px;color:#7990a0;margin:10px 0 0}
+.cx-wa-thread-list{overflow-y:auto;flex:1;min-height:0}
+.cx-wa-thread{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid #eff3f7;padding:14px 12px;cursor:pointer;color:inherit}
+.cx-wa-thread:hover{background:#f5fafe}
+.cx-wa-thread.cx-wa-selected{background:#eaf7fc;border-left:3px solid #148cba;padding-left:9px}
+.cx-wa-avatar{flex:0 0 40px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#e7f5fe,#dbf4ea);border-radius:50%;font-size:12px;font-weight:850;color:#187f99}
+.cx-wa-thread-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.cx-wa-thread-top{display:flex;align-items:center;gap:6px;justify-content:space-between}
+.cx-wa-thread-top strong{font-size:12px;color:#233f53;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-wa-thread-top time{font-size:10px;color:#8198a6;white-space:nowrap}
+.cx-wa-thread-preview{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px;color:#6e8596}
+.cx-wa-thread-tags{display:flex;gap:5px;flex-wrap:wrap}
+.cx-wa-thread-tags small{font-size:9px;border-radius:6px;background:#edf5f9;color:#598097;padding:3px 6px}
+.cx-wa-unread{border-radius:16px;background:#179b8b;color:#fff;font-size:10px;font-weight:800;min-width:20px;padding:4px;text-align:center}
+.cx-wa-footnote{padding:9px 13px;font-size:10px;color:#8497a5;line-height:1.4}
+.cx-wa-empty{padding:28px 18px;color:#7a91a0;font-size:12px;text-align:center}
+.cx-wa-empty strong{display:block;color:#42647b;margin-bottom:6px}
+.cx-wa-empty p{margin:0;line-height:1.5}
+.cx-wa-load-more{display:block;width:calc(100% - 20px);margin:10px;background:#f1f8fc;color:#167da4;border:1px solid #d7e9f2;border-radius:8px;padding:9px 10px;font-size:11px;font-weight:750;cursor:pointer}
+.cx-wa-load-more:disabled{opacity:.55}
+.cx-wa-chat{display:flex;flex-direction:column;min-width:0;min-height:0;background:#f4f9f8}
+.cx-wa-placeholder{margin:auto;text-align:center;color:#7d929b;max-width:270px;padding:25px}
+.cx-wa-placeholder>span{font-size:49px;color:#70bbc4}
+.cx-wa-placeholder h3{font-size:17px;color:#375770;margin:12px 0 7px}
+.cx-wa-placeholder p{font-size:12px;line-height:1.6;margin:0}
+.cx-wa-chat-header{display:flex;align-items:center;gap:9px;background:#fff;border-bottom:1px solid #e4edf2;padding:11px 14px;min-height:65px}
+.cx-wa-chat-header .cx-wa-avatar{flex-basis:34px;width:34px;height:34px;font-size:11px}
+.cx-wa-chat-identity{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.cx-wa-chat-identity strong{font-size:13px;color:#25465c;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cx-wa-chat-identity small{font-size:10px;color:#778d9e;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cx-wa-back{display:none;background:transparent;border:0;font-size:22px;color:#2f8098;cursor:pointer}
+.cx-wa-chat-header .cx-secondary{font-size:10px;padding:7px}
+.cx-wa-tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 14px;background:#fbfdfd;border-bottom:1px solid #e7eff3}
+.cx-wa-tools label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#52758b}
+.cx-wa-tools select{width:auto;max-width:185px;padding:7px 8px}
+.cx-wa-link{margin-left:auto;background:#eaf6fd;border:1px solid #c9e6f2;border-radius:8px;color:#167da4;font-weight:800;font-size:11px;padding:8px 10px;cursor:pointer}
+.cx-wa-link-panel{padding:12px 14px;background:#fff;border-bottom:1px solid #e5edf3}
+.cx-wa-link-panel>strong{color:#315873;font-size:12px}
+.cx-wa-link-panel>p{font-size:11px;color:#738b9a;margin:6px 0}
+.cx-wa-link-panel form{display:flex;gap:8px}
+.cx-wa-contact-option{display:flex;align-items:center;width:100%;gap:10px;padding:10px 5px;border:0;border-bottom:1px solid #ecf0f4;background:#fff;cursor:pointer;text-align:left}
+.cx-wa-contact-option strong{font-size:11px;color:#34556c}
+.cx-wa-contact-option small{font-size:10px;color:#7a8c99;margin-left:auto}
+.cx-wa-contact-option span{font-size:10px;font-weight:750;color:#137eab}
+.cx-wa-notice{padding:7px 13px;margin:0;background:#e8f8ef;color:#18775a;font-size:11px}
+.cx-wa-messages{overflow-y:auto;display:flex;flex:1;min-height:0;flex-direction:column;gap:9px;padding:20px 16px;background:linear-gradient(120deg,#f4faf9,#eef6f6);align-items:flex-start}
+.cx-wa-bubble{max-width:min(82%,540px);padding:11px 13px;background:#fff;border-radius:12px 12px 12px 3px;border:1px solid #e0eced;box-shadow:0 2px 6px rgba(0,0,0,.025);overflow-wrap:anywhere}
+.cx-wa-bubble.cx-wa-outbound{align-self:flex-end;background:#e2f8ef;border-color:#c9e9db;border-radius:12px 12px 3px 12px}
+.cx-wa-bubble p{margin:0;white-space:pre-wrap;color:#29465a;font-size:12px;line-height:1.55}
+.cx-wa-bubble footer{display:flex;justify-content:flex-end;gap:3px;margin-top:6px;color:#7d939d;font-size:10px}
+.cx-wa-media-placeholder{display:block;background:#f1f8fb;color:#36768f;padding:12px;border:1px dashed #d1e6eb;border-radius:8px;margin-bottom:6px;font-size:11px}
+.cx-wa-reply-reference{display:block;border-left:2px solid #72bdb7;color:#668997;padding-left:8px;margin-bottom:7px}
+.cx-wa-composer{padding:11px 14px;background:#fff;border-top:1px solid #e5edf2}
+.cx-wa-composer form{display:flex;flex-direction:column;gap:8px}
+.cx-wa-composer label{color:#49687c;font-size:11px;font-weight:800}
+.cx-wa-composer textarea{resize:vertical;max-height:130px}
+.cx-wa-compose-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.cx-wa-compose-actions small{color:#8a9da7;font-size:10px;margin-right:auto}
+.cx-wa-compose-actions button{white-space:nowrap}
+@media(max-width:760px){.cx-wa-layout{grid-template-columns:1fr;min-height:560px;height:72vh}.cx-wa-layout .cx-wa-chat{display:none}
+.cx-wa-layout.cx-wa-has-selection .cx-wa-chat{display:flex}.cx-wa-layout.cx-wa-has-selection .cx-wa-list{display:none}
+.cx-wa-back{display:block}.cx-wa-intro{align-items:flex-start}.cx-wa-chat-header{flex-wrap:wrap}
+.cx-wa-chat-header .cx-wa-identity{max-width:55%}
+.cx-wa-chat-header button{font-size:10px}.cx-wa-tools{padding:8px}
+.cx-wa-tools label{flex:1}.cx-wa-tools select{max-width:140px}
+.cx-wa-compose-actions{flex-wrap:wrap}.cx-wa-compose-actions small{width:100%}}
