@@ -91,3 +91,13 @@ The user explicitly approved DEV database changes. Migration `connect_contact_36
 - DEV migrations `connect_contact_relationships_phase3` and `connect_contact_owners_rls` applied successfully to `fflejkqcspivnhsmkdtn`. Added private `connect.contact_owners` for accountable contact-level ownership; kept the existing opportunity owner and the canonical `person_relations`/`organization_contacts` tables.
 - Database verified two RPCs are service-role-only, not SECURITY DEFINER. Transactional DEV test verified link/read/unlink/assign/unassign; SQL transaction was rolled back. Forged-actor read and write calls rejected. New owner table RLS enabled; its underlying private data is not exposed to `anon`/`authenticated`.
 - `main`, production database and deployments remain unchanged. A successful Next.js typecheck/build and browser end-to-end regression test with real contacts are not yet evidenced; do not claim those passed.
+
+## Phase 4 — Contact Intelligence (DEV activated, 2026-11-06)
+
+- Added `features/connect/components/contact/ContactIntelligence.tsx`: Contact 360 Insights tab plus prioritized workspace attention list. UI surfaces factual contact health, lead ageing, next action suggestions and a digest composed from recorded CRM counters. This is **not** a model-generated or predictive AI summary; no contact PII is transmitted to an external AI provider.
+- Added authenticated `GET /api/connect/workspaces/[tenantId]/intelligence` with strict UUID/limit validation and server-only `connect_contact_insights` RPC.
+- Added `database/connect/saas/27_contact_intelligence.sql`; applied migration `connect_contact_intelligence_phase4` to DEV `fflejkqcspivnhsmkdtn` successfully. Aggregate data includes linked enquiries, open/overdue tasks, upcoming appointments, active/won opportunities, contact owner presence and latest recorded interaction from enquiries, notes, messages and stage changes.
+- Indicators are transparent operational heuristics, not AI lead scores. Workspace preview is limited to 50 top-priority contacts; never label that a comprehensive historical report.
+- Added safe click-through to contacts beyond the first 100 initially loaded people records, using tenant-scoped single-contact retrieval and stale response checks.
+- Rollback-only DEV test with an 11-day-old enquiry and two-day-overdue task verified expected counts and priority 4. Forged actor rejected; no fixture data persisted. No Production changes, deployment or merge.
+- **Pending QA:** Local typecheck/build, browser and mobile visual verification, real-tenant end-to-end workflows, high-volume query performance, and a dedicated AI-provider/privacy approval if genuine LLM-generated summaries are desired.
