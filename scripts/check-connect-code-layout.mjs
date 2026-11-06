@@ -9,6 +9,8 @@ const required=[
  "features/connect/ConnectAuthGates.tsx",
  "features/connect/components/contact/ContactProfile.tsx",
  "features/connect/components/contact/ContactTimeline.tsx",
+ "features/connect/components/contact/ContactRelationships.tsx",
+ "app/api/connect/workspaces/[tenantId]/contacts/[personId]/relations/route.ts",
  "app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts",
  "features/connect/components/ChannelSettings.tsx",
  "features/connect/components/ConnectAutomationSettings.tsx",
@@ -59,3 +61,14 @@ const migration=fs.readFileSync(path.join(root,"database/connect/saas/24_contact
 if(!page.includes("<ContactTimeline")||!timeline.includes("Load older activity")||!timeline.includes("generation.current"))throw Error("Unified Contact 360 timeline or stale response handling missing.");
 if(!timelineApi.includes("connect_contact_timeline")||!timelineApi.includes("isConnectSession")||!migration.includes("m.tenant_id=p_tenant_id")||!migration.includes("c.person_id=p_person_id"))throw Error("Tenant-authorized contact timeline query missing.");
 if(!migration.includes("revoke all on function public.connect_contact_timeline"))throw Error("Contact timeline RPC must not be callable by public roles.");
+
+const relationships=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactRelationships.tsx"),"utf8");
+const relationApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/[personId]/relations/route.ts"),"utf8");
+const relationMigration=fs.readFileSync(path.join(root,"database/connect/saas/25_contact_relationships.sql"),"utf8");
+const contactProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+if(!page.includes("<ContactRelationships")||!contactProfile.includes('tab==="relations"')||!relationships.includes('assign_owner'))
+ throw Error("Contact 360 relationship tab and owner assignment are required.");
+if(!relationApi.includes("connect_contact_relations")||!relationApi.includes("connect_contact_relation_command")||
+ !relationMigration.includes("m.user_id=p_actor_id")||!relationMigration.includes("tenant_id=p_tenant_id")||
+ !relationMigration.includes("revoke all on function public.connect_contact_relation_command"))
+ throw Error("Contact relationship RPC and tenant permission checks are required.");
