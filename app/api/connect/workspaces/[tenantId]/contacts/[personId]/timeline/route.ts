@@ -20,6 +20,9 @@ export async function GET(request:NextRequest,{params}:Ctx){
   p_actor_id:auth.actorId,p_tenant_id:tenantId,p_person_id:personId,
   p_before_at:at||null,p_before_key:key||null,p_limit:40
  });
- if(result.error)return connectRpcFailure(result.error,result.code);
+ if(result.error){
+  if(result.code==="PGRST202"||result.code==="42883")return connectFailure("Contact timeline is not yet enabled in this environment.",503);
+  return connectRpcFailure(result.error,result.code);
+ }
  return NextResponse.json({ok:true,items:result.data?.items||[],nextCursor:result.data?.nextCursor||null},{headers:noStore});
 }
