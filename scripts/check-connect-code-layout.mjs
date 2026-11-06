@@ -10,6 +10,8 @@ const required=[
  "features/connect/components/contact/ContactProfile.tsx",
  "features/connect/components/contact/ContactTimeline.tsx",
  "features/connect/components/contact/ContactRelationships.tsx",
+ "features/connect/components/contact/ContactIntelligence.tsx",
+ "app/api/connect/workspaces/[tenantId]/intelligence/route.ts",
  "app/api/connect/workspaces/[tenantId]/contacts/[personId]/relations/route.ts",
  "app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts",
  "features/connect/components/ChannelSettings.tsx",
@@ -72,3 +74,10 @@ if(!relationApi.includes("connect_contact_relations")||!relationApi.includes("co
  !relationMigration.includes("m.user_id=p_actor_id")||!relationMigration.includes("tenant_id=p_tenant_id")||
  !relationMigration.includes("revoke all on function public.connect_contact_relation_command"))
  throw Error("Contact relationship RPC and tenant permission checks are required.");
+
+const intelligence=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactIntelligence.tsx"),"utf8");
+const intelligenceApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/intelligence/route.ts"),"utf8");
+const intelligenceMigration=fs.readFileSync(path.join(root,"database/connect/saas/27_contact_intelligence.sql"),"utf8");
+if(!page.includes("<WorkspaceIntelligence")||!contactProfile.includes('tab==="insights"')||!intelligence.includes("ContactIntelligence"))throw Error("Contact intelligence UI and dashboard attention board must be present.");
+if(!intelligenceApi.includes("connect_contact_insights")||!intelligenceApi.includes("isConnectSession")||!intelligenceMigration.includes("m.user_id=p_actor_id")||!intelligenceMigration.includes("revoke all on function public.connect_contact_insights"))throw Error("Contact intelligence authorization and private RPC missing.");
+if(intelligence.includes("AI-powered")||intelligence.includes("predictive score"))throw Error("Do not claim unimplemented AI predictions.");
