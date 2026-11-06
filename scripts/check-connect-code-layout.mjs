@@ -5,7 +5,7 @@ const root=process.cwd();
 const required=[
  "app/connect/page.tsx","app/connect/layout.tsx","app/connect/connect.css",
  "features/connect/api/client.ts","features/connect/model.ts","features/connect/types/enquiries.ts","features/connect/EmptyStates.tsx",
- "features/connect/ConnectSidebar.tsx","features/connect/ConnectTopbar.tsx",
+ "features/connect/ConnectSidebar.tsx","features/connect/ConnectTopbar.tsx","features/connect/ConnectBrand.tsx",
  "features/connect/ConnectAuthGates.tsx",
  "features/connect/components/ChannelSettings.tsx",
  "features/connect/components/ConnectAutomationSettings.tsx",
@@ -38,3 +38,7 @@ console.log("Connect code organization and local import paths OK.");
 const portal=fs.readFileSync(path.join(root,"components/AppShell.tsx"),"utf8");
 const sidebar=fs.readFileSync(path.join(root,"features/connect/ConnectSidebar.tsx"),"utf8");
 if(!portal.includes('<ApplicationSwitcher current="portal"')||!sidebar.includes('<ApplicationSwitcher current="connect"'))throw Error("Both products must use the shared app switcher.");
+
+const brand=fs.readFileSync(path.join(root,"features/connect/ConnectBrand.tsx"),"utf8");
+if(!brand.includes('/brand/robotronix-horizontal.png'))throw Error("Connect brand must reuse the existing Portal logo.");
+if(!sidebar.includes("<ConnectBrand")||!fs.readFileSync(path.join(root,"features/connect/ConnectAuthGates.tsx"),"utf8").includes("<ConnectBrand"))throw Error("Connect entry and sidebar must use the shared brand component.");
