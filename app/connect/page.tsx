@@ -5,13 +5,14 @@ import {getCurrentProfile} from "@/lib/repository";
 import {connectFetch,crmCommand,crmList,
  type ConnectWorkspace,type ConnectPerson,type ConnectInquiry,type ConnectOpportunity,
  type ConnectPipeline,type ConnectTask,type ConnectAppointment,type ConnectOverview,
- type ConnectActivity,type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
+ type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
 import {ChannelSettings} from "@/features/connect/components/ChannelSettings";
 import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAutomationSettings";
 import {ConnectReminderInbox,ConnectConversationHistory} from "@/features/connect/components/ConnectCommunications";
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
 import {ContactProfile} from "@/features/connect/components/contact/ContactProfile";
+import {ContactTimeline} from "@/features/connect/components/contact/ContactTimeline";
 import {EnquirySettings,readEnquiryPreferences} from "@/features/connect/components/EnquirySettings";
 import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
@@ -34,7 +35,6 @@ export default function ConnectPage(){
  const [busy,setBusy]=useState(false);
  const [loading,setLoading]=useState(false);
  const requestGeneration=useRef(0);
- const timelineGeneration=useRef(0);
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const [refreshCount,setRefreshCount]=useState(0);
@@ -53,7 +53,6 @@ export default function ConnectPage(){
  const [tasks,setTasks]=useState<ConnectTask[]>([]);
  const [appointments,setAppointments]=useState<ConnectAppointment[]>([]);
  const [programs,setPrograms]=useState<ConnectProgram[]>([]);
- const [timeline,setTimeline]=useState<ConnectActivity[]>([]);
  const [members,setMembers]=useState<ConnectMember[]>([]);
  const [showMobileNav,setShowMobileNav]=useState(false);
 
@@ -96,7 +95,7 @@ export default function ConnectPage(){
   const generation=++requestGeneration.current;
   setOverview(emptyOverview);setInquiries([]);setPeople([]);setOpportunities([]);
   setPipelines([]);setTasks([]);setAppointments([]);setPrograms([]);setMembers([]);
-  setTimeline([]);setLoading(Boolean(tenantId&&signedIn));setError("");
+  setLoading(Boolean(tenantId&&signedIn));setError("");
   if(!tenantId||!signedIn)return ()=>{requestGeneration.current++;};
   void (async()=>{
    try{
@@ -122,16 +121,6 @@ export default function ConnectPage(){
   })();
   return ()=>{requestGeneration.current++;};
  },[tenantId,refreshCount,signedIn]);
-
- useEffect(()=>{
-  const generation=++timelineGeneration.current;
-  setTimeline([]);
-  if(!tenantId||!selectedOpportunity||!signedIn)return ()=>{timelineGeneration.current++;};
-  void crmList<ConnectActivity>(tenantId,"timeline",{id:selectedOpportunity,limit:"100"})
-   .then(r=>{if(timelineGeneration.current===generation)setTimeline(r.items);})
-   .catch(()=>{if(timelineGeneration.current===generation)setTimeline([]);});
-  return ()=>{timelineGeneration.current++;};
- },[tenantId,selectedOpportunity,refreshCount,signedIn]);
 
  const tenant=workspaces.find(x=>x.tenant_id===tenantId);
  const canConfigure=["owner","admin","manager"].includes(tenant?.membership_role||"");
@@ -464,15 +453,13 @@ export default function ConnectPage(){
       {inquiries.filter(i=>i.person_id===selectedPerson).length?
        inquiries.filter(i=>i.person_id===selectedPerson).map(i=><div className="cx-detail-row" key={i.id}><span>{shortLabel(i.source)}</span><strong>{dateLabel(i.received_at)}</strong></div>):
        <p className="cx-muted">No linked enquiries loaded.</p>}</section>}</>}
-      timelineContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Activity timeline</h3>
-       {timeline.length?timeline.map(x=><div className="cx-history-item" key={x.id}><span>●</span><div><strong>{shortLabel(x.title||x.kind||x.type||"Activity")}</strong><small>{x.summary||"Stage updated"} · {dateLabel(x.event_time||x.occurred_at)}</small></div></div>):
-       <p className="cx-muted">No activities loaded yet.</p>}</section>}
+      timelineContent={<>{(selectedContact?.id||selectedLead?.contact_id)&&<ContactTimeline key={tenantId+"-"+(selectedContact?.id||selectedLead?.contact_id)} tenantId={tenantId} personId={(selectedContact?.id||selectedLead?.contact_id)!} refreshKey={refreshCount}/>}
 {canWrite&&(selectedContact||selectedLead)&&<section className="cx-detail-card"><h3>Record a call or counselling note</h3>
       <form className="cx-form" onSubmit={saveNote}><label>Note<textarea required rows={3} maxLength={3000} placeholder="What was discussed and what happens next?"
        value={activityNote} onChange={e=>setActivityNote(e.target.value)}/></label>
        <button className="cx-secondary" disabled={busy||!activityNote.trim()}>Save note</button>
       </form></section>}
-{selectedContact&&<ConnectConversationHistory key={tenantId+"-"+selectedPerson} tenantId={tenantId} personId={selectedPerson} compact/>}</>}
+</>}
       followupsContent={<>{canWrite&&<section className="cx-detail-card"><h3>Schedule a follow-up</h3>
       <form className="cx-form" onSubmit={saveTask}><label>Next action<input required maxLength={250} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} placeholder="Call to discuss programme"/></label>
        <label>Due at<input type="datetime-local" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/></label><button className="cx-primary" disabled={busy}>Save follow-up</button></form></section>}
