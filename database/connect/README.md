@@ -28,6 +28,7 @@ Connect owns the private PostgreSQL `connect` schema and service-only `public.co
 | `21_intake_first_inbound.sql` | Enquiry-first inbound policy | Active |
 | `23_unqualified_enquiry_followups.sql` | Initial follow-ups | Active |
 | `24_contact_360_timeline_PENDING.sql` | Unified contact-wide timeline RPC | **Applied in DEV 2026-11-06; not applied in Production** |\n| `25_contact_relationships.sql` | Contact relationship/organization/owner RPCs and owner table | **Applied in DEV 2026-11-06; not applied in Production** |\n| `26_contact_owners_rls.sql` | Enable private-table RLS and indexing | **Applied in DEV 2026-11-06; not applied in Production** |
+| `27_contact_intelligence.sql` | Explainable CRM contact and workspace intelligence RPC | **Applied in DEV 2026-11-06; not applied in Production** |
 
 The numbers deliberately retain original order and gaps where verification files were relocated. **Do not renumber applied source files.**
 
@@ -64,3 +65,7 @@ No Connect tables need rebuilding. The endpoint avoids direct PostgREST access t
 DEV migrations `connect_contact_relationships_phase3` and `connect_contact_owners_rls` were installed on 2026-11-06, with user approval. The feature branch adds the `Relationships` tab, person-to-person links with customizable descriptions, organization links, organization creation, and contact-specific owner assignment. Existing admissions ownership remains separate. The new RPCs enforce active membership; only managers/owners/admins can assign the contact owner, while viewers cannot write. The relation tables predate Phase 3 and were reused. All tables stay in the private `connect` schema; the public RPCs are callable by `service_role` only.
 
 A rollback-only DEV transaction exercised linking, unlinking, owner assignment and unassignment, and readback; its data was rolled back. Production remains unchanged. The DEV dataset currently contains no contacts, so browser regression testing with real contacts remains outstanding.
+
+## Phase 4: factual contact intelligence
+
+Migration `connect_contact_intelligence_phase4` applied to DEV project `fflejkqcspivnhsmkdtn` on 2026-11-06. It exposes service-role-only `connect_contact_insights` with active workspace membership checks. No new tables or external AI integration are required. The UI shows lead ageing, overdue actions, active opportunities without next steps, unassigned contacts, operational follow-up health and explainable summaries. The dashboard previews up to 50 prioritized contacts; individual insights query the whole contact history through the database aggregation. A rollback-only fixture with an overdue task verified the response and checked unauthorized actor rejection. Production remains unchanged.
