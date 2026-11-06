@@ -18,6 +18,8 @@ const required=[
  "app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts",
  "features/connect/components/ChannelSettings.tsx",
  "features/connect/components/ConnectWhatsAppInbox.tsx",
+ "lib/server/connect-meta-test.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/send/route.ts",
  "app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/route.ts",
  "app/api/connect/workspaces/[tenantId]/whatsapp/contacts/route.ts",
  "features/connect/components/ConnectAutomationSettings.tsx",
@@ -118,3 +120,27 @@ if(!inboxApi.includes("connectSession")||!inboxApi.includes("connect_whatsapp_ma
  !inboxWorkflow.includes("whatsapp_thread_state")||!inboxWorkflow.includes("enable row level security")||
  !identityFix.includes("Preserve explicitly linked CRM contact"))
  throw Error("Phase 2 WhatsApp agent state or access control missing.");
+
+const metaTestAdapter=fs.readFileSync(path.join(root,"lib/server/connect-meta-test.ts"),"utf8");
+const metaTestApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/send/route.ts"),"utf8");
+const metaTestSql=fs.readFileSync(path.join(root,"database/connect/saas/32_whatsapp_meta_test_sending.sql"),"utf8");
+const metaEligibilitySql=fs.readFileSync(path.join(root,"database/connect/saas/33_whatsapp_meta_reply_eligibility.sql"),"utf8");
+const metaLimitSql=fs.readFileSync(path.join(root,"database/connect/saas/34_whatsapp_meta_test_send_limits.sql"),"utf8");
+if(!metaTestAdapter.includes("CONNECT_META_TEST_SEND_ENABLED")||
+ !metaTestAdapter.includes("CONNECT_META_TEST_RECIPIENTS")||
+ !metaTestAdapter.includes("CONNECT_META_TEST_ACCESS_TOKEN")||
+ !metaTestAdapter.includes("https://graph.facebook.com/"))
+ throw Error("Secure Meta test-only adapter or allowlist missing.");
+if(!metaTestApi.includes("connect_whatsapp_reserve_test_send")||
+ !metaTestApi.includes("connect_whatsapp_complete_test_send")||
+ !metaTestApi.includes("metaTestReady")||!metaTestApi.includes("connectSession"))
+ throw Error("Authorized Meta test sending and idempotency missing.");
+if(!metaTestSql.includes("customer-service reply window expired")&&
+ !metaTestSql.includes("Customer-service reply window expired"))
+ throw Error("Customer-service reply window check missing.");
+if(!metaEligibilitySql.includes("connect_whatsapp_test_reply_context")||
+ !metaLimitSql.includes("whatsapp_test_send_rate_guard"))
+ throw Error("Meta reply eligibility and test rate limits missing.");
+if(!inbox.includes('sendTestReply')||!inbox.includes('Send test reply')||!inbox.includes('sendReady?.canSend'))
+ throw Error("WhatsApp Phase 3 composer must only send to verified Meta test recipients.");
+if(waWebhook.includes('){\\n'))throw Error("Meta webhook contains literal escaped newlines that break TypeScript.");
