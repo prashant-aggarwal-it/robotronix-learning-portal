@@ -33,13 +33,13 @@ begin
    from connect.opportunities o where o.tenant_id=p_tenant_id and o.contact_id=p_person_id
    union all
    select 'stage:'||st.id,'stage','Admission stage changed',
-    coalesce(prev.name,'Start')||' → '||coalesce(next.name,'Unknown')||
+    coalesce(prev.name,'Start')||' → '||coalesce(destination.name,'Unknown')||
      case when st.note is null or st.note='' then '' else ' · '||st.note end,
-    st.changed_at,next.name
+    st.changed_at,destination.name
    from connect.stage_events st
    join connect.opportunities o on o.tenant_id=st.tenant_id and o.id=st.opportunity_id
    left join connect.pipeline_stages prev on prev.tenant_id=st.tenant_id and prev.id=st.from_stage_id
-   left join connect.pipeline_stages next on next.tenant_id=st.tenant_id and next.id=st.to_stage_id
+   left join connect.pipeline_stages destination on destination.tenant_id=st.tenant_id and destination.id=st.to_stage_id
    where st.tenant_id=p_tenant_id and o.contact_id=p_person_id
    union all
    select 'task:'||t.id,'task','Follow-up created',t.title,t.created_at,t.status
@@ -74,3 +74,6 @@ begin
 end $function$;
 revoke all on function public.connect_contact_timeline(uuid,uuid,uuid,timestamptz,text,int) from public,anon,authenticated;
 grant execute on function public.connect_contact_timeline(uuid,uuid,uuid,timestamptz,text,int) to service_role;
+
+-- Refresh PostgREST RPC discovery after separately approved application.
+notify pgrst, 'reload schema';
