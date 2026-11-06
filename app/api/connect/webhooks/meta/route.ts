@@ -48,7 +48,7 @@ function extractLead(data:GraphLead){
 }
 async function fetchLead(leadId:string):Promise<GraphLead>{
  const token=process.env.CONNECT_META_GRAPH_ACCESS_TOKEN;
- const version=process.env.CONNECT_META_GRAPH_VERSION||"v23.0";
+ const version=process.env.CONNECT_META_GRAPH_VERSION||"v26.0";
  if(!token||!/^[a-zA-Z0-9_.-]{6,250}$/.test(leadId)||!/^v\d+\.\d+$/.test(version))
   throw new Error("Meta Graph lead retrieval unavailable");
  const url=new URL("https://graph.facebook.com/"+version+"/"+encodeURIComponent(leadId));
