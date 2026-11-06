@@ -10,6 +10,7 @@ import {ChannelSettings} from "@/features/connect/components/ChannelSettings";
 import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAutomationSettings";
 import {ConnectReminderInbox,ConnectConversationHistory} from "@/features/connect/components/ConnectCommunications";
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
+import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
 import {EnquirySettings,readEnquiryPreferences} from "@/features/connect/components/EnquirySettings";
 import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
@@ -292,14 +293,7 @@ export default function ConnectPage(){
     </div>
 
     {section==="overview"&&<>
-     <div className="cx-metrics">
-      {[
-       {value:overview.newEnquiries,label:"New today",detail:"Incoming enquiries"},
-       {value:overview.openOpportunities,label:"Open admissions",detail:"In active pipelines"},
-       {value:overview.overdueTasks,label:"Overdue follow-ups",detail:"Need attention",warning:overview.overdueTasks>0},
-       {value:overview.wonOpportunities,label:"Admissions won",detail:"Converted opportunities"}
-      ].map(m=><article key={m.label} className={"cx-metric "+(m.warning?"cx-metric-warn":"")}><span>{m.label}</span><strong>{m.value}</strong><small>{m.detail}</small></article>)}
-     </div>
+     <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}/>
      <div className="cx-overview-grid">
       <section className="cx-panel"><div className="cx-panel-header"><div><h2>Recent enquiries</h2><p>Latest enquiries across your channels</p></div><button className="cx-link-button" onClick={()=>setSection("enquiries")}>View all →</button></div>
        {inquiries.length===0?<EmptyState title="No enquiries yet" description="Capture the first enquiry to start building your admissions pipeline."/>:
