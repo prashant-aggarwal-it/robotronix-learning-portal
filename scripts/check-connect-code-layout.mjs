@@ -113,8 +113,8 @@ const identityFix=fs.readFileSync(path.join(root,"database/connect/saas/31_whats
 const inboxApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/route.ts"),"utf8");
 const contactSearchApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/contacts/route.ts"),"utf8");
 if(!page.includes("<ConnectWhatsAppInbox")||!inbox.includes("Load older messages")||
- !inbox.includes("Link CRM contact")||!inbox.includes("Save draft")||!inbox.includes("disabled title="))
- throw Error("Phase 2 WhatsApp conversation UI, pagination and safe draft-only composer missing.");
+ !inbox.includes("Link CRM contact")||!inbox.includes("Save draft")||!inbox.includes("sendReady?.canSend"))
+ throw Error("WhatsApp conversation UI, pagination or Meta-gated send composer missing.");
 if(!inboxApi.includes("connectSession")||!inboxApi.includes("connect_whatsapp_manage_thread")||
  !contactSearchApi.includes("connect_whatsapp_contact_search")||
  !inboxWorkflow.includes("whatsapp_thread_state")||!inboxWorkflow.includes("enable row level security")||
