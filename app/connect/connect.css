@@ -24,6 +24,14 @@
 .cx-logo-product{font-size:17px;font-weight:800;color:#087fa7;letter-spacing:-.025em;flex-shrink:0}
 .cx-sidebar{width:248px;flex:0 0 248px;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;padding:23px 14px 13px;background:#fff;border-right:1px solid var(--cx-border);z-index:25}
 .cx-sidebar>.cx-logo{padding:3px 10px 23px}
+/* Align the Connect sidebar brand with the Portal's brand/title stack. */
+.cx-sidebar-brand{padding:0 0 2px}
+.cx-sidebar-brand .sidebarBrand{box-shadow:none;border:1px solid #e8eef7;border-radius:15px;min-height:56px;padding:10px 12px;background:#fff}
+.cx-sidebar-brand .sidebarBrand img{width:100%;height:34px;object-fit:contain;object-position:left center}
+.cx-sidebar-brand .portalName{padding:15px 9px 8px;font-size:14px;font-weight:850;letter-spacing:-.01em;color:#15203b}
+.cx-sidebar-brand .portalName span{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7e8da4;margin-top:4px}
+.cx-sidebar .portalWorkspaceSwitch{margin:10px 0 12px}
+
 .cx-workspace-picker{border:1px solid #dfebf2;background:#f8fbfd;padding:12px;border-radius:13px;margin-bottom:18px}
 .cx-workspace-picker>span,.cx-nav-label{display:block;font-size:10px;font-weight:750;letter-spacing:.08em;color:#8a9aaa}
 .cx-workspace-picker select{padding:7px 28px 7px 0;border:0;background:transparent;min-height:31px;font-size:13px;font-weight:700;max-width:100%;text-overflow:ellipsis;outline:none}
@@ -310,8 +318,4 @@
 .cx-category-suggestion{display:block;margin:0 0 5px;border:1px solid #9dd5da;background:#e8f9f8;color:#086b70;border-radius:6px;padding:4px 7px;font-size:10px;text-align:left;cursor:pointer}
 
 /* Cross-application navigation; independent of CRM module navigation. */
-.cx-app-switcher{display:flex;flex-direction:column;gap:4px;margin:0 0 15px;padding:11px;border:1px solid var(--cx-border);border-radius:12px;background:#f5fafd}
-.cx-app-switcher .cx-nav-label{padding:0 5px 6px}
-.cx-app-switch-link,.cx-app-switch-current{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:9px;font-size:12px;font-weight:650;text-decoration:none;color:#365b72}
-.cx-app-switch-link:hover{background:#e8f3f9;color:#086b98}
-.cx-app-switch-current{background:#e1f2fa;color:#086b98}
+
