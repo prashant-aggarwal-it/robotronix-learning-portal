@@ -46,3 +46,12 @@ No validation step should be described as passed until its run result is inspect
 - The `POST /api/connect/workspaces` provisioning API and multi-tenant backend remain available for future controlled provisioning. **Important:** this pass changes the user interface only; server-side provisioning restrictions are NOT yet implemented. Restrict the API before any public SaaS rollout.
 - Existing workspace memberships and tenant permission checks remain the source of truth; a Portal login alone does not grant CRM access.
 - Validate that the current account has a membership in Robotronix before testing the direct dashboard flow.
+
+
+## Dashboard visual refresh — reference-led, data-first
+
+The CRM overview now has clickable KPI cards, a source-distribution summary of the currently loaded enquiry records (up to 100 from the existing API), action-focused task/appointment widgets, and an advanced-only pipeline stage snapshot (also limited to the currently loaded opportunity records). It deliberately shows no invented conversion percentages, revenue, messaging delivery rates or AI lead scores. It retains the existing recent-enquiries and attention panels.
+
+Further product candidates to assess separately before implementation: omnichannel inbox with verified WhatsApp provider support; a consolidated contact journey; role-specific productivity metrics; payments only when actual payment integration and tenant permissions are verified; funnel analytics with appropriate dedicated aggregate endpoints for accurate historical reporting. Keep all new reporting tenant-scoped, clear about date ranges, and honest about sampling/pagination.
+
+Validation still needed: npm typecheck/build, mobile-width visual review, zero-data and large-data rendering, all section links in Simple and Advanced modes, permissions and a real DEV account. No schema, Production or deployed service was changed by this UI work.
