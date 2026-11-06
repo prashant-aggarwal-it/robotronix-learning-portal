@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState,type ReactNode} from "react";
 import type {ConnectPerson,ConnectOpportunity,ConnectInquiry,ConnectTask,ConnectAppointment} from "@/features/connect/api/client";
-import {initials,shortLabel} from "@/features/connect/model";
+import {dateLabel,initials,shortLabel} from "@/features/connect/model";
 
 type ProfileTab="overview"|"timeline"|"followups"|"details";
 type Props={
@@ -14,7 +14,7 @@ const tabs:Array<{id:ProfileTab;label:string}>= [
  {id:"overview",label:"Overview"},{id:"timeline",label:"Activity"},{id:"followups",label:"Follow-ups"},{id:"details",label:"Details"}
 ];
 function phoneNumber(value:string){const cleaned=value.replace(/[^+\d]/g,"");return /^\+?\d{7,15}$/.test(cleaned)?cleaned:null;}
-export function ContactProfile({person,opportunity,inquiries,tasks,appointments,overviewContent,enquiriesContent,timelineContent,followupsContent,detailsContent,onClose}:Props){
+export function ContactProfile({person,opportunity,inquiries,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,detailsContent,onClose}:Props){
  const [tab,setTab]=useState<ProfileTab>("overview");
  useEffect(()=>setTab("overview"),[person?.id,opportunity?.id]);
  const contactId=person?.id;
@@ -35,7 +35,7 @@ export function ContactProfile({person,opportunity,inquiries,tasks,appointments,
    <div className="cx-contact360-actions">
     {validPhone&&<a href={"tel:"+validPhone} className="cx-contact360-action" aria-label="Call contact">☎ Call</a>}
     {email&&<a href={"mailto:"+email} className="cx-contact360-action" aria-label="Email contact">✉ Email</a>}
-    <button type="button" className="cx-contact360-action" onClick={()=>setTab("followups")}>＋ Follow-up</button>
+    <button type="button" className="cx-contact360-action" onClick={()=>setTab("followups")}>{canWrite?"＋ Follow-up":"Follow-ups"}</button>
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("timeline")}>▤ Activity</button>
    </div>
   </header>
@@ -50,7 +50,15 @@ export function ContactProfile({person,opportunity,inquiries,tasks,appointments,
   <div className="cx-contact360-tabpanel" id="cx-contact-tabpanel" role="tabpanel" aria-labelledby={"cx-contact-tab-"+tab}>
    {tab==="overview"&&<>{overviewContent}{enquiriesContent}</>}
    {tab==="timeline"&&timelineContent}
-   {tab==="followups"&&followupsContent}
+   {tab==="followups"&&<>
+    <section className="cx-detail-card"><h3>Contact follow-ups</h3>
+     {relatedTasks.length===0?<p className="cx-muted">No related tasks among the records loaded.</p>:relatedTasks.map(t=><div className="cx-contact360-list-row" key={t.id}><span><strong>{t.title}</strong><small>{dateLabel(t.due_at)}</small></span><span className="cx-pill">{shortLabel(t.status)}</span></div>)}
+    </section>
+    <section className="cx-detail-card"><h3>Related appointments</h3>
+     {relatedAppointments.length===0?<p className="cx-muted">No related appointments among the records loaded.</p>:relatedAppointments.map(a=><div className="cx-contact360-list-row" key={a.id}><span><strong>{a.title}</strong><small>{dateLabel(a.starts_at)} · {shortLabel(a.kind)}</small></span><span className="cx-pill">{shortLabel(a.status)}</span></div>)}
+    </section>
+    {followupsContent}
+   </>}
    {tab==="details"&&detailsContent}
   </div>
   <footer className="cx-contact360-footer"><span>Showing information available in this workspace. Counts reflect loaded records.</span><button type="button" onClick={onClose}>Close profile</button></footer>
