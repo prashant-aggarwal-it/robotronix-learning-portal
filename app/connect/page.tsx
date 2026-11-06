@@ -14,6 +14,7 @@ import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverv
 import {ContactProfile} from "@/features/connect/components/contact/ContactProfile";
 import {ContactTimeline} from "@/features/connect/components/contact/ContactTimeline";
 import {ContactRelationships} from "@/features/connect/components/contact/ContactRelationships";
+import {WorkspaceIntelligence} from "@/features/connect/components/contact/ContactIntelligence";
 import {EnquirySettings,readEnquiryPreferences} from "@/features/connect/components/EnquirySettings";
 import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
 import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
@@ -285,6 +286,7 @@ export default function ConnectPage(){
 
     {section==="overview"&&<>
      <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}/>
+     <WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onOpenContact={personId=>{setSection("contacts");setSelectedPerson(personId);setSelectedOpportunity(null);}}/>
      <div className="cx-overview-grid">
       <section className="cx-panel"><div className="cx-panel-header"><div><h2>Recent enquiries</h2><p>Latest enquiries across your channels</p></div><button className="cx-link-button" onClick={()=>setSection("enquiries")}>View all →</button></div>
        {inquiries.length===0?<EmptyState title="No enquiries yet" description="Capture the first enquiry to start building your admissions pipeline."/>:
@@ -434,7 +436,7 @@ export default function ConnectPage(){
    <aside className="cx-drawer" role="dialog" aria-modal="true" aria-label="Contact 360 profile">
     <div className="cx-drawer-header"><span>CONTACT WORKSPACE</span><button aria-label="Close details" onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>×</button></div>
     <div className="cx-drawer-body">
-     <ContactProfile person={selectedContact} opportunity={selectedLead} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onCreateEnquiry={()=>{if(!selectedContact)return;setLead({name:selectedContact.full_name,phone:selectedContact.contact_methods.find(m=>["phone","mobile"].includes(m.kind.toLowerCase()))?.value||"",email:selectedContact.contact_methods.find(m=>m.kind.toLowerCase()==="email")?.value||"",source:"phone",summary:"",pipelineId:"",personId:selectedContact.id});setSelectedPerson(null);setSelectedOpportunity(null);setShowLeadForm(true);}} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
+     <ContactProfile person={selectedContact} opportunity={selectedLead} tenantId={tenantId} refreshKey={refreshCount} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onCreateEnquiry={()=>{if(!selectedContact)return;setLead({name:selectedContact.full_name,phone:selectedContact.contact_methods.find(m=>["phone","mobile"].includes(m.kind.toLowerCase()))?.value||"",email:selectedContact.contact_methods.find(m=>m.kind.toLowerCase()==="email")?.value||"",source:"phone",summary:"",pipelineId:"",personId:selectedContact.id});setSelectedPerson(null);setSelectedOpportunity(null);setShowLeadForm(true);}} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
       overviewContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Admission opportunity</h3><strong className="cx-detail-title">{selectedLead.title}</strong>
       <p className="cx-muted">Current stage: {selectedLead.stage_name} · Version {selectedLead.version}</p>
       {canWrite&&<label>Move to stage<select value={selectedLead.stage_id} disabled={busy} onChange={e=>void updateStage(selectedLead,e.target.value)}>
