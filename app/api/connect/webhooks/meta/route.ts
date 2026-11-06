@@ -14,7 +14,7 @@ export async function GET(req:NextRequest){
  if(!valid||!challenge)return new NextResponse("Forbidden",{status:403});
  return new NextResponse(challenge,{status:200,headers:{"Content-Type":"text/plain","Cache-Control":"no-store"}});
 }
-type GraphLead={id?:string;field_data?:Array<{name?:string;values?:unknown[]}>};
+function validMetaTime(value:unknown):string|null{\n const time=typeof value==="string"&&/^\\d{10,11}$/.test(value)?Number(value):NaN;\n if(!Number.isFinite(time)||time<946684800||time>Date.now()/1000+86400)return null;\n return new Date(time*1000).toISOString();\n}\nfunction messageParts(msg:any){\n const kind=safeString(msg?.type,40)||"unknown";\n const body=kind==="text"?safeString(msg?.text?.body,3000):\n  kind==="button"?safeString(msg?.button?.text,3000):\n  kind==="interactive"?safeString(msg?.interactive?.button_reply?.title||msg?.interactive?.list_reply?.title,3000):\n  kind==="reaction"?safeString(msg?.reaction?.emoji,100):\n  kind==="location"?safeString(msg?.location?.name||msg?.location?.address,300):\n  safeString(msg?.[kind]?.caption,3000);\n const media=["image","video","audio","document","sticker"].includes(kind)?msg?.[kind]:null;\n return {kind,body,mediaId:safeString(media?.id,250)||null,mimeType:safeString(media?.mime_type,150)||null,\n  filename:safeString(media?.filename,255)||null,replyToId:safeString(msg?.context?.id,250)||null};\n}\ntype GraphLead={id?:string;field_data?:Array<{name?:string;values?:unknown[]}>};
 function extractLead(data:GraphLead){
  const fields=new Map<string,string>();
  for(const field of data.field_data||[]){
@@ -62,17 +62,47 @@ export async function POST(req:NextRequest){
     for(const c of (Array.isArray(value?.contacts)?value.contacts:[]))
      profiles.set(String(c.wa_id||""),safeString(c.profile?.name,150));
     for(const msg of (Array.isArray(value?.messages)?value.messages:[]).slice(0,50)){
-     const id=safeString(msg.id,250),waId=safeString(msg.from,35);
-     const content=msg.type==="text"?safeString(msg.text?.body,2000):
-       msg.type==="button"?safeString(msg.button?.text,2000):
-       msg.type==="interactive"?safeString(msg.interactive?.button_reply?.title||
-         msg.interactive?.list_reply?.title,2000):"";
-     if(!phoneId||!id||!waId||!content){ignored++;continue;}
+     const id=safeString(msg?.id,250),waId=safeString(msg?.from,35);
+     if(!phoneId||!id||!waId){ignored++;continue;}
+     const parts=messageParts(msg);
      try{
-      const result:any=await invokeIngest("connect_ingest_channel",{
-       p_provider:"whatsapp",p_external_account_id:phoneId,p_event_id:id,
-       p_name:profiles.get(waId)||"WhatsApp contact",p_email:null,
-       p_phone:"+"+waId.replace(/\D/g,""),p_summary:content
+      const result:any=await invokeIngest("connect_ingest_whatsapp_message",{
+       p_external_account_id:phoneId,p_message_id:id,p_contact_wa_id:waId,
+       p_contact_name:profiles.get(waId)||"WhatsApp contact",p_kind:parts.kind,
+       p_body:parts.body,p_occurred_at:validMetaTime(msg?.timestamp),
+       p_media_id:parts.mediaId,p_media_mime_type:parts.mimeType,
+       p_media_filename:parts.filename,p_reply_to_id:parts.replyToId,p_direction:"inbound"
+      });
+      if(result?.duplicate)duplicate++;else processed++;
+     }catch{failures++;}
+    }
+    for(const status of (Array.isArray(value?.statuses)?value.statuses:[]).slice(0,50)){
+     const id=safeString(status?.id,250),state=safeString(status?.status,30);
+     if(!phoneId||!id||!["sent","delivered","read","failed"].includes(state)){ignored++;continue;}
+     try{
+      await invokeIngest("connect_ingest_whatsapp_status",{
+       p_external_account_id:phoneId,p_message_id:id,p_status:state,
+       p_occurred_at:validMetaTime(status?.timestamp),
+       p_failure_reason:safeString(status?.errors?.[0]?.title||status?.errors?.[0]?.message,500)||null
+      });processed++;
+     }catch{failures++;}
+    }
+    continue;
+   }
+   // Business App coexistence: echo is outbound and uses the recipient as the contact.
+   if(change.field==="smb_message_echoes"){
+    const phoneId=safeString(value?.metadata?.phone_number_id,200);
+    for(const msg of (Array.isArray(value?.message_echoes)?value.message_echoes:[]).slice(0,50)){
+     const id=safeString(msg?.id,250),waId=safeString(msg?.to,35);
+     if(!phoneId||!id||!waId){ignored++;continue;}
+     const parts=messageParts(msg);
+     try{
+      const result:any=await invokeIngest("connect_ingest_whatsapp_message",{
+       p_external_account_id:phoneId,p_message_id:id,p_contact_wa_id:waId,
+       p_contact_name:"WhatsApp contact",p_kind:parts.kind,p_body:parts.body,
+       p_occurred_at:validMetaTime(msg?.timestamp),p_media_id:parts.mediaId,
+       p_media_mime_type:parts.mimeType,p_media_filename:parts.filename,
+       p_reply_to_id:parts.replyToId,p_direction:"outbound"
       });
       if(result?.duplicate)duplicate++;else processed++;
      }catch{failures++;}
