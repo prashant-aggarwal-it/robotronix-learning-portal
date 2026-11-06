@@ -14,7 +14,7 @@ const relationshipChoices=[
  {value:"parent_of",label:"Parent of"},{value:"guardian_of",label:"Guardian of"},
  {value:"student_of",label:"Student of"},{value:"sibling_of",label:"Sibling of"},
  {value:"colleague_of",label:"Colleague of"},{value:"refers_to",label:"Refers to"},
- {value:"other",label:"Other"}
+ {value:"custom",label:"Custom relationship"}
 ];
 function friendly(value:string){return value.replaceAll("_"," ").replace(/\b\w/g,x=>x.toUpperCase());}
 export function ContactRelationships({tenantId,personId,canWrite,canManage}:{
@@ -22,7 +22,7 @@ export function ContactRelationships({tenantId,personId,canWrite,canManage}:{
 }){
  const [info,setInfo]=useState<RelationData|null>(null);
  const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
- const [other,setOther]=useState(""),[relation,setRelation]=useState("parent_of");
+ const [other,setOther]=useState(""),[relation,setRelation]=useState("parent_of"),[customRelation,setCustomRelation]=useState("");
  const [org,setOrg]=useState(""),[position,setPosition]=useState("");
  const [newOrgName,setNewOrgName]=useState(""),[newOrgCategory,setNewOrgCategory]=useState("school");
  const generation=useRef(0);
@@ -78,12 +78,13 @@ export function ContactRelationships({tenantId,personId,canWrite,canManage}:{
       <span><strong>{p.name}</strong><small>{p.direction==="incoming"?"Related to this contact as":"This contact is"} · {friendly(p.relationship)}</small></span>
       {canWrite&&<button type="button" className="cx-relations-remove" disabled={busy} onClick={()=>void action("unlink_person",{relatedPersonId:p.personId,relationship:p.relationship,direction:p.direction})}>Remove</button>}
      </div>)}
-    {canWrite&&<form className="cx-relations-form" onSubmit={e=>{e.preventDefault();if(other)void action("link_person",{relatedPersonId:other,relationship:relation});}}>
+    {canWrite&&<form className="cx-relations-form" onSubmit={e=>{e.preventDefault();if(other&&(relation!=="custom"||customRelation.trim()))void action("link_person",{relatedPersonId:other,relationship:relation==="custom"?customRelation.trim():relation});}}>
      <label>Related contact<select required value={other} onChange={e=>setOther(e.target.value)} disabled={busy}><option value="">Choose an existing contact</option>
       {info.peopleOptions.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
      <label>Relationship<select value={relation} onChange={e=>setRelation(e.target.value)} disabled={busy}>
       {relationshipChoices.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select></label>
-     <button type="submit" className="cx-secondary" disabled={!other||busy}>Link person</button>
+     {relation==="custom"&&<label>Custom relationship<input required maxLength={60} value={customRelation} onChange={e=>setCustomRelation(e.target.value)} disabled={busy} placeholder="e.g. Mentor of"/></label>}
+     <button type="submit" className="cx-secondary" disabled={!other||busy||(relation==="custom"&&!customRelation.trim())}>Link person</button>
     </form>}
    </section>
    <section className="cx-detail-card">
