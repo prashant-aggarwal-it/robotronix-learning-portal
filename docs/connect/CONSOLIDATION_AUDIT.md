@@ -36,3 +36,13 @@ Branch: `feature/robotronix-connect-crm`. Do not merge to `main`, deploy, or mod
 6. Reconfirm branch diff and migration map before user-approved merge.
 
 No validation step should be described as passed until its run result is inspected.
+
+## Simplified organization UX (November 2026)
+
+- Development database read-only inspection confirmed an active `Robotronix Tech Lab` workspace (`robotronix-tech-lab`). No database records were created or altered.
+- A user with one authorized workspace opens that workspace directly; its selector is hidden.
+- A user with multiple authorized workspaces retains the organization dropdown.
+- A user with zero workspace memberships sees an access request / retry gate instead of self-service organization creation.
+- The `POST /api/connect/workspaces` provisioning API and multi-tenant backend remain available for future controlled provisioning. **Important:** this pass changes the user interface only; server-side provisioning restrictions are NOT yet implemented. Restrict the API before any public SaaS rollout.
+- Existing workspace memberships and tenant permission checks remain the source of truth; a Portal login alone does not grant CRM access.
+- Validate that the current account has a membership in Robotronix before testing the direct dashboard flow.
