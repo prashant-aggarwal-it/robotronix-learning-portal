@@ -27,6 +27,7 @@ Connect owns the private PostgreSQL `connect` schema and service-only `public.co
 | `20_simple_mode_enquiry_classification.sql` | Simple Mode and categories | Active |
 | `21_intake_first_inbound.sql` | Enquiry-first inbound policy | Active |
 | `23_unqualified_enquiry_followups.sql` | Initial follow-ups | Active |
+| `24_contact_360_timeline_PENDING.sql` | Unified contact-wide timeline RPC | **Pending / not applied** |
 
 The numbers deliberately retain original order and gaps where verification files were relocated. **Do not renumber applied source files.**
 
@@ -46,3 +47,14 @@ Most tests need two confirmed DEV Auth accounts. Rollback-only tests should not 
 6. Preserve historical SQL needed to understand applied changes; remove only proven obsolete copies or stale references, not migration provenance.
 
 The Learning Portal's existing `database/01_install/`, `database/02_qa/` and related scripts remain unchanged during this Connect-only cleanup.
+
+## Contact 360 Phase 2 activation gate
+
+The feature branch contains `24_contact_360_timeline_PENDING.sql` and the matching authenticated Next.js API route.
+The SQL is **not installed** in DEV or Production; the UI timeline will not load until this reviewed SQL
+has been applied explicitly to the intended environment. Do not deploy or apply it automatically.
+
+After approval, review permissions, execute **only this new pending SQL** against the approved DEV
+project, confirm the `connect_contact_timeline` function signature and service-role-only EXECUTE,
+run cross-tenant and pagination tests, and only then consider production promotion separately.
+No Connect tables need rebuilding. The endpoint avoids direct PostgREST access to the private `connect` schema.
