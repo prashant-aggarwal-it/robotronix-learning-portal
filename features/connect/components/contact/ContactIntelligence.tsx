@@ -47,6 +47,7 @@ export function ContactIntelligence({tenantId,personId,refreshKey,onOpenFollowup
   <div className="cx-intel-head"><div><span className="cx-kicker">CONTACT INTELLIGENCE</span><h3>What needs attention?</h3><p>Explainable recommendations based on recorded CRM activity—not AI predictions.</p></div>
    <button type="button" className="cx-secondary" onClick={()=>void load()} disabled={loading}>Refresh</button></div>
   {loading?<p className="cx-insight-empty" role="status">Checking contact activity…</p>:error?<p className="cx-alert" role="alert">{error}</p>:!insight?<p className="cx-insight-empty">No contact information available.</p>:<>
+   <div className="cx-intel-health"><span className={"cx-intel-health-pill "+(insight.priority>=3?"needs-action":insight.priority>0?"review":"clear")}>{insight.priority>=3?"Follow-up needs attention":insight.priority>0?"Review suggested":"No immediate alerts"}</span><small>{daysSince(insight.last_enquiry_at,asOf)===null?"No enquiry recorded":daysSince(insight.last_enquiry_at,asOf)+" days since latest enquiry"}</small></div>
    <div className="cx-intel-facts">
     <span><strong>{insight.enquiry_count}</strong> Enquiries</span>
     <span><strong>{insight.open_opportunities}</strong> Active opportunities</span>
