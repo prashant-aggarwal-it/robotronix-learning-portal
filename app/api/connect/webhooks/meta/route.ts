@@ -14,7 +14,24 @@ export async function GET(req:NextRequest){
  if(!valid||!challenge)return new NextResponse("Forbidden",{status:403});
  return new NextResponse(challenge,{status:200,headers:{"Content-Type":"text/plain","Cache-Control":"no-store"}});
 }
-function validMetaTime(value:unknown):string|null{\n const time=typeof value==="string"&&/^\\d{10,11}$/.test(value)?Number(value):NaN;\n if(!Number.isFinite(time)||time<946684800||time>Date.now()/1000+86400)return null;\n return new Date(time*1000).toISOString();\n}\nfunction messageParts(msg:any){\n const kind=safeString(msg?.type,40)||"unknown";\n const body=kind==="text"?safeString(msg?.text?.body,3000):\n  kind==="button"?safeString(msg?.button?.text,3000):\n  kind==="interactive"?safeString(msg?.interactive?.button_reply?.title||msg?.interactive?.list_reply?.title,3000):\n  kind==="reaction"?safeString(msg?.reaction?.emoji,100):\n  kind==="location"?safeString(msg?.location?.name||msg?.location?.address,300):\n  safeString(msg?.[kind]?.caption,3000);\n const media=["image","video","audio","document","sticker"].includes(kind)?msg?.[kind]:null;\n return {kind,body,mediaId:safeString(media?.id,250)||null,mimeType:safeString(media?.mime_type,150)||null,\n  filename:safeString(media?.filename,255)||null,replyToId:safeString(msg?.context?.id,250)||null};\n}\ntype GraphLead={id?:string;field_data?:Array<{name?:string;values?:unknown[]}>};
+function validMetaTime(value:unknown):string|null{
+ const time=typeof value==="string"&&/^\\d{10,11}$/.test(value)?Number(value):NaN;
+ if(!Number.isFinite(time)||time<946684800||time>Date.now()/1000+86400)return null;
+ return new Date(time*1000).toISOString();
+}
+function messageParts(msg:any){
+ const kind=safeString(msg?.type,40)||"unknown";
+ const body=kind==="text"?safeString(msg?.text?.body,3000):
+  kind==="button"?safeString(msg?.button?.text,3000):
+  kind==="interactive"?safeString(msg?.interactive?.button_reply?.title||msg?.interactive?.list_reply?.title,3000):
+  kind==="reaction"?safeString(msg?.reaction?.emoji,100):
+  kind==="location"?safeString(msg?.location?.name||msg?.location?.address,300):
+  safeString(msg?.[kind]?.caption,3000);
+ const media=["image","video","audio","document","sticker"].includes(kind)?msg?.[kind]:null;
+ return {kind,body,mediaId:safeString(media?.id,250)||null,mimeType:safeString(media?.mime_type,150)||null,
+  filename:safeString(media?.filename,255)||null,replyToId:safeString(msg?.context?.id,250)||null};
+}
+type GraphLead={id?:string;field_data?:Array<{name?:string;values?:unknown[]}>};
 function extractLead(data:GraphLead){
  const fields=new Map<string,string>();
  for(const field of data.field_data||[]){
