@@ -6,7 +6,7 @@ import {dateLabel,initials,shortLabel} from "@/features/connect/model";
 type ProfileTab="overview"|"timeline"|"followups"|"details";
 type Props={
  person:ConnectPerson|null|undefined;opportunity:ConnectOpportunity|null|undefined;
- inquiries:ConnectInquiry[];tasks:ConnectTask[];appointments:ConnectAppointment[];
+ inquiries:ConnectInquiry[];opportunities:ConnectOpportunity[];tasks:ConnectTask[];appointments:ConnectAppointment[];canWrite:boolean;
  overviewContent:ReactNode;enquiriesContent:ReactNode;timelineContent:ReactNode;
  followupsContent:ReactNode;detailsContent:ReactNode;onCreateEnquiry:()=>void;onClose:()=>void;
 };
