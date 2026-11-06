@@ -8,6 +8,8 @@ const required=[
  "features/connect/ConnectSidebar.tsx","features/connect/ConnectTopbar.tsx","features/connect/ConnectBrand.tsx",
  "features/connect/ConnectAuthGates.tsx",
  "features/connect/components/contact/ContactProfile.tsx",
+ "features/connect/components/contact/ContactTimeline.tsx",
+ "app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts",
  "features/connect/components/ChannelSettings.tsx",
  "features/connect/components/ConnectAutomationSettings.tsx",
  "features/connect/components/ConnectCommunications.tsx",
@@ -50,3 +52,10 @@ if(!sidebar.includes("workspaces.length>1"))throw Error("Workspace selector must
 const contact=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
 if(!page.includes("<ContactProfile")||!contact.includes('role="tablist"')||!contact.includes("Contact follow-ups")||!contact.includes("Related appointments"))throw Error("Contact 360 profile must contain its navigation and linked records.");
 if(!page.includes("onSubmit={saveTask}")||!page.includes("onSubmit={saveAppointment}")||!page.includes("onSubmit={saveNote}")||!page.includes("onSubmit={startAdmission}"))throw Error("Contact 360 must retain its existing action forms.");
+
+const timeline=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactTimeline.tsx"),"utf8");
+const timelineApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts"),"utf8");
+const migration=fs.readFileSync(path.join(root,"database/connect/saas/24_contact_360_timeline_PENDING.sql"),"utf8");
+if(!page.includes("<ContactTimeline")||!timeline.includes("Load older activity")||!timeline.includes("generation.current"))throw Error("Unified Contact 360 timeline or stale response handling missing.");
+if(!timelineApi.includes("connect_contact_timeline")||!timelineApi.includes("isConnectSession")||!migration.includes("m.tenant_id=p_tenant_id")||!migration.includes("c.person_id=p_person_id"))throw Error("Tenant-authorized contact timeline query missing.");
+if(!migration.includes("revoke all on function public.connect_contact_timeline"))throw Error("Contact timeline RPC must not be callable by public roles.");
