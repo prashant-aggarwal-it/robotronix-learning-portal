@@ -27,7 +27,7 @@ Connect owns the private PostgreSQL `connect` schema and service-only `public.co
 | `20_simple_mode_enquiry_classification.sql` | Simple Mode and categories | Active |
 | `21_intake_first_inbound.sql` | Enquiry-first inbound policy | Active |
 | `23_unqualified_enquiry_followups.sql` | Initial follow-ups | Active |
-| `24_contact_360_timeline_PENDING.sql` | Unified contact-wide timeline RPC | **Applied in DEV 2026-11-06; not applied in Production** |
+| `24_contact_360_timeline_PENDING.sql` | Unified contact-wide timeline RPC | **Applied in DEV 2026-11-06; not applied in Production** |\n| `25_contact_relationships.sql` | Contact relationship/organization/owner RPCs and owner table | **Applied in DEV 2026-11-06; not applied in Production** |\n| `26_contact_owners_rls.sql` | Enable private-table RLS and indexing | **Applied in DEV 2026-11-06; not applied in Production** |
 
 The numbers deliberately retain original order and gaps where verification files were relocated. **Do not renumber applied source files.**
 
@@ -58,3 +58,9 @@ After approval, review permissions, execute **only this new pending SQL** agains
 project, confirm the `connect_contact_timeline` function signature and service-role-only EXECUTE,
 run cross-tenant and pagination tests, and only then consider production promotion separately.
 No Connect tables need rebuilding. The endpoint avoids direct PostgREST access to the private `connect` schema.
+
+## Contact 360 Phase 3 activation
+
+DEV migrations `connect_contact_relationships_phase3` and `connect_contact_owners_rls` were installed on 2026-11-06, with user approval. The feature branch adds the `Relationships` tab, person-to-person links with customizable descriptions, organization links, organization creation, and contact-specific owner assignment. Existing admissions ownership remains separate. The new RPCs enforce active membership; only managers/owners/admins can assign the contact owner, while viewers cannot write. The relation tables predate Phase 3 and were reused. All tables stay in the private `connect` schema; the public RPCs are callable by `service_role` only.
+
+A rollback-only DEV transaction exercised linking, unlinking, owner assignment and unassignment, and readback; its data was rolled back. Production remains unchanged. The DEV dataset currently contains no contacts, so browser regression testing with real contacts remains outstanding.
