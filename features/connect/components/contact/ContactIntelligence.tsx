@@ -53,7 +53,7 @@ export function ContactIntelligence({tenantId,personId,refreshKey,onOpenFollowup
     <span><strong>{insight.open_tasks}</strong> Open follow-ups</span>
     <span><strong>{insight.upcoming_appointments}</strong> Upcoming appointments</span>
    </div>
-   <div className="cx-intel-digest"><strong>Contact summary</strong><p>{insight.name} has {insight.enquiry_count} recorded enquiry{insight.enquiry_count===1?"":"ies"}, {insight.open_opportunities} active opportunity{insight.open_opportunities===1?"":"ies"}, and {insight.open_tasks} open follow-up{insight.open_tasks===1?"":"s"}. Last recorded interaction: {when(insight.last_interaction_at)}.</p></div>
+   <div className="cx-intel-digest"><strong>Contact summary</strong><p>{insight.name} has {insight.enquiry_count} recorded {insight.enquiry_count===1?"enquiry":"enquiries"}, {insight.open_opportunities} active opportunity{insight.open_opportunities===1?"":"ies"}, and {insight.open_tasks} open follow-up{insight.open_tasks===1?"":"s"}. Last recorded interaction: {when(insight.last_interaction_at)}.</p></div>
    <div className="cx-intel-advice">{guidance(insight,asOf).map((item,i)=><article className={"cx-intel-advice-item cx-intel-"+item.type} key={i}><strong>{item.title}</strong><p>{item.why}</p><small>Suggested action: {item.next}</small></article>)}</div>
    <div className="cx-intel-actions"><button className="cx-secondary" onClick={onOpenFollowups} type="button">Open follow-ups</button><button className="cx-secondary" onClick={onOpenRelations} type="button">View ownership</button></div>
   </>}
