@@ -425,3 +425,28 @@
 .cx-timeline-more:disabled{opacity:.6;cursor:wait}
 .cx-timeline-note{font-size:10px;color:#8395a5;margin:14px 0 0}
 @media(max-width:650px){.cx-contact-timeline{padding:13px}.cx-timeline-title{flex-direction:column;gap:4px}.cx-timeline-entry{gap:9px}}
+
+
+/* Contact 360 Phase 3 — relationship graph and accountable owner */
+.cx-contact-relations{display:flex;flex-direction:column;gap:13px}
+.cx-contact-relations-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:7px 2px}
+.cx-contact-relations-heading h3{font-size:16px;font-weight:850;margin:0 0 5px;color:#193352}
+.cx-contact-relations-heading p{font-size:12px;color:#70899d;margin:0;line-height:1.5}
+.cx-contact-relations-heading button{flex-shrink:0}
+.cx-relations-owner{display:flex;align-items:center;gap:12px;margin:16px 0 18px}
+.cx-relations-owner-icon{width:42px;height:42px;border-radius:13px;background:#e8f4ff;color:#1887bd;font-size:21px;display:grid;place-items:center}
+.cx-relations-owner>div{display:flex;flex-direction:column;gap:5px}
+.cx-relations-owner strong{font-size:13px;color:#233d56}
+.cx-relations-owner small{font-size:11px;color:#748b9d}
+.cx-relations-field{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:700;color:#345770}
+.cx-relations-field select{width:100%}
+.cx-relations-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;border-top:1px solid #edf2f6;margin-top:15px;padding-top:15px}
+.cx-relations-form label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;font-weight:700;color:#42647b}
+.cx-relations-form input,.cx-relations-form select{min-width:0;width:100%}
+.cx-relations-form .cx-secondary{grid-column:1 / -1;justify-self:start}
+.cx-relations-remove{border:1px solid #e6edf2;border-radius:9px;background:#fff;color:#a14c45;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0}
+.cx-relations-remove:hover{background:#fff6f4}
+.cx-relations-create{margin-top:15px;border-top:1px dashed #dce8f0;padding-top:12px}
+.cx-relations-create summary{font-size:12px;font-weight:750;color:#0d799f;cursor:pointer}
+.cx-contact-relations-notice{font-size:12px;color:#167d65;background:#eaf9f2;padding:11px 13px;border-radius:10px}
+@media(max-width:650px){.cx-relations-form{grid-template-columns:1fr}.cx-contact-relations-heading{align-items:flex-start}.cx-contact360-tabs button{min-width:87px}}
