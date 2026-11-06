@@ -7,7 +7,7 @@ export function metaTestConfig():TestConfig|null{
  const token=process.env.CONNECT_META_TEST_ACCESS_TOKEN?.trim()||"";
  const values=process.env.CONNECT_META_TEST_RECIPIENTS||"";
  const recipients=new Set(values.split(",").map(x=>x.replace(/[^\d]/g,"")).filter(x=>/^\d{8,15}$/.test(x)));
- const version=process.env.CONNECT_META_GRAPH_VERSION||"v23.0";
+ const version=process.env.CONNECT_META_GRAPH_VERSION||"v26.0";
  if(!/^\d{5,25}$/.test(id)||!token||recipients.size===0||!/^v\d{1,2}\.\d$/.test(version))return null;
  return {phoneNumberId:id,accessToken:token,recipients,version};
 }
