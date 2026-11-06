@@ -482,3 +482,9 @@
 .cx-intel-dot{height:10px;width:10px;flex:0 0 10px;background:#20a3ad;border-radius:50%}
 .cx-intel-dot.urgent{background:#e39d3d}
 @media(max-width:650px){.cx-contact-intelligence{padding:13px}.cx-intel-facts{gap:7px}.cx-intel-facts span{padding:10px}.cx-intel-head{gap:8px}.cx-intelligence-board{margin-bottom:13px}}
+
+.cx-intel-health{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.cx-intel-health small{color:#71889a;font-size:11px}
+.cx-intel-health-pill{border-radius:999px;padding:7px 11px;font-size:11px;font-weight:800;background:#eaf6f0;color:#14805d}
+.cx-intel-health-pill.needs-action{background:#fff0dc;color:#ab6817}
+.cx-intel-health-pill.review{background:#e9f5ff;color:#146e9c}
