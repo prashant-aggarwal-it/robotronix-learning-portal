@@ -28,7 +28,7 @@ Connect owns the private PostgreSQL `connect` schema and service-only `public.co
 | `21_intake_first_inbound.sql` | Enquiry-first inbound policy | Active |
 | `23_unqualified_enquiry_followups.sql` | Initial follow-ups | Active |
 | `24_contact_360_timeline_PENDING.sql` | Unified contact-wide timeline RPC | **Applied in DEV 2026-11-06; not applied in Production** |\n| `25_contact_relationships.sql` | Contact relationship/organization/owner RPCs and owner table | **Applied in DEV 2026-11-06; not applied in Production** |\n| `26_contact_owners_rls.sql` | Enable private-table RLS and indexing | **Applied in DEV 2026-11-06; not applied in Production** |
-| `27_contact_intelligence.sql` | Explainable CRM contact and workspace intelligence RPC | **Applied in DEV 2026-11-06; not applied in Production** |
+| `27_contact_intelligence.sql` | Explainable CRM contact and workspace intelligence RPC | **Applied in DEV 2026-11-06; not applied in Production** |\n| `28_whatsapp_messaging_foundation.sql` | Separate signed WhatsApp chat events from enquiries; dedupe/status/media fields | **Applied in DEV 2026-11-06; not applied in Production** |\n| `29_whatsapp_inbox_read_apis.sql` | Tenant-authorized WhatsApp threads/messages with stable cursor pagination | **Applied in DEV 2026-11-06; not applied in Production** |
 
 The numbers deliberately retain original order and gaps where verification files were relocated. **Do not renumber applied source files.**
 
@@ -69,3 +69,15 @@ A rollback-only DEV transaction exercised linking, unlinking, owner assignment a
 ## Phase 4: factual contact intelligence
 
 Migration `connect_contact_intelligence_phase4` applied to DEV project `fflejkqcspivnhsmkdtn` on 2026-11-06. It exposes service-role-only `connect_contact_insights` with active workspace membership checks. No new tables or external AI integration are required. The UI shows lead ageing, overdue actions, active opportunities without next steps, unassigned contacts, operational follow-up health and explainable summaries. The dashboard previews up to 50 prioritized contacts; individual insights query the whole contact history through the database aggregation. A rollback-only fixture with an overdue task verified the response and checked unauthorized actor rejection. Production remains unchanged.
+
+## WhatsApp integration — Stage A / Phase 1 (DEV 2026-11-06)
+
+**Scope:** Messaging data foundation only; no real Meta phone number or WA Simple webhook was changed. Existing Meta webhook route recognizes `messages`, `statuses`, and `smb_message_echoes` after Meta HMAC verification. A new dedicated `connect_ingest_whatsapp_message` function separates conversation storage from enquiry creation. It creates an unclassified enquiry only for a **newly created contact** on their first inbound WhatsApp message. Subsequent incoming texts, media events and echoes are stored as messages only. Legacy calls to `connect_ingest_channel(..., 'whatsapp', ...)` route to the new function; other channels retain existing intake behavior. Do not assume every message is a sales lead.
+
+Message records include type, provider media identifiers (not publicly accessible downloadable URLs), reply reference and delivery timestamps. Raw media downloads and signed media retrieval are **not yet implemented**. Delivery events are saved separately, including statuses that arrive before outbound echo storage. Distinct WhatsApp phone_number_id values are separate registered `channel_accounts` and have independent conversations.
+
+New server-only read APIs: `GET /api/connect/workspaces/[tenantId]/whatsapp/threads` and `GET /api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/messages`. Both require a Connect session and confirm membership in the RPC. They return at most 100 records per page and expose no provider token.
+
+**Installed DEV migrations:** `connect_whatsapp_messaging_foundation_phase1` and `connect_whatsapp_inbox_read_phase1`. Rollback-only DEV fixture verified first inbound enquiry, no subsequent enquiry, duplicate webhook idempotency, multi-number separation, out-of-order read/sent status, document metadata, both read cursor types and unauthorized actor rejection. Tests left no records. `database/connect/tests/verify_whatsapp_phase1.sql` documents read-only checks. DEV has no real WhatsApp channel connected.
+
+**Not yet implemented:** Message send API, WhatsApp conversation composer/inbox UI, media retrieval, live subscriptions, Meta Developer app setup, coexistence onboarding, and campaigns. Complete those in Phases 2–4, and run a full Node/Next.js build and signed webhook replay before enabling a live number. Never touch Production, `main`, Meta app settings, or WA Simple without explicit approval.
