@@ -45,6 +45,9 @@ export default function ConnectPage(){
  const [notice,setNotice]=useState("");
  const [refreshCount,setRefreshCount]=useState(0);
  const [search,setSearch]=useState("");
+ const [contactView,setContactView]=useState<"all"|"with_details"|"missing_details">("all");
+ const [contactRole,setContactRole]=useState("all");
+ const [contactSort,setContactSort]=useState<"name"|"newest">("name");
  const [showLeadForm,setShowLeadForm]=useState(false);
  const [showContactForm,setShowContactForm]=useState(false);
  const [selectedPerson,setSelectedPerson]=useState<string|null>(null);
@@ -268,9 +271,30 @@ export default function ConnectPage(){
  const linkedCount=inquiries.filter(i=>Boolean(i.opportunity_id)).length;
  const enquirySources=[...new Set(inquiries.map(i=>i.source.toLowerCase()))].sort();
 
- const matchingPeople=useMemo(()=>people.filter(x=>
-  !search||[x.full_name,...x.contact_methods.map(m=>m.value)].some(v=>v.toLowerCase().includes(search.toLowerCase()))
- ),[people,search]);
+ const enquiryByPerson=useMemo(()=>{
+  const result=new Map<string,{count:number;summary:string;source:string;date:string}>();
+  for(const item of [...inquiries].sort((a,b)=>Date.parse(b.received_at)-Date.parse(a.received_at))){
+   if(!item.person_id)continue;
+   const old=result.get(item.person_id);
+   if(old){old.count+=1;}else{
+    result.set(item.person_id,{count:1,summary:item.summary||"Enquiry received",source:item.source,date:item.received_at});
+   }
+  }
+  return result;
+ },[inquiries]);
+ const contactsWithDetails=people.filter(p=>p.contact_methods.some(m=>m.value.trim())).length;
+ const contactsMissingDetails=people.length-contactsWithDetails;
+ const contactRoles=[...new Set(people.flatMap(p=>p.roles))].sort();
+ const matchingPeople=useMemo(()=>people.filter(p=>{
+  const hasDetails=p.contact_methods.some(m=>m.value.trim());
+  if(contactView==="with_details"&&!hasDetails)return false;
+  if(contactView==="missing_details"&&hasDetails)return false;
+  if(contactRole!=="all"&&!p.roles.includes(contactRole))return false;
+  const q=search.trim().toLowerCase();
+  const lastEnquiry=enquiryByPerson.get(p.id);
+  return !q||[p.full_name,...p.contact_methods.map(m=>m.value),...p.roles,lastEnquiry?.summary,lastEnquiry?.source].some(v=>(v||"").toLowerCase().includes(q));
+ }).sort((a,b)=>contactSort==="newest"?Date.parse(b.created_at)-Date.parse(a.created_at)||a.full_name.localeCompare(b.full_name):a.full_name.localeCompare(b.full_name)),
+ [people,search,contactView,contactRole,contactSort,enquiryByPerson]);
 
  if(signedIn===null)return <main className="cx-gate">Checking your Connect session…</main>;
  if(!signedIn)return <ConnectSignInGate error={error} busy={busy} email={loginEmail} password={loginPassword} onEmailChange={setLoginEmail} onPasswordChange={setLoginPassword} onSubmit={signIn}/>;
@@ -359,13 +383,36 @@ export default function ConnectPage(){
       </table></div>}
     </section>}
 
-    {section==="contacts"&&<section className="cx-panel cx-panel-full">
-     <div className="cx-panel-header cx-toolbar"><div><h2>Contacts</h2><p>{people.length} active contacts loaded</p></div>
-      <input className="cx-search" type="search" placeholder="Search by name or contact detail…" aria-label="Search contacts" value={search} onChange={e=>setSearch(e.target.value)}/></div>
-     {matchingPeople.length===0?<EmptyState title="No contacts found" description="Contacts are created when you capture enquiries."/>:
-     <div className="cx-contact-grid">{matchingPeople.map(p=><button className="cx-contact-card" key={p.id} onClick={()=>setSelectedPerson(p.id)}>
-      <span className="cx-avatar">{initials(p.full_name)}</span><span className="cx-contact-detail"><strong>{p.full_name}</strong><small>{p.contact_methods.map(m=>m.value).join(" · ")||"Contact details not added"}</small><span className="cx-tags">{p.roles.map(role=><em key={role}>{shortLabel(role)}</em>)}</span></span><span className="cx-arrow">↗</span>
-     </button>)}</div>}
+    {section==="contacts"&&<section className="cx-panel cx-contacts-directory">
+     <header className="cx-contacts-directory-head">
+      <div><h2>Contact directory</h2><p>Search customers, review enquiry history and open Contact 360</p></div>
+      <div className="cx-contacts-totals" aria-label="Contact summary">
+       <span><strong>{people.length}</strong> Loaded</span>
+       <button type="button" className={contactView==="with_details"?"active":""} aria-pressed={contactView==="with_details"} onClick={()=>setContactView(contactView==="with_details"?"all":"with_details")}><strong>{contactsWithDetails}</strong> With details</button>
+       <button type="button" className={contactView==="missing_details"?"active":""} aria-pressed={contactView==="missing_details"} onClick={()=>setContactView(contactView==="missing_details"?"all":"missing_details")}><strong>{contactsMissingDetails}</strong> Missing details</button>
+      </div>
+     </header>
+     <div className="cx-contacts-directory-controls">
+      <label className="cx-contacts-search"><span className="cx-sr-only">Search contacts</span><input type="search" aria-label="Search contacts" placeholder="Search name, contact info or enquiry…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
+      <label><span className="cx-sr-only">Contact role</span><select aria-label="Filter contact role" value={contactRole} onChange={e=>setContactRole(e.target.value)}><option value="all">All roles</option>{contactRoles.map(role=><option key={role} value={role}>{shortLabel(role)}</option>)}</select></label>
+      <label><span className="cx-sr-only">Sort contacts</span><select aria-label="Sort contacts" value={contactSort} onChange={e=>setContactSort(e.target.value==="newest"?"newest":"name")}><option value="name">Name A–Z</option><option value="newest">Recently added</option></select></label>
+      {(search||contactRole!=="all"||contactSort!=="name"||contactView!=="all")&&<button type="button" className="cx-contacts-clear" onClick={()=>{setSearch("");setContactRole("all");setContactView("all");setContactSort("name");}}>Clear filters</button>}
+     </div>
+     <div className="cx-contacts-directory-count" role="status">{matchingPeople.length} of {people.length} loaded contacts shown</div>
+     {matchingPeople.length===0?<EmptyState title="No matching contacts" description={people.length?"Try changing the search or filters.":"New contacts will appear here when they are created or linked to an enquiry."}/>:
+      <div className="cx-contacts-directory-list">
+       <div className="cx-contacts-directory-columns" aria-hidden="true"><span>Contact</span><span>Latest enquiry</span><span>Contact information</span><span> </span></div>
+       {matchingPeople.map(p=>{
+        const latest=enquiryByPerson.get(p.id);
+        const primary=p.contact_methods.find(m=>m.primary&&m.value.trim())||p.contact_methods.find(m=>m.value.trim());
+        return <button type="button" className="cx-contacts-directory-row" key={p.id} onClick={()=>{setSelectedOpportunity(null);setSelectedPerson(p.id);}} aria-label={"Open contact profile for "+p.full_name}>
+         <span className="cx-contacts-person"><span className="cx-avatar" aria-hidden="true">{initials(p.full_name)}</span><span className="cx-contacts-person-details"><strong>{p.full_name}</strong><small>{p.roles.length?p.roles.map(shortLabel).join(" · "):"Contact"}</small></span></span>
+         <span className="cx-contacts-enquiry">{latest?<><span title={latest.summary}>{latest.summary}</span><small>{shortLabel(latest.source)} · {latest.count} {latest.count===1?"enquiry":"enquiries"} in loaded records</small></>:<small>No enquiries in loaded records</small>}</span>
+         <span className="cx-contacts-method">{primary?<><span title={primary.value}>{primary.value}</span><small>{shortLabel(primary.kind)}</small></>:<span className="cx-contacts-missing">Contact details needed</span>}</span>
+         <span className="cx-contacts-open" aria-hidden="true">View ↗</span>
+        </button>;
+       })}
+      </div>}
     </section>}
 
     {section==="pipeline"&&<div className="cx-pipeline-stack">
