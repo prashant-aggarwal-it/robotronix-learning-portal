@@ -12,9 +12,16 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
  const [threads,setThreads]=useState<Thread[]>([]),[selected,setSelected]=useState<string|null>(null),[conversation,setConversation]=useState<Conversation|null>(null);
  const [attachments,setAttachments]=useState<Attachment[]>([]),[replyContext,setReplyContext]=useState<Record<string,unknown>|null>(null);
  const [filter,setFilter]=useState("all"),[search,setSearch]=useState(""),[summary,setSummary]=useState(""),[personId,setPersonId]=useState("");
- const [contacts,setContacts]=useState<ConnectPerson[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const [contacts,setContacts]=useState<ConnectPerson[]>([]),[nextCursor,setNextCursor]=useState<{at:string;id:string}|null>(null),[loadingMore,setLoadingMore]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const api=base(tenantId);
- const refresh=useCallback(async()=>{const r=await connectFetch<{items:Thread[]}>(api+"/threads?limit=100");setThreads(r.items||[]);},[api]);
+ const refresh=useCallback(async()=>{const r=await connectFetch<{items:Thread[];nextCursor:{at:string;id:string}|null}>(api+"/threads?limit=100");setThreads(r.items||[]);setNextCursor(r.nextCursor||null);},[api]);
+ async function loadMore(){if(!nextCursor||loadingMore)return;setLoadingMore(true);setError("");
+  try{const q=new URLSearchParams({limit:"100",beforeAt:nextCursor.at,beforeId:nextCursor.id});
+   const r=await connectFetch<{items:Thread[];nextCursor:{at:string;id:string}|null}>(api+"/threads?"+q);
+   setThreads(old=>{const seen=new Set(old.map(x=>x.id));return [...old,...r.items.filter(x=>!seen.has(x.id))];});
+   setNextCursor(r.nextCursor||null);
+  }catch(e){setError(e instanceof Error?e.message:String(e));}finally{setLoadingMore(false);}
+ }
  useEffect(()=>{setThreads([]);setSelected(null);setConversation(null);setError("");void refresh().catch(e=>setError(String(e)));},[refresh]);
  useEffect(()=>{if(!selected)return;let alive=true;setConversation(null);setAttachments([]);setReplyContext(null);setNotice("");
   const path=api+"/conversations/"+encodeURIComponent(selected);
@@ -37,7 +44,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
   <div style={{display:"grid",gridTemplateColumns:"minmax(210px,1fr) minmax(0,2fr)",gap:16}}>
    <div style={{maxHeight:640,overflowY:"auto"}}>{shown.length===0?<p>No conversations found.</p>:shown.map(t=><button type="button" key={t.id} onClick={()=>setSelected(t.id)} style={{display:"block",width:"100%",textAlign:"left",padding:12,marginBottom:6,border:"1px solid #d8e3ec",borderRadius:10,background:selected===t.id?"#eaf5fc":"transparent",color:"inherit"}}>
     <strong>{t.personName||t.externalContactId||"Unknown contact"}</strong> {t.unreadCount>0&&<span>({t.unreadCount} new)</span>}<div><small>{t.provider} · {stamp(t.lastAt)} · {t.classification}</small></div><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.lastMessage||"No preview"}</div>
-   </button>)}</div>
+   </button>)}{nextCursor&&<button type="button" disabled={loadingMore} onClick={()=>void loadMore()} style={{padding:10,width:"100%"}}>{loadingMore?"Loading…":"Load older conversations"}</button>}</div>
    <div style={{minWidth:0}}>{!selected?<p>Select a conversation to view its history.</p>:!conversation?<p>Loading conversation…</p>:<>
     <h3>{threads.find(t=>t.id===selected)?.personName||"Conversation"} <small>({conversation.provider})</small></h3>
     <div style={{maxHeight:380,overflowY:"auto",padding:12,border:"1px solid #d8e3ec",borderRadius:10}}>
