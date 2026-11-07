@@ -28,6 +28,20 @@ export async function POST(req:NextRequest){
  const recipients=Array.isArray(data.to)?data.to:[data.to].filter(Boolean);
  if(!emailId||!from||!recipients.length)return intakeError("Incomplete email metadata",400);
  let processed=0,duplicates=0,failed=0;
+ const token=process.env.CONNECT_RESEND_API_KEY;
+ if(!token)return intakeError("Inbound email content retrieval is not configured",503);
+ const received=await fetch("https://api.resend.com/emails/receiving/"+encodeURIComponent(emailId),{
+  headers:{Authorization:"Bearer "+token},cache:"no-store",signal:AbortSignal.timeout(10000)
+ }).catch(()=>null);
+ if(!received?.ok)return intakeError("Unable to retrieve inbound email content",503);
+ const full:any=await received.json().catch(()=>null);
+ if(!full||typeof full!=="object"||full.id!==emailId)return intakeError("Invalid received email",503);
+ const body=safeString(full.text,15000)||"";
+ const attachments=Array.isArray(full.attachments)?full.attachments.slice(0,20).map((a:any)=>({
+  id:safeString(a.id,250),filename:safeString(a.filename,255),
+  contentType:safeString(a.content_type,150),size:typeof a.size==="number"&&a.size>=0?Math.floor(a.size):null
+ })):[];
+ const messageHeader=safeString(full.message_id,250)||null;
  for(const rawTo of recipients.slice(0,10)){
   const to=mailbox(safeString(rawTo,350));
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){failed++;continue;}
@@ -36,6 +50,11 @@ export async function POST(req:NextRequest){
     p_provider:"email",p_external_account_id:to,p_event_id:emailId,
     p_name:senderName(from).slice(0,150),p_email:mailbox(from),p_phone:null,
     p_summary:(safeString(data.subject,1500)||"New inbound email enquiry")
+   });
+   await invokeIngest("connect_enrich_inbound_email",{
+    p_mailbox:to,p_event_id:emailId,p_body:body,p_attachments:attachments,
+    p_header_message_id:messageHeader,p_subject:safeString(full.subject||data.subject,250),
+    p_sender_email:mailbox(from)
    });
    if(result?.duplicate)duplicates++;else processed++;
   }catch{failed++;}
