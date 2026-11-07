@@ -4,7 +4,7 @@ import {connectFetch,crmList,type ConnectPerson} from "@/features/connect/api/cl
 import {ConnectWhatsAppInbox} from "./ConnectWhatsAppInbox";
 import styles from "./ConnectUnifiedInbox.module.css";
 
-type Thread={id:string;provider:string;channelName:string;personId:string|null;personName:string|null;externalContactId:string|null;status:string;lastAt:string;lastMessage:string|null;unreadCount:number;classification:string};
+type Thread={id:string;provider:string;channelName:string;personId:string|null;personName:string|null;externalContactId:string|null;status:string;lastAt:string;lastMessage:string|null;lastDirection:string|null;unreadCount:number;classification:string};
 type Message={id:string;body:string|null;kind:string;direction:string;occurredAt:string;deliveryStatus:string};
 type Conversation={personId:string|null;provider:string;channelName:string;status:string;canWrite:boolean;classification:string;inquiryId:string|null;messages:Message[]};
 type Attachment={messageId:string;id:string;filename:string;contentType:string;size:number};
@@ -62,6 +62,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
  const shown=threads.filter(t=>{
   if(filter!=="all"&&t.provider!==filter)return false;
   if(view==="unread"&&t.unreadCount===0)return false;
+  if(view==="needs_reply"&&t.lastDirection!=="inbound")return false;
   if(view==="open"&&t.status!=="open")return false;
   if(view==="pending"&&t.status!=="pending")return false;
   if(view==="closed"&&t.status!=="closed")return false;
@@ -70,6 +71,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
  });
  const current=threads.find(t=>t.id===selected);
  const unreadTotal=threads.reduce((n,t)=>n+t.unreadCount,0);
+ const needsReply=threads.filter(t=>t.lastDirection==="inbound").length;
  const contactOptions=contacts.filter(c=>c.full_name.toLowerCase().includes(personId.toLowerCase())).slice(0,10);
  const providerLabel=(provider:string)=>provider==="whatsapp"?"WhatsApp":provider==="instagram"?"Instagram":provider==="facebook"?"Facebook":"Email";
  return <section className={styles.workspace} aria-label="Unified communications inbox">
@@ -93,9 +95,10 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
       <div className={styles.pillGroup} role="group" aria-label="Conversation status">
        <button type="button" className={view==="all"?styles.pillActive:styles.pill} aria-pressed={view==="all"} onClick={()=>setView("all")}>All</button>
        <button type="button" className={view==="unread"?styles.pillActive:styles.pill} aria-pressed={view==="unread"} onClick={()=>setView("unread")}>Unread {unreadTotal>0?"("+unreadTotal+")":""}</button>
+       <button type="button" className={view==="needs_reply"?styles.pillActive:styles.pill} aria-pressed={view==="needs_reply"} onClick={()=>setView("needs_reply")}>Needs reply {needsReply>0?"("+needsReply+")":""}</button>
       </div>
       <label className={styles.srOnly} htmlFor="cx-thread-state">Conversation state</label>
-      <select id="cx-thread-state" className={styles.stateSelect} aria-label="Conversation state" value={["all","unread"].includes(view)?"all":view} onChange={e=>setView(e.target.value)}>
+      <select id="cx-thread-state" className={styles.stateSelect} aria-label="Conversation state" value={["all","unread","needs_reply"].includes(view)?"all":view} onChange={e=>setView(e.target.value)}>
        <option value="all">Any status</option><option value="open">Open</option><option value="pending">Pending</option><option value="closed">Closed</option>
       </select>
      </div>

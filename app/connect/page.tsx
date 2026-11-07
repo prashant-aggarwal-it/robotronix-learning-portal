@@ -271,7 +271,7 @@ export default function ConnectPage(){
    <div className="cx-content">
     <ErrorMessage error={error}/>
     {notice&&<div className="cx-success" role="status">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss notice">×</button></div>}
-    <div className="cx-page-heading"><div><span className="cx-kicker">{tenant?.workspace_name}</span>
+    {section!=="communications"&&<div className="cx-page-heading"><div><span className="cx-kicker">{tenant?.workspace_name}</span>
      <h1>{section==="overview"?"Business overview":navigation.find(n=>n.id===section)?.label}</h1>
      <p>{section==="overview"?"Stay on top of every enquiry, follow-up and admission.":
      section==="enquiries"?"Capture, qualify and respond to every incoming enquiry.":
@@ -283,7 +283,7 @@ export default function ConnectPage(){
      section==="reports"?"Track conversion, counsellor performance and real recorded marketing ROI.":"Manage institute programmes and access."}</p></div>
      {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>＋ New enquiry</button>}
      {section==="contacts"&&canWrite&&<button className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
-    </div>
+    </div>}
 
     {section==="overview"&&<>
      <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}/>
