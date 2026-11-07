@@ -593,3 +593,45 @@
 .cx-intelligence-board .cx-intel-board-rows{gap:5px}
 .cx-intelligence-board .cx-intel-board-row{padding:9px 11px}
 @media(max-width:650px){.cx-insight-metric{padding:11px}.cx-overview-recent .cx-record-main small{max-width:175px}.cx-overview-actions{justify-content:flex-end}}
+
+/* Enquiries: compact, responsive triage workspace */
+.cx-enquiry-workspace{min-height:0}
+.cx-enquiry-heading{padding:18px 20px 12px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.cx-enquiry-heading h2{font-size:17px;font-weight:750;margin:0 0 4px}
+.cx-enquiry-heading p{margin:0;font-size:12px;color:#72879a}
+.cx-enquiry-summary{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.cx-enquiry-summary>span,.cx-enquiry-summary>button{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:9px;border:1px solid #dfebf3;background:#f6fafc;color:#416680;font-size:11px;white-space:nowrap}
+.cx-enquiry-summary strong{font-size:14px;color:#164a6b}
+.cx-enquiry-summary button{cursor:pointer}
+.cx-enquiry-summary button:hover,.cx-enquiry-summary button.is-active{background:#e4f3fc;border-color:#99cbe7}
+.cx-enquiry-toolbar{padding:0 20px 11px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #e6eef3}
+.cx-enquiry-toolbar label{min-width:135px;flex:0 1 auto}
+.cx-enquiry-toolbar .cx-enquiry-search{flex:1 1 270px}
+.cx-enquiry-toolbar input,.cx-enquiry-toolbar select{width:100%;height:38px;background:#fff;border:1px solid #dbe7ee;border-radius:9px;padding:8px 11px;color:#244c67;font-size:12px}
+.cx-enquiry-toolbar select{cursor:pointer;min-width:125px}
+.cx-enquiry-clear{padding:9px;border:0;border-radius:8px;background:#edf6fb;color:#166f9f;font-size:12px;font-weight:700;cursor:pointer}
+.cx-enquiry-result-count{padding:9px 20px;background:#fbfdfe;color:#70879a;font-size:11px}
+.cx-enquiry-table{width:100%;min-width:790px;table-layout:fixed}
+.cx-enquiry-table th{text-align:left;font-size:11px;white-space:nowrap}
+.cx-enquiry-table td{padding:11px 10px;vertical-align:middle}
+.cx-enquiry-table th:first-child,.cx-enquiry-table td:first-child{width:30%;padding-left:20px}
+.cx-enquiry-table th:nth-child(2),.cx-enquiry-table td:nth-child(2){width:11%}
+.cx-enquiry-table th:nth-child(3),.cx-enquiry-table td:nth-child(3){width:23%}
+.cx-enquiry-table th:nth-child(4),.cx-enquiry-table td:nth-child(4){width:14%}
+.cx-enquiry-table th:nth-child(5),.cx-enquiry-table td:nth-child(5){width:12%}
+.cx-enquiry-table th:nth-child(6),.cx-enquiry-table td:nth-child(6){width:10%}
+.cx-enquiry-person{display:flex;align-items:center;gap:10px;min-width:0}
+.cx-enquiry-person .cx-avatar{height:32px;width:32px;flex:0 0 32px;border-radius:50%}
+.cx-enquiry-person>span:last-child{min-width:0;display:flex;flex-direction:column;gap:3px}
+.cx-enquiry-person .cx-cell-title{font-weight:750;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-enquiry-person .cx-cell-secondary{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;overflow:hidden;line-height:1.35;max-width:none;font-size:11px}
+.cx-enquiry-category{display:flex;flex-direction:column;gap:5px}
+.cx-enquiry-category select{height:36px;width:100%;max-width:220px;min-width:0;border:1px solid #dce8f1;border-radius:8px;background:#fff;padding:7px 9px;color:#355b76;font-size:11px}
+.cx-enquiry-category .cx-category-suggestion{font-size:10px;line-height:1.35;margin:0;max-width:220px}
+.cx-enquiry-progress{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.cx-enquiry-progress small{font-size:10px;color:#657c91;overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
+.cx-enquiry-date{font-size:11px;color:#4b677b}
+.cx-enquiry-view{font-size:11px;white-space:normal;text-align:left}
+.cx-enquiry-table tbody tr:hover{background:#f7fbfe}
+@media(max-width:800px){.cx-enquiry-toolbar{padding-left:12px;padding-right:12px}.cx-enquiry-heading{padding-left:12px;padding-right:12px}.cx-enquiry-result-count{padding-left:12px}.cx-enquiry-table-scroll{overflow-x:auto;max-width:100%}}
+@media(max-width:550px){.cx-enquiry-toolbar label,.cx-enquiry-toolbar .cx-enquiry-search{flex:1 1 100%}.cx-enquiry-summary{width:100%}}

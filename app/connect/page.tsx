@@ -34,6 +34,9 @@ export default function ConnectPage(){
  const [section,setSection]=useState<Section>("overview");
  const [enquiryPrefs,setEnquiryPrefs]=useState<EnquiryPreferences|null>(null);
  const [categoryFilter,setCategoryFilter]=useState("");
+ const [enquirySourceFilter,setEnquirySourceFilter]=useState("all");
+ const [enquiryView,setEnquiryView]=useState<"all"|"unclassified"|"linked">("all");
+ const [enquirySort,setEnquirySort]=useState<"latest"|"oldest">("latest");
  const [leadCategory,setLeadCategory]=useState("");
  const [busy,setBusy]=useState(false);
  const [loading,setLoading]=useState(false);
@@ -252,9 +255,19 @@ export default function ConnectPage(){
  }
  const selectedContact=people.find(x=>x.id===selectedPerson);
  const selectedLead=opportunities.find(x=>x.id===selectedOpportunity);
- const matchingInquiries=useMemo(()=>inquiries.filter(x=>
-  (!categoryFilter||x.category_id===categoryFilter)&&(!search||[x.contact_name,x.summary,x.source,x.stage_name,x.category_label].some(v=>(v||"").toLowerCase().includes(search.toLowerCase())))
- ),[inquiries,search,categoryFilter]);
+ const matchingInquiries=useMemo(()=>inquiries.filter(i=>{
+  if(categoryFilter&&i.category_id!==categoryFilter)return false;
+  if(enquirySourceFilter!=="all"&&i.source.toLowerCase()!==enquirySourceFilter)return false;
+  if(enquiryView==="unclassified"&&i.category_id)return false;
+  if(enquiryView==="linked"&&!i.opportunity_id)return false;
+  const q=search.trim().toLowerCase();
+  return !q||[i.contact_name,i.summary,i.source,i.stage_name,i.category_label,i.contact_detail].some(v=>(v||"").toLowerCase().includes(q));
+ }).sort((a,b)=>enquirySort==="latest"?Date.parse(b.received_at)-Date.parse(a.received_at):Date.parse(a.received_at)-Date.parse(b.received_at)),
+ [inquiries,search,categoryFilter,enquirySourceFilter,enquiryView,enquirySort]);
+ const unclassifiedCount=inquiries.filter(i=>!i.category_id).length;
+ const linkedCount=inquiries.filter(i=>Boolean(i.opportunity_id)).length;
+ const enquirySources=[...new Set(inquiries.map(i=>i.source.toLowerCase()))].sort();
+
  const matchingPeople=useMemo(()=>people.filter(x=>
   !search||[x.full_name,...x.contact_methods.map(m=>m.value)].some(v=>v.toLowerCase().includes(search.toLowerCase()))
  ),[people,search]);
@@ -286,7 +299,7 @@ export default function ConnectPage(){
 
     {section==="overview"&&<>
      <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}
-      onSelectSource={source=>{setSearch(source);setSection("enquiries");}}/>
+      onSelectSource={source=>{setEnquirySourceFilter(source.toLowerCase());setCategoryFilter("");setEnquiryView("all");setSearch("");setSection("enquiries");}}/>
      <WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onViewAll={()=>{setSearch("");setSection("contacts");}} onOpenContact={personId=>{const generation=requestGeneration.current;void (async()=>{
       try{
        if(!people.some(contact=>contact.id===personId)){
@@ -301,19 +314,49 @@ export default function ConnectPage(){
      })();}}/>
     </>}
 
-    {section==="enquiries"&&<section className="cx-panel cx-panel-full">
-     <div className="cx-panel-header cx-toolbar"><div><h2>Enquiry inbox</h2><p>{inquiries.length} recent enquiries loaded</p></div>
-      <input className="cx-search" type="search" aria-label="Search enquiries" placeholder="Search names, sources or notes…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
-     <div className="cx-category-filters"><button className={!categoryFilter?"active":""} onClick={()=>setCategoryFilter("")}>All enquiries</button>{enquiryPrefs?.categories.filter(c=>c.active).map(c=><button key={c.id} className={categoryFilter===c.id?"active":""} onClick={()=>setCategoryFilter(c.id)}>{c.label}</button>)}</div>
-     {matchingInquiries.length===0?<EmptyState title="No matching enquiries" description="Try another search or capture a new enquiry."/>:
-      <div className="cx-table-wrap"><table className="cx-table"><thead><tr><th>Contact</th><th>Source</th><th>Category</th><th>Interested in</th><th>Stage</th><th>Received</th><th></th></tr></thead>
-       <tbody>{matchingInquiries.map(i=><tr key={i.id}>
-        <td><span className="cx-cell-title">{i.contact_name||"Unknown contact"}</span><span className="cx-cell-secondary">{i.contact_detail||i.summary||"No contact detail"}</span></td>
-        <td><span className="cx-pill">{shortLabel(i.source)}</span></td><td>{!i.category_id&&canWrite&&suggestEnquiryCategory(i.summary||"",enquiryPrefs?.categories||[])&&<button className="cx-category-suggestion" onClick={()=>{const suggestion=suggestEnquiryCategory(i.summary||"",enquiryPrefs?.categories||[]);if(suggestion)void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId:suggestion.id}})}),"Suggested category applied.");}}>Suggested: {suggestEnquiryCategory(i.summary||"",enquiryPrefs?.categories||[])?.label} · Apply</button>}<select aria-label={"Category for "+(i.contact_name||"enquiry")} disabled={!canWrite} value={i.category_id||""} onChange={e=>{const categoryId=e.target.value;if(!categoryId)return;void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId}})}),"Enquiry categorized.");}}><option value="">Unclassified</option>{enquiryPrefs?.categories.filter(c=>c.active||c.id===i.category_id).map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></td><td>{i.opportunity_title||"Not linked to admissions"}</td>
-        <td><span className={"cx-status "+(i.outcome==="won"?"won":i.outcome==="lost"?"lost":"")}>{i.stage_name||"New enquiry"}</span></td>
-        <td>{dateLabel(i.received_at)}</td>
-        <td><button className="cx-link-button" onClick={()=>{setSelectedPerson(i.person_id);setSelectedOpportunity(i.opportunity_id);}}>View details →</button></td>
-       </tr>)}</tbody></table></div>}
+    {section==="enquiries"&&<section className="cx-panel cx-panel-full cx-enquiry-workspace">
+     <div className="cx-enquiry-heading">
+      <div><h2>Enquiry inbox</h2><p>{inquiries.length} recent enquiries loaded · Classify and move qualified leads forward</p></div>
+      <div className="cx-enquiry-summary">
+       <span><strong>{inquiries.length}</strong> Total</span>
+       <button type="button" className={enquiryView==="unclassified"?"is-active":""} onClick={()=>setEnquiryView(enquiryView==="unclassified"?"all":"unclassified")}><strong>{unclassifiedCount}</strong> Unclassified</button>
+       <button type="button" className={enquiryView==="linked"?"is-active":""} onClick={()=>setEnquiryView(enquiryView==="linked"?"all":"linked")}><strong>{linkedCount}</strong> Linked to admissions</button>
+      </div>
+     </div>
+     <div className="cx-enquiry-toolbar">
+      <label className="cx-enquiry-search"><span className="cx-sr-only">Search enquiries</span>
+       <input type="search" aria-label="Search enquiries" placeholder="Search name, message or source…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
+      <label><span className="cx-sr-only">Filter enquiry source</span><select aria-label="Filter enquiry source" value={enquirySourceFilter} onChange={e=>setEnquirySourceFilter(e.target.value)}>
+       <option value="all">All channels</option>{enquirySources.map(source=><option key={source} value={source}>{shortLabel(source)}</option>)}
+      </select></label>
+      <label><span className="cx-sr-only">Filter enquiry category</span><select aria-label="Filter enquiry category" value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}>
+       <option value="">All categories</option>{enquiryPrefs?.categories.filter(c=>c.active||c.id===categoryFilter).map(c=><option value={c.id} key={c.id}>{c.label}</option>)}
+      </select></label>
+      <label><span className="cx-sr-only">Sort enquiries</span><select aria-label="Sort enquiries" value={enquirySort} onChange={e=>setEnquirySort(e.target.value)}>
+       <option value="latest">Newest first</option><option value="oldest">Oldest first</option>
+      </select></label>
+      {(search||categoryFilter||enquirySourceFilter!=="all"||enquiryView!=="all"||enquirySort!=="latest")&&<button type="button" className="cx-enquiry-clear" onClick={()=>{setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setEnquirySort("latest");}}>Clear filters</button>}
+     </div>
+     <div className="cx-enquiry-result-count" role="status">{matchingInquiries.length} of {inquiries.length} enquiries shown{enquiryView==="unclassified"?" · Unclassified only":enquiryView==="linked"?" · Linked to admissions":""}</div>
+     {matchingInquiries.length===0?<EmptyState title="No matching enquiries" description="Try changing the search or filters, or capture a new enquiry."/>:
+      <div className="cx-table-wrap cx-enquiry-table-scroll"><table className="cx-table cx-enquiry-table">
+       <thead><tr><th scope="col">Customer &amp; enquiry</th><th scope="col">Channel</th><th scope="col">Classification</th><th scope="col">Progress</th><th scope="col">Received</th><th scope="col"><span className="cx-sr-only">Actions</span></th></tr></thead>
+       <tbody>{matchingInquiries.map(i=>{
+        const suggestion=!i.category_id&&canWrite?suggestEnquiryCategory(i.summary||"",enquiryPrefs?.categories||[]):null;
+        return <tr key={i.id}>
+         <td><div className="cx-enquiry-person"><span className="cx-avatar" aria-hidden="true">{initials(i.contact_name||"Lead")}</span><span><strong className="cx-cell-title">{i.contact_name||"New enquiry"}</strong><small className="cx-cell-secondary">{i.summary||i.contact_detail||"No enquiry description"}</small></span></div></td>
+         <td><span className="cx-pill">{shortLabel(i.source)}</span></td>
+         <td><div className="cx-enquiry-category">
+          {suggestion&&<button type="button" className="cx-category-suggestion" disabled={busy} title={"Apply suggested category: "+suggestion.label} onClick={()=>void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId:suggestion.id}})}),"Suggested category applied.")}>Suggested: {suggestion.label} · Apply</button>}
+          <select aria-label={"Category for "+(i.contact_name||"enquiry")} disabled={!canWrite||busy} value={i.category_id||""} onChange={e=>{const categoryId=e.target.value;if(!categoryId)return;void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId}})}),"Enquiry categorized.");}}>
+           <option value="">Unclassified</option>{enquiryPrefs?.categories.filter(c=>c.active||c.id===i.category_id).map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+          </select></div></td>
+         <td><div className="cx-enquiry-progress"><span className={"cx-status "+(i.outcome==="won"?"won":i.outcome==="lost"?"lost":"")}>{i.stage_name||"New enquiry"}</span>{i.opportunity_title&&<small title={i.opportunity_title}>{i.opportunity_title}</small>}</div></td>
+         <td><time className="cx-enquiry-date" dateTime={i.received_at}>{dateLabel(i.received_at)}</time></td>
+         <td><button type="button" className="cx-link-button cx-enquiry-view" aria-label={"View details for "+(i.contact_name||"enquiry")} onClick={()=>{setSelectedPerson(i.person_id);setSelectedOpportunity(i.opportunity_id);}}>View details →</button></td>
+        </tr>;
+       })}</tbody>
+      </table></div>}
     </section>}
 
     {section==="contacts"&&<section className="cx-panel cx-panel-full">
