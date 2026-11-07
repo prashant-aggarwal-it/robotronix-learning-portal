@@ -285,32 +285,20 @@ export default function ConnectPage(){
     </div>}
 
     {section==="overview"&&<>
-     <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}/>
-     <WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onOpenContact={personId=>{const generation=requestGeneration.current;void (async()=>{
+     <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}
+      onSelectSource={source=>{setSearch(source);setSection("enquiries");}}/>
+     <WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onViewAll={()=>{setSearch("");setSection("contacts");}} onOpenContact={personId=>{const generation=requestGeneration.current;void (async()=>{
       try{
-       if(!people.some(p=>p.id===personId)){
+       if(!people.some(contact=>contact.id===personId)){
         const response=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});
         if(requestGeneration.current!==generation)return;
         if(!response.items.length){setError("Contact is not available in this workspace.");return;}
-        setPeople(current=>current.some(p=>p.id===personId)?current:[...current,response.items[0]]);
+        setPeople(current=>current.some(contact=>contact.id===personId)?current:[...current,response.items[0]]);
        }
        if(requestGeneration.current!==generation)return;
        setSection("contacts");setSelectedPerson(personId);setSelectedOpportunity(null);
       }catch(e){if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Unable to open contact.");}
      })();}}/>
-     <div className="cx-overview-grid">
-      <section className="cx-panel"><div className="cx-panel-header"><div><h2>Recent enquiries</h2><p>Latest enquiries across your channels</p></div><button className="cx-link-button" onClick={()=>setSection("enquiries")}>View all →</button></div>
-       {inquiries.length===0?<EmptyState title="No enquiries yet" description="Capture the first enquiry to start building your admissions pipeline."/>:
-       <div className="cx-record-list">{inquiries.slice(0,6).map(i=><button className="cx-record" key={i.id} onClick={()=>{setSection("enquiries");setSelectedPerson(i.person_id);setSelectedOpportunity(i.opportunity_id);}}>
-        <span className="cx-avatar">{initials(i.contact_name||"Lead")}</span><span className="cx-record-main"><strong>{i.contact_name||"New enquiry"}</strong><small>{i.summary||shortLabel(i.source)}</small></span>
-        <span className="cx-record-end"><span className="cx-pill">{shortLabel(i.stage_name||i.source)}</span><small>{dateLabel(i.received_at)}</small></span></button>)}</div>}
-      </section>
-      <section className="cx-panel"><div className="cx-panel-header"><div><h2>Requires attention</h2><p>Follow-ups and upcoming counselling</p></div><button className="cx-link-button" onClick={()=>setSection("followups")}>Open tasks →</button></div>
-       <div className="cx-attention"><div><span className="cx-attention-icon">!</span><strong>{overview.overdueTasks} overdue follow-ups</strong><small>Tasks past their scheduled date</small></div>
-       <div><span className="cx-attention-icon blue">✓</span><strong>{overview.openTasks} open tasks</strong><small>Still awaiting completion</small></div>
-       <div><span className="cx-attention-icon teal">▦</span><strong>{overview.scheduledAppointments} upcoming appointments</strong><small>Counselling, demo and trial sessions</small></div></div>
-      </section>
-     </div>
     </>}
 
     {section==="enquiries"&&<section className="cx-panel cx-panel-full">

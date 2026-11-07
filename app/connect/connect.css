@@ -573,3 +573,23 @@
 .cx-wa-chat-header button{font-size:10px}.cx-wa-tools{padding:8px}
 .cx-wa-tools label{flex:1}.cx-wa-tools select{max-width:140px}
 .cx-wa-compose-actions{flex-wrap:wrap}.cx-wa-compose-actions small{width:100%}}
+
+/* Compact, action-first CRM overview */
+.cx-insights{gap:13px;margin-bottom:15px}
+.cx-insights-intro{padding:0 1px;min-height:15px}
+.cx-insight-metric{padding:13px 16px;gap:3px;border-radius:14px}
+.cx-insight-metric-top{margin-bottom:3px}
+.cx-insight-number{font-size:28px}
+.cx-insight-panel{padding:16px 18px}
+.cx-insight-panel-heading{margin-bottom:11px}
+.cx-overview-recent .cx-record-list{padding:0}
+.cx-overview-recent .cx-record{padding:10px 6px}
+.cx-overview-recent .cx-avatar{width:34px;height:34px}
+.cx-source-action{border:0;width:100%;padding:4px 3px;background:transparent;text-align:left;border-radius:6px;cursor:pointer;color:inherit;font:inherit}
+.cx-source-action:hover{background:#eff7fc}
+.cx-source-action:focus-visible{outline:2px solid #178bc4;outline-offset:2px}
+.cx-pipeline-compact-empty{font-size:12px;color:#6d8497;padding:5px 1px;margin:0}
+.cx-overview-actions{display:flex;gap:7px;flex-wrap:wrap}
+.cx-intelligence-board .cx-intel-board-rows{gap:5px}
+.cx-intelligence-board .cx-intel-board-row{padding:9px 11px}
+@media(max-width:650px){.cx-insight-metric{padding:11px}.cx-overview-recent .cx-record-main small{max-width:175px}.cx-overview-actions{justify-content:flex-end}}
