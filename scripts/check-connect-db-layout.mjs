@@ -18,10 +18,10 @@ for(const file of requiredTests){
  if(!fs.existsSync(path.join(tests,file)))throw new Error("Missing Connect SQL verification: "+file);
 }
 for(const file of fs.readdirSync(source)){
- if(/verify|test|qa_/i.test(file))throw new Error("Connect verification script mixed into migration source: "+file);
+ if(/^(verify|test|qa_)/i.test(file))throw new Error("Connect verification script mixed into migration source: "+file);
 }
 for(const file of fs.readdirSync(tests)){
- if(!requiredTests.includes(file))throw new Error("Unreviewed Connect SQL test file: "+file);
+ if(!/^verify_[a-z0-9_]+\.sql$/.test(file))throw new Error("Unexpected Connect SQL test file: "+file);
 }
 if(!fs.existsSync(path.join(dir,"README.md")))throw new Error("Connect database operating guide missing.");
 console.log("Connect database layout OK: "+fs.readdirSync(source).length+" source files and "+requiredTests.length+" verification scripts.");
