@@ -1,4 +1,5 @@
 import {NextRequest,NextResponse} from "next/server";
+import {createHash} from "node:crypto";
 import {acceptedEvent,intakeError,checkHmacSha256,equalSecret,
  readRawLimited,invokeIngest,safeString} from "@/lib/server/connect-ingestion";
 
@@ -74,8 +75,8 @@ async function fetchLead(leadId:string):Promise<GraphLead>{
 export async function POST(req:NextRequest){
  const secret=process.env.CONNECT_META_APP_SECRET;
  if(!secret)return intakeError("Meta integration unavailable",503);
- // History sync can contain many threads; keep a hard limit to avoid unbounded memory.
- const raw=await readRawLimited(req,2_000_000);
+ // Keep an explicit bound; accepted history chunks are persisted before replying.
+ const raw=await readRawLimited(req,8_000_000);
  if(raw===null)return intakeError("Payload too large",413);
  if(!checkHmacSha256(raw,req.headers.get("x-hub-signature-256"),secret))
   return intakeError("Invalid webhook signature",401);
@@ -112,20 +113,13 @@ export async function POST(req:NextRequest){
      if(Array.isArray(chunk?.errors)){ignored++;continue;} // History sharing declined by owner.
      const threads=Array.isArray(chunk?.threads)?chunk.threads:null;
      if(!threads||threads.length>500){failures++;continue;}
-     for(const thread of threads){
-      const contact=safeString(thread?.id,35),items=thread?.messages;
-      if(!contact||!Array.isArray(items)||items.length>5000){failures++;continue;}
-      // Bounded, idempotent batches allow safe retries after partial success.
-      for(let i=0;i<items.length;i+=200){
-       try{
-        const result:any=await invokeIngest("connect_import_whatsapp_history_thread",{
-         p_external_account_id:phoneId,p_contact_wa_id:contact,
-         p_messages:items.slice(i,i+200)
-        });
-        processed+=Number(result?.imported)||0;
-       }catch{failures++;break;}
-      }
-     }
+     try{
+      const fingerprint=createHash("sha256").update(phoneId+":"+JSON.stringify(chunk)).digest("hex");
+      const result:any=await invokeIngest("connect_queue_whatsapp_history",{
+       p_external_account_id:phoneId,p_fingerprint:fingerprint,p_payload:chunk
+      });
+      if(result?.queued)processed++;else duplicate++;
+     }catch{failures++;}
     }
     continue;
    }

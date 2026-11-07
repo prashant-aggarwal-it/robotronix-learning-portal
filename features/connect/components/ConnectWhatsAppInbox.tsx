@@ -21,6 +21,7 @@ type Details={conversationId:string;personId:string|null;status:"open"|"pending"
 type ContactOption={id:string;name:string;phone:string|null};
 type SendReady={ok:true;canSend:boolean;testMode:boolean;reason:string|null;lastInboundAt:string|null};
 type ChannelHealth={channelId:string;name:string;status:string;syncContacts:number;historicalMessages:number;lastMessageAt:string|null};
+type QueueHealth={channelId:string;pending:number;processing:number;failed:number;completed:number;lastError:string|null};
 const base=(tenantId:string)=>"/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/whatsapp";
 function shortDate(value:string){const date=new Date(value);return Number.isNaN(date.getTime())?"—":
  date.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});}
@@ -44,6 +45,7 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
  const [contactSearching,setContactSearching]=useState(false),[linkOpen,setLinkOpen]=useState(false);
  const [sendReady,setSendReady]=useState<SendReady|null>(null),[sending,setSending]=useState(false);
  const [channelHealth,setChannelHealth]=useState<ChannelHealth[]>([]),[healthError,setHealthError]=useState("");
+ const [queueHealth,setQueueHealth]=useState<QueueHealth[]>([]);
  const sendRequestId=useRef<string|null>(null);
  const threadGeneration=useRef(0),chatGeneration=useRef(0),searchGeneration=useRef(0);
  const selectedRef=useRef<string|null>(null);
@@ -51,8 +53,8 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
  const api=base(tenantId);
  const loadHealth=useCallback(async()=>{
   try{
-   const r=await connectFetch<{ok:true;channels:ChannelHealth[]}>(api+"/health");
-   setChannelHealth(r.channels);setHealthError("");
+   const r=await connectFetch<{ok:true;channels:ChannelHealth[];historyQueue:QueueHealth[]}>(api+"/health");
+   setChannelHealth(r.channels);setQueueHealth(r.historyQueue);setHealthError("");
   }catch{setHealthError("Connection diagnostics unavailable.");}
  },[api]);
 
@@ -97,7 +99,7 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
   threadGeneration.current++;chatGeneration.current++;searchGeneration.current++;
   setThreads([]);setThreadCursor(null);setSelected(null);setMessages([]);setDetails(null);
   setDraft("");setSendReady(null);sendRequestId.current=null;setError("");setChatError("");setQuery("");setFilter("all");setNumber("all");setLinkOpen(false);
-  setChannelHealth([]);setHealthError("");
+  setChannelHealth([]);setQueueHealth([]);setHealthError("");
   void loadThreads();void loadHealth();return()=>{threadGeneration.current++;chatGeneration.current++;searchGeneration.current++;};
  },[loadThreads,loadHealth]);
 
@@ -193,6 +195,10 @@ export function ConnectWhatsAppInbox({tenantId,canWrite,onOpenContact}:{
       channelHealth.map(h=><p key={h.channelId}><strong>{h.name}</strong> · {h.status} channel ·
        {" "+h.syncContacts} synced contacts · {h.historicalMessages} historical messages
        {h.lastMessageAt?" · Latest message "+shortDate(h.lastMessageAt):" · No messages yet"}
+       {queueHealth.filter(q=>q.channelId===h.channelId).map(q=><span key={q.channelId}>
+        {" · History jobs: "+q.pending} queued, {q.processing} processing, {q.failed} failed, {q.completed} completed
+        {q.lastError?" · Error: "+q.lastError:""}
+       </span>)}
       </p>)}
     </div>}
    </details>

@@ -2,7 +2,7 @@
 
 **Priority:** Robotronix WhatsApp Business mobile-app number **+91 85957 72008**. The separate Cloud API/WA Simple number **+91 92179 06540** is out of scope and must not be changed.
 
-**State:** Stage A code built and DEV migration `connect_whatsapp_coexistence_sync_stage_a` applied on 2026-11-06. No real Meta credentials, webhook subscriptions or live phone connections. Do not activate a real channel, expose a production send button, launch embedded signup, scan a QR code, transfer/deregister a number, or claim live synchronization yet.
+**State:** Stage A code built and DEV migrations `connect_whatsapp_coexistence_sync_stage_a` and `connect_whatsapp_history_queue_stage_a` applied (2026-11-06/07). No real Meta credentials, webhook subscriptions or live phone connections. Do not activate a real channel, expose a production send button, launch embedded signup, scan a QR code, transfer/deregister a number, or claim live synchronization yet.
 
 ## Already implemented
 
@@ -15,12 +15,13 @@
 - `edit` and `revoke` handling for incoming messages and app echoes, preserving original message body for audit.
 - Authorized `/api/connect/workspaces/{tenantId}/whatsapp/health` readout of registered channels, synchronized contacts, imported historical messages and latest message activity. This does **not** establish live Meta connection health.
 - Rollback-only DEV SQL acceptance tests passed after installation; RPCs are service-role-only and `SECURITY INVOKER`.
+- Durable history queue: signed history events are stored in a private RLS-protected table with fingerprint deduplication; a bounded worker imports 200 messages at a time, persists cursor progress, uses leases, retries transient errors and exposes failed-job counts. Completed queue payloads are removed immediately; old completed/failed job records expire after 7/30 days. Worker is disabled by default and must be explicitly configured in an approved DEV deployment.
 
 ## Must complete before connecting the Business App
 
 1. Recover Meta Developer sign-in (the user currently cannot receive SMS login codes). Check the existing app and business ownership, eligibility, Tech Provider/Solution Partner requirements and available Embedded Signup flow. Do not ask for OTPs, app secrets, access tokens or passwords in chat.
 2. Build and verify the official Coexistence Embedded Signup callback, state/nonce checks and account binding. Use only the intended Robotronix Business Portfolio; never reuse the WA Simple number's connection as the Business App sender.
-3. Verify the history/contact importers against actual signed Meta payloads, including large history chunks, media placeholders, history-sharing decline, missing/late edit targets and sync order. The current webhook handles bounded batches synchronously, up to a 2 MB request; oversized payloads cannot be imported yet. Do not connect a live number until durable staging/async processing for larger history payloads is in place.
+3. Verify the history/contact importers against actual signed Meta payloads, including large history chunks, media placeholders, history-sharing decline, missing/late edit targets and sync order. The webhook now queues history payloads (up to 8 MB per signed request, bounded by deployment provider request limits); the scheduled worker processes them asynchronously. Larger-than-limit webhook requests and very large single history chunks still need a live Meta acceptance check.
 4. Confirm `messages`, `smb_message_echoes`, `history` and `smb_app_state_sync` subscriptions and any account-disconnection events required by the approved Meta onboarding model.
 5. Build a production-number send path with permission checks, permitted reply/template rules, opt-in protections, idempotency, provider reconciliation and strict per-channel credential separation. Do not reuse the test-only token allowlist for live sends.
 6. Test on a DEV HTTPS endpoint with an explicitly approved account: inbound text, app-originated reply echo, Connect-originated reply, delivery/read callbacks, duplicates, unsupported media, historical/contact sync, disconnected account and cross-tenant isolation.
@@ -31,3 +32,11 @@
 The user has confirmed WhatsApp Business app → Account → Business Platform displays **Connect to the Business Platform**, with the option to continue using the mobile app and share up to six months of individual chat history. This shows a connection entry point, **not** approval for this custom CRM or a completed connection.
 
 Current blocker: Meta Developer login SMS is not arriving. Continue code and DEV-safe verification without account changes. Once login works, inspect **My Apps** before choosing the onboarding flow.
+
+## Background worker DEV configuration
+
+- `CONNECT_HISTORY_DRAIN_ENABLED=true` — only after a DEV deployment has the migration and a protected scheduler endpoint.
+- `CONNECT_HISTORY_JOB_SECRET` — independent random server-only secret (at least 24 characters), never shared in chat.
+- Existing DEV `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` must point only to the DEV project.
+- `netlify/functions/connect-history-drain.mts` runs every minute and calls the authenticated `/api/connect/jobs/whatsapp-history` endpoint. Without the enable flag, it exits without processing.
+- The inbox Connection readiness panel shows pending, processing, completed and failed history jobs. A failed job is retained for review; never expose raw queued message payloads to the browser.
