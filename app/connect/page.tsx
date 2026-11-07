@@ -279,7 +279,6 @@ export default function ConnectPage(){
      section==="pipeline"?"Track every admission from first conversation to enrolment.":
      section==="followups"?"Your team's calls, tasks and next actions.":
      section==="calendar"?"Counselling, demo and trial appointments.":
-     section==="communications"?"Read conversations, manage contacts and prepare WhatsApp replies.":
      section==="reports"?"Track conversion, counsellor performance and real recorded marketing ROI.":"Manage institute programmes and access."}</p></div>
      {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>＋ New enquiry</button>}
      {section==="contacts"&&canWrite&&<button className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
@@ -339,7 +338,18 @@ export default function ConnectPage(){
     </section>}
 
     {section==="pipeline"&&<div className="cx-pipeline-stack">
-     {pipelines.length===0?<section className="cx-panel"><EmptyState title="Create your admissions pipeline" description="A pipeline is configured by institute managers. Start with stages such as New, Contacted, Trial, Won and Lost."/></section>:
+     {pipelines.length===0?<section className="cx-panel">
+      <EmptyState title="Set up your first admissions pipeline" description="Track every opportunity from initial enquiry to enrolment. Start with a ready-made five-stage pipeline."/>
+      {canConfigure?<form className="cx-inline-form" aria-label="Create admissions pipeline" style={{maxWidth:520,margin:"0 auto 22px",display:"flex",flexWrap:"wrap",justifyContent:"center",gap:10}} onSubmit={e=>{e.preventDefault();const name=pipelineName.trim()||"Student Admissions";void run(async()=>{
+       await crmCommand(tenantId,"pipelines","bootstrap_pipeline",{name});
+       setPipelineName("");
+      },"Admissions pipeline created. You can now add and track opportunities.");}}>
+       <label htmlFor="cx-pipeline-quick-name" style={{width:"100%",textAlign:"center",fontWeight:600,fontSize:13}}>Pipeline name</label>
+       <input id="cx-pipeline-quick-name" style={{flex:"1 1 230px",minWidth:0}} value={pipelineName} maxLength={100} onChange={e=>setPipelineName(e.target.value)} placeholder="Student Admissions"/>
+       <button type="submit" className="cx-primary" disabled={busy}>{busy?"Creating…":"Create pipeline"}</button>
+       <small style={{flexBasis:"100%",textAlign:"center",color:"#657e92"}}>Default stages: New → Contacted → Trial → Won / Lost. You can manage additional pipelines in Institute settings.</small>
+      </form>:<p style={{textAlign:"center",margin:"0 0 24px",color:"#657e92",fontSize:13}}>Ask your workspace owner, admin or manager to create the first pipeline.</p>}
+     </section>:
      pipelines.map(p=><section key={p.id} className="cx-pipeline-section">
       <div className="cx-panel-header"><div><h2>{p.name}</h2><p>{p.stages.length} stages · {opportunities.filter(o=>o.pipeline_id===p.id).length} opportunities</p></div></div>
       <div className="cx-kanban">{[...p.stages].sort((a,b)=>a.order-b.order).map(stage=><div className="cx-kanban-column" key={stage.id}>
