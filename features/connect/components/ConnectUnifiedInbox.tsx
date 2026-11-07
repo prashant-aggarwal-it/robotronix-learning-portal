@@ -30,6 +30,17 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
   void connectFetch(path,{method:"PATCH",body:JSON.stringify({action:"mark_read"})}).then(()=>{if(alive)setThreads(old=>old.map(t=>t.id===selected?{...t,unreadCount:0}:t));}).catch(()=>{});
   return()=>{alive=false;};
  },[api,selected]);
+ async function openAttachment(messageId:string,attachmentId:string){
+  if(!selected)return;setError("");
+  try{
+   const result=await connectFetch<{url:string}>(api+"/conversations/"+encodeURIComponent(selected)+"/attachment-link",{
+    method:"POST",body:JSON.stringify({messageId,attachmentId})
+   });
+   const url=new URL(result.url);
+   if(url.protocol!=="https:")throw new Error("Invalid download link.");
+   window.open(url.toString(),"_blank","noopener,noreferrer");
+  }catch(e){setError(e instanceof Error?e.message:String(e));}
+ }
  async function sendReply(){if(!selected||!replyText.trim()||busy)return;
   setBusy(true);setError("");setNotice("");
   try{
@@ -59,7 +70,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
     <h3>{threads.find(t=>t.id===selected)?.personName||"Conversation"} <small>({conversation.provider})</small></h3>
     <div style={{maxHeight:380,overflowY:"auto",padding:12,border:"1px solid #d8e3ec",borderRadius:10}}>
      {(conversation.messages||[]).map(m=><div key={m.id} style={{marginBottom:10,textAlign:m.direction==="outbound"?"right":"left"}}><div style={{display:"inline-block",maxWidth:"90%",padding:10,borderRadius:10,background:m.direction==="outbound"?"#e2f4ed":"#eef4f8",textAlign:"left",whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{m.body||"["+m.kind+"]"}<div><small>{stamp(m.occurredAt)} · {m.deliveryStatus}</small></div>
-      {attachments.filter(a=>a.messageId===m.id).map(a=><div key={a.id}><small>Attachment: {a.filename} ({a.contentType})</small></div>)}</div></div>)}
+      {attachments.filter(a=>a.messageId===m.id).map(a=><div key={a.id}><small>Attachment: {a.filename} ({a.contentType})</small>{conversation.provider==="email"&&<button type="button" onClick={()=>void openAttachment(m.id,a.id)}>Open attachment</button>}</div>)}</div></div>)}
      {!conversation.messages?.length&&<p>No messages yet.</p>}
     </div>
     {canWrite&&conversation.canWrite&&<div style={{display:"grid",gap:8,marginTop:12}}>
