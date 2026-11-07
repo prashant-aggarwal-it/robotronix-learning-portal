@@ -11,7 +11,7 @@ const stamp=(s:string)=>{const d=new Date(s);return Number.isNaN(d.getTime())?""
 export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:string;canWrite:boolean;onOpenContact?:(id:string)=>void}){
  const [threads,setThreads]=useState<Thread[]>([]),[selected,setSelected]=useState<string|null>(null),[conversation,setConversation]=useState<Conversation|null>(null);
  const [attachments,setAttachments]=useState<Attachment[]>([]),[replyContext,setReplyContext]=useState<Record<string,unknown>|null>(null);
- const [filter,setFilter]=useState("all"),[search,setSearch]=useState(""),[summary,setSummary]=useState(""),[personId,setPersonId]=useState("");
+ const [filter,setFilter]=useState("all"),[search,setSearch]=useState(""),[summary,setSummary]=useState(""),[personId,setPersonId]=useState(""),[replyText,setReplyText]=useState("");
  const [contacts,setContacts]=useState<ConnectPerson[]>([]),[nextCursor,setNextCursor]=useState<{at:string;id:string}|null>(null),[loadingMore,setLoadingMore]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const api=base(tenantId);
  const refresh=useCallback(async()=>{const r=await connectFetch<{items:Thread[];nextCursor:{at:string;id:string}|null}>(api+"/threads?limit=100");setThreads(r.items||[]);setNextCursor(r.nextCursor||null);},[api]);
@@ -30,6 +30,16 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
   void connectFetch(path,{method:"PATCH",body:JSON.stringify({action:"mark_read"})}).then(()=>{if(alive)setThreads(old=>old.map(t=>t.id===selected?{...t,unreadCount:0}:t));}).catch(()=>{});
   return()=>{alive=false;};
  },[api,selected]);
+ async function sendReply(){if(!selected||!replyText.trim()||busy)return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   const path=api+"/conversations/"+encodeURIComponent(selected);
+   await connectFetch(path+"/reply",{method:"POST",body:JSON.stringify({clientRequestId:crypto.randomUUID(),text:replyText.trim()})});
+   setReplyText("");setNotice("Provider accepted the reply. Delivery may still be pending.");
+   const r=await connectFetch<{conversation:Conversation}>(path);setConversation(r.conversation);await refresh();
+  }catch(e){setError(e instanceof Error?e.message:String(e));}
+  finally{setBusy(false);}
+ }
  async function action(name:string,data:Record<string,unknown>={},id?:string){const target=id||selected;if(!target||busy)return;setBusy(true);setError("");setNotice("");
   try{await connectFetch(api+"/conversations/"+encodeURIComponent(target)+"/actions",{method:"PATCH",body:JSON.stringify(name==="link_contact"?{action:name,personId:data.personId}:{action:name,data})});
    const r=await connectFetch<{conversation:Conversation}>(api+"/conversations/"+encodeURIComponent(target));setConversation(r.conversation);await refresh();setNotice("Changes saved.");
@@ -61,7 +71,9 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
       {conversation.personId&&onOpenContact&&<button onClick={()=>onOpenContact(conversation.personId!)}>Open linked contact</button>}
      </div>
     </div>}
-    {conversation.provider!=="whatsapp"&&<p style={{marginTop:12}}><small>{replyContext?.canReply===true?"Reply eligibility confirmed. Sending remains disabled until provider credentials and delivery integration are validated.":"Replies are unavailable or outside the permitted messaging window."}</small></p>}
+    {conversation.provider!=="whatsapp"&&<div style={{display:"grid",gap:8,marginTop:12}}>
+     {replyContext?.canReply===true&&canWrite?<><textarea aria-label="Reply to conversation" rows={3} maxLength={conversation.provider==="email"?12000:1000} placeholder="Write your reply…" value={replyText} onChange={e=>setReplyText(e.target.value)}/><button type="button" disabled={busy||!replyText.trim()} onClick={()=>void sendReply()}>Send {conversation.provider==="email"?"email":"social"} reply</button></>:<small>Replies are unavailable or outside the permitted messaging window.</small>}
+    </div>}
     {conversation.provider==="whatsapp"&&<p><small>For WhatsApp replies, use the existing WhatsApp inbox while Meta sending is being validated.</small></p>}
    </>}</div>
   </div>
