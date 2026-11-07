@@ -1,6 +1,8 @@
 "use client";
 import {useCallback,useEffect,useState} from "react";
 import {connectFetch,crmList,type ConnectPerson} from "@/features/connect/api/client";
+import {ConnectWhatsAppInbox} from "./ConnectWhatsAppInbox";
+import styles from "./ConnectUnifiedInbox.module.css";
 
 type Thread={id:string;provider:string;channelName:string;personId:string|null;personName:string|null;externalContactId:string|null;status:string;lastAt:string;lastMessage:string|null;unreadCount:number;classification:string};
 type Message={id:string;body:string|null;kind:string;direction:string;occurredAt:string;deliveryStatus:string};
@@ -11,7 +13,7 @@ const stamp=(s:string)=>{const d=new Date(s);return Number.isNaN(d.getTime())?""
 export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:string;canWrite:boolean;onOpenContact?:(id:string)=>void}){
  const [threads,setThreads]=useState<Thread[]>([]),[selected,setSelected]=useState<string|null>(null),[conversation,setConversation]=useState<Conversation|null>(null);
  const [attachments,setAttachments]=useState<Attachment[]>([]),[replyContext,setReplyContext]=useState<Record<string,unknown>|null>(null);
- const [filter,setFilter]=useState("all"),[search,setSearch]=useState(""),[summary,setSummary]=useState(""),[personId,setPersonId]=useState(""),[replyText,setReplyText]=useState("");
+ const [filter,setFilter]=useState("all"),[view,setView]=useState("all"),[toolsOpen,setToolsOpen]=useState(false),[search,setSearch]=useState(""),[summary,setSummary]=useState(""),[personId,setPersonId]=useState(""),[replyText,setReplyText]=useState("");
  const [contacts,setContacts]=useState<ConnectPerson[]>([]),[nextCursor,setNextCursor]=useState<{at:string;id:string}|null>(null),[loadingMore,setLoadingMore]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const api=base(tenantId);
  const refresh=useCallback(async()=>{const r=await connectFetch<{items:Thread[];nextCursor:{at:string;id:string}|null}>(api+"/threads?limit=100");setThreads(r.items||[]);setNextCursor(r.nextCursor||null);},[api]);
@@ -23,7 +25,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
   }catch(e){setError(e instanceof Error?e.message:String(e));}finally{setLoadingMore(false);}
  }
  useEffect(()=>{setThreads([]);setSelected(null);setConversation(null);setError("");void refresh().catch(e=>setError(String(e)));},[refresh]);
- useEffect(()=>{if(!selected)return;let alive=true;setConversation(null);setAttachments([]);setReplyContext(null);setNotice("");
+ useEffect(()=>{if(!selected)return;let alive=true;setReplyText("");setToolsOpen(false);setConversation(null);setAttachments([]);setReplyContext(null);setNotice("");
   const path=api+"/conversations/"+encodeURIComponent(selected);
   void Promise.all([connectFetch<{conversation:Conversation}>(path),connectFetch<{attachments:Attachment[]}>(path+"/attachments")]).then(([a,b])=>{if(alive){setConversation(a.conversation);setAttachments(b.attachments||[]);}}).catch(e=>{if(alive)setError(String(e));});
   void connectFetch<{context:Record<string,unknown>}>(path+"/reply-context").then(r=>{if(alive)setReplyContext(r.context||null);}).catch(()=>{});
@@ -56,37 +58,105 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
    const r=await connectFetch<{conversation:Conversation}>(api+"/conversations/"+encodeURIComponent(target));setConversation(r.conversation);await refresh();setNotice("Changes saved.");
   }catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
  }
- const shown=threads.filter(t=>(filter==="all"||t.provider===filter)&&[t.personName,t.externalContactId,t.lastMessage].some(x=>(x||"").toLowerCase().includes(search.toLowerCase())));
+
+ const shown=threads.filter(t=>{
+  if(filter!=="all"&&t.provider!==filter)return false;
+  if(view==="unread"&&t.unreadCount===0)return false;
+  if(view==="open"&&t.status!=="open")return false;
+  if(view==="pending"&&t.status!=="pending")return false;
+  if(view==="closed"&&t.status!=="closed")return false;
+  const q=search.trim().toLowerCase();
+  return !q||[t.personName,t.externalContactId,t.lastMessage,t.classification].some(x=>(x||"").toLowerCase().includes(q));
+ });
+ const current=threads.find(t=>t.id===selected);
+ const unreadTotal=threads.reduce((n,t)=>n+t.unreadCount,0);
  const contactOptions=contacts.filter(c=>c.full_name.toLowerCase().includes(personId.toLowerCase())).slice(0,10);
- return <div className="cx-panel cx-panel-full" style={{padding:16}}>
-  <div className="cx-panel-header"><div><h2>Unified inbox</h2><p>WhatsApp, Instagram, Facebook and email in one view</p></div><button type="button" onClick={()=>void refresh().catch(e=>setError(String(e)))}>Refresh</button></div>
-  {error&&<p role="alert" style={{color:"#b42318"}}>{error}</p>}{notice&&<p role="status">{notice}</p>}
-  <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}><select aria-label="Channel filter" value={filter} onChange={e=>setFilter(e.target.value)}>{["all","whatsapp","instagram","facebook","email"].map(x=><option key={x} value={x}>{x==="all"?"All channels":x}</option>)}</select><input aria-label="Search conversations" placeholder="Search conversations" value={search} onChange={e=>setSearch(e.target.value)}/></div>
-  <div style={{display:"grid",gridTemplateColumns:"minmax(210px,1fr) minmax(0,2fr)",gap:16}}>
-   <div style={{maxHeight:640,overflowY:"auto"}}>{shown.length===0?<p>No conversations found.</p>:shown.map(t=><button type="button" key={t.id} onClick={()=>setSelected(t.id)} style={{display:"block",width:"100%",textAlign:"left",padding:12,marginBottom:6,border:"1px solid #d8e3ec",borderRadius:10,background:selected===t.id?"#eaf5fc":"transparent",color:"inherit"}}>
-    <strong>{t.personName||t.externalContactId||"Unknown contact"}</strong> {t.unreadCount>0&&<span>({t.unreadCount} new)</span>}<div><small>{t.provider} · {stamp(t.lastAt)} · {t.classification}</small></div><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.lastMessage||"No preview"}</div>
-   </button>)}{nextCursor&&<button type="button" disabled={loadingMore} onClick={()=>void loadMore()} style={{padding:10,width:"100%"}}>{loadingMore?"Loading…":"Load older conversations"}</button>}</div>
-   <div style={{minWidth:0}}>{!selected?<p>Select a conversation to view its history.</p>:!conversation?<p>Loading conversation…</p>:<>
-    <h3>{threads.find(t=>t.id===selected)?.personName||"Conversation"} <small>({conversation.provider})</small></h3>
-    <div style={{maxHeight:380,overflowY:"auto",padding:12,border:"1px solid #d8e3ec",borderRadius:10}}>
-     {(conversation.messages||[]).map(m=><div key={m.id} style={{marginBottom:10,textAlign:m.direction==="outbound"?"right":"left"}}><div style={{display:"inline-block",maxWidth:"90%",padding:10,borderRadius:10,background:m.direction==="outbound"?"#e2f4ed":"#eef4f8",textAlign:"left",whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{m.body||"["+m.kind+"]"}<div><small>{stamp(m.occurredAt)} · {m.deliveryStatus}</small></div>
-      {attachments.filter(a=>a.messageId===m.id).map(a=><div key={a.id}><small>Attachment: {a.filename} ({a.contentType})</small>{conversation.provider==="email"&&<button type="button" onClick={()=>void openAttachment(m.id,a.id)}>Open attachment</button>}</div>)}</div></div>)}
-     {!conversation.messages?.length&&<p>No messages yet.</p>}
-    </div>
-    {canWrite&&conversation.canWrite&&<div style={{display:"grid",gap:8,marginTop:12}}>
-     <strong>Enquiry classification: {conversation.classification}</strong>
-     {conversation.classification!=="enquiry"&&<><textarea aria-label="Enquiry summary" rows={2} maxLength={2000} placeholder="Describe the enquiry before saving" value={summary} onChange={e=>setSummary(e.target.value)}/><div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button disabled={busy||!summary.trim()} onClick={()=>void action("mark_enquiry",{summary})}>Mark as enquiry</button><button disabled={busy} onClick={()=>void action("not_enquiry")}>Not an enquiry</button></div></>}
-     {conversation.inquiryId&&<small>Linked enquiry: {conversation.inquiryId}</small>}
-     <div><button disabled={busy} onClick={()=>{void crmList<ConnectPerson>(tenantId,"people",{limit:"100"}).then(r=>setContacts(r.items)).catch(e=>setError(String(e)));}}>Find CRM contact</button>
-      {contacts.length>0&&<><input aria-label="Filter CRM contacts" placeholder="Filter by name" value={personId} onChange={e=>setPersonId(e.target.value)}/><select aria-label="Link contact" defaultValue="" onChange={e=>{if(e.target.value)void action("link_contact",{personId:e.target.value});}}><option value="">Select a contact to link</option>{contactOptions.map(c=><option value={c.id} key={c.id}>{c.full_name}</option>)}</select></>}
-      {conversation.personId&&onOpenContact&&<button onClick={()=>onOpenContact(conversation.personId!)}>Open linked contact</button>}
-     </div>
-    </div>}
-    {conversation.provider!=="whatsapp"&&<div style={{display:"grid",gap:8,marginTop:12}}>
-     {replyContext?.canReply===true&&canWrite?<><textarea aria-label="Reply to conversation" rows={3} maxLength={conversation.provider==="email"?12000:1000} placeholder="Write your reply…" value={replyText} onChange={e=>setReplyText(e.target.value)}/><button type="button" disabled={busy||!replyText.trim()} onClick={()=>void sendReply()}>Send {conversation.provider==="email"?"email":"social"} reply</button></>:<small>Replies are unavailable or outside the permitted messaging window.</small>}
-    </div>}
-    {conversation.provider==="whatsapp"&&<p><small>For WhatsApp replies, use the existing WhatsApp inbox while Meta sending is being validated.</small></p>}
-   </>}</div>
+ const providerLabel=(provider:string)=>provider==="whatsapp"?"WhatsApp":provider==="instagram"?"Instagram":provider==="facebook"?"Facebook":"Email";
+ return <section className={styles.workspace} aria-label="Unified communications inbox">
+  <header className={styles.head}>
+   <div><h2>Inbox <span className={styles.count}>{threads.length}</span></h2>
+    <p>Customer conversations across WhatsApp, Instagram, Facebook and email</p></div>
+   <button className={styles.ghostButton} type="button" onClick={()=>void refresh().catch(e=>setError(String(e)))} aria-label="Refresh conversations">↻ Refresh</button>
+  </header>
+  {error&&<div className={styles.alert} role="alert">{error}</div>}
+  {notice&&<div className={styles.notice} role="status">{notice}</div>}
+  <div className={styles.channelTabs} role="group" aria-label="Filter by channel">
+   {(["all","whatsapp","instagram","facebook","email"] as const).map(ch=><button type="button" key={ch} className={filter===ch?styles.channelActive:styles.channelButton} aria-pressed={filter===ch} onClick={()=>setFilter(ch)}>
+    {ch==="all"?"All channels":providerLabel(ch)}
+   </button>)}
   </div>
- </div>;
+  <div className={styles.layout}>
+   <aside className={styles.listPane} aria-label="Conversations">
+    <div className={styles.listHeader}>
+     <label className={styles.searchWrap}><span className={styles.srOnly}>Search conversations</span><input type="search" placeholder="Search conversations…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
+     <div className={styles.filters}>
+      <div className={styles.pillGroup} role="group" aria-label="Conversation status">
+       <button type="button" className={view==="all"?styles.pillActive:styles.pill} aria-pressed={view==="all"} onClick={()=>setView("all")}>All</button>
+       <button type="button" className={view==="unread"?styles.pillActive:styles.pill} aria-pressed={view==="unread"} onClick={()=>setView("unread")}>Unread {unreadTotal>0?"("+unreadTotal+")":""}</button>
+      </div>
+      <label className={styles.srOnly} htmlFor="cx-thread-state">Conversation state</label>
+      <select id="cx-thread-state" className={styles.stateSelect} aria-label="Conversation state" value={["all","unread"].includes(view)?"all":view} onChange={e=>setView(e.target.value)}>
+       <option value="all">Any status</option><option value="open">Open</option><option value="pending">Pending</option><option value="closed">Closed</option>
+      </select>
+     </div>
+     <p className={styles.resultCount}>{shown.length} conversation{shown.length===1?"":"s"} {search?"matching search":""}</p>
+    </div>
+    <div className={styles.threadList}>
+     {shown.length===0?<div className={styles.empty}><strong>No conversations found</strong><p>{threads.length?"Try another filter or search term.":"Connected messages will appear here. Demo data is available in DEV."}</p></div>:
+      shown.map(t=><button type="button" key={t.id} className={selected===t.id?styles.threadSelected:styles.thread} onClick={()=>setSelected(t.id)} aria-pressed={selected===t.id}>
+       <span className={styles.avatar} aria-hidden="true">{(t.personName||"?").split(" ").filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()).join("")}</span>
+       <span className={styles.threadContent}>
+        <span className={styles.threadTop}><strong>{t.personName||t.externalContactId||"Unknown contact"}</strong><time>{stamp(t.lastAt)}</time></span>
+        <span className={styles.preview}>{t.lastMessage||"No message preview"}</span>
+        <span className={styles.threadMeta}><span className={styles.channelTag}>{providerLabel(t.provider)}</span><span>{t.classification==="unreviewed"?"Needs review":t.classification}</span>{t.status!=="open"&&<span>· {t.status}</span>}</span>
+       </span>
+       {t.unreadCount>0&&<span className={styles.unread} aria-label={t.unreadCount+" unread messages"}>{t.unreadCount>99?"99+":t.unreadCount}</span>}
+      </button>)}
+     {nextCursor&&<button type="button" className={styles.more} disabled={loadingMore} onClick={()=>void loadMore()}>{loadingMore?"Loading…":"Load older conversations"}</button>}
+    </div>
+   </aside>
+   <div className={styles.chatPane} aria-label="Conversation details">
+    {!selected?<div className={styles.placeholder}><span className={styles.placeholderIcon} aria-hidden="true">✉</span><h3>Select a conversation</h3><p>Choose a customer on the left to read their messages and manage the enquiry.</p></div>:
+     !conversation?<div className={styles.placeholder}><p>Loading conversation…</p></div>:<>
+      <header className={styles.chatHead}>
+       <div className={styles.chatIdentity}>
+        <span className={styles.avatar} aria-hidden="true">{(current?.personName||"?").split(" ").filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()).join("")}</span>
+        <div><h3>{current?.personName||current?.externalContactId||"Conversation"}</h3><p>{providerLabel(conversation.provider)} · {conversation.status} · {conversation.classification}</p></div>
+       </div>
+       {conversation.personId&&onOpenContact&&<button className={styles.ghostButton} type="button" onClick={()=>onOpenContact(conversation.personId!)}>View contact</button>}
+      </header>
+      <div className={styles.messages} aria-live="polite">
+       {(conversation.messages||[]).length===0&&<p className={styles.empty}>No messages in this conversation yet.</p>}
+       {(conversation.messages||[]).map(m=><article key={m.id} className={m.direction==="outbound"?styles.messageOut:styles.messageIn}>
+        <div className={styles.bubble}><p>{m.body||"["+m.kind+"]"}</p>
+         {attachments.filter(a=>a.messageId===m.id).map(a=><div className={styles.attachment} key={a.id}>📎 {a.filename||"Attachment"} {conversation.provider==="email"&&<button type="button" onClick={()=>void openAttachment(m.id,a.id)}>Open</button>}</div>)}
+         <small>{stamp(m.occurredAt)}{m.direction==="outbound"?" · "+m.deliveryStatus:""}</small>
+        </div>
+       </article>)}
+      </div>
+      <div className={styles.chatFooter}>
+       {conversation.provider!=="whatsapp"&&<div className={styles.reply}>
+        {replyContext?.canReply===true&&canWrite?<><label htmlFor="cx-compose-reply">Reply to customer</label><textarea id="cx-compose-reply" rows={2} maxLength={conversation.provider==="email"?12000:1000} placeholder="Write a reply…" value={replyText} onChange={e=>setReplyText(e.target.value)}/>
+         <div className={styles.replyActions}><small>Sending requires configured and enabled provider credentials.</small><button className={styles.primary} type="button" disabled={busy||!replyText.trim()} onClick={()=>void sendReply()}>Send reply</button></div></>:
+         <p className={styles.muted}>Replies are unavailable until the channel is active and within its permitted messaging window.</p>}
+       </div>}
+       {conversation.provider==="whatsapp"&&<div className={styles.whatsappNote}><span>WhatsApp sending and administration are currently restricted to the existing tested workflow.</span>
+        <button className={styles.ghostButton} type="button" onClick={()=>setToolsOpen(v=>!v)} aria-expanded={toolsOpen}>{toolsOpen?"Hide WhatsApp tools":"WhatsApp tools"}</button></div>}
+       {canWrite&&conversation.canWrite&&<details className={styles.detailBox}>
+        <summary>Enquiry &amp; contact actions <span className={styles.muted}>· {conversation.classification}</span></summary>
+        <div className={styles.detailContents}>
+         {conversation.classification!=="enquiry"&&<><label htmlFor="cx-enquiry-summary">Enquiry summary</label><textarea id="cx-enquiry-summary" rows={2} maxLength={2000} placeholder="Describe the customer's enquiry" value={summary} onChange={e=>setSummary(e.target.value)}/><div className={styles.actionRow}><button className={styles.primary} type="button" disabled={busy||!summary.trim()} onClick={()=>void action("mark_enquiry",{summary})}>Mark as enquiry</button><button className={styles.ghostButton} type="button" disabled={busy} onClick={()=>void action("not_enquiry")}>Not an enquiry</button></div></>}
+         {conversation.inquiryId&&<small>Linked enquiry: {conversation.inquiryId}</small>}
+         <div className={styles.actionRow}><button className={styles.ghostButton} type="button" disabled={busy} onClick={()=>void crmList<ConnectPerson>(tenantId,"people",{limit:"100"}).then(r=>setContacts(r.items)).catch(e=>setError(String(e)))}>Find CRM contact</button>
+          {conversation.personId&&onOpenContact&&<button type="button" className={styles.ghostButton} onClick={()=>onOpenContact(conversation.personId!)}>Open linked contact</button>}</div>
+         {contacts.length>0&&<><input aria-label="Filter CRM contacts" placeholder="Filter contacts by name" value={personId} onChange={e=>setPersonId(e.target.value)}/><select aria-label="Link contact" value="" onChange={e=>{if(e.target.value)void action("link_contact",{personId:e.target.value});}}><option value="">Select a contact to link</option>{contactOptions.map(c=><option value={c.id} key={c.id}>{c.full_name}</option>)}</select></>}
+        </div>
+       </details>}
+      </div>
+      {conversation.provider==="whatsapp"&&toolsOpen&&<div className={styles.advancedTools}><p className={styles.muted}>Advanced WhatsApp tools include test replies, assignment, draft management and connection diagnostics. Only configured WhatsApp channels are available here.</p>
+       <ConnectWhatsAppInbox tenantId={tenantId} canWrite={canWrite} onOpenContact={onOpenContact}/></div>}
+     </>}
+   </div>
+  </div>
+ </section>;
 }
