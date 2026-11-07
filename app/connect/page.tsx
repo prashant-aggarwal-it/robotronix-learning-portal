@@ -332,7 +332,7 @@ export default function ConnectPage(){
       <label><span className="cx-sr-only">Filter enquiry category</span><select aria-label="Filter enquiry category" value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}>
        <option value="">All categories</option>{enquiryPrefs?.categories.filter(c=>c.active||c.id===categoryFilter).map(c=><option value={c.id} key={c.id}>{c.label}</option>)}
       </select></label>
-      <label><span className="cx-sr-only">Sort enquiries</span><select aria-label="Sort enquiries" value={enquirySort} onChange={e=>setEnquirySort(e.target.value)}>
+      <label><span className="cx-sr-only">Sort enquiries</span><select aria-label="Sort enquiries" value={enquirySort} onChange={e=>setEnquirySort(e.target.value==="oldest"?"oldest":"latest")}>
        <option value="latest">Newest first</option><option value="oldest">Oldest first</option>
       </select></label>
       {(search||categoryFilter||enquirySourceFilter!=="all"||enquiryView!=="all"||enquirySort!=="latest")&&<button type="button" className="cx-enquiry-clear" onClick={()=>{setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setEnquirySort("latest");}}>Clear filters</button>}
