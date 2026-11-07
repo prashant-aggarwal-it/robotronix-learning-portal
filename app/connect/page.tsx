@@ -33,6 +33,7 @@ export default function ConnectPage(){
  const [workspacesReady,setWorkspacesReady]=useState(false);
  const [tenantId,setTenantId]=useState("");
  const [section,setSection]=useState<Section>("overview");
+ const [communicationsView,setCommunicationsView]=useState<"unified"|"whatsapp">("unified");
  const [enquiryPrefs,setEnquiryPrefs]=useState<EnquiryPreferences|null>(null);
  const [categoryFilter,setCategoryFilter]=useState("");
  const [leadCategory,setLeadCategory]=useState("");
@@ -374,7 +375,7 @@ export default function ConnectPage(){
       </div>)}</div>}
     </section>}
 
-    {section==="communications"&&<ConnectUnifiedInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} onOpenContact={personId=>{void (async()=>{try{if(!people.some(person=>person.id===personId)){const result=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});if(!result.items.length){setError("Contact is no longer available.");return;}setPeople(current=>current.some(person=>person.id===personId)?current:[...current,result.items[0]]);}setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}catch(e){setError(e instanceof Error?e.message:"Could not open linked CRM contact.");}})();}}/>}
+    {section==="communications"&&<><div style={{display:"flex",gap:8,marginBottom:12}}><button type="button" className={communicationsView==="unified"?"cx-primary":"cx-secondary"} onClick={()=>setCommunicationsView("unified")}>All channels</button><button type="button" className={communicationsView==="whatsapp"?"cx-primary":"cx-secondary"} onClick={()=>setCommunicationsView("whatsapp")}>WhatsApp operations</button></div>{communicationsView==="unified"?<ConnectUnifiedInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} onOpenContact={personId=>{void (async()=>{try{if(!people.some(person=>person.id===personId)){const result=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});if(!result.items.length){setError("Contact is no longer available.");return;}setPeople(current=>current.some(person=>person.id===personId)?current:[...current,result.items[0]]);}setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}catch(e){setError(e instanceof Error?e.message:"Could not open linked CRM contact.");}})();}}/>:<ConnectWhatsAppInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} onOpenContact={personId=>{void (async()=>{try{if(!people.some(person=>person.id===personId)){const result=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});if(!result.items.length){setError("Contact is no longer available.");return;}setPeople(current=>current.some(person=>person.id===personId)?current:[...current,result.items[0]]);}setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}catch(e){setError(e instanceof Error?e.message:"Could not open linked CRM contact.");}})();}}/>}</>}
 
     {section==="reports"&&(canConfigure?<ConnectReports key={tenantId} tenantId={tenantId}/>:
      <section className="cx-panel"><div className="cx-empty"><strong>Reporting access restricted</strong><p>Ask your institute manager for access.</p></div></section>)}
