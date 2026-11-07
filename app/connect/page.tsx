@@ -9,6 +9,7 @@ import {connectFetch,crmCommand,crmList,
 import {ChannelSettings} from "@/features/connect/components/ChannelSettings";
 import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAutomationSettings";
 import {ConnectReminderInbox} from "@/features/connect/components/ConnectCommunications";
+import {ConnectFollowupsBoard} from "@/features/connect/components/ConnectFollowupsBoard";
 import {ConnectUnifiedInbox} from "@/features/connect/components/ConnectUnifiedInbox";
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
@@ -440,16 +441,16 @@ export default function ConnectPage(){
      </section>)}
     </div>}
 
-    {section==="followups"&&<><ConnectReminderInbox key={tenantId} tenantId={tenantId}/><section className="cx-panel cx-panel-full">
-     <div className="cx-panel-header"><div><h2>Team follow-ups</h2><p>Prioritize overdue and open tasks</p></div></div>
-     {!tasks.length?<EmptyState title="No follow-ups scheduled" description="Open a contact or opportunity to add a follow-up task."/>:
-      <div className="cx-task-list">{[...tasks].sort((a,b)=>Number(a.status==="done")-Number(b.status==="done")).map(t=><div className="cx-task-row" key={t.id}>
-       <span className={"cx-task-check "+(t.status==="done"?"checked":"")}>{t.status==="done"?"✓":"○"}</span>
-       <div><strong>{t.title}</strong><small>{t.due_at?"Due "+dateLabel(t.due_at):"No due date set"}</small></div>
-       <span className={"cx-status "+(t.status==="done"?"won":"")}>{shortLabel(t.status)}</span>
-       {canWrite&&t.status==="open"&&<button className="cx-secondary" disabled={busy} onClick={()=>void run(()=>crmCommand(tenantId,"tasks","complete_task",{taskId:t.id}),"Follow-up completed.")}>Mark done</button>}
-      </div>)}</div>}
-    </section></>}
+    {section==="followups"&&<div className="cx-followups-workspace">
+     <ConnectFollowupsBoard tasks={tasks} people={people} opportunities={opportunities} canWrite={canWrite} busy={busy}
+      onComplete={taskId=>void run(()=>crmCommand(tenantId,"tasks","complete_task",{taskId}),"Follow-up completed.")}
+      onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}
+      onOpenOpportunity={(personId,opportunityId)=>{setSelectedPerson(personId);setSelectedOpportunity(opportunityId);}}/>
+     <details className="cx-followups-reminders">
+      <summary>My reminder notifications <span>Alerts from the reminder scheduler</span></summary>
+      <ConnectReminderInbox key={tenantId} tenantId={tenantId}/>
+     </details>
+    </div>}
 
     {section==="calendar"&&<section className="cx-panel cx-panel-full">
      <div className="cx-panel-header"><div><h2>Counselling & trial appointments</h2><p>Scheduled, completed and cancelled sessions</p></div></div>
