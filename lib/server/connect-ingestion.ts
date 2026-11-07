@@ -45,7 +45,7 @@ export function safeString(input:unknown,max=250){
  return typeof input==="string"?input.trim().slice(0,max):"";
 }
 export function eventIdentity(value:unknown){const v=safeString(value,250);return v.length>=3?v:null;}
-export async function invokeIngest(fn:"connect_ingest_channel"|"connect_ingest_website"|"connect_ingest_whatsapp_message"|"connect_ingest_whatsapp_status"|"connect_sync_whatsapp_app_contact"|"connect_import_whatsapp_history_thread"|"connect_revise_whatsapp_message"|"connect_queue_whatsapp_history"|"connect_ingest_social_message"|"connect_enrich_inbound_email",args:Record<string,unknown>){
+export async function invokeIngest(fn:"connect_ingest_channel"|"connect_ingest_website"|"connect_ingest_whatsapp_message"|"connect_ingest_whatsapp_status"|"connect_sync_whatsapp_app_contact"|"connect_import_whatsapp_history_thread"|"connect_revise_whatsapp_message"|"connect_queue_whatsapp_history"|"connect_ingest_social_message"|"connect_enrich_inbound_email"|"connect_ingest_email_thread",args:Record<string,unknown>){
  const db=ingestionClient();
  const {data,error}=await db.rpc(fn,args);
  if(error)throw new Error("Connect ingestion failed: "+error.code);

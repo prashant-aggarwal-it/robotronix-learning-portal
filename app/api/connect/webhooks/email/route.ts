@@ -46,10 +46,10 @@ export async function POST(req:NextRequest){
   const to=mailbox(safeString(rawTo,350));
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){failed++;continue;}
   try{
-   const result:any=await invokeIngest("connect_ingest_channel",{
-    p_provider:"email",p_external_account_id:to,p_event_id:emailId,
-    p_name:senderName(from).slice(0,150),p_email:mailbox(from),p_phone:null,
-    p_summary:(safeString(data.subject,1500)||"New inbound email enquiry")
+   const result:any=await invokeIngest("connect_ingest_email_thread",{
+    p_mailbox:to,p_event_id:emailId,p_sender_email:mailbox(from),
+    p_sender_name:senderName(from).slice(0,150),
+    p_subject:safeString(full.subject||data.subject,1500)||"New inbound email enquiry"
    });
    await invokeIngest("connect_enrich_inbound_email",{
     p_mailbox:to,p_event_id:emailId,p_body:body,p_attachments:attachments,
