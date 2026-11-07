@@ -84,6 +84,39 @@ export async function POST(req:NextRequest){
  try{payload=JSON.parse(raw);}catch{return intakeError("Invalid webhook payload",400);}
  if(!payload||!Array.isArray(payload.entry))return intakeError("Invalid webhook event",400);
  let processed=0,duplicate=0,ignored=0,failures=0;
+ // Messenger and Instagram messaging events use entry.messaging rather than
+ // WhatsApp's entry.changes. Never process these as WhatsApp messages.
+ if(payload.object==="page"||payload.object==="instagram"){
+  const provider=payload.object==="instagram"?"instagram":"facebook";
+  for(const entry of payload.entry.slice(0,30)){
+   const accountId=safeString(entry?.id,200);
+   for(const event of (Array.isArray(entry?.messaging)?entry.messaging:[]).slice(0,50)){
+    const message=event?.message;
+    const eventId=safeString(message?.mid,250);
+    const sender=safeString(event?.sender?.id,200),recipient=safeString(event?.recipient?.id,200);
+    const outbound=Boolean(message?.is_echo);
+    const contact=outbound?recipient:sender;
+    if(!message||!eventId||!accountId||!contact){ignored++;continue;}
+    const body=safeString(message.text,3000);
+    const attachments=Array.isArray(message.attachments)?message.attachments:[];
+    const kind=attachments.length?safeString(attachments[0]?.type,40)||"attachment":"text";
+    if(!body&&!attachments.length){ignored++;continue;}
+    const timestamp=typeof event.timestamp==="number"&&Number.isFinite(event.timestamp)?
+     new Date(event.timestamp).toISOString():null;
+    try{
+     const result:any=await invokeIngest("connect_ingest_social_message",{
+      p_provider:provider,p_external_account_id:accountId,p_event_id:eventId,
+      p_sender_id:contact,p_sender_name:provider==="instagram"?"Instagram contact":"Facebook contact",
+      p_body:body,p_occurred_at:timestamp,p_direction:outbound?"outbound":"inbound",p_kind:kind
+     });
+     if(result?.duplicate)duplicate++;else processed++;
+    }catch{failures++;}
+   }
+  }
+  if(failures)return intakeError("Some social events could not be processed; retry delivery",503);
+  return acceptedEvent({processed,duplicate,ignored});
+ }
+
  // Meta delivers event batches. Unknown/status events are not new enquiries.
  for(const entry of payload.entry.slice(0,30)){
   for(const change of (Array.isArray(entry.changes)?entry.changes:[]).slice(0,50)){
