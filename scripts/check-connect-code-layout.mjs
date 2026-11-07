@@ -108,11 +108,12 @@ if(!waReadMigration.includes('connect_whatsapp_threads')||
  throw Error("Protected paginated WhatsApp inbox read APIs are required.");
 
 const inbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectWhatsAppInbox.tsx"),"utf8");
+const unifiedInbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectUnifiedInbox.tsx"),"utf8");
 const inboxWorkflow=fs.readFileSync(path.join(root,"database/connect/saas/30_whatsapp_inbox_workflow.sql"),"utf8");
 const identityFix=fs.readFileSync(path.join(root,"database/connect/saas/31_whatsapp_preserve_contact_links.sql"),"utf8");
 const inboxApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/route.ts"),"utf8");
 const contactSearchApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/contacts/route.ts"),"utf8");
-if(!page.includes("<ConnectWhatsAppInbox")||!inbox.includes("Load older messages")||
+if(!page.includes("<ConnectUnifiedInbox")||!unifiedInbox.includes("<ConnectWhatsAppInbox")||!inbox.includes("Load older messages")||
  !inbox.includes("Link CRM contact")||!inbox.includes("Save draft")||!inbox.includes("sendReady?.canSend"))
  throw Error("WhatsApp conversation UI, pagination or Meta-gated send composer missing.");
 if(!inboxApi.includes("connectSession")||!inboxApi.includes("connect_whatsapp_manage_thread")||
