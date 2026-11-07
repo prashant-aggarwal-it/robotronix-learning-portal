@@ -33,6 +33,17 @@ export async function PATCH(req:NextRequest,{params}:Ctx){
  const body=await req.json().catch(()=>null);
  if(!body||!uuid(body.channelId)||!["active","inactive","disabled"].includes(body.status))
   return connectFailure("Invalid channel status update",400);
+ // Never allow synthetic demonstration channel records to be enabled as live provider endpoints.
+ if(body.status==="active"){
+  const channels=await invokeConnect<Array<{id:string;externalId:string}>>(auth,"connect_list_channels",{
+   p_actor_id:auth.actorId,p_tenant_id:tenantId
+  });
+  if(channels.error)return connectRpcFailure(channels.error,channels.code);
+  const selected=channels.data?.find(channel=>channel.id===body.channelId);
+  if(!selected)return connectFailure("Channel not found in this workspace.",404);
+  if(selected.externalId.startsWith("demo-connect-"))
+   return connectFailure("Demo channels cannot be activated. Register a real provider channel.",409);
+ }
  const result=await invokeConnect<boolean>(auth,"connect_set_channel_status",{
   p_actor_id:auth.actorId,p_tenant_id:tenantId,p_channel_id:body.channelId,p_status:body.status
  });

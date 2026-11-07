@@ -467,9 +467,11 @@ export default function ConnectPage(){
     {section==="reports"&&(canConfigure?<ConnectReports key={tenantId} tenantId={tenantId}/>:
      <section className="cx-panel"><div className="cx-empty"><strong>Reporting access restricted</strong><p>Ask your institute manager for access.</p></div></section>)}
 
-    {section==="settings"&&<>
+    {section==="settings"&&<div className="cx-settings-workspace">
     <EnquirySettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")} onSaved={setEnquiryPrefs}/>
-    {advanced&&<div className="cx-settings-grid">
+    {advanced&&<details className="cx-settings-section cx-settings-business">
+     <summary><span><strong>Business configuration</strong><small>Team access, programmes and admissions pipelines</small></span><span className="cx-settings-section-action">Manage</span></summary>
+     <div className="cx-settings-grid">
      <section className="cx-panel"><div className="cx-panel-header"><div><h2>Institute access</h2><p>Who can manage this workspace</p></div></div>
       <dl className="cx-settings-list"><div><dt>Institute</dt><dd>{tenant?.workspace_name}</dd></div><div><dt>Workspace</dt><dd>{tenant?.slug}</dd></div><div><dt>Your role</dt><dd>{shortLabel(tenant?.membership_role||"")}</dd></div></dl>
       {canConfigure&&<button className="cx-secondary" onClick={()=>void connectFetch<{members:ConnectMember[]}>("/api/connect/workspaces/"+tenantId+"/members").then(r=>setMembers(r.members)).catch(e=>setError(e instanceof Error?e.message:"Could not load members."))}>View team members</button>}
@@ -490,10 +492,17 @@ export default function ConnectPage(){
        <input required placeholder="New pipeline name" aria-label="Pipeline name" value={pipelineName} onChange={e=>setPipelineName(e.target.value)}/>
        <button disabled={busy} className="cx-secondary">Add</button></form>}
      </section>
+     </div>
+    </details>}
+    {advanced&&<details className="cx-settings-section">
+     <summary><span><strong>Automation &amp; reminders</strong><small>Assignments, first follow-ups and in-app reminder timing</small></span><span className="cx-settings-section-action">Configure</span></summary>
+     <ConnectAutomationSettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>
+    </details>}
+    {canConfigure&&<details className="cx-settings-section" id="cx-integration-settings">
+     <summary><span><strong>Channel integrations</strong><small>WhatsApp, email, Meta and website lead capture</small></span><span className="cx-settings-section-action">Manage channels</span></summary>
+     <ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>
+    </details>}
     </div>}
-    {advanced&&<ConnectAutomationSettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
-    {canConfigure&&<ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>}
-    </>}
    </div>
   </div>
 
