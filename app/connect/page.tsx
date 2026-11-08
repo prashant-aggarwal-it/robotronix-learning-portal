@@ -10,6 +10,7 @@ import {ChannelSettings} from "@/features/connect/components/ChannelSettings";
 import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAutomationSettings";
 import {ConnectReminderInbox} from "@/features/connect/components/ConnectCommunications";
 import {ConnectFollowupsBoard} from "@/features/connect/components/ConnectFollowupsBoard";
+import {PipelineVisual} from "@/features/connect/components/ConnectDataWidgets";
 import {ConnectUnifiedInbox} from "@/features/connect/components/ConnectUnifiedInbox";
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
@@ -417,6 +418,7 @@ export default function ConnectPage(){
     </section>}
 
     {section==="pipeline"&&<div className="cx-pipeline-stack">
+     {pipelines.length>0&&<PipelineVisual pipelines={pipelines} opportunities={opportunities} onOpen={id=>{const item=opportunities.find(o=>o.id===id);if(item){setSelectedOpportunity(id);setSelectedPerson(item.contact_id);}}}/>}
      {pipelines.length===0?<section className="cx-panel">
       <EmptyState title="Set up your first admissions pipeline" description="Track every opportunity from initial enquiry to enrolment. Start with a ready-made five-stage pipeline."/>
       {canConfigure?<form className="cx-inline-form" aria-label="Create admissions pipeline" style={{maxWidth:520,margin:"0 auto 22px",display:"flex",flexWrap:"wrap",justifyContent:"center",gap:10}} onSubmit={e=>{e.preventDefault();const name=pipelineName.trim()||"Student Admissions";void run(async()=>{

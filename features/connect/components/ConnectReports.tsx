@@ -1,6 +1,7 @@
 "use client";
 import {FormEvent,useCallback,useEffect,useRef,useState} from "react";
 import {connectFetch,type ConnectOpportunity,type ConnectPipeline} from "@/features/connect/api/client";
+import {ReportVisuals} from "./ConnectDataWidgets";
 type Summary={opportunities:number;won:number;conversionRate:number|null;inquiries:number;expectedValue:number;excludedCurrencyOpportunities:number;currency:string;fromDate:string;toDate:string};
 type Stage={pipelineId:string;pipeline:string;stageId:string;stage:string;sortOrder:number;outcome:string;opportunities:number};
 type Staff={memberId:string;role:string;opportunities:number;won:number;open:number;lost:number;conversionRate:number|null;tasksCompleted:number};
@@ -98,6 +99,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
   {error&&<div className="cx-alert" role="alert">{error}</div>}
   {notice&&<div className="cx-success" role="status">{notice}</div>}
   {loading&&!report?<p className="cx-muted">Calculating admissions reports…</p>:report&&<>
+   <ReportVisuals report={report}/>
    <div className="cx-metrics">
     {[
      {label:"Enquiries received",value:report.summary.inquiries,foot:"Messages/forms received in period"},

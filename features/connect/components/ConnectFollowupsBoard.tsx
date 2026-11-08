@@ -2,6 +2,7 @@
 import {useMemo,useState} from "react";
 import type {ConnectTask,ConnectPerson,ConnectOpportunity} from "@/features/connect/api/client";
 import styles from "./ConnectFollowupsBoard.module.css";
+import {FollowupWeekWidget} from "./ConnectDataWidgets";
 
 type Filter="open"|"overdue"|"today"|"upcoming"|"undated"|"completed"|"all";
 type Props={
@@ -30,6 +31,7 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,canWrite,busy,
  const [filter,setFilter]=useState<Filter>("open");
  const [search,setSearch]=useState("");
  const [sort,setSort]=useState<"due"|"newest">("due");
+ const [selectedDay,setSelectedDay]=useState<string|null>(null);
  const now=new Date(),today=dayKey(now);
  const peopleById=useMemo(()=>new Map(people.map(p=>[p.id,p])),[people]);
  const opportunitiesById=useMemo(()=>new Map(opportunities.map(o=>[o.id,o])),[opportunities]);
@@ -40,6 +42,7 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,canWrite,busy,
   return out;
  },[tasks,today]);
  const filtered=tasks.filter(t=>{
+  if(selectedDay&&(!t.due_at||!Number.isFinite(Date.parse(t.due_at))||dayKey(new Date(t.due_at))!==selectedDay))return false;
   const status=state(t,today);
   if(filter==="open"&&status==="completed")return false;
   if(filter!=="open"&&filter!=="all"&&status!==filter)return false;
@@ -61,6 +64,7 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,canWrite,busy,
     <strong>{counts[f]}</strong><span>{labels[f]}</span>
    </button>)}
   </div>
+  <FollowupWeekWidget tasks={tasks} onSelectDay={setSelectedDay} selectedDay={selectedDay}/>
   <div className={styles.toolbar}>
    <div className={styles.tabs} role="group" aria-label="Follow-up filter">
     {filters.map(f=><button key={f} type="button" className={filter===f?styles.tabActive:styles.tab} onClick={()=>setFilter(f)} aria-pressed={filter===f}>{labels[f]}</button>)}

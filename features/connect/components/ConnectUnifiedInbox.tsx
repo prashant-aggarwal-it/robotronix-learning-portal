@@ -2,6 +2,7 @@
 import {useCallback,useEffect,useState} from "react";
 import {connectFetch,crmList,type ConnectPerson} from "@/features/connect/api/client";
 import {ConnectWhatsAppInbox} from "./ConnectWhatsAppInbox";
+import {CommunicationPulse} from "./ConnectDataWidgets";
 import styles from "./ConnectUnifiedInbox.module.css";
 
 type Thread={id:string;provider:string;channelName:string;personId:string|null;personName:string|null;externalContactId:string|null;status:string;lastAt:string;lastMessage:string|null;lastDirection:string|null;unreadCount:number;classification:string};
@@ -82,6 +83,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
   </header>
   {error&&<div className={styles.alert} role="alert">{error}</div>}
   {notice&&<div className={styles.notice} role="status">{notice}</div>}
+  <CommunicationPulse threads={threads} onSelectProvider={provider=>{setFilter(provider);setView("all");}}/>
   <div className={styles.channelTabs} role="group" aria-label="Filter by channel">
    {(["all","whatsapp","instagram","facebook","email"] as const).map(ch=><button type="button" key={ch} className={filter===ch?styles.channelActive:styles.channelButton} aria-pressed={filter===ch} onClick={()=>setFilter(ch)}>
     {ch==="all"?"All channels":providerLabel(ch)}
