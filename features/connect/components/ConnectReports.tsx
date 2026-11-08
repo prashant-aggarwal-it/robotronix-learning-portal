@@ -115,7 +115,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
      e.preventDefault();const index=tabItems.findIndex(t=>t.id===item.id);
      const next=e.key==="Home"?0:e.key==="End"?tabItems.length-1:e.key==="ArrowRight"?(index+1)%tabItems.length:(index+tabItems.length-1)%tabItems.length;
      const nextId=tabItems[next].id;setTab(nextId);document.getElementById("connect-report-tab-"+nextId)?.focus();}}>
-    <span>{item.label}</span><small>{item.description}</small>
+    <span>{item.label}</span><small className="cx-report-tab-description">{item.description}</small>
    </button>)}
   </nav>
   {error&&<div className="cx-alert" role="alert">{error}</div>}

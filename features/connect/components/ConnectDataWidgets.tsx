@@ -35,10 +35,13 @@ export function ReportVisuals({report,view="both"}:{report:ReportGraphic;view?:"
   {(view==="channels"||view==="both")&&<>  <section className="cx-widget"><header className="cx-widget-head"><div><h3>Channel performance</h3><p>Comparison for the selected reporting period</p></div>
    <select value={metric} onChange={e=>setMetric(e.target.value==="won"?"won":e.target.value==="opportunities"?"opportunities":"inquiries")} aria-label="Channel performance metric"><option value="inquiries">Enquiries</option><option value="opportunities">Admissions</option><option value="won">Won</option></select>
   </header>
-  {entries.length===0?<p className="cx-widget-empty">No channel activity recorded for this period.</p>:<div className="cx-widget-bars">{entries.map(s=><div key={s.source} className="cx-widget-bar-row">
-   <span title={s.source}>{label(s.source)}</span><span className="cx-widget-track"><span style={{width:s[metric]/max*100+"%",background:channelColor(s.source)}}/></span><strong>{s[metric]}</strong>
-  </div>)}</div>}
-  <p className="cx-widget-caption">Changing the metric compares recorded counts, not predicted results.</p>
+  {entries.length===0?<p className="cx-widget-empty">No channel activity recorded for this period.</p>:<div className="cx-report-channel-grid">
+   {entries.map(s=><div key={s.source} className="cx-report-channel-card">
+    <div className="cx-report-channel-head"><span className="cx-report-channel-label"><i style={{background:channelColor(s.source)}} aria-hidden="true"/>{label(s.source)}</span><strong>{s[metric]}</strong></div>
+    <div className="cx-report-channel-track" role="meter" aria-label={label(s.source)+" "+metric} aria-valuemin={0} aria-valuemax={max} aria-valuenow={s[metric]}><span style={{width:s[metric]/max*100+"%",background:channelColor(s.source)}}/></div>
+   </div>)}
+  </div>}
+  <p className="cx-widget-caption">Showing recorded counts for the selected metric and reporting dates.</p>
   </section>
   </>}
   {(view==="stages"||view==="both")&&<>  <section className="cx-widget"><header className="cx-widget-head"><div><h3>Admissions stage reach</h3><p>Recorded stage history for the selected creation cohort</p></div></header>

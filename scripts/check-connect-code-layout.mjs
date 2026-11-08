@@ -222,3 +222,14 @@ if(!overviewRail.includes("cx-overview-right-rail")||
  !overviewPage.includes("appointments={appointments} people={people} pipelines={pipelines}")||
  !overviewStyles.includes(".cx-overview-stage-list"))
  throw Error("CRM Overview operational right-rail widgets or responsive styles are missing.");
+
+/* Compact report navigation and channel widgets should not regress to wide bars. */
+const compactReports=fs.readFileSync(path.join(root,"features/connect/components/ConnectReports.tsx"),"utf8");
+const compactWidgets=fs.readFileSync(path.join(root,"features/connect/components/ConnectDataWidgets.tsx"),"utf8");
+const compactCss=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8");
+if(!compactReports.includes('cx-report-tab-description')||
+ !compactWidgets.includes("cx-report-channel-grid")||
+ !compactWidgets.includes("cx-report-channel-card")||
+ !compactCss.includes(".cx-app .cx-report-tabs{display:flex")||
+ !compactCss.includes("grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-width:900px"))
+ throw Error("Compact Reports tabs and channel-comparison cards are required.");

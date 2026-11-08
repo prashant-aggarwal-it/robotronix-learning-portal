@@ -1097,3 +1097,27 @@
 .cx-app .cx-overview-widget-empty button{border:0;background:transparent;padding:0;color:#1383ad;font-weight:800;font-size:11px;cursor:pointer}
 @media(max-width:1180px){.cx-app .cx-overview-right-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.cx-app .cx-overview-actions-panel{grid-column:1/-1}}
 @media(max-width:690px){.cx-app .cx-overview-right-rail{display:flex}.cx-app .cx-overview-stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}.cx-app .cx-overview-appointment{grid-template-columns:80px minmax(0,1fr) 12px}}
+
+/* Reports compact treatment: information density without giant horizontal bars. */
+.cx-app .cx-report-tabs{display:flex;gap:5px;padding:4px;border-radius:12px;align-items:stretch;max-width:100%;background:#f1f7fb}
+.cx-app .cx-report-tab{flex:0 1 auto;display:inline-flex;align-items:center;justify-content:center;text-align:center;min-height:38px;padding:8px 15px;border-radius:9px;white-space:nowrap}
+.cx-app .cx-report-tab span{font-size:12px;line-height:1.2}
+.cx-app .cx-report-tab .cx-report-tab-description{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%)}
+.cx-app .cx-report-tab.is-active{box-shadow:0 2px 6px rgba(20,71,109,.07)}
+.cx-app .cx-report-tab-panel .cx-widget-double.cx-widget-report-channels{margin:0}
+.cx-app .cx-report-tab-panel .cx-widget-report-channels>.cx-widget{padding:17px 20px;max-width:100%}
+.cx-app .cx-widget-report-channels .cx-widget-head{margin-bottom:12px;gap:12px}
+.cx-app .cx-widget-report-channels .cx-widget-head h3{font-size:15px}
+.cx-app .cx-widget-report-channels .cx-widget-head p{font-size:11px}
+.cx-app .cx-report-channel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-width:900px}
+.cx-app .cx-report-channel-card{padding:11px 13px;border-radius:10px;border:1px solid #dfeaf2;background:#f8fbfd;min-width:0}
+.cx-app .cx-report-channel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.cx-app .cx-report-channel-label{display:flex;gap:9px;align-items:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700;color:#375f78}
+.cx-app .cx-report-channel-label i{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cx-app .cx-report-channel-head strong{font-size:15px;color:#173b55;font-variant-numeric:tabular-nums}
+.cx-app .cx-report-channel-track{height:6px;background:#e4edf3;border-radius:10px;overflow:hidden}
+.cx-app .cx-report-channel-track>span{height:100%;display:block;border-radius:10px;transition:width .2s ease}
+.cx-app .cx-widget-report-channels .cx-widget-caption{margin-top:9px;font-size:10px}
+@media(max-width:740px){.cx-app .cx-report-tab{flex:1 1 auto;padding:9px 10px}.cx-app .cx-report-tab span{font-size:11px}}
+@media(max-width:590px){.cx-app .cx-report-tabs{display:flex;overflow-x:auto;scrollbar-width:thin}.cx-app .cx-report-tab{flex:1 0 auto;padding:9px 11px}.cx-app .cx-report-channel-grid{grid-template-columns:1fr}.cx-app .cx-report-tab-panel .cx-widget-report-channels>.cx-widget{padding:14px}}
+@media(prefers-reduced-motion:reduce){.cx-app .cx-report-channel-track>span{transition:none}}
