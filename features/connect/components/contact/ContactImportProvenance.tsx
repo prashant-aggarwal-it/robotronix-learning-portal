@@ -16,7 +16,7 @@ export function ContactImportProvenance({tenantId,personId}:{tenantId:string;per
   {data.sources.map((source,index)=><div className="cx-provenance-source" key={index}>
    <div><strong>{source.source_label}</strong><small>{source.source_type} · {new Date(source.imported_at).toLocaleDateString("en-IN")}</small></div>
    {(source.company||source.city)&&<p>{[source.company,source.city].filter(Boolean).join(" · ")}</p>}
-   {source.tags?.length>0&&<p>Tags: {source.tags.join(", ")}</p>}
+   {Boolean(source.tags?.length)&&<p>Tags: {(source.tags||[]).join(", ")}</p>}
    {source.notes&&<p>{source.notes}</p>}
    {source.source_reference&&/^https:\/\//i.test(source.source_reference)&&<a href={source.source_reference} target="_blank" rel="noopener noreferrer">Source reference ↗</a>}
   </div>)}
