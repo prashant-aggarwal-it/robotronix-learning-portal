@@ -59,7 +59,7 @@ begin
      case when a.person_id<b.person_id then b.person_id else a.person_id end as second_id,
      p1.full_name as first_name,p2.full_name as second_name,a.normalized_value as matching_value,a.kind
     from connect.contact_methods a join connect.contact_methods b on b.tenant_id=a.tenant_id
-      and b.person_id<>a.person_id and b.kind=a.kind and b.normalized_value=a.normalized_value
+      and b.person_id<>a.person_id and ((a.kind='email' and b.kind='email') or (a.kind in ('mobile','phone','whatsapp') and b.kind in ('mobile','phone','whatsapp'))) and b.normalized_value=a.normalized_value
     join connect.people p1 on p1.id=a.person_id and p1.tenant_id=a.tenant_id and p1.status='active'
     join connect.people p2 on p2.id=b.person_id and p2.tenant_id=b.tenant_id and p2.status='active'
     where a.tenant_id=p_tenant_id and a.person_id<b.person_id and a.kind in ('mobile','phone','whatsapp','email')
@@ -222,3 +222,18 @@ begin
 end $fn$;
 revoke all on function public.connect_manage_contacts(uuid,uuid,text,jsonb) from public,anon,authenticated;
 grant execute on function public.connect_manage_contacts(uuid,uuid,text,jsonb) to service_role;
+
+-- Make metadata imported in Phase 5 immediately visible in saved-segment filters.
+-- Do not overwrite user-edited profile fields.
+insert into connect.contact_profiles(tenant_id,person_id,company,city,notes,tags)
+select distinct on (d.tenant_id,d.person_id)
+ d.tenant_id,d.person_id,d.company,d.city,d.notes,coalesce(d.tags,'{}'::text[])
+from connect.contact_import_details d
+join connect.people p on p.tenant_id=d.tenant_id and p.id=d.person_id and p.status='active'
+order by d.tenant_id,d.person_id,d.imported_at desc
+on conflict(tenant_id,person_id) do update set
+ company=coalesce(connect.contact_profiles.company,excluded.company),
+ city=coalesce(connect.contact_profiles.city,excluded.city),
+ notes=coalesce(connect.contact_profiles.notes,excluded.notes),
+ tags=array(select distinct tag from unnest(coalesce(connect.contact_profiles.tags,'{}'::text[])||excluded.tags) tag limit 20),
+ updated_at=now();
