@@ -987,3 +987,29 @@
 .cx-app .cx-widget-kpis>span[data-tone="new"]{box-shadow:inset 3px 0 var(--cx-status-new)}
 .cx-app .cx-widget-kpis>span[data-tone="won"]{box-shadow:inset 3px 0 var(--cx-status-won)}
 .cx-app .cx-widget-kpis>span[data-tone="lost"]{box-shadow:inset 3px 0 var(--cx-status-lost)}
+
+/* Phase 2: Overview is a short action-first dashboard, not a second report. */
+.cx-app .cx-insights{gap:14px;margin-bottom:14px}
+.cx-app .cx-insights-intro{padding-top:0}
+.cx-app .cx-overview-recent{padding-bottom:10px}
+.cx-app .cx-overview-recent .cx-record-list{border-top:1px solid #edf3f7}
+.cx-app .cx-overview-recent .cx-record{min-height:67px;align-items:center;gap:11px;padding:11px 2px}
+.cx-app .cx-overview-recent .cx-record:hover{background:#f1f8fd}
+.cx-app .cx-overview-recent .cx-record:focus-visible{outline:2px solid #138fbe;outline-offset:-2px;border-radius:8px}
+.cx-app .cx-overview-recent .cx-record-main{min-width:0}
+.cx-app .cx-overview-recent .cx-record-main small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:100%}
+.cx-app .cx-overview-recent .cx-record-end{max-width:175px;min-width:0}
+.cx-app .cx-overview-recent .cx-record-end .cx-pill{white-space:normal;text-align:right}
+.cx-app .cx-intelligence-board .cx-intel-board-rows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.cx-app .cx-intelligence-board .cx-intel-board-row{margin:0;min-width:0;align-items:flex-start}
+.cx-app .cx-intelligence-board .cx-intel-board-row>span:nth-child(2){min-width:0}
+.cx-app .cx-intelligence-board .cx-intel-board-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.cx-app .cx-intelligence-board .cx-intel-board-row small{overflow-wrap:anywhere;line-height:1.5}
+.cx-app .cx-intelligence-board .cx-timeline-note{margin-bottom:0}
+@media(max-width:1050px){.cx-app .cx-intelligence-board .cx-intel-board-rows{grid-template-columns:1fr}}
+@media(max-width:620px){
+ .cx-app .cx-overview-recent .cx-record-end{max-width:112px}
+ .cx-app .cx-overview-recent .cx-record{gap:7px}
+ .cx-app .cx-overview-recent .cx-avatar{width:32px;height:32px;flex:none}
+ .cx-app .cx-intelligence-board .cx-intel-board-row{padding:11px}
+}

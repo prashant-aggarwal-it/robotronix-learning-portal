@@ -67,12 +67,12 @@ export function WorkspaceIntelligence({tenantId,refreshKey,onOpenContact,onViewA
  const asOf=data?.asOf||new Date().toISOString();
  const flagged=(data?.items||[]).filter(x=>x.priority>0);
  return <section className="cx-insight-panel cx-intelligence-board">
-  <div className="cx-insight-panel-heading"><div><h3>Contacts needing attention</h3><p>Top 5 rule-based priorities from up to 50 checked contacts</p></div><div className="cx-overview-actions">{onViewAll&&<button type="button" onClick={onViewAll}>View contacts ↗</button>}<button type="button" onClick={()=>void load()} disabled={loading}>Refresh</button></div></div>
+  <div className="cx-insight-panel-heading"><div><h3>Contacts needing attention</h3><p>Top 3 customers with recorded follow-up gaps</p></div><div className="cx-overview-actions">{onViewAll&&<button type="button" onClick={onViewAll}>View contacts ↗</button>}<button type="button" onClick={()=>void load()} disabled={loading}>Refresh</button></div></div>
   {loading?<p className="cx-insight-empty" role="status">Checking contact priorities…</p>:error?<p className="cx-alert" role="alert">{error}</p>:
    flagged.length===0?<p className="cx-insight-empty">No follow-up gaps or overdue contacts identified among the contacts checked.</p>:
-   <div className="cx-intel-board-rows">{flagged.slice(0,5).map(c=><button className="cx-intel-board-row" type="button" key={c.person_id} onClick={()=>onOpenContact(c.person_id)}>
+   <div className="cx-intel-board-rows">{flagged.slice(0,3).map(c=><button className="cx-intel-board-row" type="button" key={c.person_id} onClick={()=>onOpenContact(c.person_id)}>
     <span className={"cx-intel-dot "+(c.priority>=4?"urgent":"")}/>
-    <span><strong>{c.name}</strong><small>{guidance(c,asOf)[0].title} · Latest contact {when(c.last_interaction_at)}</small></span>
+    <span><strong>{c.name}</strong><small>{guidance(c,asOf)[0].title} · Last activity {when(c.last_interaction_at)}</small></span>
     <span aria-hidden="true">›</span>
    </button>)}</div>}
   <p className="cx-timeline-note">Rules-based operational reminders; not lead-quality predictions or automated outreach.</p>

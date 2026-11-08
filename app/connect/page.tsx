@@ -327,6 +327,16 @@ export default function ConnectPage(){
 
     {section==="overview"&&<>
      <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}
+      onViewAllEnquiries={()=>{setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setEnquirySort("latest");setSection("enquiries");}}
+      onOpenEnquiry={inquiry=>{
+       setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");
+       if(inquiry.person_id||inquiry.opportunity_id){
+        setSelectedPerson(inquiry.person_id);setSelectedOpportunity(inquiry.opportunity_id);
+       }else{
+        setSearch(inquiry.summary||inquiry.contact_name||"");
+        setSection("enquiries");
+       }
+      }}
       onSelectSource={source=>{setEnquirySourceFilter(source.toLowerCase());setCategoryFilter("");setEnquiryView("all");setSearch("");setSection("enquiries");}}/>
      <WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onViewAll={()=>{setSearch("");setSection("contacts");}} onOpenContact={personId=>{const generation=requestGeneration.current;void (async()=>{
       try{

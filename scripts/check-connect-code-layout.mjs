@@ -166,3 +166,10 @@ if(!crmStyles.includes('.cx-app .cx-status.won')||!crmStyles.includes('data-tone
  !crmStyles.includes('data-tone="trial"')||!crmStyles.includes('data-tone="lost"')||
  !crmStyles.includes('@media(max-width:480px)'))
  throw Error("Connect semantic states or mobile layout rules are missing.");
+
+const overviewPhase2=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
+const intelligencePhase2=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactIntelligence.tsx"),"utf8");
+if(!overviewPhase2.includes("onOpenEnquiry(i)")||!overviewPhase2.includes(".slice(0,3)")||
+ overviewPhase2.includes("cx-stages-panel")||!intelligencePhase2.includes("flagged.slice(0,3)")||
+ !page.includes("onOpenEnquiry={inquiry=>"))
+ throw Error("Overview Phase 2 must retain direct enquiry access and three-item summaries without duplicated stage analytics.");

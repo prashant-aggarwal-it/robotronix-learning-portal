@@ -1,7 +1,6 @@
 "use client";
-import {useMemo} from "react";
 import {ConnectEnquiryVisualizations} from "./ConnectEnquiryVisualizations";
-import {stageTone,toneColor} from "../connect-palette";
+import {stageTone} from "../connect-palette";
 import type {ConnectInquiry,ConnectOverview,ConnectOpportunity,ConnectTask} from "@/features/connect/api/client";
 import type {Section} from "@/features/connect/model";
 
@@ -9,16 +8,15 @@ type Props={
  overview:ConnectOverview;inquiries:ConnectInquiry[];opportunities:ConnectOpportunity[];
  tasks:ConnectTask[];advanced:boolean;onNavigate:(section:Section)=>void;
  onSelectSource?:(source:string)=>void;
+ onOpenEnquiry:(enquiry:ConnectInquiry)=>void;
+ onViewAllEnquiries:()=>void;
 };
 function nameSource(value:string){return value.trim().replace(/[_-]+/g," ").replace(/\b\w/g,x=>x.toUpperCase())||"Unknown";}
-export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,advanced,onNavigate,onSelectSource}:Props){
- const stageData=useMemo(()=>{
-  const byStage=new Map<string,number>();
-  for(const item of opportunities){const label=item.stage_name||"Unassigned";byStage.set(label,(byStage.get(label)||0)+1);}
-  return [...byStage].sort((a,b)=>b[1]-a[1]).slice(0,6);
- },[opportunities]);
- const today=new Date().toDateString();
- const todayTasks=tasks.filter(t=>t.due_at&&new Date(t.due_at).toDateString()===today&&t.status!=="completed").length;
+export function ConnectOverviewWidgets({overview,inquiries,tasks,advanced,onNavigate,onSelectSource,onOpenEnquiry,onViewAllEnquiries}:Props){
+ const recent=[...inquiries].sort((a,b)=>Date.parse(b.received_at)-Date.parse(a.received_at)).slice(0,3);
+ const indiaDay=(value:string)=>new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(value));
+ const today=indiaDay(new Date().toISOString());
+ const todayTasks=tasks.filter(t=>t.due_at&&indiaDay(t.due_at)===today&&!["completed","done","cancelled"].includes(t.status)).length;
  const metrics=[
   {label:"New enquiries today",value:overview.newEnquiries,detail:"Captured today",icon:"✉",target:"enquiries" as Section},
   {label:"Open opportunities",value:overview.openOpportunities,detail:"Admissions in progress",icon:"▥",target:(advanced?"pipeline":"enquiries") as Section},
@@ -33,15 +31,6 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,a
     <span className="cx-insight-number">{m.value.toLocaleString()}</span><span className="cx-insight-label">{m.label}</span><small>{m.detail}</small>
    </button>)}
   </div>
-  <section className="cx-insight-panel cx-overview-recent" aria-label="Recent enquiries">
-   <div className="cx-insight-panel-heading"><div><h3>Recent enquiries</h3><p>Latest customer enquiries · {inquiries.length} loaded</p></div><button type="button" onClick={()=>onNavigate("enquiries")}>View all ↗</button></div>
-   {inquiries.length===0?<p className="cx-insight-empty">No enquiries yet. Add your first enquiry to begin tracking prospects.</p>:
-    <div className="cx-record-list">{inquiries.slice(0,5).map(i=><button type="button" className="cx-record" key={i.id} onClick={()=>onNavigate("enquiries")}>
-     <span className="cx-avatar" aria-hidden="true">{(i.contact_name||"Lead").trim().split(/\\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()).join("")||"?"}</span>
-     <span className="cx-record-main"><strong>{i.contact_name||"New enquiry"}</strong><small>{i.summary||nameSource(i.source)}</small></span>
-     <span className="cx-record-end"><span className="cx-pill" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||nameSource(i.source)}</span><small>{new Date(i.received_at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</small></span>
-    </button>)}</div>}
-  </section>
   <div className="cx-insight-panels">
    <ConnectEnquiryVisualizations inquiries={inquiries} onSelectSource={onSelectSource}/>
    <section className="cx-insight-panel"><div className="cx-insight-panel-heading"><div><h3>Action required</h3><p>Follow-ups and scheduled activities</p></div><button type="button" onClick={()=>onNavigate("followups")}>View tasks ↗</button></div>
@@ -50,8 +39,16 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,a
     <button type="button" className="cx-priority-row" onClick={()=>onNavigate(advanced?"calendar":"followups")}><span className="cx-priority-symbol cx-insight-color-1">▦</span><span><strong>{overview.scheduledAppointments} upcoming appointments</strong><small>Demo and counselling schedule</small></span><span aria-hidden="true">›</span></button>
    </section>
   </div>
-  {advanced&&<section className="cx-insight-panel cx-stages-panel"><div className="cx-insight-panel-heading"><div><h3>Admissions pipeline</h3><p>{opportunities.length} loaded opportunities · stage summary</p></div><button type="button" onClick={()=>onNavigate("pipeline")}>Open pipeline ↗</button></div>
-   {stageData.length===0?<p className="cx-pipeline-compact-empty">No opportunities yet. Open your pipeline to set up stages or add your first admission.</p>:<div className="cx-stage-grid">{stageData.map(([stage,count])=><div className="cx-stage-tile" key={stage}><span className="cx-stage-dot" style={{background:toneColor(stageTone(stage))}}/><span>{stage}</span><strong>{count}</strong></div>)}</div>}
-  </section>}
+  <section className="cx-insight-panel cx-overview-recent" aria-label="Recent enquiries">
+   <div className="cx-insight-panel-heading"><div><h3>Latest enquiries</h3><p>The three most recent customer enquiries</p></div><button type="button" onClick={onViewAllEnquiries}>View all ↗</button></div>
+   {recent.length===0?<p className="cx-insight-empty">No enquiries recorded yet. Create an enquiry to get started.</p>:
+    <div className="cx-record-list">{recent.map(i=><button type="button" className="cx-record" key={i.id}
+     aria-label={"Open enquiry for "+(i.contact_name||"new enquiry")}
+     onClick={()=>onOpenEnquiry(i)}>
+      <span className="cx-avatar" aria-hidden="true">{(i.contact_name||"Lead").trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()).join("")||"?"}</span>
+      <span className="cx-record-main"><strong>{i.contact_name||"New enquiry"}</strong><small>{i.summary||nameSource(i.source)}</small></span>
+      <span className="cx-record-end"><span className="cx-pill" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||"New"}</span><small>{nameSource(i.source)} · {new Date(i.received_at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</small></span>
+    </button>)}</div>}
+  </section>
  </div>;
 }
