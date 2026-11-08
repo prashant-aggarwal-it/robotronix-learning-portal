@@ -118,7 +118,7 @@ export default function ConnectPage(){
      crmList<ConnectOpportunity>(tenantId,"opportunities",{limit:"100"}),
      crmList<ConnectPipeline>(tenantId,"pipelines",{limit:"100"}),
      crmList<ConnectTask>(tenantId,"tasks",{limit:"100"}),
-     crmList<ConnectAppointment>(tenantId,"appointments",{limit:"100"}),
+     connectFetch<{ok:true;items:ConnectAppointment[]}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/calendar"),
      crmList<ConnectProgram>(tenantId,"programs",{limit:"100"})
     ]);
     if(requestGeneration.current!==generation)return;
@@ -455,9 +455,11 @@ export default function ConnectPage(){
      </details>
     </div>}
 
-    {section==="calendar"&&<ConnectCalendar appointments={appointments} people={people} canWrite={canWrite} busy={busy}
-     onComplete={appointmentId=>void run(()=>crmCommand(tenantId,"appointments","finish_appointment",{appointmentId,status:"completed"}),"Appointment completed.")}
-     onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}/>}
+    {section==="calendar"&&<ConnectCalendar tenantId={tenantId} appointments={appointments} people={people} opportunities={opportunities}
+     programs={programs} members={members} canWrite={canWrite} canManage={canConfigure}
+     onChanged={()=>setRefreshCount(v=>v+1)}
+     onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}
+     onOpenOpportunity={opportunityId=>{const opp=opportunities.find(o=>o.id===opportunityId);if(opp){setSelectedOpportunity(opportunityId);setSelectedPerson(opp.contact_id);}}}/>}
 
     {section==="communications"&&<ConnectUnifiedInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} onOpenContact={personId=>{void (async()=>{try{if(!people.some(person=>person.id===personId)){const result=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});if(!result.items.length){setError("Contact is no longer available.");return;}setPeople(current=>current.some(person=>person.id===personId)?current:[...current,result.items[0]]);}setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}catch(e){setError(e instanceof Error?e.message:"Could not open linked CRM contact.");}})();}}/>}
 
