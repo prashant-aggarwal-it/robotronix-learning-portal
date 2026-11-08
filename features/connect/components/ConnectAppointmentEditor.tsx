@@ -29,6 +29,8 @@ export function ConnectAppointmentEditor({tenantId,appointment,day,people,opport
   return()=>{active=false;};
  },[tenantId,canManage]);
  const set=(name:keyof FormData,v:string)=>setValue(prev=>({...prev,[name]:v}));
+ const hasUnsavedChanges=Object.keys(initial).some(key=>value[key as keyof FormData]!==initial[key as keyof FormData]);
+ const requestClose=()=>{if(busy)return;if(hasUnsavedChanges&&!window.confirm("Discard unsaved appointment changes?"))return;onClose();};
  const linked=opportunities.filter(o=>!value.personId||o.contact_id===value.personId);
  async function save(e:FormEvent){
   e.preventDefault();setError("");
@@ -55,9 +57,9 @@ export function ConnectAppointmentEditor({tenantId,appointment,day,people,opport
   }catch(e){setError(e instanceof Error?e.message:"Could not save this appointment.");}
   finally{setBusy(false);}
  }
- return <div className="ccal-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)onClose();}}>
-  <section className="ccal-modal" role="dialog" aria-modal="true" aria-labelledby="ccal-modal-heading">
-   <header className="ccal-modal-head"><div><h2 id="ccal-modal-heading">{appointment?"Edit appointment":"New appointment"}</h2><p>All dates and times are in India Standard Time (IST)</p></div><button type="button" aria-label="Close appointment form" onClick={onClose} disabled={busy}>×</button></header>
+ return <div className="ccal-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)requestClose();}}>
+  <section className="ccal-modal" role="dialog" aria-modal="true" aria-busy={busy} aria-labelledby="ccal-modal-heading">
+   <header className="ccal-modal-head"><div><h2 id="ccal-modal-heading">{appointment?"Edit appointment":"New appointment"}</h2><p>All dates and times are in India Standard Time (IST)</p></div><button type="button" aria-label="Close appointment form" data-escape-close="true" onClick={requestClose} disabled={busy}>×</button></header>
    <form className="ccal-editor" onSubmit={save}>
     {error&&<p className="ccal-error" role="alert">{error}</p>}
     <label className="ccal-full">Appointment title<input required maxLength={250} value={value.title} onChange={e=>set("title",e.target.value)} placeholder="Robotics trial or parent counselling"/></label>
@@ -73,7 +75,7 @@ export function ConnectAppointmentEditor({tenantId,appointment,day,people,opport
     <label>Meeting location<input maxLength={250} placeholder="Robotronix lab / Online" value={value.location} onChange={e=>set("location",e.target.value)}/></label>
     <label className="ccal-full">Meeting link<input type="url" maxLength={500} placeholder="https://..." value={value.meetingUrl} onChange={e=>set("meetingUrl",e.target.value)}/></label>
     <label className="ccal-full">Internal notes<textarea rows={3} maxLength={2000} placeholder="Agenda, preparation, or result of discussion" value={value.notes} onChange={e=>set("notes",e.target.value)}/></label>
-    <footer className="ccal-modal-actions"><button type="button" className="ccal-action-secondary" disabled={busy} onClick={onClose}>Cancel</button><button className="ccal-action-primary" disabled={busy} type="submit">{busy?"Saving…":appointment?"Save changes":"Create appointment"}</button></footer>
+    <footer className="ccal-modal-actions"><button type="button" className="ccal-action-secondary" disabled={busy} onClick={requestClose}>Cancel</button><button className="ccal-action-primary" disabled={busy} type="submit">{busy?"Saving…":appointment?"Save changes":"Create appointment"}</button></footer>
    </form>
   </section>
  </div>;

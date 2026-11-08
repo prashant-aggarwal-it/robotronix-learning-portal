@@ -505,8 +505,8 @@ export default function ConnectPage(){
    </div>
   </div>
 
-  {showContactForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowContactForm(false);}}><section className="cx-modal" role="dialog" aria-modal="true" aria-labelledby="cx-new-contact-title">
-   <div className="cx-modal-header"><div><span className="cx-kicker">CONTACT DIRECTORY</span><h2 id="cx-new-contact-title">New contact</h2><p>Add a person without generating an enquiry.</p></div><button aria-label="Close new contact" onClick={()=>setShowContactForm(false)}>×</button></div>
+  {showContactForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setShowContactForm(false);}}><section className="cx-modal" role="dialog" aria-modal="true" aria-busy={busy} aria-labelledby="cx-new-contact-title">
+   <div className="cx-modal-header"><div><span className="cx-kicker">CONTACT DIRECTORY</span><h2 id="cx-new-contact-title">New contact</h2><p>Add a person without generating an enquiry.</p></div><button aria-label="Close new contact" data-escape-close="true" disabled={busy} onClick={()=>setShowContactForm(false)}>×</button></div>
    <form className="cx-form" onSubmit={createContact}>
     <label>Full name <span>*</span><input required autoFocus maxLength={150} value={newContact.name} onChange={e=>setNewContact(v=>({...v,name:e.target.value}))}/></label>
     <label>Relationship<select value={newContact.role} onChange={e=>setNewContact(v=>({...v,role:e.target.value}))}>
@@ -514,10 +514,10 @@ export default function ConnectPage(){
     </select></label>
     <div className="cx-form-columns"><label>Phone<input type="tel" maxLength={35} value={newContact.phone} onChange={e=>setNewContact(v=>({...v,phone:e.target.value}))}/></label>
      <label>Email<input type="email" value={newContact.email} onChange={e=>setNewContact(v=>({...v,email:e.target.value}))}/></label></div>
-    <div className="cx-form-actions"><button type="button" className="cx-secondary" onClick={()=>setShowContactForm(false)}>Cancel</button><button disabled={busy} className="cx-primary">Save contact</button></div>
+    <div className="cx-form-actions"><button type="button" className="cx-secondary" disabled={busy} onClick={()=>setShowContactForm(false)}>Cancel</button><button disabled={busy} className="cx-primary">Save contact</button></div>
    </form></section></div>}
-  {showLeadForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowLeadForm(false);}}><section className="cx-modal" role="dialog" aria-modal="true" aria-labelledby="cx-new-lead-title">
-   <div className="cx-modal-header"><div><span className="cx-kicker">QUICK CAPTURE</span><h2 id="cx-new-lead-title">New enquiry</h2><p>Capture the important details now. Qualify the lead later.</p></div><button aria-label="Close new enquiry" onClick={()=>setShowLeadForm(false)}>×</button></div>
+  {showLeadForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setShowLeadForm(false);}}><section className="cx-modal" role="dialog" aria-modal="true" aria-labelledby="cx-new-lead-title">
+   <div className="cx-modal-header"><div><span className="cx-kicker">QUICK CAPTURE</span><h2 id="cx-new-lead-title">New enquiry</h2><p>Capture the important details now. Qualify the lead later.</p></div><button aria-label="Close new enquiry" data-escape-close="true" disabled={busy} onClick={()=>setShowLeadForm(false)}>×</button></div>
    <form onSubmit={captureLead} className="cx-form"><label>Contact name <span>*</span><input required maxLength={150} autoFocus value={lead.name} readOnly={Boolean(lead.personId)}
      onChange={e=>setLead(v=>({...v,name:e.target.value,personId:""}))} placeholder="Parent or contact name"/></label>
     {!lead.personId&&lead.name.trim().length>=2&&people.filter(p=>p.full_name.toLowerCase().includes(lead.name.trim().toLowerCase())).slice(0,5).length>0&&
@@ -538,12 +538,12 @@ export default function ConnectPage(){
      <option value="">Capture enquiry only</option>{pipelines.filter(p=>p.stages.some(s=>s.outcome==="open")).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
     </select></label>
     <label>Enquiry details<textarea rows={3} maxLength={2000} value={lead.summary} onChange={e=>setLead(v=>({...v,summary:e.target.value}))} placeholder="What programme are they interested in?"/></label>
-    <div className="cx-form-actions"><button type="button" className="cx-secondary" onClick={()=>setShowLeadForm(false)}>Cancel</button><button className="cx-primary" disabled={busy}>{busy?"Saving…":"Save enquiry"}</button></div>
+    <div className="cx-form-actions"><button type="button" className="cx-secondary" disabled={busy} onClick={()=>setShowLeadForm(false)}>Cancel</button><button className="cx-primary" disabled={busy}>{busy?"Saving…":"Save enquiry"}</button></div>
    </form></section></div>}
 
   {(selectedContact||selectedLead)&&<div className="cx-drawer-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget){setSelectedPerson(null);setSelectedOpportunity(null);}}}>
    <aside className="cx-drawer" role="dialog" aria-modal="true" aria-label="Contact 360 profile">
-    <div className="cx-drawer-header"><span>CONTACT WORKSPACE</span><button aria-label="Close details" onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>×</button></div>
+    <div className="cx-drawer-header"><span>CONTACT WORKSPACE</span><button aria-label="Close details" data-escape-close="true" disabled={busy} onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>×</button></div>
     <div className="cx-drawer-body">
      <ContactProfile person={selectedContact} opportunity={selectedLead} tenantId={tenantId} refreshKey={refreshCount} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onCreateEnquiry={()=>{if(!selectedContact)return;setLead({name:selectedContact.full_name,phone:selectedContact.contact_methods.find(m=>["phone","mobile"].includes(m.kind.toLowerCase()))?.value||"",email:selectedContact.contact_methods.find(m=>m.kind.toLowerCase()==="email")?.value||"",source:"phone",summary:"",pipelineId:"",personId:selectedContact.id});setSelectedPerson(null);setSelectedOpportunity(null);setShowLeadForm(true);}} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
       overviewContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Admission opportunity</h3><strong className="cx-detail-title">{selectedLead.title}</strong>
