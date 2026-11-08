@@ -41,7 +41,7 @@ export function ContactProfile({person,opportunity,tenantId,refreshKey,allowAdmi
     {person&&canWrite&&<button type="button" className="cx-contact360-action" onClick={onCreateEnquiry}>＋ Enquiry</button>}
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("followups")}>{canWrite?"＋ Follow-up":"Follow-ups"}</button>
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("timeline")}>▤ Activity</button>
-    {person&&canWrite&&allowAdmissions&&<button type="button" className="cx-contact360-action" onClick={()=>setTab("details")}>＋ Admission</button>
+    {person&&canWrite&&allowAdmissions&&<button type="button" className="cx-contact360-action" onClick={()=>setTab("details")}>＋ Admission</button>}
    </div>
   </header>
   {onNavigateWorkflow&&(person?.id||opportunity?.contact_id)&&<nav className="cx-contact360-workflow" aria-label="Customer journey">
