@@ -264,3 +264,10 @@ if(!page.includes("loadMoreContacts()")||!page.includes("peopleHasMore")||
  !contactProfile.includes("ContactImportProvenance")||!provenanceView.includes("WhatsApp marketing:")||
  !profileRpc.includes("connect_contact_import_profile"))
  throw Error("Bulk contact pagination and import provenance views are required.");
+
+/* Imported phone-only records must be searchable across the entire tenant. */
+const directoryUi=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+const directoryApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/directory/route.ts"),"utf8");
+const directorySql=fs.readFileSync(path.join(root,"database/connect/saas/42_contact_directory_search.sql"),"utf8");
+if(!directoryUi.includes("searchingDirectory")||!directoryUi.includes("directoryResults")||!directoryApi.includes("connect_contact_directory")||!directorySql.includes("cm.display_value ilike"))
+ throw Error("Tenant-wide name/phone/email contact search is required after bulk import.");

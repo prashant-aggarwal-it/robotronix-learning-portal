@@ -64,6 +64,9 @@ export default function ConnectPage(){
  const [overview,setOverview]=useState<ConnectOverview>(emptyOverview);
  const [people,setPeople]=useState<ConnectPerson[]>([]);
  const [peopleHasMore,setPeopleHasMore]=useState(false);
+ const [directoryResults,setDirectoryResults]=useState<ConnectPerson[]|null>(null);
+ const [directoryTotal,setDirectoryTotal]=useState(0);
+ const [directoryLoading,setDirectoryLoading]=useState(false);
  const [loadingMorePeople,setLoadingMorePeople]=useState(false);
  const [inquiries,setInquiries]=useState<ConnectInquiry[]>([]);
  const [opportunities,setOpportunities]=useState<ConnectOpportunity[]>([]);
@@ -319,20 +322,45 @@ export default function ConnectPage(){
  async function loadMoreContacts(){
   if(loadingMorePeople||!peopleHasMore||!tenantId)return;
   const generation=requestGeneration.current;
-  const offset=people.length;
+  const isSearch=section==="contacts"&&search.trim().length>=2;
+  const offset=isSearch?(directoryResults?.length||0):people.length;
   setLoadingMorePeople(true);
   try{
-   const r=await crmList<ConnectPerson>(tenantId,"people",{limit:"100",offset:String(offset)});
-   if(requestGeneration.current!==generation)return;
-   setPeople(current=>[...current,...r.items.filter(person=>!current.some(x=>x.id===person.id))]);
-   setPeopleHasMore(r.items.length===100);
+   if(isSearch){
+    const params=new URLSearchParams({search:search.trim(),sort:contactSort,offset:String(offset)});
+    const r=await connectFetch<{items:ConnectPerson[];total:number}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/contacts/directory?"+params.toString());
+    if(requestGeneration.current!==generation)return;
+    setDirectoryResults(current=>[...(current||[]),...r.items.filter(person=>!(current||[]).some(x=>x.id===person.id))]);
+    setDirectoryTotal(r.total);
+   }else{
+    const r=await crmList<ConnectPerson>(tenantId,"people",{limit:"100",offset:String(offset)});
+    if(requestGeneration.current!==generation)return;
+    setPeople(current=>[...current,...r.items.filter(person=>!current.some(x=>x.id===person.id))]);
+    setPeopleHasMore(r.items.length===100);
+   }
   }catch(e){if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Could not load more contacts.");}
   finally{if(requestGeneration.current===generation)setLoadingMorePeople(false);}
  }
+ useEffect(()=>{
+  if(section!=="contacts"||!tenantId||!signedIn||search.trim().length<2){
+   setDirectoryResults(null);setDirectoryTotal(0);setDirectoryLoading(false);return;
+  }
+  let cancelled=false;
+  setDirectoryLoading(true);
+  const timer=window.setTimeout(()=>{
+   const params=new URLSearchParams({search:search.trim(),sort:contactSort,offset:"0"});
+   void connectFetch<{items:ConnectPerson[];total:number}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/contacts/directory?"+params.toString())
+    .then(r=>{if(cancelled)return;setDirectoryResults(r.items);setDirectoryTotal(r.total);})
+    .catch(e=>{if(!cancelled){setDirectoryResults([]);setDirectoryTotal(0);setError(e instanceof Error?e.message:"Unable to search contacts.");}})
+    .finally(()=>{if(!cancelled)setDirectoryLoading(false);});
+  },280);
+  return()=>{cancelled=true;window.clearTimeout(timer);};
+ },[tenantId,signedIn,section,search,contactSort,refreshCount]);
  const contactsWithDetails=people.filter(p=>p.contact_methods.some(m=>m.value.trim())).length;
  const contactsMissingDetails=people.length-contactsWithDetails;
  const contactRoles=[...new Set(people.flatMap(p=>p.roles))].sort();
- const matchingPeople=useMemo(()=>people.filter(p=>{
+ const searchingDirectory=section==="contacts"&&search.trim().length>=2;
+ const matchingPeople=useMemo(()=>(searchingDirectory?(directoryResults||[]):people).filter(p=>{
   const hasDetails=p.contact_methods.some(m=>m.value.trim());
   if(contactView==="with_details"&&!hasDetails)return false;
   if(contactView==="missing_details"&&hasDetails)return false;
@@ -341,7 +369,7 @@ export default function ConnectPage(){
   const lastEnquiry=enquiryByPerson.get(p.id);
   return !q||[p.full_name,...p.contact_methods.map(m=>m.value),...p.roles,lastEnquiry?.summary,lastEnquiry?.source].some(v=>(v||"").toLowerCase().includes(q));
  }).sort((a,b)=>contactSort==="newest"?Date.parse(b.created_at)-Date.parse(a.created_at)||a.full_name.localeCompare(b.full_name):a.full_name.localeCompare(b.full_name)),
- [people,search,contactView,contactRole,contactSort,enquiryByPerson]);
+ [people,search,contactView,contactRole,contactSort,enquiryByPerson,searchingDirectory,directoryResults]);
 
  if(signedIn===null)return <main className="cx-gate">Checking your Connect session…</main>;
  if(!signedIn)return <ConnectSignInGate error={error} busy={busy} email={loginEmail} password={loginPassword} onEmailChange={setLoginEmail} onPasswordChange={setLoginPassword} onSubmit={signIn}/>;
@@ -470,14 +498,14 @@ export default function ConnectPage(){
       <label><span className="cx-sr-only">Sort contacts</span><select aria-label="Sort contacts" value={contactSort} onChange={e=>setContactSort(e.target.value==="newest"?"newest":"name")}><option value="name">Name A–Z</option><option value="newest">Recently added</option></select></label>
       {(search||contactRole!=="all"||contactSort!=="name"||contactView!=="all")&&<button type="button" className="cx-contacts-clear" onClick={()=>{setSearch("");setContactRole("all");setContactView("all");setContactSort("name");}}>Clear filters</button>}
      </div>
-     <div className="cx-contacts-directory-count" role="status">{matchingPeople.length} of {people.length} loaded contacts shown</div>
-     {matchingPeople.length===0?<EmptyState title="No matching contacts" description={people.length?"Try changing the search or filters.":"New contacts will appear here when they are created or linked to an enquiry."}/>:
+     <div className="cx-contacts-directory-count" role="status">{directoryLoading?"Searching full contact directory…":searchingDirectory?matchingPeople.length+" of "+directoryTotal+" matching contacts":matchingPeople.length+" of "+people.length+" loaded contacts shown"}</div>
+     {matchingPeople.length===0?<EmptyState title={directoryLoading?"Searching contacts…":"No matching contacts"} description={people.length?"Try changing the search or filters.":"New contacts will appear here when they are created or linked to an enquiry."}/>:
       <div className="cx-contacts-directory-list">
        <div className="cx-contacts-directory-columns" aria-hidden="true"><span>Contact</span><span>Latest enquiry</span><span>Contact information</span><span> </span></div>
        {matchingPeople.map(p=>{
         const latest=enquiryByPerson.get(p.id);
         const primary=p.contact_methods.find(m=>m.primary&&m.value.trim())||p.contact_methods.find(m=>m.value.trim());
-        return <button type="button" className="cx-contacts-directory-row" key={p.id} onClick={()=>{setSelectedOpportunity(null);setSelectedPerson(p.id);}} aria-label={"Open contact profile for "+p.full_name}>
+        return <button type="button" className="cx-contacts-directory-row" key={p.id} onClick={()=>{setPeople(current=>current.some(x=>x.id===p.id)?current:[...current,p]);setSelectedOpportunity(null);setSelectedPerson(p.id);}} aria-label={"Open contact profile for "+p.full_name}>
          <span className="cx-contacts-person"><span className="cx-avatar" aria-hidden="true">{initials(p.full_name)}</span><span className="cx-contacts-person-details"><strong>{p.full_name}</strong><small>{p.roles.length?p.roles.map(shortLabel).join(" · "):"Contact"}</small></span></span>
          <span className="cx-contacts-enquiry">{latest?<><span title={latest.summary}>{latest.summary}</span><small>{shortLabel(latest.source)} · {latest.count} {latest.count===1?"enquiry":"enquiries"} in loaded records</small></>:<small>No enquiries in loaded records</small>}</span>
          <span className="cx-contacts-method">{primary?<><span title={primary.value}>{primary.value}</span><small>{shortLabel(primary.kind)}</small></>:<span className="cx-contacts-missing">Contact details needed</span>}</span>
@@ -485,7 +513,7 @@ export default function ConnectPage(){
         </button>;
        })}
       </div>}
-     {peopleHasMore&&<div className="cx-contacts-load-more"><span>Showing loaded contacts. More records are available in this workspace.</span>
+     {(searchingDirectory?(directoryResults||[]).length<directoryTotal:peopleHasMore)&&!directoryLoading&&<div className="cx-contacts-load-more"><span>{searchingDirectory?"More matching contacts are available.":"Showing loaded contacts. More records are available in this workspace."}</span>
       <button type="button" className="cx-secondary" disabled={loadingMorePeople} onClick={()=>void loadMoreContacts()}>{loadingMorePeople?"Loading…":"Load 100 more contacts"}</button>
      </div>}
     </section>}

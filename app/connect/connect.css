@@ -1201,3 +1201,6 @@
 .cx-app .cx-provenance-source strong{font-size:12px;color:#2c526d}
 .cx-app .cx-provenance-source small,.cx-app .cx-provenance-source p{font-size:11px;color:#66849a;margin:0;overflow-wrap:anywhere}
 .cx-app .cx-provenance-source a{font-size:11px;color:#147da9;font-weight:700}
+
+.cx-app .cx-contacts-directory-count{min-height:22px}
+.cx-app .cx-contacts-search input:focus-visible{outline:2px solid #138fbe;outline-offset:1px}
