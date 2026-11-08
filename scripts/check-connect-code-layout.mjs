@@ -186,3 +186,10 @@ if(!connectReports.includes('role="tablist"')||!connectReports.includes('role="t
  throw Error("CRM report tab and historical-data safeguards are required.");
 
 if(!connectReports.includes('e.key==="ArrowRight"')||!connectReports.includes("cx-report-empty-cell"))throw Error("Report accessibility and empty-state controls are required.");
+
+/* Phase 4: the customer-journey handoffs must remain connected. */
+const journeyPage=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+const journeyInbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectUnifiedInbox.tsx"),"utf8");
+const journeyProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+const journeyTasks=fs.readFileSync(path.join(root,"features/connect/components/ConnectFollowupsBoard.tsx"),"utf8");
+if(!journeyPage.includes("openCustomerWorkflow=(personId:string")||!journeyPage.includes("setWorkflowContactId(null)")||!journeyInbox.includes("onOpenWorkflow(conversation.personId!")||!journeyInbox.includes("if(focusPersonId&&t.personId!==focusPersonId)")||!journeyProfile.includes("Customer journey")||!journeyTasks.includes("const scopedTasks=useMemo"))throw Error("CRM cross-screen workflow handoffs were lost.");

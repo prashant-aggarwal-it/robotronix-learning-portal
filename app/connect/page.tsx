@@ -56,6 +56,7 @@ export default function ConnectPage(){
  const [showContactForm,setShowContactForm]=useState(false);
  const [selectedPerson,setSelectedPerson]=useState<string|null>(null);
  const [selectedOpportunity,setSelectedOpportunity]=useState<string|null>(null);
+ const [workflowContactId,setWorkflowContactId]=useState<string|null>(null);
  const [assignees,setAssignees]=useState<Array<{id:string;label:string;role:string}>>([]);
  const [activityNote,setActivityNote]=useState("");
  const [overview,setOverview]=useState<ConnectOverview>(emptyOverview);
@@ -260,9 +261,17 @@ export default function ConnectPage(){
    opportunityId:opp.id,stageId,version:opp.version
   }),"Admissions stage updated.");
  }
+ const openCustomerWorkflow=(personId:string,destination:"communications"|"enquiries"|"pipeline"|"followups")=>{
+  if(!personId)return;
+  setWorkflowContactId(personId);setSelectedPerson(null);setSelectedOpportunity(null);
+  setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setSection(destination);
+ };
+ const workflowContact=people.find(x=>x.id===workflowContactId);
+ const visibleOpportunities=workflowContactId?opportunities.filter(x=>x.contact_id===workflowContactId):opportunities;
  const selectedContact=people.find(x=>x.id===selectedPerson);
  const selectedLead=opportunities.find(x=>x.id===selectedOpportunity);
  const matchingInquiries=useMemo(()=>inquiries.filter(i=>{
+  if(workflowContactId&&i.person_id!==workflowContactId)return false;
   if(categoryFilter&&i.category_id!==categoryFilter)return false;
   if(enquirySourceFilter!=="all"&&i.source.toLowerCase()!==enquirySourceFilter)return false;
   if(enquiryView==="unclassified"&&i.category_id)return false;
@@ -270,7 +279,7 @@ export default function ConnectPage(){
   const q=search.trim().toLowerCase();
   return !q||[i.contact_name,i.summary,i.source,i.stage_name,i.category_label,i.contact_detail].some(v=>(v||"").toLowerCase().includes(q));
  }).sort((a,b)=>enquirySort==="latest"?Date.parse(b.received_at)-Date.parse(a.received_at):Date.parse(a.received_at)-Date.parse(b.received_at)),
- [inquiries,search,categoryFilter,enquirySourceFilter,enquiryView,enquirySort]);
+ [inquiries,search,categoryFilter,enquirySourceFilter,enquiryView,enquirySort,workflowContactId]);
  const unclassifiedCount=inquiries.filter(i=>!i.category_id).length;
  const linkedCount=inquiries.filter(i=>Boolean(i.opportunity_id)).length;
  const enquirySources=[...new Set(inquiries.map(i=>i.source.toLowerCase()))].sort();
@@ -306,7 +315,7 @@ export default function ConnectPage(){
  if(!workspaces.length)return <ConnectNoWorkspaceGate error={error} onRetry={()=>{setWorkspacesReady(false);void loadWorkspaces().catch(e=>{setError(e instanceof Error?e.message:"Unable to check workspace access.");setWorkspacesReady(true);});}} onSignOut={()=>{setSignedIn(false);void getSupabaseBrowserClient()?.auth.signOut();}}/>;
  
   return <main className="cx-app">
-  <ConnectSidebar showMobileNav={showMobileNav} onToggleMobile={()=>setShowMobileNav(v=>!v)} canOpenPortal={canOpenPortal} tenantId={tenantId} tenantRole={tenant?.membership_role||"member"} workspaces={workspaces} accountEmail={accountEmail} section={section} visibleNavigation={visibleNavigation} onWorkspaceChange={value=>{setTenantId(value);setSelectedPerson(null);setSelectedOpportunity(null);}} onSectionChange={value=>{setSection(value);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setShowMobileNav(false);}}/>
+  <ConnectSidebar showMobileNav={showMobileNav} onToggleMobile={()=>setShowMobileNav(v=>!v)} canOpenPortal={canOpenPortal} tenantId={tenantId} tenantRole={tenant?.membership_role||"member"} workspaces={workspaces} accountEmail={accountEmail} section={section} visibleNavigation={visibleNavigation} onWorkspaceChange={value=>{setTenantId(value);setSelectedPerson(null);setSelectedOpportunity(null);setWorkflowContactId(null);}} onSectionChange={value=>{setSection(value);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setWorkflowContactId(null);setShowMobileNav(false);}}/>
   <div className="cx-main">
    <ConnectTopbar section={section} loading={loading} canOpenPortal={canOpenPortal} onRefresh={()=>setRefreshCount(v=>v+1)}/>
    <div className="cx-content">
@@ -325,6 +334,12 @@ export default function ConnectPage(){
      {section==="contacts"&&canWrite&&<button className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
     </div>}
 
+    {workflowContactId&&["enquiries","pipeline","followups","communications"].includes(section)&&<div className="cx-workflow-context" role="region" aria-label="Customer workflow">
+     <div className="cx-workflow-identity"><span>CUSTOMER WORKFLOW</span><strong>{workflowContact?.full_name||"Selected customer"}</strong><small>Related records only</small></div>
+     <nav className="cx-workflow-nav" aria-label="Customer journey sections">
+      {(["communications","enquiries","pipeline","followups"] as const).filter(x=>advanced||x!=="pipeline").map(x=><button key={x} type="button" aria-current={section===x?"page":undefined} onClick={()=>{setSection(x);setSearch("");setEnquiryView("all");setCategoryFilter("");setEnquirySourceFilter("all");}}>{x==="communications"?"Conversations":x==="pipeline"?"Admissions":x==="followups"?"Follow-ups":"Enquiries"}</button>)}
+      <button type="button" className="cx-workflow-clear" onClick={()=>{setWorkflowContactId(null);setSearch("");}}>All records ×</button>
+     </nav></div>}
     {section==="overview"&&<>
      <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}
       onViewAllEnquiries={()=>{setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setEnquirySort("latest");setSection("enquiries");}}
@@ -391,7 +406,10 @@ export default function ConnectPage(){
           </select></div></td>
          <td><div className="cx-enquiry-progress"><span className="cx-status" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||"New enquiry"}</span>{i.opportunity_title&&<small title={i.opportunity_title}>{i.opportunity_title}</small>}</div></td>
          <td><time className="cx-enquiry-date" dateTime={i.received_at}>{dateLabel(i.received_at)}</time></td>
-         <td><button type="button" className="cx-link-button cx-enquiry-view" aria-label={"View details for "+(i.contact_name||"enquiry")} onClick={()=>{setSelectedPerson(i.person_id);setSelectedOpportunity(i.opportunity_id);}}>View details →</button></td>
+         <td><div className="cx-enquiry-quick-actions">
+        <button type="button" className="cx-link-button cx-enquiry-view" aria-label={"View details for "+(i.contact_name||"enquiry")} onClick={()=>{setSelectedPerson(i.person_id);setSelectedOpportunity(i.opportunity_id);}}>View details →</button>
+        {i.person_id&&<button type="button" className="cx-link-button" onClick={()=>openCustomerWorkflow(i.person_id!,"followups")}>Follow-ups ↗</button>}
+       </div></td>
         </tr>;
        })}</tbody>
       </table></div>}
@@ -430,7 +448,7 @@ export default function ConnectPage(){
     </section>}
 
     {section==="pipeline"&&<div className="cx-pipeline-stack">
-     {pipelines.length>0&&<PipelineVisual pipelines={pipelines} opportunities={opportunities} onOpen={id=>{const item=opportunities.find(o=>o.id===id);if(item){setSelectedOpportunity(id);setSelectedPerson(item.contact_id);}}}/>}
+     {pipelines.length>0&&<PipelineVisual pipelines={pipelines} opportunities={visibleOpportunities} onOpen={id=>{const item=opportunities.find(o=>o.id===id);if(item){setSelectedOpportunity(id);setSelectedPerson(item.contact_id);}}}/>}
      {pipelines.length===0?<section className="cx-panel">
       <EmptyState title="Set up your first admissions pipeline" description="Track every opportunity from initial enquiry to enrolment. Start with a ready-made five-stage pipeline."/>
       {canConfigure?<form className="cx-inline-form" aria-label="Create admissions pipeline" style={{maxWidth:520,margin:"0 auto 22px",display:"flex",flexWrap:"wrap",justifyContent:"center",gap:10}} onSubmit={e=>{e.preventDefault();const name=pipelineName.trim()||"Student Admissions";void run(async()=>{
@@ -444,19 +462,19 @@ export default function ConnectPage(){
       </form>:<p style={{textAlign:"center",margin:"0 0 24px",color:"#657e92",fontSize:13}}>Ask your workspace owner, admin or manager to create the first pipeline.</p>}
      </section>:
      pipelines.map(p=><section key={p.id} className="cx-pipeline-section">
-      <div className="cx-panel-header"><div><h2>{p.name}</h2><p>{p.stages.length} stages · {opportunities.filter(o=>o.pipeline_id===p.id).length} opportunities</p></div></div>
+      <div className="cx-panel-header"><div><h2>{p.name}</h2><p>{p.stages.length} stages · {visibleOpportunities.filter(o=>o.pipeline_id===p.id).length} opportunities</p></div></div>
       <div className="cx-kanban">{[...p.stages].sort((a,b)=>a.order-b.order).map(stage=><div className="cx-kanban-column" key={stage.id}>
-       <div className="cx-column-heading"><span className="cx-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}}/><strong>{stage.name}</strong><span>{opportunities.filter(o=>o.stage_id===stage.id).length}</span></div>
-       {opportunities.filter(o=>o.stage_id===stage.id).map(o=><button key={o.id} className="cx-deal" onClick={()=>{setSelectedOpportunity(o.id);setSelectedPerson(o.contact_id);}}>
+       <div className="cx-column-heading"><span className="cx-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}}/><strong>{stage.name}</strong><span>{visibleOpportunities.filter(o=>o.stage_id===stage.id).length}</span></div>
+       {visibleOpportunities.filter(o=>o.stage_id===stage.id).map(o=><button key={o.id} className="cx-deal" onClick={()=>{setSelectedOpportunity(o.id);setSelectedPerson(o.contact_id);}}>
         <strong>{o.title}</strong><small>{people.find(x=>x.id===o.contact_id)?.full_name||"Institutional opportunity"}</small>
         <span className="cx-deal-foot"><span>{o.expected_value==null?"No value specified":o.currency+" "+o.expected_value.toLocaleString("en-IN")}</span><span>View →</span></span></button>)}
-       {!opportunities.some(o=>o.stage_id===stage.id)&&<span className="cx-stage-empty">No admissions in this stage</span>}
+       {!visibleOpportunities.some(o=>o.stage_id===stage.id)&&<span className="cx-stage-empty">No admissions in this stage</span>}
       </div>)}</div>
      </section>)}
     </div>}
 
     {section==="followups"&&<div className="cx-followups-workspace">
-     <ConnectFollowupsBoard tasks={tasks} people={people} opportunities={opportunities} canWrite={canWrite} busy={busy}
+     <ConnectFollowupsBoard tasks={tasks} people={people} opportunities={opportunities} focusPersonId={workflowContactId} canWrite={canWrite} busy={busy}
       onComplete={taskId=>void run(()=>crmCommand(tenantId,"tasks","complete_task",{taskId}),"Follow-up completed.")}
       onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}
       onOpenOpportunity={(personId,opportunityId)=>{setSelectedPerson(personId);setSelectedOpportunity(opportunityId);}}/>
@@ -472,7 +490,8 @@ export default function ConnectPage(){
      onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}
      onOpenOpportunity={opportunityId=>{const opp=opportunities.find(o=>o.id===opportunityId);if(opp){setSelectedOpportunity(opportunityId);setSelectedPerson(opp.contact_id);}}}/>}
 
-    {section==="communications"&&<ConnectUnifiedInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} onOpenContact={personId=>{void (async()=>{try{if(!people.some(person=>person.id===personId)){const result=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});if(!result.items.length){setError("Contact is no longer available.");return;}setPeople(current=>current.some(person=>person.id===personId)?current:[...current,result.items[0]]);}setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}catch(e){setError(e instanceof Error?e.message:"Could not open linked CRM contact.");}})();}}/>}
+    {section==="communications"&&<ConnectUnifiedInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} focusPersonId={workflowContactId}
+     onOpenWorkflow={(id,destination)=>openCustomerWorkflow(id,destination)} onOpenContact={personId=>{void (async()=>{try{if(!people.some(person=>person.id===personId)){const result=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});if(!result.items.length){setError("Contact is no longer available.");return;}setPeople(current=>current.some(person=>person.id===personId)?current:[...current,result.items[0]]);}setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}catch(e){setError(e instanceof Error?e.message:"Could not open linked CRM contact.");}})();}}/>}
 
     {section==="reports"&&(canConfigure?<ConnectReports key={tenantId} tenantId={tenantId}/>:
      <section className="cx-panel"><div className="cx-empty"><strong>Reporting access restricted</strong><p>Ask your institute manager for access.</p></div></section>)}
@@ -556,7 +575,8 @@ export default function ConnectPage(){
    <aside className="cx-drawer" role="dialog" aria-modal="true" aria-label="Contact 360 profile">
     <div className="cx-drawer-header"><span>CONTACT WORKSPACE</span><button aria-label="Close details" data-escape-close="true" disabled={busy} onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>×</button></div>
     <div className="cx-drawer-body">
-     <ContactProfile person={selectedContact} opportunity={selectedLead} tenantId={tenantId} refreshKey={refreshCount} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onCreateEnquiry={()=>{if(!selectedContact)return;setLead({name:selectedContact.full_name,phone:selectedContact.contact_methods.find(m=>["phone","mobile"].includes(m.kind.toLowerCase()))?.value||"",email:selectedContact.contact_methods.find(m=>m.kind.toLowerCase()==="email")?.value||"",source:"phone",summary:"",pipelineId:"",personId:selectedContact.id});setSelectedPerson(null);setSelectedOpportunity(null);setShowLeadForm(true);}} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
+     <ContactProfile person={selectedContact} opportunity={selectedLead} tenantId={tenantId} refreshKey={refreshCount} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onNavigateWorkflow={destination=>{const id=selectedContact?.id||selectedLead?.contact_id;if(id)openCustomerWorkflow(id,destination);}}
+      onCreateEnquiry={()=>{if(!selectedContact)return;setLead({name:selectedContact.full_name,phone:selectedContact.contact_methods.find(m=>["phone","mobile"].includes(m.kind.toLowerCase()))?.value||"",email:selectedContact.contact_methods.find(m=>m.kind.toLowerCase()==="email")?.value||"",source:"phone",summary:"",pipelineId:"",personId:selectedContact.id});setSelectedPerson(null);setSelectedOpportunity(null);setShowLeadForm(true);}} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
       overviewContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Admission opportunity</h3><strong className="cx-detail-title">{selectedLead.title}</strong>
       <p className="cx-muted">Current stage: {selectedLead.stage_name} · Version {selectedLead.version}</p>
       {canWrite&&<label>Move to stage<select value={selectedLead.stage_id} disabled={busy} onChange={e=>void updateStage(selectedLead,e.target.value)}>

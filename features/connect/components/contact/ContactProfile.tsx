@@ -10,12 +10,13 @@ type Props={
  inquiries:ConnectInquiry[];opportunities:ConnectOpportunity[];tasks:ConnectTask[];appointments:ConnectAppointment[];canWrite:boolean;
  overviewContent:ReactNode;enquiriesContent:ReactNode;timelineContent:ReactNode;
  followupsContent:ReactNode;relationsContent:ReactNode;detailsContent:ReactNode;onCreateEnquiry:()=>void;onClose:()=>void;
+ onNavigateWorkflow?:(destination:"communications"|"enquiries"|"pipeline"|"followups")=>void;
 };
 const tabs:Array<{id:ProfileTab;label:string}>= [
  {id:"overview",label:"Overview"},{id:"insights",label:"Insights"},{id:"timeline",label:"Activity"},{id:"followups",label:"Follow-ups"},{id:"relations",label:"Relationships"},{id:"details",label:"Details"}
 ];
 function phoneNumber(value:string){const cleaned=value.replace(/[^+\d]/g,"");return /^\+?\d{7,15}$/.test(cleaned)?cleaned:null;}
-export function ContactProfile({person,opportunity,tenantId,refreshKey,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,relationsContent,detailsContent,onCreateEnquiry,onClose}:Props){
+export function ContactProfile({person,opportunity,tenantId,refreshKey,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,relationsContent,detailsContent,onCreateEnquiry,onClose,onNavigateWorkflow}:Props){
  const [tab,setTab]=useState<ProfileTab>("overview");
  useEffect(()=>setTab("overview"),[person?.id,opportunity?.id]);
  const contactId=person?.id;
@@ -40,8 +41,18 @@ export function ContactProfile({person,opportunity,tenantId,refreshKey,inquiries
     {person&&canWrite&&<button type="button" className="cx-contact360-action" onClick={onCreateEnquiry}>＋ Enquiry</button>}
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("followups")}>{canWrite?"＋ Follow-up":"Follow-ups"}</button>
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("timeline")}>▤ Activity</button>
+    {person&&canWrite&&<button type="button" className="cx-contact360-action" onClick={()=>setTab("details")}>＋ Admission</button>
    </div>
   </header>
+  {onNavigateWorkflow&&<nav className="cx-contact360-workflow" aria-label="Customer journey">
+     <div><strong>Customer journey</strong><small>Open related records without losing the customer</small></div>
+     <div className="cx-contact360-workflow-links">
+      <button type="button" onClick={()=>onNavigateWorkflow("communications")}>Conversations ↗</button>
+      <button type="button" onClick={()=>onNavigateWorkflow("enquiries")}>Enquiries ({relatedInquiries.length}) ↗</button>
+      <button type="button" onClick={()=>onNavigateWorkflow("pipeline")}>Admissions ({opportunityIds.size}) ↗</button>
+      <button type="button" onClick={()=>onNavigateWorkflow("followups")}>Follow-ups ({openTasks.length}) ↗</button>
+     </div>
+   </nav>}
   <div className="cx-contact360-stats" aria-label="Loaded contact records">
    <button type="button" onClick={()=>setTab("overview")}><span>Enquiries</span><strong>{relatedInquiries.length}</strong><small>Loaded records</small></button>
    <button type="button" onClick={()=>setTab("followups")}><span>Open follow-ups</span><strong>{openTasks.length}</strong><small>Loaded tasks</small></button>

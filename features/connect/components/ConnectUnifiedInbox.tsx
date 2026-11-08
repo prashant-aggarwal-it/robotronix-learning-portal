@@ -12,7 +12,10 @@ type Conversation={personId:string|null;provider:string;channelName:string;statu
 type Attachment={messageId:string;id:string;filename:string;contentType:string;size:number};
 const base=(tenantId:string)=>"/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/unified";
 const stamp=(s:string)=>{const d=new Date(s);return Number.isNaN(d.getTime())?"":d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});};
-export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:string;canWrite:boolean;onOpenContact?:(id:string)=>void}){
+export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact,onOpenWorkflow,focusPersonId}:{
+ tenantId:string;canWrite:boolean;onOpenContact?:(id:string)=>void;focusPersonId?:string|null;
+ onOpenWorkflow?:(personId:string,destination:"enquiries"|"pipeline"|"followups")=>void;
+}){
  const [threads,setThreads]=useState<Thread[]>([]),[selected,setSelected]=useState<string|null>(null),[conversation,setConversation]=useState<Conversation|null>(null);
  const [attachments,setAttachments]=useState<Attachment[]>([]),[replyContext,setReplyContext]=useState<Record<string,unknown>|null>(null);
  const [filter,setFilter]=useState("all"),[view,setView]=useState("all"),[toolsOpen,setToolsOpen]=useState(false),[search,setSearch]=useState(""),[summary,setSummary]=useState(""),[personId,setPersonId]=useState(""),[replyText,setReplyText]=useState("");
@@ -62,6 +65,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
  }
 
  const shown=threads.filter(t=>{
+  if(focusPersonId&&t.personId!==focusPersonId)return false;
   if(filter!=="all"&&t.provider!==filter)return false;
   if(view==="unread"&&t.unreadCount===0)return false;
   if(view==="needs_reply"&&t.lastDirection!=="inbound")return false;
@@ -90,6 +94,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
     {ch==="all"?"All channels":providerLabel(ch)}
    </button>)}
   </div>
+  {focusPersonId&&threads.length>0&&!threads.some(t=>t.personId===focusPersonId)&&<p className={styles.workflowHint}>No linked conversations for this contact in the loaded inbox. Select All records to browse other conversations.</p>}
   <div className={styles.layout}>
    <aside className={styles.listPane} aria-label="Conversations">
     <div className={styles.listHeader}>
@@ -140,6 +145,13 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
         </div>
        </article>)}
       </div>
+      {conversation.personId&&onOpenWorkflow&&<nav className={styles.workflowSteps} aria-label="Customer next steps">
+        <strong>Next steps</strong>
+        <button type="button" onClick={()=>onOpenWorkflow(conversation.personId!,"enquiries")}>Enquiries ↗</button>
+        <button type="button" onClick={()=>onOpenWorkflow(conversation.personId!,"pipeline")}>Admissions ↗</button>
+        <button type="button" onClick={()=>onOpenWorkflow(conversation.personId!,"followups")}>Follow-ups ↗</button>
+       </nav>}
+      {!conversation.personId&&<p className={styles.workflowHint}>Link this conversation to a CRM contact under Enquiry &amp; contact actions to access admissions and follow-ups.</p>}
       <div className={styles.chatFooter}>
        {conversation.provider!=="whatsapp"&&<div className={styles.reply}>
         {replyContext?.canReply===true&&canWrite?<><label htmlFor="cx-compose-reply">Reply to customer</label><textarea id="cx-compose-reply" rows={2} maxLength={conversation.provider==="email"?12000:1000} placeholder="Write a reply…" value={replyText} onChange={e=>setReplyText(e.target.value)}/>

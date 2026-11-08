@@ -85,3 +85,11 @@
 .empty{border:1px dashed #dce8f1;background:#f9fcfe;border-radius:10px;padding:20px;margin:12px}
 @media(max-width:900px){.layout{grid-template-columns:minmax(270px,39%) minmax(0,1fr)}}
 @media(max-width:690px){.layout{grid-template-columns:minmax(0,1fr)}.channelTabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.channelButton,.channelActive{white-space:nowrap;flex:none}.filters{gap:6px;flex-wrap:wrap}.pillGroup{max-width:100%;overflow-x:auto}.chatPane{min-width:0}.head h2{font-size:18px}}
+
+/* Customer journey handoffs */
+.workflowSteps{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:12px 15px;border-top:1px solid #dfeaf2;background:#f5fafe}
+.workflowSteps strong{font-size:11px;color:#4f7188;margin-right:4px}
+.workflowSteps button{border-radius:8px;border:1px solid #cae2ef;background:#fff;color:#146a98;padding:8px 11px;font-size:11px;font-weight:750;cursor:pointer}
+.workflowSteps button:hover{background:#e9f7fc}
+.workflowSteps button:focus-visible{outline:2px solid #138fbe;outline-offset:2px}
+.workflowHint{margin:10px 15px;padding:12px;border:1px dashed #d7e7f0;border-radius:9px;background:#f7fbfe;color:#59778d;font-size:12px;line-height:1.5}

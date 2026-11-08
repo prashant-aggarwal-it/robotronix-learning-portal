@@ -6,7 +6,7 @@ import {FollowupWeekWidget} from "./ConnectDataWidgets";
 
 type Filter="open"|"overdue"|"today"|"upcoming"|"undated"|"completed"|"all";
 type Props={
- tasks:ConnectTask[];people:ConnectPerson[];opportunities:ConnectOpportunity[];
+ tasks:ConnectTask[];people:ConnectPerson[];opportunities:ConnectOpportunity[];focusPersonId?:string|null;
  canWrite:boolean;busy:boolean;onComplete:(taskId:string)=>void;
  onOpenContact:(personId:string)=>void;onOpenOpportunity:(personId:string,opportunityId:string)=>void;
 };
@@ -27,7 +27,7 @@ function state(t:ConnectTask,today:string):Filter{
  return due<today?"overdue":due===today?"today":"upcoming";
 }
 const labels:Record<Filter,string>={all:"All",open:"Open",overdue:"Overdue",today:"Due today",upcoming:"Upcoming",undated:"No due date",completed:"Completed"};
-export function ConnectFollowupsBoard({tasks,people,opportunities,canWrite,busy,onComplete,onOpenContact,onOpenOpportunity}:Props){
+export function ConnectFollowupsBoard({tasks,people,opportunities,focusPersonId,canWrite,busy,onComplete,onOpenContact,onOpenOpportunity}:Props){
  const [filter,setFilter]=useState<Filter>("open");
  const [search,setSearch]=useState("");
  const [sort,setSort]=useState<"due"|"newest">("due");
@@ -36,12 +36,13 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,canWrite,busy,
  const peopleById=useMemo(()=>new Map(people.map(p=>[p.id,p])),[people]);
  const opportunitiesById=useMemo(()=>new Map(opportunities.map(o=>[o.id,o])),[opportunities]);
  const personFor=(t:ConnectTask)=>peopleById.get(t.person_id||opportunitiesById.get(t.opportunity_id||"")?.contact_id||"");
+ const scopedTasks=useMemo(()=>focusPersonId?tasks.filter(t=>t.person_id===focusPersonId||opportunitiesById.get(t.opportunity_id||"")?.contact_id===focusPersonId):tasks,[tasks,focusPersonId,opportunitiesById]);
  const counts=useMemo(()=>{
-  const out:Record<Filter,number>={all:tasks.length,open:0,overdue:0,today:0,upcoming:0,undated:0,completed:0};
-  for(const task of tasks){const status=state(task,today);out[status]++;if(status!=="completed")out.open++;}
+  const out:Record<Filter,number>={all:scopedTasks.length,open:0,overdue:0,today:0,upcoming:0,undated:0,completed:0};
+  for(const task of scopedTasks){const status=state(task,today);out[status]++;if(status!=="completed")out.open++;}
   return out;
- },[tasks,today]);
- const filtered=tasks.filter(t=>{
+ },[scopedTasks,today]);
+ const filtered=scopedTasks.filter(t=>{
   if(selectedDay&&(!t.due_at||!Number.isFinite(Date.parse(t.due_at))||dayKey(new Date(t.due_at))!==selectedDay))return false;
   const status=state(t,today);
   if(filter==="open"&&status==="completed")return false;
@@ -64,7 +65,7 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,canWrite,busy,
     <strong>{counts[f]}</strong><span>{labels[f]}</span>
    </button>)}
   </div>
-  <FollowupWeekWidget tasks={tasks} onSelectDay={setSelectedDay} selectedDay={selectedDay}/>
+  <FollowupWeekWidget tasks={scopedTasks} onSelectDay={setSelectedDay} selectedDay={selectedDay}/>
   <div className={styles.toolbar}>
    <div className={styles.tabs} role="group" aria-label="Follow-up filter">
     {filters.map(f=><button key={f} type="button" className={filter===f?styles.tabActive:styles.tab} onClick={()=>setFilter(f)} aria-pressed={filter===f}>{labels[f]}</button>)}
@@ -73,9 +74,9 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,canWrite,busy,
     <select aria-label="Sort follow-ups" value={sort} onChange={e=>setSort(e.target.value==="newest"?"newest":"due")}><option value="due">Due date</option><option value="newest">Recently created</option></select>
    </div>
   </div>
-  <p className={styles.count}>{filtered.length} of {tasks.length} loaded tasks shown{filter==="open"?" · Open tasks":filter!=="all"?" · "+labels[filter]:""}{search?" · Search results":""}</p>
+  <p className={styles.count}>{filtered.length} of {scopedTasks.length} loaded tasks shown{filter==="open"?" · Open tasks":filter!=="all"?" · "+labels[filter]:""}{search?" · Search results":""}</p>
   <div className={styles.list}>
-   {filtered.length===0?<div className={styles.empty}><strong>{tasks.length?"No matching follow-ups":"No follow-ups yet"}</strong><p>{tasks.length?"Try another filter or search term.":"Open a contact to schedule your first follow-up."}</p>{filter!=="open"&&<button type="button" onClick={()=>{setFilter("open");setSearch("");}}>Show open tasks</button>}</div>:
+   {filtered.length===0?<div className={styles.empty}><strong>{scopedTasks.length?"No matching follow-ups":"No follow-ups yet"}</strong><p>{scopedTasks.length?"Try another filter or search term.":"Open a contact to schedule your first follow-up."}</p>{filter!=="open"&&<button type="button" onClick={()=>{setFilter("open");setSearch("");}}>Show open tasks</button>}</div>:
     filtered.map(t=>{
      const status=state(t,today),contact=personFor(t),opportunity=opportunitiesById.get(t.opportunity_id||"");
      return <article key={t.id} className={styles.task}>
