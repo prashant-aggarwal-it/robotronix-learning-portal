@@ -30,7 +30,8 @@ export type ConnectTask={
 };
 export type ConnectAppointment={
  id:string;title:string;kind:string;status:string;person_id:string|null;opportunity_id:string|null;
- starts_at:string;ends_at:string;owner_membership_id:string|null
+ starts_at:string;ends_at:string;owner_membership_id:string|null;
+ location:string|null;meeting_url:string|null;notes:string|null;programme:string|null;version:number;updated_at:string
 };
 export type ConnectOverview={
  newEnquiries:number;totalEnquiries:number;openOpportunities:number;wonOpportunities:number;
