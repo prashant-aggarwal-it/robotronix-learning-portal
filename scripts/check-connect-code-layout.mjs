@@ -271,3 +271,8 @@ const directoryApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[t
 const directorySql=fs.readFileSync(path.join(root,"database/connect/saas/42_contact_directory_search.sql"),"utf8");
 if(!directoryUi.includes("searchingDirectory")||!directoryUi.includes("directoryResults")||!directoryApi.includes("connect_contact_directory")||!directorySql.includes("cm.display_value ilike"))
  throw Error("Tenant-wide name/phone/email contact search is required after bulk import.");
+
+const importIssueSql=fs.readFileSync(path.join(root,"database/connect/saas/43_contact_import_issue_review.sql"),"utf8");
+const importIssueUi=fs.readFileSync(path.join(root,"features/connect/components/ContactImportWizard.tsx"),"utf8");
+if(!importIssueSql.includes("connect_contact_import_issues")||!importIssueUi.includes("Review skipped rows")||!importIssueUi.includes("downloadIssueReport"))
+ throw Error("Bulk contact import skipped-row review must remain available.");

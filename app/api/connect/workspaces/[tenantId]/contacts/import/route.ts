@@ -7,9 +7,13 @@ export async function GET(request:NextRequest,{params}:Ctx){
  const {tenantId}=await params;
  if(!uuid(tenantId))return connectFailure("Invalid workspace.",400);
  const auth=await connectSession(request);if(!isConnectSession(auth))return auth;
- const result=await invokeConnect<{items:unknown[]}>(auth,"connect_contacts_import",{
-  p_actor_id:auth.actorId,p_tenant_id:tenantId,p_action:"history",p_data:{}
- });
+ const batchId=request.nextUrl.searchParams.get("batchId");
+ if(batchId!==null&&!uuid(batchId))return connectFailure("Invalid import batch.",400);
+ const result=await invokeConnect<{items:unknown[]}>(auth,
+  batchId?"connect_contact_import_issues":"connect_contacts_import",
+  batchId?{p_actor_id:auth.actorId,p_tenant_id:tenantId,p_batch_id:batchId}:
+  {p_actor_id:auth.actorId,p_tenant_id:tenantId,p_action:"history",p_data:{}}
+ );
  if(result.error)return connectRpcFailure(result.error,result.code);
  return NextResponse.json({ok:true,items:result.data?.items??[]},{headers:noStore});
 }

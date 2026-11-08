@@ -71,6 +71,9 @@ export function ContactImportWizard({tenantId,onClose,onImported}:{
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[progress,setProgress]=useState(0);
  const [result,setResult]=useState({created:0,existing:0,skipped:0}),[history,setHistory]=useState<Batch[]>([]);
  const [ack,setAck]=useState(false),fileInput=useRef<HTMLInputElement>(null);
+ const [issueBatch,setIssueBatch]=useState<string|null>(null);
+ const [issues,setIssues]=useState<Array<{rowNumber:number;reason:string}>>([]);
+ const [issuesBusy,setIssuesBusy]=useState(false);
  const rows=useMemo(()=>buildRows(sheet,headers,mapping,country),[sheet,headers,mapping,country]);
  const invalid=useMemo(()=>rows.filter(r=>rowWarning(r,country)),[rows,country]);
  const duplicates=useMemo(()=>{
@@ -100,6 +103,22 @@ export function ContactImportWizard({tenantId,onClose,onImported}:{
    setHeaders(unique);setSheet([unique,...data.slice(1)]);setMapping(guess);setFile(fileToRead);
    if(!sourceLabel)setSourceLabel(fileToRead.name.replace(/\.csv$/i,"").slice(0,120));
   }catch(err){setError(err instanceof Error?err.message:"Unable to parse CSV.");}
+ }
+ async function showIssues(batchId:string){
+  if(issueBatch===batchId){setIssueBatch(null);setIssues([]);return;}
+  setIssueBatch(batchId);setIssues([]);setIssuesBusy(true);setError("");
+  try{
+   const res=await connectFetch<{items:Array<{rowNumber:number;reason:string}>}>(url+"?batchId="+encodeURIComponent(batchId));
+   setIssues(res.items||[]);
+  }catch(err){setError(err instanceof Error?err.message:"Unable to load import issues.");}
+  finally{setIssuesBusy(false);}
+ }
+ function downloadIssueReport(){
+  if(!issues.length)return;
+  const quote=(value:string)=>'"'+value.replace(/"/g,'""')+'"';
+  const csv="CSV row,Reason\n"+issues.map(x=>[x.rowNumber,quote(x.reason||"Skipped")].join(",")).join("\n")+"\n";
+  const link=document.createElement("a");link.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  link.download="contact-import-skipped-rows.csv";link.click();URL.revokeObjectURL(link.href);
  }
  function downloadTemplate(){
   const csv="Name,Phone,Email,Company,City,Tags,Notes,Website\nAarav Example,9876543210,,Robotronix,Delhi,Robotics;School,Requested a demo,https://example.org\n";
@@ -170,8 +189,17 @@ export function ContactImportWizard({tenantId,onClose,onImported}:{
     {busy&&<div className="cx-import-progress" role="status"><progress value={progress} max={rows.length||1}/><span>Processing {progress} of {rows.length} contacts…</span></div>}
     <section className="cx-import-history"><h3>Recent imports</h3>{history.length===0?<p>No previous contact imports.</p>:<div className="cx-import-history-list">{history.slice(0,6).map(b=><div key={b.id}>
      <span><strong>{b.file_name}</strong><small>{b.source_label} · {new Date(b.created_at).toLocaleDateString("en-IN")} · {b.status}</small></span>
-     <span>{b.created} new · {b.existing} existing · {b.skipped} skipped</span>
-    </div>)}</div>}</section>
+     <span className="cx-import-history-actions">{b.created} new · {b.existing} existing · {b.skipped} skipped
+      {Number(b.skipped)>0&&<button type="button" onClick={()=>void showIssues(b.id)} disabled={issuesBusy}>{issueBatch===b.id?"Hide issues":"Review skipped rows"}</button>}
+     </span>
+    </div>)}</div>}
+    {issueBatch&&<div className="cx-import-issue-list" role="region" aria-label="Skipped import rows">
+     <div><strong>Skipped rows</strong>{issues.length>0&&<button type="button" onClick={downloadIssueReport}>Export issues CSV</button>}</div>
+     {issuesBusy?<p>Loading skipped rows…</p>:issues.length===0?<p>No skipped rows were recorded in this batch.</p>:
+      <div>{issues.slice(0,100).map(x=><p key={x.rowNumber}>CSV row {x.rowNumber}: {x.reason}</p>)}
+       {issues.length>100&&<p>Showing the first 100 of {issues.length} skipped rows. Export the CSV for the complete list.</p>}
+      </div>}
+    </div>}</section>
    </div>
    <footer className="cx-import-footer">
     <button type="button" disabled={busy} onClick={requestClose}>{step==="results"?"Done":"Cancel"}</button>

@@ -1204,3 +1204,12 @@
 
 .cx-app .cx-contacts-directory-count{min-height:22px}
 .cx-app .cx-contacts-search input:focus-visible{outline:2px solid #138fbe;outline-offset:1px}
+
+/* Contact importer: skipped-row review and CSV issue export */
+.cx-app .cx-import-history-actions{display:flex;align-items:flex-end;flex-direction:column;gap:4px}
+.cx-app .cx-import-history-actions button,.cx-app .cx-import-issue-list button{font-size:11px;color:#167fa9;font-weight:800;border:0;background:transparent;padding:4px;cursor:pointer}
+.cx-app .cx-import-issue-list{display:grid;gap:7px;border:1px solid #f0debf;background:#fffbf5;border-radius:9px;padding:10px 12px}
+.cx-app .cx-import-issue-list>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cx-app .cx-import-issue-list strong{font-size:12px;color:#755425}
+.cx-app .cx-import-issue-list>div:last-child{max-height:150px;overflow-y:auto}
+.cx-app .cx-import-issue-list p{font-size:11px;color:#796b58;margin:3px 0;overflow-wrap:anywhere}
