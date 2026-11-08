@@ -1121,3 +1121,25 @@
 @media(max-width:740px){.cx-app .cx-report-tab{flex:1 1 auto;padding:9px 10px}.cx-app .cx-report-tab span{font-size:11px}}
 @media(max-width:590px){.cx-app .cx-report-tabs{display:flex;overflow-x:auto;scrollbar-width:thin}.cx-app .cx-report-tab{flex:1 0 auto;padding:9px 11px}.cx-app .cx-report-channel-grid{grid-template-columns:1fr}.cx-app .cx-report-tab-panel .cx-widget-report-channels>.cx-widget{padding:14px}}
 @media(prefers-reduced-motion:reduce){.cx-app .cx-report-channel-track>span{transition:none}}
+
+/* Overview masonry layout: related content flows inside independent columns.
+   Avoid grid-row height matching and large blank pockets under the chart. */
+.cx-app .cx-insight-panels.cx-overview-masonry{display:grid;grid-template-columns:minmax(0,1.14fr) minmax(0,1fr);gap:14px;align-items:start}
+.cx-app .cx-overview-left-column,.cx-app .cx-overview-right-rail{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cx-app .cx-overview-left-column>.cx-insight-panel,.cx-app .cx-overview-right-rail>.cx-insight-panel{min-height:0;max-width:100%}
+.cx-app .cx-overview-left-column .cx-overview-recent{margin:0}
+.cx-app .cx-overview-right-rail .cx-intelligence-board{margin:0;min-height:0}
+.cx-app .cx-overview-right-rail .cx-intelligence-board .cx-intel-board-rows{display:flex;flex-direction:column;gap:6px}
+.cx-app .cx-overview-right-rail .cx-intelligence-board .cx-intel-board-row{padding:9px 10px}
+.cx-app .cx-overview-left-column,.cx-app .cx-overview-right-rail{align-self:start}
+@media(max-width:1050px){
+ .cx-app .cx-insight-panels.cx-overview-masonry{grid-template-columns:minmax(0,1fr)}
+ .cx-app .cx-overview-right-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .cx-app .cx-overview-right-rail .cx-overview-actions-panel{grid-column:auto}
+ .cx-app .cx-overview-right-rail .cx-intelligence-board{grid-column:1/-1}
+ .cx-app .cx-overview-right-rail .cx-intelligence-board .cx-intel-board-rows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ .cx-app .cx-overview-right-rail{display:flex;flex-direction:column}
+ .cx-app .cx-overview-right-rail .cx-intelligence-board .cx-intel-board-rows{display:flex;flex-direction:column}
+}

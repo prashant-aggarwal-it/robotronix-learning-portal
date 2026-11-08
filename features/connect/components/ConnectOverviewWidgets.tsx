@@ -1,5 +1,6 @@
 "use client";
 import {ConnectEnquiryVisualizations} from "./ConnectEnquiryVisualizations";
+import type {ReactNode} from "react";
 import {stageTone,toneColor} from "../connect-palette";
 import type {ConnectAppointment,ConnectPerson,ConnectPipeline,ConnectInquiry,ConnectOverview,ConnectOpportunity,ConnectTask} from "@/features/connect/api/client";
 import type {Section} from "@/features/connect/model";
@@ -11,9 +12,10 @@ type Props={
  onSelectSource?:(source:string)=>void;
  onOpenEnquiry:(enquiry:ConnectInquiry)=>void;
  onViewAllEnquiries:()=>void;
+ attentionWidget?:ReactNode;
 };
 function nameSource(value:string){return value.trim().replace(/[_-]+/g," ").replace(/\b\w/g,x=>x.toUpperCase())||"Unknown";}
-export function ConnectOverviewWidgets({overview,inquiries,opportunities,appointments,people,pipelines,tasks,advanced,onNavigate,onSelectSource,onOpenEnquiry,onViewAllEnquiries}:Props){
+export function ConnectOverviewWidgets({overview,inquiries,opportunities,appointments,people,pipelines,tasks,advanced,onNavigate,onSelectSource,onOpenEnquiry,onViewAllEnquiries,attentionWidget}:Props){
  const recent=[...inquiries].sort((a,b)=>Date.parse(b.received_at)-Date.parse(a.received_at)).slice(0,3);
  const indiaDay=(value:string)=>new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(value));
  const today=indiaDay(new Date().toISOString());
@@ -40,8 +42,22 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
     <span className="cx-insight-number">{m.value.toLocaleString()}</span><span className="cx-insight-label">{m.label}</span><small>{m.detail}</small>
    </button>)}
   </div>
-  <div className="cx-insight-panels">
-   <ConnectEnquiryVisualizations inquiries={inquiries} onSelectSource={onSelectSource}/>
+  <div className="cx-insight-panels cx-overview-masonry">
+   <div className="cx-overview-left-column">
+    <ConnectEnquiryVisualizations inquiries={inquiries} onSelectSource={onSelectSource}/>
+  <section className="cx-insight-panel cx-overview-recent" aria-label="Recent enquiries">
+   <div className="cx-insight-panel-heading"><div><h3>Latest enquiries</h3><p>The three most recent customer enquiries</p></div><button type="button" onClick={onViewAllEnquiries}>View all ↗</button></div>
+   {recent.length===0?<p className="cx-insight-empty">No enquiries recorded yet. Create an enquiry to get started.</p>:
+    <div className="cx-record-list">{recent.map(i=><button type="button" className="cx-record" key={i.id}
+     aria-label={"Open enquiry for "+(i.contact_name||"new enquiry")}
+     onClick={()=>onOpenEnquiry(i)}>
+      <span className="cx-avatar" aria-hidden="true">{(i.contact_name||"Lead").trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()).join("")||"?"}</span>
+      <span className="cx-record-main"><strong>{i.contact_name||"New enquiry"}</strong><small>{i.summary||nameSource(i.source)}</small></span>
+      <span className="cx-record-end"><span className="cx-pill" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||"New"}</span><small>{nameSource(i.source)} · {new Date(i.received_at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</small></span>
+    </button>)}</div>}
+  </section>
+
+   </div>
    <div className="cx-overview-right-rail">
     <section className="cx-insight-panel cx-overview-actions-panel"><div className="cx-insight-panel-heading"><div><h3>Action required</h3><p>Follow-ups and scheduled activities</p></div><button type="button" onClick={()=>onNavigate("followups")}>View tasks ↗</button></div>
      <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-2">◷</span><span><strong>{overview.overdueTasks} overdue</strong><small>Follow-ups needing action</small></span><span aria-hidden="true">›</span></button>
@@ -64,18 +80,8 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
        <span className="cx-overview-stage-label">{stage.name}</span><strong>{stage.count}</strong>
       </button>)}</div>}
     </section>}
+    {attentionWidget}
    </div>
   </div>
-  <section className="cx-insight-panel cx-overview-recent" aria-label="Recent enquiries">
-   <div className="cx-insight-panel-heading"><div><h3>Latest enquiries</h3><p>The three most recent customer enquiries</p></div><button type="button" onClick={onViewAllEnquiries}>View all ↗</button></div>
-   {recent.length===0?<p className="cx-insight-empty">No enquiries recorded yet. Create an enquiry to get started.</p>:
-    <div className="cx-record-list">{recent.map(i=><button type="button" className="cx-record" key={i.id}
-     aria-label={"Open enquiry for "+(i.contact_name||"new enquiry")}
-     onClick={()=>onOpenEnquiry(i)}>
-      <span className="cx-avatar" aria-hidden="true">{(i.contact_name||"Lead").trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()).join("")||"?"}</span>
-      <span className="cx-record-main"><strong>{i.contact_name||"New enquiry"}</strong><small>{i.summary||nameSource(i.source)}</small></span>
-      <span className="cx-record-end"><span className="cx-pill" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||"New"}</span><small>{nameSource(i.source)} · {new Date(i.received_at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</small></span>
-    </button>)}</div>}
-  </section>
  </div>;
 }

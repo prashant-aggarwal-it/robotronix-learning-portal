@@ -369,8 +369,7 @@ export default function ConnectPage(){
         setSection("enquiries");
        }
       }}
-      onSelectSource={source=>{setEnquirySourceFilter(source.toLowerCase());setCategoryFilter("");setEnquiryView("all");setSearch("");setSection("enquiries");}}/>
-     <WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onViewAll={()=>{setSearch("");setSection("contacts");}} onOpenContact={personId=>{const generation=requestGeneration.current;void (async()=>{
+      onSelectSource={source=>{setEnquirySourceFilter(source.toLowerCase());setCategoryFilter("");setEnquiryView("all");setSearch("");setSection("enquiries");}} attentionWidget={<><WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onViewAll={()=>{setSearch("");setSection("contacts");}} onOpenContact={personId=>{const generation=requestGeneration.current;void (async()=>{
       try{
        if(!people.some(contact=>contact.id===personId)){
         const response=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});
@@ -381,7 +380,8 @@ export default function ConnectPage(){
        if(requestGeneration.current!==generation)return;
        setSection("contacts");setSelectedPerson(personId);setSelectedOpportunity(null);
       }catch(e){if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Unable to open contact.");}
-     })();}}/>
+     })();}}/></>}/>
+
     </>}
 
     {section==="enquiries"&&<section className="cx-panel cx-panel-full cx-enquiry-workspace">

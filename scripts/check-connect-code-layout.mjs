@@ -233,3 +233,14 @@ if(!compactReports.includes('cx-report-tab-description')||
  !compactCss.includes(".cx-app .cx-report-tabs{display:flex")||
  !compactCss.includes("grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-width:900px"))
  throw Error("Compact Reports tabs and channel-comparison cards are required.");
+
+/* Overview should use two independent content columns, never a forced-height grid row. */
+const masonryView=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
+const masonryPage=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+const masonryStyles=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8");
+if(!masonryView.includes("cx-overview-left-column")||
+ !masonryView.includes("cx-overview-masonry")||
+ !masonryView.includes("{attentionWidget}")||
+ !masonryPage.includes("attentionWidget={<>")||
+ !masonryStyles.includes(".cx-app .cx-insight-panels.cx-overview-masonry"))
+ throw Error("Overview independent-column layout and customer attention slot are required.");
