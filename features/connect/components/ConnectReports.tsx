@@ -11,6 +11,7 @@ type Campaign={id:string;name:string;source:string|null;spend:number|null;revenu
 type StageReach=Stage & {reached:number;cohort:number;reachPercent:number|null};
 type Report={summary:Summary;funnel:Stage[];stageJourney:StageReach[];staff:Staff[];sources:Source[];campaigns:Campaign[];definitions:Record<string,string>};
 type Assignee={id:string;label:string;role:string};
+type ReportTab="performance"|"admissions"|"marketing";
 function iso(d:Date){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return [y,m,day].join("-");}
 function money(v:number|null|undefined,currency:string){if(v===null||v===undefined)return "Not recorded";return new Intl.NumberFormat("en-IN",{style:"currency",currency,maximumFractionDigits:0}).format(v);}
 function pct(v:number|null|undefined){return v===null||v===undefined?"—":v.toFixed(1)+"%";}
@@ -21,12 +22,14 @@ export function ConnectReports({tenantId}:{tenantId:string}){
  const[assignees,setAssignees]=useState<Assignee[]>([]);
  const[opportunities,setOpportunities]=useState<ConnectOpportunity[]>([]);
  const[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const[tab,setTab]=useState<ReportTab>("performance");
  const[form,setForm]=useState({campaignName:"",source:"facebook",campaignId:"",spend:"",revenue:"",opportunityId:"",date:iso(today),reference:""});
  const requestRef=useRef(0),tenantRef=useRef(tenantId);tenantRef.current=tenantId;
  const load=useCallback(async()=>{
   const id=++requestRef.current;
   setLoading(true);setError("");
   try{
+   if(from>to){setError("Start date must not be after end date.");setLoading(false);return;}
    const q=new URLSearchParams({from,to});
    if(pipelineId)q.set("pipelineId",pipelineId);
    const [r,p,a,o]=await Promise.all([
@@ -88,19 +91,38 @@ export function ConnectReports({tenantId}:{tenantId:string}){
  const currency=report?.summary.currency||"INR";
  const availableRevenue=report?.sources.reduce((sum,s)=>sum+(s.revenue||0),0)||0;
  const availableSpend=report?.sources.reduce((sum,s)=>sum+(s.spend||0),0)||0;
+ const stageHistoryUnavailable=Boolean(report&&report.summary.opportunities>0&&report.stageJourney.length>0&&report.stageJourney.every(stage=>stage.reached===0));
+ const tabItems:ReadonlyArray<{id:ReportTab;label:string;description:string}>=[
+  {id:"performance",label:"Performance",description:"Enquiries, outcomes and team"},
+  {id:"admissions",label:"Admissions Analytics",description:"Current stages and recorded history"},
+  {id:"marketing",label:"Marketing & ROI",description:"Channels, campaigns and financials"}
+ ];
  return <div className="cx-reports">
   <section className="cx-report-filters">
    <label>From<input aria-label="Report start date" type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
    <label>To<input aria-label="Report end date" type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
    <label>Pipeline<select value={pipelineId} onChange={e=>setPipelineId(e.target.value)}><option value="">All admissions pipelines</option>
     {pipelines.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
-   <button type="button" className="cx-secondary" onClick={()=>void load()}>Refresh reports</button>
+   <button type="button" className="cx-secondary" disabled={loading||from>to} onClick={()=>void load()}>Refresh reports</button>
    <button type="button" className="cx-secondary" disabled={!report||loading} onClick={exportCsv}>Export CSV</button>
   </section>
+  {from>to&&<div className="cx-report-data-warning" role="alert">The start date must be on or before the end date. Correct the reporting period to refresh these results.</div>}
+  <nav className="cx-report-tabs" role="tablist" aria-label="Reporting views">
+   {tabItems.map(item=><button key={item.id} id={"connect-report-tab-"+item.id} type="button" role="tab"
+    aria-selected={tab===item.id} aria-controls={"connect-report-panel-"+item.id} tabIndex={tab===item.id?0:-1}
+    className={"cx-report-tab"+(tab===item.id?" is-active":"")} onClick={()=>setTab(item.id)}
+    onKeyDown={e=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(e.key))return;
+     e.preventDefault();const index=tabItems.findIndex(t=>t.id===item.id);
+     const next=e.key==="Home"?0:e.key==="End"?tabItems.length-1:e.key==="ArrowRight"?(index+1)%tabItems.length:(index+tabItems.length-1)%tabItems.length;
+     const nextId=tabItems[next].id;setTab(nextId);document.getElementById("connect-report-tab-"+nextId)?.focus();}}>
+    <span>{item.label}</span><small>{item.description}</small>
+   </button>)}
+  </nav>
   {error&&<div className="cx-alert" role="alert">{error}</div>}
   {notice&&<div className="cx-success" role="status">{notice}</div>}
   {loading&&!report?<p className="cx-muted">Calculating admissions reports…</p>:report&&<>
-   <ReportVisuals report={report}/>
+   {tab==="performance"&&<div className="cx-report-tab-panel" id="connect-report-panel-performance" role="tabpanel" aria-labelledby="connect-report-tab-performance">
+   <ReportVisuals report={report} view="channels"/>
    <div className="cx-metrics">
     {[
      {label:"Enquiries received",value:report.summary.inquiries,foot:"Messages/forms received in period"},
@@ -109,11 +131,17 @@ export function ConnectReports({tenantId}:{tenantId:string}){
      {label:"Conversion rate",value:pct(report.summary.conversionRate),foot:"Won ÷ new opportunities"}
     ].map(item=><article className="cx-metric" key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.foot}</small></article>)}
    </div>
-   <div className="cx-report-financials">
-    <div><span>Expected opportunity value</span><strong>{money(report.summary.expectedValue,currency)}</strong><small>Not actual revenue{report.summary.excludedCurrencyOpportunities>0?` · ${report.summary.excludedCurrencyOpportunities} other-currency admissions excluded`:""}</small></div>
-    <div><span>Recorded receipts</span><strong>{money(availableRevenue,currency)}</strong><small>Cash entered for the selected dates</small></div>
-    <div><span>Recorded campaign spend</span><strong>{pipelineId?"Not allocated":money(availableSpend,currency)}</strong><small>Only manually recorded spend</small></div>
-   </div>
+      <section className="cx-panel">
+    <div className="cx-panel-header"><div><h2>Counsellor performance</h2><p>Based on currently assigned opportunities; reassignment changes attribution.</p></div></div>
+    <div className="cx-table-wrap"><table className="cx-table"><thead><tr><th>Team member</th><th>Opportunities</th><th>Won</th><th>Open</th><th>Conversion</th><th>Follow-ups completed</th></tr></thead>
+     <tbody>{report.staff.length===0?<tr><td colSpan={6} className="cx-report-empty-cell">No assigned counsellor performance data for this period.</td></tr>:report.staff.map(member=><tr key={member.memberId}>
+      <td><strong>{assignees.find(a=>a.id===member.memberId)?.label||member.role+" · "+member.memberId.slice(0,8)}</strong><span className="cx-cell-secondary">{member.role}</span></td>
+      <td>{member.opportunities}</td><td>{member.won}</td><td>{member.open}</td><td>{pct(member.conversionRate)}</td><td>{member.tasksCompleted}</td>
+     </tr>)}</tbody></table></div>
+   </section>
+
+   </div>}
+   {tab==="admissions"&&<div className="cx-report-tab-panel" id="connect-report-panel-admissions" role="tabpanel" aria-labelledby="connect-report-tab-admissions">
    <section className="cx-panel">
     <div className="cx-panel-header"><div><h2>Admissions stage distribution</h2><p>Current stages of admissions created during the selected dates. Not historical stage-entry conversion.</p></div></div>
     <div className="cx-report-bars">
@@ -129,36 +157,31 @@ export function ConnectReports({tenantId}:{tenantId:string}){
     </div>
    </section>
    <section className="cx-panel">
-    <div className="cx-panel-header"><div><h2>Stage reach & funnel progression</h2>
-     <p>Unique admissions from the selected creation cohort that have reached each stage, including historical moves.</p></div></div>
-    <div className="cx-report-bars">
-     {(report.stageJourney||[]).length===0?<p className="cx-muted">No pipeline history available.</p>:
-      report.stageJourney.map(stage=><div className="cx-report-bar-row" key={stage.stageId}>
-       <div><strong>{stage.stage}</strong><small>{stage.pipeline} · {stage.outcome}</small></div>
-       <div className="cx-bar-track"><div style={{width:(stage.reachPercent||0)+"%",background:toneColor(stageTone(stage.stage,stage.outcome))}}/></div>
-       <span>{stage.reached} / {stage.cohort} ({pct(stage.reachPercent)})</span>
-      </div>)}
-    </div>
+    <div className="cx-panel-header"><div><h2>Historical stage reach</h2><p>How many admissions have a recorded transition into each stage (not current stage distribution).</p></div></div>
+    {stageHistoryUnavailable?<div className="cx-report-data-warning" role="status">
+      <strong>Stage history isn't available for this cohort</strong>
+      <p>The database has admissions, but no recorded stage-entry events. Showing 0% here would be misleading. Newly tracked stage changes will populate this chart.</p>
+     </div>:<ReportVisuals report={report} view="stages"/>}
    </section>
-   <section className="cx-panel">
-    <div className="cx-panel-header"><div><h2>Counsellor performance</h2><p>Based on currently assigned opportunities; reassignment changes attribution.</p></div></div>
-    <div className="cx-table-wrap"><table className="cx-table"><thead><tr><th>Team member</th><th>Opportunities</th><th>Won</th><th>Open</th><th>Conversion</th><th>Follow-ups completed</th></tr></thead>
-     <tbody>{report.staff.map(member=><tr key={member.memberId}>
-      <td><strong>{assignees.find(a=>a.id===member.memberId)?.label||member.role+" · "+member.memberId.slice(0,8)}</strong><span className="cx-cell-secondary">{member.role}</span></td>
-      <td>{member.opportunities}</td><td>{member.won}</td><td>{member.open}</td><td>{pct(member.conversionRate)}</td><td>{member.tasksCompleted}</td>
-     </tr>)}</tbody></table></div>
-   </section>
+   </div>}
+   {tab==="marketing"&&<div className="cx-report-tab-panel" id="connect-report-panel-marketing" role="tabpanel" aria-labelledby="connect-report-tab-marketing">
+   <div className="cx-report-financials">
+    <div><span>Expected opportunity value</span><strong>{money(report.summary.expectedValue,currency)}</strong><small>Not actual revenue{report.summary.excludedCurrencyOpportunities>0?` · ${report.summary.excludedCurrencyOpportunities} other-currency admissions excluded`:""}</small></div>
+    <div><span>Recorded receipts</span><strong>{money(availableRevenue,currency)}</strong><small>Cash entered for the selected dates</small></div>
+    <div><span>Recorded campaign spend</span><strong>{pipelineId?"Not allocated":money(availableSpend,currency)}</strong><small>Only manually recorded spend</small></div>
+   </div>
+
    <section className="cx-panel">
     <div className="cx-panel-header"><div><h2>Lead-source performance</h2><p>First linked enquiry source per admission. Return on spend uses recorded receipts, not expected values.</p></div></div>
     <div className="cx-table-wrap"><table className="cx-table"><thead><tr><th>Source</th><th>Enquiries</th><th>Admissions</th><th>Won</th><th>Conversion</th><th>Spend</th><th>Revenue</th><th>ROI</th></tr></thead>
-    <tbody>{report.sources.map(item=><tr key={item.source}><td><strong className="cx-channel-label"><i style={{background:channelColor(item.source)}} aria-hidden="true"/>{item.source}</strong></td><td>{item.inquiries}</td><td>{item.opportunities}</td><td>{item.won}</td>
+    <tbody>{report.sources.length===0?<tr><td colSpan={8} className="cx-report-empty-cell">No lead-source records for this reporting period.</td></tr>:report.sources.map(item=><tr key={item.source}><td><strong className="cx-channel-label"><i style={{background:channelColor(item.source)}} aria-hidden="true"/>{item.source}</strong></td><td>{item.inquiries}</td><td>{item.opportunities}</td><td>{item.won}</td>
       <td>{pct(item.conversionRate)}</td><td>{pipelineId?"—":money(item.spend,currency)}</td>
       <td>{money(item.revenue,currency)}</td><td>{pipelineId?"—":pct(item.roiPercent)}</td></tr>)}</tbody></table></div>
    </section>
    <section className="cx-panel">
     <div className="cx-panel-header"><div><h2>Campaign spend & ROI</h2><p>Campaign-level revenue requires manually linking the admission to a campaign. Missing spend means ROI is unavailable.</p></div></div>
     <div className="cx-table-wrap"><table className="cx-table"><thead><tr><th>Campaign</th><th>Source</th><th>Spend</th><th>Received</th><th>Admissions</th><th>Won</th><th>Cost / won</th><th>ROI</th></tr></thead>
-      <tbody>{report.campaigns.map(c=><tr key={c.id}><td><strong>{c.name}</strong></td><td>{c.source||"Unspecified"}</td>
+      <tbody>{report.campaigns.length===0?<tr><td colSpan={8} className="cx-report-empty-cell">No campaigns recorded yet. Add a campaign below to begin tracking spend and receipts.</td></tr>:report.campaigns.map(c=><tr key={c.id}><td><strong>{c.name}</strong></td><td>{c.source||"Unspecified"}</td>
        <td>{pipelineId?"—":money(c.spend,currency)}</td><td>{money(c.revenue,currency)}</td><td>{c.opportunities}</td><td>{c.won}</td>
        <td>{pipelineId?"—":money(c.costPerAcquisition,currency)}</td><td>{pipelineId?"—":pct(c.roiPercent)}</td></tr>)}</tbody></table></div>
    </section>
@@ -190,6 +213,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
     </div>
    </section>
    <p className="cx-muted cx-report-footnote">{report.definitions.roi}. No marketing spend or payment data is inferred. Reconciliation with the Learning Portal is not yet automatic.</p>
+  </div>}
   </>}
  </div>;
 }

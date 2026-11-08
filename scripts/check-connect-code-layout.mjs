@@ -173,3 +173,16 @@ if(!overviewPhase2.includes("onOpenEnquiry(i)")||!overviewPhase2.includes(".slic
  overviewPhase2.includes("cx-stages-panel")||!intelligencePhase2.includes("flagged.slice(0,3)")||
  !page.includes("onOpenEnquiry={inquiry=>"))
  throw Error("Overview Phase 2 must retain direct enquiry access and three-item summaries without duplicated stage analytics.");
+
+const connectReports=fs.readFileSync(path.join(root,"features/connect/components/ConnectReports.tsx"),"utf8");
+const connectReportVisuals=fs.readFileSync(path.join(root,"features/connect/components/ConnectDataWidgets.tsx"),"utf8");
+for(const name of ["Performance","Admissions Analytics","Marketing & ROI"]){
+ if(!connectReports.includes('label:"'+name+'"'))throw Error("Missing CRM report tab "+name);
+}
+if(!connectReports.includes('role="tablist"')||!connectReports.includes('role="tabpanel"')||
+ !connectReports.includes('stageHistoryUnavailable')||
+ !connectReports.includes('view="channels"')||!connectReports.includes('view="stages"')||
+ !connectReportVisuals.includes('view?:"channels"|"stages"|"both"'))
+ throw Error("CRM report tab and historical-data safeguards are required.");
+
+if(!connectReports.includes('e.key==="ArrowRight"')||!connectReports.includes("cx-report-empty-cell"))throw Error("Report accessibility and empty-state controls are required.");

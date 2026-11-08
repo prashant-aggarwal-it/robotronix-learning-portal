@@ -26,13 +26,13 @@ export function PipelineVisual({pipelines,opportunities,onOpen}:{pipelines:Conne
 }
 
 type ReportGraphic={summary:{inquiries:number;opportunities:number;won:number;conversionRate:number|null};sources:Array<{source:string;inquiries:number;opportunities:number;won:number;conversionRate:number|null;revenue:number|null;spend:number|null}>;stageJourney:Array<{stageId:string;pipeline:string;stage:string;reached:number;cohort:number;reachPercent:number|null}>};
-export function ReportVisuals({report}:{report:ReportGraphic}){
+export function ReportVisuals({report,view="both"}:{report:ReportGraphic;view?:"channels"|"stages"|"both"}){
  const [metric,setMetric]=useState<"inquiries"|"opportunities"|"won">("inquiries");
  const entries=report.sources.slice().sort((a,b)=>b[metric]-a[metric]).slice(0,8);
  const max=Math.max(1,...entries.map(s=>s[metric]));
  const stages=report.stageJourney.slice().sort((a,b)=>b.cohort-a.cohort).slice(0,8);
- return <div className="cx-widget-double" aria-label="Visual reporting">
-  <section className="cx-widget"><header className="cx-widget-head"><div><h3>Channel performance</h3><p>Comparison for the selected reporting period</p></div>
+ return <div className={"cx-widget-double cx-widget-report-"+view} aria-label="Visual reporting">
+  {(view==="channels"||view==="both")&&<>  <section className="cx-widget"><header className="cx-widget-head"><div><h3>Channel performance</h3><p>Comparison for the selected reporting period</p></div>
    <select value={metric} onChange={e=>setMetric(e.target.value==="won"?"won":e.target.value==="opportunities"?"opportunities":"inquiries")} aria-label="Channel performance metric"><option value="inquiries">Enquiries</option><option value="opportunities">Admissions</option><option value="won">Won</option></select>
   </header>
   {entries.length===0?<p className="cx-widget-empty">No channel activity recorded for this period.</p>:<div className="cx-widget-bars">{entries.map(s=><div key={s.source} className="cx-widget-bar-row">
@@ -40,7 +40,8 @@ export function ReportVisuals({report}:{report:ReportGraphic}){
   </div>)}</div>}
   <p className="cx-widget-caption">Changing the metric compares recorded counts, not predicted results.</p>
   </section>
-  <section className="cx-widget"><header className="cx-widget-head"><div><h3>Admissions stage reach</h3><p>Recorded stage history for the selected creation cohort</p></div></header>
+  </>}
+  {(view==="stages"||view==="both")&&<>  <section className="cx-widget"><header className="cx-widget-head"><div><h3>Admissions stage reach</h3><p>Recorded stage history for the selected creation cohort</p></div></header>
    {stages.length===0?<p className="cx-widget-empty">No stage history yet. Create admissions and move them through the pipeline to populate this chart.</p>:
     <div className="cx-widget-bars">{stages.map(s=><div key={s.stageId} className="cx-widget-bar-row">
      <span title={s.pipeline+" · "+s.stage}>{s.stage}</span><span className="cx-widget-track"><span style={{width:Math.min(100,Math.max(0,s.reachPercent||0))+"%",background:toneColor(stageTone(s.stage))}}/></span>
@@ -48,6 +49,7 @@ export function ReportVisuals({report}:{report:ReportGraphic}){
     </div>)}</div>}
    <p className="cx-widget-caption">Reached stages, not stage-to-stage conversion. Cohorts and pipeline filters apply.</p>
   </section>
+  </>}
  </div>;
 }
 
