@@ -1,5 +1,6 @@
 "use client";
 import {useMemo} from "react";
+import {ConnectEnquiryVisualizations} from "./ConnectEnquiryVisualizations";
 import type {ConnectInquiry,ConnectOverview,ConnectOpportunity,ConnectTask} from "@/features/connect/api/client";
 import type {Section} from "@/features/connect/model";
 
@@ -11,17 +12,11 @@ type Props={
 const colors=["#1589d0","#16a6a0","#f3a74b","#607de7","#e47d9e","#8a9cae"];
 function nameSource(value:string){return value.trim().replace(/[_-]+/g," ").replace(/\b\w/g,x=>x.toUpperCase())||"Unknown";}
 export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,advanced,onNavigate,onSelectSource}:Props){
- const sourceData=useMemo(()=>{
-  const bySource=new Map<string,number>();
-  for(const item of inquiries){const source=nameSource(item.source||"Unknown");bySource.set(source,(bySource.get(source)||0)+1);}
-  return [...bySource].sort((a,b)=>b[1]-a[1]).slice(0,6);
- },[inquiries]);
  const stageData=useMemo(()=>{
   const byStage=new Map<string,number>();
   for(const item of opportunities){const label=item.stage_name||"Unassigned";byStage.set(label,(byStage.get(label)||0)+1);}
   return [...byStage].sort((a,b)=>b[1]-a[1]).slice(0,6);
  },[opportunities]);
- const totalSources=sourceData.reduce((n,entry)=>n+entry[1],0);
  const today=new Date().toDateString();
  const todayTasks=tasks.filter(t=>t.due_at&&new Date(t.due_at).toDateString()===today&&t.status!=="completed").length;
  const metrics=[
@@ -48,12 +43,7 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,a
     </button>)}</div>}
   </section>
   <div className="cx-insight-panels">
-   <section className="cx-insight-panel"><div className="cx-insight-panel-heading"><div><h3>Where enquiries come from</h3><p>Breakdown of the latest {inquiries.length} loaded enquiries</p></div><button type="button" onClick={()=>onNavigate("enquiries")}>Explore ↗</button></div>
-    {totalSources===0?<p className="cx-insight-empty">No enquiries captured yet. Source insights will appear here as enquiries arrive.</p>:<>
-     <div className="cx-source-bar" aria-label="Enquiry source distribution">{sourceData.map(([source,count],i)=><span key={source} title={source+": "+count} style={{width:(count/totalSources*100)+"%",background:colors[i]}}/>)}</div>
-     <div className="cx-source-rows">{sourceData.map(([source,count],i)=><button type="button" className="cx-source-row cx-source-action" onClick={()=>onSelectSource?.(source)} key={source} aria-label={"View "+source+" enquiries"}><span className="cx-source-name"><i style={{background:colors[i]}}/>{source}</span><div className="cx-source-track"><span style={{width:(count/totalSources*100)+"%",background:colors[i]}}/></div><strong>{count}</strong><small>{Math.round(count/totalSources*100)}%</small></button>)}</div>
-    </>}
-   </section>
+   <ConnectEnquiryVisualizations inquiries={inquiries} onSelectSource={onSelectSource}/>
    <section className="cx-insight-panel"><div className="cx-insight-panel-heading"><div><h3>Action required</h3><p>Follow-ups and scheduled activities</p></div><button type="button" onClick={()=>onNavigate("followups")}>View tasks ↗</button></div>
     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-2">◷</span><span><strong>{overview.overdueTasks} overdue</strong><small>Follow-ups needing action</small></span><span aria-hidden="true">›</span></button>
     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-0">☑</span><span><strong>{todayTasks} due today</strong><small>From the latest {tasks.length} loaded tasks</small></span><span aria-hidden="true">›</span></button>
