@@ -3,6 +3,7 @@ import {useEffect,useState,type ReactNode} from "react";
 import type {ConnectPerson,ConnectOpportunity,ConnectInquiry,ConnectTask,ConnectAppointment} from "@/features/connect/api/client";
 import {dateLabel,initials,shortLabel} from "@/features/connect/model";
 import {ContactIntelligence} from "@/features/connect/components/contact/ContactIntelligence";
+import {ContactImportProvenance} from "@/features/connect/components/contact/ContactImportProvenance";
 
 type ProfileTab="overview"|"insights"|"timeline"|"followups"|"relations"|"details";
 type Props={
@@ -69,7 +70,7 @@ export function ContactProfile({person,opportunity,tenantId,refreshKey,allowAdmi
     }}>{t.label}</button>)}
   </div>
   <div className="cx-contact360-tabpanel" id="cx-contact-tabpanel" role="tabpanel" aria-labelledby={"cx-contact-tab-"+tab}>
-   {tab==="overview"&&<>{overviewContent}{enquiriesContent}</>}
+   {tab==="overview"&&<>{overviewContent}{person?.id&&<ContactImportProvenance tenantId={tenantId} personId={person.id}/>}{enquiriesContent}</>}
    {tab==="insights"&&(person?.id||opportunity?.contact_id)&&<ContactIntelligence tenantId={tenantId} personId={(person?.id||opportunity?.contact_id)!} refreshKey={refreshKey} onOpenFollowups={()=>setTab("followups")} onOpenRelations={()=>setTab("relations")}/>}
    {tab==="timeline"&&timelineContent}
    {tab==="followups"&&<>

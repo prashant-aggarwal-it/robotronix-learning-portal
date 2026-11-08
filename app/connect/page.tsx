@@ -63,6 +63,8 @@ export default function ConnectPage(){
  const [activityNote,setActivityNote]=useState("");
  const [overview,setOverview]=useState<ConnectOverview>(emptyOverview);
  const [people,setPeople]=useState<ConnectPerson[]>([]);
+ const [peopleHasMore,setPeopleHasMore]=useState(false);
+ const [loadingMorePeople,setLoadingMorePeople]=useState(false);
  const [inquiries,setInquiries]=useState<ConnectInquiry[]>([]);
  const [opportunities,setOpportunities]=useState<ConnectOpportunity[]>([]);
  const [pipelines,setPipelines]=useState<ConnectPipeline[]>([]);
@@ -109,7 +111,7 @@ export default function ConnectPage(){
  // Clear old data immediately on institute switching so it can never flash on the new screen.
  useEffect(()=>{
   const generation=++requestGeneration.current;
-  setOverview(emptyOverview);setInquiries([]);setPeople([]);setOpportunities([]);
+  setOverview(emptyOverview);setInquiries([]);setPeople([]);setPeopleHasMore(false);setOpportunities([]);
   setPipelines([]);setTasks([]);setAppointments([]);setPrograms([]);setMembers([]);
   setLoading(Boolean(tenantId&&signedIn));setError("");
   if(!tenantId||!signedIn)return ()=>{requestGeneration.current++;};
@@ -126,7 +128,7 @@ export default function ConnectPage(){
      crmList<ConnectProgram>(tenantId,"programs",{limit:"100"})
     ]);
     if(requestGeneration.current!==generation)return;
-    setOverview(r[0].items[0]||emptyOverview);setInquiries(r[1].items);setPeople(r[2].items);
+    setOverview(r[0].items[0]||emptyOverview);setInquiries(r[1].items);setPeople(r[2].items);setPeopleHasMore(r[2].items.length===100);
     setOpportunities(r[3].items);setPipelines(r[4].items);setTasks(r[5].items);
     setAppointments(r[6].items);setPrograms(r[7].items);
    }catch(e){
@@ -314,6 +316,19 @@ export default function ConnectPage(){
   }
   return result;
  },[inquiries]);
+ async function loadMoreContacts(){
+  if(loadingMorePeople||!peopleHasMore||!tenantId)return;
+  const generation=requestGeneration.current;
+  const offset=people.length;
+  setLoadingMorePeople(true);
+  try{
+   const r=await crmList<ConnectPerson>(tenantId,"people",{limit:"100",offset:String(offset)});
+   if(requestGeneration.current!==generation)return;
+   setPeople(current=>[...current,...r.items.filter(person=>!current.some(x=>x.id===person.id))]);
+   setPeopleHasMore(r.items.length===100);
+  }catch(e){if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Could not load more contacts.");}
+  finally{if(requestGeneration.current===generation)setLoadingMorePeople(false);}
+ }
  const contactsWithDetails=people.filter(p=>p.contact_methods.some(m=>m.value.trim())).length;
  const contactsMissingDetails=people.length-contactsWithDetails;
  const contactRoles=[...new Set(people.flatMap(p=>p.roles))].sort();
@@ -470,6 +485,9 @@ export default function ConnectPage(){
         </button>;
        })}
       </div>}
+     {peopleHasMore&&<div className="cx-contacts-load-more"><span>Showing loaded contacts. More records are available in this workspace.</span>
+      <button type="button" className="cx-secondary" disabled={loadingMorePeople} onClick={()=>void loadMoreContacts()}>{loadingMorePeople?"Loading…":"Load 100 more contacts"}</button>
+     </div>}
     </section>}
 
     {section==="pipeline"&&<div className="cx-pipeline-stack">

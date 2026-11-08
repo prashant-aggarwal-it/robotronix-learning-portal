@@ -1189,3 +1189,15 @@
 .cx-app .cx-import-footer button.cx-import-primary{background:linear-gradient(110deg,#2466db,#088daf);color:#fff;border:0}
 .cx-app .cx-import-footer button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:700px){.cx-app .cx-import-backdrop{padding:5px}.cx-app .cx-import-modal{max-height:calc(100vh - 10px)}.cx-app .cx-import-header,.cx-app .cx-import-body,.cx-app .cx-import-footer{padding:13px}.cx-app .cx-import-map-grid,.cx-app .cx-import-source{grid-template-columns:1fr}.cx-app .cx-import-summary,.cx-app .cx-import-results{gap:5px}}
+
+/* Imported contact provenance and paginated directory */
+.cx-app .cx-contacts-load-more{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 19px;border-top:1px solid #e5eef3;color:#6a889d;font-size:12px}
+.cx-app .cx-provenance{margin:14px 0;border:1px solid #dbeaf3;border-radius:12px;background:#f7fbfe;padding:14px;display:grid;gap:10px}
+.cx-app .cx-provenance>header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cx-app .cx-provenance h3{font-size:13px;color:#214b69;margin:0}
+.cx-app .cx-provenance>header>span{font-size:11px;color:#966623;background:#fff5e6;padding:6px 8px;border-radius:7px}
+.cx-app .cx-provenance-source{display:grid;gap:5px;border-top:1px solid #e3edf3;padding-top:10px}
+.cx-app .cx-provenance-source>div{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+.cx-app .cx-provenance-source strong{font-size:12px;color:#2c526d}
+.cx-app .cx-provenance-source small,.cx-app .cx-provenance-source p{font-size:11px;color:#66849a;margin:0;overflow-wrap:anywhere}
+.cx-app .cx-provenance-source a{font-size:11px;color:#147da9;font-weight:700}
