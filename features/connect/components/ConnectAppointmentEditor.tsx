@@ -1,5 +1,5 @@
 "use client";
-import {useMemo,useState,type FormEvent} from "react";
+import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {connectFetch, type ConnectAppointment,type ConnectPerson,type ConnectOpportunity,type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
 
 type FormData={
@@ -22,6 +22,12 @@ export function ConnectAppointmentEditor({tenantId,appointment,day,people,opport
  },[appointment,day]);
  const [value,setValue]=useState<FormData>(initial);
  const [busy,setBusy]=useState(false),[error,setError]=useState("");
+ const [staff,setStaff]=useState<Array<{id:string;label:string;role:string}>>([]);
+ useEffect(()=>{if(!canManage)return;let active=true;
+  void connectFetch<{assignees:Array<{id:string;label:string;role:string}>}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/assignees")
+   .then(r=>{if(active)setStaff(r.assignees||[]);}).catch(()=>{});
+  return()=>{active=false;};
+ },[tenantId,canManage]);
  const set=(name:keyof FormData,v:string)=>setValue(prev=>({...prev,[name]:v}));
  const linked=opportunities.filter(o=>!value.personId||o.contact_id===value.personId);
  async function save(e:FormEvent){
@@ -63,7 +69,7 @@ export function ConnectAppointmentEditor({tenantId,appointment,day,people,opport
     <label>Linked admission<select value={value.opportunityId} onChange={e=>{const id=e.target.value;const opp=opportunities.find(o=>o.id===id);setValue(v=>({...v,opportunityId:id,personId:opp?.contact_id||v.personId}));}}>
       <option value="">No linked admission</option>{linked.map(o=><option key={o.id} value={o.id}>{o.title}</option>)}</select></label>
     <label>Programme<input list="ccal-programmes" maxLength={160} placeholder="Robotics Club" value={value.programme} onChange={e=>set("programme",e.target.value)}/><datalist id="ccal-programmes">{programs.map(p=><option key={p.id} value={p.name}/>)}</datalist></label>
-    {canManage&&<label>Assigned team member<select value={value.ownerMemberId} onChange={e=>set("ownerMemberId",e.target.value)}><option value="">Current owner / assign to me</option>{members.map(m=><option key={m.member_id} value={m.member_id}>{m.member_role} · {m.member_user_id.slice(0,8)}</option>)}</select></label>}
+    {canManage&&<label>Assigned team member<select value={value.ownerMemberId} onChange={e=>set("ownerMemberId",e.target.value)}><option value="">Current owner / assign to me</option>{value.ownerMemberId&&!(staff.some(m=>m.id===value.ownerMemberId)||members.some(m=>m.member_id===value.ownerMemberId))&&<option value={value.ownerMemberId}>Previously assigned team member</option>}{staff.length?staff.map(m=><option key={m.id} value={m.id}>{m.label} · {m.role}</option>):members.filter(m=>m.member_status==="active").map(m=><option key={m.member_id} value={m.member_id}>{m.member_role} · {m.member_user_id.slice(0,8)}</option>)}</select></label>}
     <label>Meeting location<input maxLength={250} placeholder="Robotronix lab / Online" value={value.location} onChange={e=>set("location",e.target.value)}/></label>
     <label className="ccal-full">Meeting link<input type="url" maxLength={500} placeholder="https://..." value={value.meetingUrl} onChange={e=>set("meetingUrl",e.target.value)}/></label>
     <label className="ccal-full">Internal notes<textarea rows={3} maxLength={2000} placeholder="Agenda, preparation, or result of discussion" value={value.notes} onChange={e=>set("notes",e.target.value)}/></label>
