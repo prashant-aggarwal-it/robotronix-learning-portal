@@ -60,7 +60,7 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,canWrite,busy,
   <div className={styles.heading}><div><h2>Team follow-ups</h2><p>Follow up with customers, track due dates and close completed work</p></div>
    <span className={styles.total}>{counts.open} open tasks</span></div>
   <div className={styles.summary}>
-   {(["overdue","today","upcoming","completed"] as Filter[]).map(f=><button key={f} type="button" className={filter===f?styles.summaryActive:styles.summaryItem} onClick={()=>setFilter(filter===f?"open":f)} aria-pressed={filter===f}>
+   {(["overdue","today","upcoming","completed"] as Filter[]).map(f=><button key={f} type="button" className={filter===f?styles.summaryActive:styles.summaryItem} data-tone={f} onClick={()=>setFilter(filter===f?"open":f)} aria-pressed={filter===f}>
     <strong>{counts[f]}</strong><span>{labels[f]}</span>
    </button>)}
   </div>

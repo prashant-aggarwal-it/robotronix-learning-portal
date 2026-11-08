@@ -983,3 +983,7 @@
   transition:none;
  }
 }
+
+.cx-app .cx-widget-kpis>span[data-tone="new"]{box-shadow:inset 3px 0 var(--cx-status-new)}
+.cx-app .cx-widget-kpis>span[data-tone="won"]{box-shadow:inset 3px 0 var(--cx-status-won)}
+.cx-app .cx-widget-kpis>span[data-tone="lost"]{box-shadow:inset 3px 0 var(--cx-status-lost)}

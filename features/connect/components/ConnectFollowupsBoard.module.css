@@ -30,3 +30,8 @@
 .status{background:#e9f5fc;color:#146b9f;border:1px solid #cee8f6}
 .empty{border:1px dashed #dce8f1;background:#f9fcfe;border-radius:10px;margin:16px}
 @media(max-width:450px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.tab,.tabActive{white-space:nowrap}.actions button{min-height:35px}}
+
+.summaryItem[data-tone="overdue"],.summaryActive[data-tone="overdue"]{border-left:3px solid #c6801d}
+.summaryItem[data-tone="today"],.summaryActive[data-tone="today"]{border-left:3px solid #e79a35}
+.summaryItem[data-tone="upcoming"],.summaryActive[data-tone="upcoming"]{border-left:3px solid #168bca}
+.summaryItem[data-tone="completed"],.summaryActive[data-tone="completed"]{border-left:3px solid #149979}

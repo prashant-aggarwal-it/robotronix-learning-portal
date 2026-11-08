@@ -14,7 +14,7 @@ export function PipelineVisual({pipelines,opportunities,onOpen}:{pipelines:Conne
   <header className="cx-widget-head"><div><h3>Admissions at a glance</h3><p>Current opportunities by stage · Not a historical conversion funnel</p></div>
    {pipelines.length>1&&<select aria-label="Select pipeline to visualize" value={pipelineId} onChange={e=>setPipelineId(e.target.value)}><option value="all">All pipelines</option>{pipelines.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>}
   </header>
-  <div className="cx-widget-kpis"><span><strong>{relevant.length}</strong>Total opportunities</span><span><strong>{open}</strong>Open</span><span><strong>{won}</strong>Won</span><span><strong>{lost}</strong>Lost</span></div>
+  <div className="cx-widget-kpis"><span><strong>{relevant.length}</strong>Total opportunities</span><span data-tone="new"><strong>{open}</strong>Open</span><span data-tone="won"><strong>{won}</strong>Won</span><span data-tone="lost"><strong>{lost}</strong>Lost</span></div>
   {stages.length===0?<p className="cx-widget-empty">Create an admissions pipeline to visualize its stages.</p>:<div className="cx-widget-stages">
    {stages.map(stage=><button type="button" key={stage.id} className="cx-widget-stage" onClick={()=>{const opportunity=relevant.find(o=>o.stage_id===stage.id);if(opportunity&&onOpen)onOpen(opportunity.id);}} disabled={!stage.count||!onOpen} title={stage.pipeline+" · "+stage.name+": "+stage.count+" current opportunities"}>
     <span className="cx-widget-stage-top"><span>{stage.name}</span><strong>{stage.count}</strong></span>
