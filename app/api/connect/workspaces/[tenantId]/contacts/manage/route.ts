@@ -51,6 +51,10 @@ export async function POST(request:NextRequest,{params}:Context){
   action==="merge"?{p_actor_id:auth.actorId,p_tenant_id:tenantId,p_keep_id:data.keepId,p_merge_id:data.mergeId}
   :{p_actor_id:auth.actorId,p_tenant_id:tenantId,p_action:action,p_data:data}
  );
- if(result.error)return connectRpcFailure(result.error,result.code);
+ if(result.error){
+  if(action==="merge"&&result.error.startsWith("Cannot merge: source contact has connected CRM history"))
+   return connectFailure("This duplicate has related enquiries, messages, admissions or other history. Automatic merging is blocked; reconcile its records manually.",409);
+  return connectRpcFailure(result.error,result.code);
+ }
  return NextResponse.json({ok:true,...(result.data||{})},{headers:noStore});
 }

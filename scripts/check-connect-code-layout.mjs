@@ -289,3 +289,11 @@ if(!managerUI.includes("saveConsent")||!managerUI.includes("saveSegment")||!mana
  !mergeSQL.includes("Cannot merge: source contact has connected CRM history")||
  !page.includes("<ContactManagementWorkspace"))
  throw Error("Contact administration, consent, segments, export, safe merge or routing missing.");
+
+const contactEnrichmentTrigger=fs.readFileSync(path.join(root,"database/connect/saas/47_contact_import_profile_sync.sql"),"utf8");
+const phase6Checklist=fs.readFileSync(path.join(root,"qa/connect-phase6-contact-management.md"),"utf8");
+if(!contactEnrichmentTrigger.includes("after insert on connect.contact_import_details")||
+ !phase6Checklist.includes("Merge contact with linked enquiry")||
+ !managerAPI.includes("connect_contact_management_detail")||
+ !managerUI.includes("Discard unsaved contact changes?"))
+ throw Error("Phase 6 import enrichment, off-page editing or UAT safeguards missing.");
