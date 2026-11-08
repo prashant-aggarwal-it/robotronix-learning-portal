@@ -1,6 +1,7 @@
 "use client";
 import {useMemo} from "react";
 import {ConnectEnquiryVisualizations} from "./ConnectEnquiryVisualizations";
+import {stageTone,toneColor} from "../connect-palette";
 import type {ConnectInquiry,ConnectOverview,ConnectOpportunity,ConnectTask} from "@/features/connect/api/client";
 import type {Section} from "@/features/connect/model";
 
@@ -9,7 +10,6 @@ type Props={
  tasks:ConnectTask[];advanced:boolean;onNavigate:(section:Section)=>void;
  onSelectSource?:(source:string)=>void;
 };
-const colors=["#1589d0","#16a6a0","#f3a74b","#607de7","#e47d9e","#8a9cae"];
 function nameSource(value:string){return value.trim().replace(/[_-]+/g," ").replace(/\b\w/g,x=>x.toUpperCase())||"Unknown";}
 export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,advanced,onNavigate,onSelectSource}:Props){
  const stageData=useMemo(()=>{
@@ -39,7 +39,7 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,a
     <div className="cx-record-list">{inquiries.slice(0,5).map(i=><button type="button" className="cx-record" key={i.id} onClick={()=>onNavigate("enquiries")}>
      <span className="cx-avatar" aria-hidden="true">{(i.contact_name||"Lead").trim().split(/\\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()).join("")||"?"}</span>
      <span className="cx-record-main"><strong>{i.contact_name||"New enquiry"}</strong><small>{i.summary||nameSource(i.source)}</small></span>
-     <span className="cx-record-end"><span className="cx-pill">{i.stage_name||nameSource(i.source)}</span><small>{new Date(i.received_at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</small></span>
+     <span className="cx-record-end"><span className="cx-pill" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||nameSource(i.source)}</span><small>{new Date(i.received_at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</small></span>
     </button>)}</div>}
   </section>
   <div className="cx-insight-panels">
@@ -51,7 +51,7 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,tasks,a
    </section>
   </div>
   {advanced&&<section className="cx-insight-panel cx-stages-panel"><div className="cx-insight-panel-heading"><div><h3>Admissions pipeline</h3><p>{opportunities.length} loaded opportunities · stage summary</p></div><button type="button" onClick={()=>onNavigate("pipeline")}>Open pipeline ↗</button></div>
-   {stageData.length===0?<p className="cx-pipeline-compact-empty">No opportunities yet. Open your pipeline to set up stages or add your first admission.</p>:<div className="cx-stage-grid">{stageData.map(([stage,count],i)=><div className="cx-stage-tile" key={stage}><span className="cx-stage-dot" style={{background:colors[i]}}/><span>{stage}</span><strong>{count}</strong></div>)}</div>}
+   {stageData.length===0?<p className="cx-pipeline-compact-empty">No opportunities yet. Open your pipeline to set up stages or add your first admission.</p>:<div className="cx-stage-grid">{stageData.map(([stage,count])=><div className="cx-stage-tile" key={stage}><span className="cx-stage-dot" style={{background:toneColor(stageTone(stage))}}/><span>{stage}</span><strong>{count}</strong></div>)}</div>}
   </section>}
  </div>;
 }

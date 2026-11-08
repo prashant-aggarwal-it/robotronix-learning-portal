@@ -2,6 +2,7 @@
 import {FormEvent,useCallback,useEffect,useRef,useState} from "react";
 import {connectFetch,type ConnectOpportunity,type ConnectPipeline} from "@/features/connect/api/client";
 import {ReportVisuals} from "./ConnectDataWidgets";
+import {stageTone,toneColor,channelColor} from "../connect-palette";
 type Summary={opportunities:number;won:number;conversionRate:number|null;inquiries:number;expectedValue:number;excludedCurrencyOpportunities:number;currency:string;fromDate:string;toDate:string};
 type Stage={pipelineId:string;pipeline:string;stageId:string;stage:string;sortOrder:number;outcome:string;opportunities:number};
 type Staff={memberId:string;role:string;opportunities:number;won:number;open:number;lost:number;conversionRate:number|null;tasksCompleted:number};
@@ -121,7 +122,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
        const total=report.funnel.filter(x=>x.pipelineId===stage.pipelineId).reduce((sum,x)=>sum+x.opportunities,0);
        return <div className="cx-report-bar-row" key={stage.stageId}>
         <div><strong>{stage.stage}</strong><small>{stage.pipeline} · {stage.outcome}</small></div>
-        <div className="cx-bar-track"><div style={{width:(total?100*stage.opportunities/total:0)+"%"}}/></div>
+        <div className="cx-bar-track"><div style={{width:(total?100*stage.opportunities/total:0)+"%",background:toneColor(stageTone(stage.stage,stage.outcome))}}/></div>
         <span>{stage.opportunities}</span>
        </div>;
       })}
@@ -134,7 +135,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
      {(report.stageJourney||[]).length===0?<p className="cx-muted">No pipeline history available.</p>:
       report.stageJourney.map(stage=><div className="cx-report-bar-row" key={stage.stageId}>
        <div><strong>{stage.stage}</strong><small>{stage.pipeline} · {stage.outcome}</small></div>
-       <div className="cx-bar-track"><div style={{width:(stage.reachPercent||0)+"%"}}/></div>
+       <div className="cx-bar-track"><div style={{width:(stage.reachPercent||0)+"%",background:toneColor(stageTone(stage.stage,stage.outcome))}}/></div>
        <span>{stage.reached} / {stage.cohort} ({pct(stage.reachPercent)})</span>
       </div>)}
     </div>
@@ -150,7 +151,7 @@ export function ConnectReports({tenantId}:{tenantId:string}){
    <section className="cx-panel">
     <div className="cx-panel-header"><div><h2>Lead-source performance</h2><p>First linked enquiry source per admission. Return on spend uses recorded receipts, not expected values.</p></div></div>
     <div className="cx-table-wrap"><table className="cx-table"><thead><tr><th>Source</th><th>Enquiries</th><th>Admissions</th><th>Won</th><th>Conversion</th><th>Spend</th><th>Revenue</th><th>ROI</th></tr></thead>
-    <tbody>{report.sources.map(item=><tr key={item.source}><td><strong>{item.source}</strong></td><td>{item.inquiries}</td><td>{item.opportunities}</td><td>{item.won}</td>
+    <tbody>{report.sources.map(item=><tr key={item.source}><td><strong className="cx-channel-label"><i style={{background:channelColor(item.source)}} aria-hidden="true"/>{item.source}</strong></td><td>{item.inquiries}</td><td>{item.opportunities}</td><td>{item.won}</td>
       <td>{pct(item.conversionRate)}</td><td>{pipelineId?"—":money(item.spend,currency)}</td>
       <td>{money(item.revenue,currency)}</td><td>{pipelineId?"—":pct(item.roiPercent)}</td></tr>)}</tbody></table></div>
    </section>

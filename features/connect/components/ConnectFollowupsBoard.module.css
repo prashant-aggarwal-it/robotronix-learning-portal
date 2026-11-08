@@ -19,3 +19,14 @@
 .srOnly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 @media(max-width:1180px){.task{grid-template-columns:32px minmax(120px,1fr) minmax(105px,.6fr);gap:8px}.actions{grid-column:2/4;justify-content:flex-start}.search input{width:185px}}
 @media(max-width:680px){.heading{padding:14px}.summary{padding:0 12px 12px;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.summaryItem,.summaryActive{padding:10px}.toolbar{padding:10px 12px}.tools{width:100%}.search{flex:1}.search input{width:100%}.task{grid-template-columns:30px minmax(0,1fr);padding:12px;gap:7px}.detail{grid-column:2}.due,.actions{grid-column:2}.due{flex-direction:row;align-items:center}.actions{justify-content:flex-start}.count,.footnote{padding-left:12px}.tabs{width:100%}}
+
+/* Shared CRM Phase 1 control and semantic tokens */
+.board{--cx-control-outline:#dce8f1;--cx-control-hover:#eef8fd}
+.summaryItem:hover,.tab:hover,.secondary:hover,.empty button:hover{background:var(--cx-control-hover);border-color:#b9d9e9}
+.summaryItem:focus-visible,.summaryActive:focus-visible,.tab:focus-visible,.tabActive:focus-visible,.primary:focus-visible,.secondary:focus-visible{outline:2px solid #138fbe;outline-offset:2px}
+.overdue{background:#fff3e1;color:#986115;border:1px solid #f2ddba}
+.today{background:#fff3e1;color:#986115;border:1px solid #f2ddba}
+.complete{background:#e8f7f1;color:#18785b;border:1px solid #c7ebdd}
+.status{background:#e9f5fc;color:#146b9f;border:1px solid #cee8f6}
+.empty{border:1px dashed #dce8f1;background:#f9fcfe;border-radius:10px;margin:16px}
+@media(max-width:450px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.tab,.tabActive{white-space:nowrap}.actions button{min-height:35px}}

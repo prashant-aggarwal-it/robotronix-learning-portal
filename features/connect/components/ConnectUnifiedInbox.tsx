@@ -3,6 +3,7 @@ import {useCallback,useEffect,useState} from "react";
 import {connectFetch,crmList,type ConnectPerson} from "@/features/connect/api/client";
 import {ConnectWhatsAppInbox} from "./ConnectWhatsAppInbox";
 import {CommunicationPulse} from "./ConnectDataWidgets";
+import {channelColor} from "../connect-palette";
 import styles from "./ConnectUnifiedInbox.module.css";
 
 type Thread={id:string;provider:string;channelName:string;personId:string|null;personName:string|null;externalContactId:string|null;status:string;lastAt:string;lastMessage:string|null;lastDirection:string|null;unreadCount:number;classification:string};
@@ -113,7 +114,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact}:{tenantId:
        <span className={styles.threadContent}>
         <span className={styles.threadTop}><strong>{t.personName||t.externalContactId||"Unknown contact"}</strong><time>{stamp(t.lastAt)}</time></span>
         <span className={styles.preview}>{t.lastMessage||"No message preview"}</span>
-        <span className={styles.threadMeta}><span className={styles.channelTag}>{providerLabel(t.provider)}</span><span>{t.classification==="unreviewed"?"Needs review":t.classification}</span>{t.status!=="open"&&<span>· {t.status}</span>}</span>
+        <span className={styles.threadMeta}><span className={styles.channelTag} style={{borderLeftColor:channelColor(t.provider)}}>{providerLabel(t.provider)}</span><span>{t.classification==="unreviewed"?"Needs review":t.classification}</span>{t.status!=="open"&&<span>· {t.status}</span>}</span>
        </span>
        {t.unreadCount>0&&<span className={styles.unread} aria-label={t.unreadCount+" unread messages"}>{t.unreadCount>99?"99+":t.unreadCount}</span>}
       </button>)}

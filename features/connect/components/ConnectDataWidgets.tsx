@@ -1,8 +1,8 @@
 "use client";
 import {useMemo,useState} from "react";
 import type {ConnectPipeline,ConnectOpportunity,ConnectTask} from "@/features/connect/api/client";
+import {channelColor,stageTone,toneColor} from "../connect-palette";
 
-const palette=["#118bc5","#18a7a4","#f4aa51","#6383e8","#ca7db9","#819fb8"];
 const label=(s:string)=>s.replace(/[_-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 export function PipelineVisual({pipelines,opportunities,onOpen}:{pipelines:ConnectPipeline[];opportunities:ConnectOpportunity[];onOpen?:(id:string)=>void}){
  const [pipelineId,setPipelineId]=useState("all");
@@ -16,9 +16,9 @@ export function PipelineVisual({pipelines,opportunities,onOpen}:{pipelines:Conne
   </header>
   <div className="cx-widget-kpis"><span><strong>{relevant.length}</strong>Total opportunities</span><span><strong>{open}</strong>Open</span><span><strong>{won}</strong>Won</span><span><strong>{lost}</strong>Lost</span></div>
   {stages.length===0?<p className="cx-widget-empty">Create an admissions pipeline to visualize its stages.</p>:<div className="cx-widget-stages">
-   {stages.map((stage,i)=><button type="button" key={stage.id} className="cx-widget-stage" onClick={()=>{const opportunity=relevant.find(o=>o.stage_id===stage.id);if(opportunity&&onOpen)onOpen(opportunity.id);}} disabled={!stage.count||!onOpen} title={stage.pipeline+" · "+stage.name+": "+stage.count+" current opportunities"}>
+   {stages.map(stage=><button type="button" key={stage.id} className="cx-widget-stage" onClick={()=>{const opportunity=relevant.find(o=>o.stage_id===stage.id);if(opportunity&&onOpen)onOpen(opportunity.id);}} disabled={!stage.count||!onOpen} title={stage.pipeline+" · "+stage.name+": "+stage.count+" current opportunities"}>
     <span className="cx-widget-stage-top"><span>{stage.name}</span><strong>{stage.count}</strong></span>
-    <span className="cx-widget-track"><span style={{width:stage.count/max*100+"%",background:stage.outcome==="won"?"#1ca487":stage.outcome==="lost"?"#d38d7d":palette[i%palette.length]}}/></span>
+    <span className="cx-widget-track"><span style={{width:stage.count/max*100+"%",background:toneColor(stageTone(stage.name,stage.outcome))}}/></span>
     {pipelineId==="all"&&pipelines.length>1&&<small>{stage.pipeline}</small>}
    </button>)}
   </div>}
@@ -35,15 +35,15 @@ export function ReportVisuals({report}:{report:ReportGraphic}){
   <section className="cx-widget"><header className="cx-widget-head"><div><h3>Channel performance</h3><p>Comparison for the selected reporting period</p></div>
    <select value={metric} onChange={e=>setMetric(e.target.value==="won"?"won":e.target.value==="opportunities"?"opportunities":"inquiries")} aria-label="Channel performance metric"><option value="inquiries">Enquiries</option><option value="opportunities">Admissions</option><option value="won">Won</option></select>
   </header>
-  {entries.length===0?<p className="cx-widget-empty">No channel activity recorded for this period.</p>:<div className="cx-widget-bars">{entries.map((s,i)=><div key={s.source} className="cx-widget-bar-row">
-   <span title={s.source}>{label(s.source)}</span><span className="cx-widget-track"><span style={{width:s[metric]/max*100+"%",background:palette[i%palette.length]}}/></span><strong>{s[metric]}</strong>
+  {entries.length===0?<p className="cx-widget-empty">No channel activity recorded for this period.</p>:<div className="cx-widget-bars">{entries.map(s=><div key={s.source} className="cx-widget-bar-row">
+   <span title={s.source}>{label(s.source)}</span><span className="cx-widget-track"><span style={{width:s[metric]/max*100+"%",background:channelColor(s.source)}}/></span><strong>{s[metric]}</strong>
   </div>)}</div>}
   <p className="cx-widget-caption">Changing the metric compares recorded counts, not predicted results.</p>
   </section>
   <section className="cx-widget"><header className="cx-widget-head"><div><h3>Admissions stage reach</h3><p>Recorded stage history for the selected creation cohort</p></div></header>
    {stages.length===0?<p className="cx-widget-empty">No stage history yet. Create admissions and move them through the pipeline to populate this chart.</p>:
-    <div className="cx-widget-bars">{stages.map((s,i)=><div key={s.stageId} className="cx-widget-bar-row">
-     <span title={s.pipeline+" · "+s.stage}>{s.stage}</span><span className="cx-widget-track"><span style={{width:Math.min(100,Math.max(0,s.reachPercent||0))+"%",background:palette[i%palette.length]}}/></span>
+    <div className="cx-widget-bars">{stages.map(s=><div key={s.stageId} className="cx-widget-bar-row">
+     <span title={s.pipeline+" · "+s.stage}>{s.stage}</span><span className="cx-widget-track"><span style={{width:Math.min(100,Math.max(0,s.reachPercent||0))+"%",background:toneColor(stageTone(s.stage))}}/></span>
      <strong>{s.reached}/{s.cohort}</strong>
     </div>)}</div>}
    <p className="cx-widget-caption">Reached stages, not stage-to-stage conversion. Cohorts and pipeline filters apply.</p>
@@ -90,9 +90,9 @@ export function CommunicationPulse({threads,onSelectProvider}:{threads:ThreadPoi
   <header className="cx-widget-head"><div><h3>Inbox pulse</h3><p>Current loaded conversations across connected channels</p></div><span className="cx-widget-tag">{threads.length} conversations</span></header>
   <div className="cx-widget-mini-kpis"><span><strong>{unread}</strong>Unread messages</span><span><strong>{needsReply}</strong>Last message inbound</span></div>
   {stats.length===0?<p className="cx-widget-empty">No conversations available yet.</p>:<div className="cx-widget-pulse-channels">
-   {stats.map((s,i)=><button type="button" key={s.provider} onClick={()=>onSelectProvider(s.provider)} className="cx-widget-pulse-channel">
+   {stats.map(s=><button type="button" key={s.provider} onClick={()=>onSelectProvider(s.provider)} className="cx-widget-pulse-channel">
     <span className="cx-widget-pulse-channel-label">{label(s.provider)}<strong>{s.total}</strong></span>
-    <span className="cx-widget-track"><span style={{background:palette[i%palette.length],width:s.total/max*100+"%"}}/></span>
+    <span className="cx-widget-track"><span style={{background:channelColor(s.provider),width:s.total/max*100+"%"}}/></span>
     <small>{s.needsReply} last inbound · {s.unread} unread</small>
    </button>)}
   </div>}

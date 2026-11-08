@@ -1,8 +1,8 @@
 "use client";
 import {useMemo,useState} from "react";
 import type {ConnectInquiry} from "@/features/connect/api/client";
+import {channelColor} from "../connect-palette";
 
-const colors=["#0d8bc6","#18a6a2","#f3a54b","#6483ed","#d979b2","#8e9cad"];
 const offsetMs=5.5*60*60*1000;
 function indiaDay(value:number){return new Date(value+offsetMs).toISOString().slice(0,10);}
 function dayLabel(key:string){return new Date(key+"T00:00:00Z").toLocaleDateString("en-IN",{day:"numeric",month:"short",timeZone:"UTC"});}
@@ -57,12 +57,12 @@ export function ConnectEnquiryVisualizations({inquiries,onSelectSource}:{inquiri
   {totalSources===0?<p className={"cx-viz-empty"}>No enquiries in this workspace yet.</p>:<div className={"cx-viz-mix"}>
    <svg className={"cx-viz-donut"} viewBox="0 0 140 140" role="img" aria-label="Enquiries by channel">
     <circle cx="70" cy="70" r="46" fill="none" stroke="#eef4f8" strokeWidth="16"/>
-    {data.sources.map(([source,count],i)=>{const share=count/totalSources*circumference;const start=running;running+=share;return <circle key={source} cx="70" cy="70" r="46" fill="none" stroke={colors[i]} strokeWidth="16" strokeDasharray={share+" "+(circumference-share)} strokeDashoffset={-start} transform="rotate(-90 70 70)"><title>{sourceLabel(source)+": "+count}</title></circle>;})}
+    {data.sources.map(([source,count])=>{const share=count/totalSources*circumference;const start=running;running+=share;return <circle key={source} cx="70" cy="70" r="46" fill="none" stroke={channelColor(source)} strokeWidth="16" strokeDasharray={share+" "+(circumference-share)} strokeDashoffset={-start} transform="rotate(-90 70 70)"><title>{sourceLabel(source)+": "+count}</title></circle>;})}
     <text x="70" y="69" textAnchor="middle" fill="#173951" fontSize="24" fontWeight="800">{totalSources}</text>
     <text x="70" y="84" textAnchor="middle" fill="#8193a0" fontSize="9">enquiries</text>
    </svg>
    <div className={"cx-viz-legend"}>{data.sources.map(([source,count],i)=><button type="button" key={source} className={"cx-viz-source"} onClick={()=>onSelectSource?.(source)} disabled={!onSelectSource} aria-label={"Show "+sourceLabel(source)+" enquiries"}>
-    <span className={"cx-viz-source-name"}><i style={{background:colors[i]}}/>{sourceLabel(source)}</span><span><strong>{count}</strong><small>{Math.round(count/totalSources*100)}%</small></span>
+    <span className={"cx-viz-source-name"}><i style={{background:channelColor(source)}}/>{sourceLabel(source)}</span><span><strong>{count}</strong><small>{Math.round(count/totalSources*100)}%</small></span>
    </button>)}</div>
   </div>}
   <p className={"cx-viz-note"}>Charts use loaded workspace records, not projected revenue or inferred conversions.</p>

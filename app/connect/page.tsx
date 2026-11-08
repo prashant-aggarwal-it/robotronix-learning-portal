@@ -12,6 +12,7 @@ import {ConnectReminderInbox} from "@/features/connect/components/ConnectCommuni
 import {ConnectFollowupsBoard} from "@/features/connect/components/ConnectFollowupsBoard";
 import {ConnectCalendar} from "@/features/connect/components/ConnectCalendar";
 import {PipelineVisual} from "@/features/connect/components/ConnectDataWidgets";
+import {stageTone,channelColor,toneColor} from "@/features/connect/connect-palette";
 import {ConnectUnifiedInbox} from "@/features/connect/components/ConnectUnifiedInbox";
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
@@ -346,8 +347,8 @@ export default function ConnectPage(){
       <div><h2>Enquiry inbox</h2><p>{inquiries.length} recent enquiries loaded · Classify and move qualified leads forward</p></div>
       <div className="cx-enquiry-summary">
        <span><strong>{inquiries.length}</strong> Total</span>
-       <button type="button" className={enquiryView==="unclassified"?"is-active":""} onClick={()=>setEnquiryView(enquiryView==="unclassified"?"all":"unclassified")}><strong>{unclassifiedCount}</strong> Unclassified</button>
-       <button type="button" className={enquiryView==="linked"?"is-active":""} onClick={()=>setEnquiryView(enquiryView==="linked"?"all":"linked")}><strong>{linkedCount}</strong> Linked to admissions</button>
+       <button type="button" className={enquiryView==="unclassified"?"is-active":""} aria-pressed={enquiryView==="unclassified"} onClick={()=>setEnquiryView(enquiryView==="unclassified"?"all":"unclassified")}><strong>{unclassifiedCount}</strong> Unclassified</button>
+       <button type="button" className={enquiryView==="linked"?"is-active":""} aria-pressed={enquiryView==="linked"} onClick={()=>setEnquiryView(enquiryView==="linked"?"all":"linked")}><strong>{linkedCount}</strong> Linked to admissions</button>
       </div>
      </div>
      <div className="cx-enquiry-toolbar">
@@ -372,13 +373,13 @@ export default function ConnectPage(){
         const suggestion=!i.category_id&&canWrite?suggestEnquiryCategory(i.summary||"",enquiryPrefs?.categories||[]):null;
         return <tr key={i.id}>
          <td><div className="cx-enquiry-person"><span className="cx-avatar" aria-hidden="true">{initials(i.contact_name||"Lead")}</span><span><strong className="cx-cell-title">{i.contact_name||"New enquiry"}</strong><small className="cx-cell-secondary">{i.summary||i.contact_detail||"No enquiry description"}</small></span></div></td>
-         <td><span className="cx-pill">{shortLabel(i.source)}</span></td>
+         <td><span className="cx-pill cx-channel-badge" style={{borderLeftColor:channelColor(i.source)}}>{shortLabel(i.source)}</span></td>
          <td><div className="cx-enquiry-category">
           {suggestion&&<button type="button" className="cx-category-suggestion" disabled={busy} title={"Apply suggested category: "+suggestion.label} onClick={()=>void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId:suggestion.id}})}),"Suggested category applied.")}>Suggested: {suggestion.label} · Apply</button>}
           <select aria-label={"Category for "+(i.contact_name||"enquiry")} disabled={!canWrite||busy} value={i.category_id||""} onChange={e=>{const categoryId=e.target.value;if(!categoryId)return;void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId}})}),"Enquiry categorized.");}}>
            <option value="">Unclassified</option>{enquiryPrefs?.categories.filter(c=>c.active||c.id===i.category_id).map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
           </select></div></td>
-         <td><div className="cx-enquiry-progress"><span className={"cx-status "+(i.outcome==="won"?"won":i.outcome==="lost"?"lost":"")}>{i.stage_name||"New enquiry"}</span>{i.opportunity_title&&<small title={i.opportunity_title}>{i.opportunity_title}</small>}</div></td>
+         <td><div className="cx-enquiry-progress"><span className="cx-status" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||"New enquiry"}</span>{i.opportunity_title&&<small title={i.opportunity_title}>{i.opportunity_title}</small>}</div></td>
          <td><time className="cx-enquiry-date" dateTime={i.received_at}>{dateLabel(i.received_at)}</time></td>
          <td><button type="button" className="cx-link-button cx-enquiry-view" aria-label={"View details for "+(i.contact_name||"enquiry")} onClick={()=>{setSelectedPerson(i.person_id);setSelectedOpportunity(i.opportunity_id);}}>View details →</button></td>
         </tr>;
@@ -435,11 +436,11 @@ export default function ConnectPage(){
      pipelines.map(p=><section key={p.id} className="cx-pipeline-section">
       <div className="cx-panel-header"><div><h2>{p.name}</h2><p>{p.stages.length} stages · {opportunities.filter(o=>o.pipeline_id===p.id).length} opportunities</p></div></div>
       <div className="cx-kanban">{[...p.stages].sort((a,b)=>a.order-b.order).map(stage=><div className="cx-kanban-column" key={stage.id}>
-       <div className="cx-column-heading"><span className={"cx-stage-dot "+stage.outcome}/><strong>{stage.name}</strong><span>{opportunities.filter(o=>o.stage_id===stage.id).length}</span></div>
+       <div className="cx-column-heading"><span className="cx-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}}/><strong>{stage.name}</strong><span>{opportunities.filter(o=>o.stage_id===stage.id).length}</span></div>
        {opportunities.filter(o=>o.stage_id===stage.id).map(o=><button key={o.id} className="cx-deal" onClick={()=>{setSelectedOpportunity(o.id);setSelectedPerson(o.contact_id);}}>
         <strong>{o.title}</strong><small>{people.find(x=>x.id===o.contact_id)?.full_name||"Institutional opportunity"}</small>
         <span className="cx-deal-foot"><span>{o.expected_value==null?"No value specified":o.currency+" "+o.expected_value.toLocaleString("en-IN")}</span><span>View →</span></span></button>)}
-       {!opportunities.some(o=>o.stage_id===stage.id)&&<span className="cx-stage-empty">No opportunities</span>}
+       {!opportunities.some(o=>o.stage_id===stage.id)&&<span className="cx-stage-empty">No admissions in this stage</span>}
       </div>)}</div>
      </section>)}
     </div>}

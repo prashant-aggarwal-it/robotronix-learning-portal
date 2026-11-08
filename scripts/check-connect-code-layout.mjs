@@ -152,3 +152,17 @@ const crmStyles=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8"
 if(!calendarComponent.includes('className="ccal"')||!crmStyles.includes(".cx-app .ccal-grid{display:grid")||!crmStyles.includes(".cx-app .ccal-view button")||!crmStyles.includes(".cx-app .ccal-day-item")){
  console.error("CRM calendar layout or critical stylesheet rules are missing.");process.exitCode=1;
 }
+
+/* Design-system regression guard: colours must stay stable by meaning, not index. */
+const paletteSource=fs.readFileSync(path.join(root,"features/connect/connect-palette.ts"),"utf8");
+const visualizationSource=fs.readFileSync(path.join(root,"features/connect/components/ConnectEnquiryVisualizations.tsx"),"utf8");
+const overviewSource=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
+const widgetSource=fs.readFileSync(path.join(root,"features/connect/components/ConnectDataWidgets.tsx"),"utf8");
+if(!paletteSource.includes("export function stageTone")||!paletteSource.includes("export function channelColor")||
+ !visualizationSource.includes("channelColor(source)")||!overviewSource.includes("stageTone(stage)")||
+ !widgetSource.includes("toneColor(stageTone("))
+ throw Error("Connect visual semantics must use the shared status/channel palette.");
+if(!crmStyles.includes('.cx-app .cx-status.won')||!crmStyles.includes('data-tone="contacted"')||
+ !crmStyles.includes('data-tone="trial"')||!crmStyles.includes('data-tone="lost"')||
+ !crmStyles.includes('@media(max-width:480px)'))
+ throw Error("Connect semantic states or mobile layout rules are missing.");

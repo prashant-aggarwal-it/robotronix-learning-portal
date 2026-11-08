@@ -858,3 +858,128 @@
 .cx-app .ccal-modal-actions button{padding:10px 17px;border-radius:9px;font-size:12px;font-weight:800}
 .cx-app .ccal-error{grid-column:1/-1;border:1px solid #f0dbd9;background:#fff2f0;border-radius:8px;padding:10px;font-size:12px;color:#a23d38;margin:0}
 @media(max-width:640px){.cx-app .ccal-modal-backdrop{padding:8px}.cx-app .ccal-modal{max-height:calc(100vh - 16px)}.cx-app .ccal-modal-head{padding:13px}.cx-app .ccal-editor{grid-template-columns:1fr;padding:14px;gap:12px}.cx-app .ccal-heading-actions{justify-content:space-between;width:100%}.cx-app .ccal-new-button{padding:9px}}
+
+/* Connect Phase 1: shared visual language. Keep these rules in the route
+   stylesheet (not in a client-only CSS import). Tokens are tenant-safe:
+   they affect this CRM workspace only, not the Learning Portal. */
+.cx-app{
+ --cx-surface:#fff;--cx-surface-soft:#f6fafd;--cx-surface-hover:#eff8fd;
+ --cx-outline:#dce8f1;--cx-heading:#173b55;--cx-text:#294e69;--cx-caption:#71899d;
+ --cx-focus:#138fbe;--cx-radius-card:16px;--cx-radius-control:10px;
+ --cx-status-new:#168bca;--cx-status-contacted:#12a39e;
+ --cx-status-trial:#e79a35;--cx-status-won:#149979;--cx-status-lost:#cb6270;
+ --cx-status-open:#168bca;--cx-status-completed:#149979;
+ --cx-status-cancelled:#cb6270;--cx-status-overdue:#c6801d;
+}
+.cx-app :is(.cx-panel,.cx-widget,.cx-insight-panel,.cx-reports .cx-report-filters){
+ border-color:var(--cx-outline);border-radius:var(--cx-radius-card);
+}
+.cx-app :is(.cx-panel,.cx-widget,.cx-insight-panel) :is(h2,h3){
+ color:var(--cx-heading);
+}
+.cx-app :is(.cx-primary,.cx-secondary,.cx-text-button,.cx-link-button,.cx-enquiry-clear,.cx-enquiry-summary button,.cx-contacts-totals button,.cx-widget-stage,.cx-widget-week-day){
+ transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,color .16s ease;
+}
+.cx-app :is(button,select,input,textarea):focus-visible{
+ outline:2px solid var(--cx-focus);outline-offset:2px;
+}
+.cx-app :is(.cx-status,.cx-pill)[data-tone]{
+ display:inline-flex;align-items:center;max-width:100%;border-radius:8px;
+ padding:5px 9px;font-weight:700;font-size:11px;white-space:normal;
+ line-height:1.4;
+}
+.cx-app :is(.cx-status,.cx-pill)[data-tone="new"]{background:#e9f5fc;border:1px solid #cee8f6;color:#146b9f}
+.cx-app :is(.cx-status,.cx-pill)[data-tone="contacted"]{background:#e7f8f5;border:1px solid #c8ebe4;color:#147c75}
+.cx-app :is(.cx-status,.cx-pill)[data-tone="trial"]{background:#fff5e4;border:1px solid #f5dfb6;color:#986115}
+.cx-app :is(.cx-status,.cx-pill)[data-tone="won"]{background:#e8f7f1;border:1px solid #c7ebdd;color:#18785b}
+.cx-app :is(.cx-status,.cx-pill)[data-tone="lost"]{background:#fff0f2;border:1px solid #f2d8de;color:#a64a5d}
+.cx-app :is(.cx-status,.cx-pill)[data-tone="neutral"]{background:#f1f6f9;border:1px solid #e0e9ef;color:#526e83}
+.cx-app .cx-channel-badge{border-left-style:solid;border-left-width:3px;padding-left:9px}
+.cx-app .cx-channel-label{display:inline-flex;align-items:center;gap:8px;text-transform:capitalize}
+.cx-app .cx-channel-label i{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
+.cx-app .cx-status.won{background:#e8f7f1;color:#18785b;border-color:#c7ebdd}
+.cx-app .cx-status.lost{background:#fff0f2;color:#a64a5d;border-color:#f2d8de}
+.cx-app .cx-enquiry-summary button[aria-pressed="true"],
+.cx-app .cx-enquiry-summary button.is-active,
+.cx-app .cx-contacts-totals button[aria-pressed="true"],
+.cx-app .cx-contacts-totals button.active{
+ background:#e8f5fc;border-color:#87c5e6;color:#086c9c;box-shadow:inset 0 0 0 1px #bddfec;
+}
+.cx-app .cx-widget-stage:disabled{opacity:1;cursor:default}
+.cx-app .cx-widget-stage-top strong{font-variant-numeric:tabular-nums}
+.cx-app .cx-kanban{scrollbar-width:thin;scrollbar-color:#b1ccd9 #edf4f7;overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+.cx-app .cx-kanban-column{scroll-snap-align:start}
+.cx-app .cx-kanban-column:focus-within{border-color:#8bcbe8}
+.cx-app .cx-deal:focus-visible{outline:3px solid #86cbe9;outline-offset:2px}
+.cx-app :is(.cx-widget-empty,.cx-insight-empty,.cx-pipeline-compact-empty,.cx-stage-empty){
+ color:var(--cx-caption);line-height:1.5;
+}
+.cx-app .cx-widget-empty{background:#f8fbfd;border:1px dashed #deebf2;border-radius:10px;padding:20px;text-align:center;min-height:75px;display:flex;align-items:center;justify-content:center}
+.cx-app .cx-stage-empty{display:block;text-align:center;padding:20px 9px;border-radius:8px;border:1px dashed #d6e4ed;background:#f9fcfd}
+.cx-app .cx-empty{min-height:160px;padding:30px 20px}
+.cx-app .cx-empty p{max-width:410px}
+.cx-app .cx-enquiry-toolbar label,.cx-app .cx-report-filters label{min-width:0}
+.cx-app :is(.cx-enquiry-toolbar,.cx-contacts-directory-head,.cx-report-filters,.cx-page-heading,.cx-widget-head){
+ min-width:0;
+}
+.cx-app .cx-enquiry-result-count,.cx-app .cx-contacts-directory-count{
+ color:#688296;
+}
+.cx-app .cx-table-wrap{max-width:100%;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#b5cedc #f4f8fb}
+.cx-app .cx-table th{white-space:nowrap}
+.cx-app .cx-table tr:focus-within{background:#f1f9fe}
+.cx-app .cx-report-bar-row strong,.cx-app .cx-widget-bar-row strong{font-variant-numeric:tabular-nums}
+.cx-app .cx-report-forms>form{min-width:0}
+.cx-app .cx-report-forms :is(input,select,textarea){max-width:100%;min-width:0}
+.cx-app :is(.cx-alert,.cx-success){border-radius:10px}
+.cx-app .cx-alert{border:1px solid #f0d8d8;background:#fff4f3;color:#a4423d}
+.cx-app .cx-success{border:1px solid #d0ebdf;background:#ecfaf3;color:#167b56}
+.cx-app .cx-widget-pulse-channel{transition:background .16s ease,border-color .16s ease,box-shadow .16s ease}
+.cx-app .cx-widget-pulse-channel:focus-visible{box-shadow:0 0 0 3px #c7e8f6}
+.cx-app .ccal-status.scheduled{background:#e9f5fc;color:#146b9f}
+.cx-app .ccal-status.completed{background:#e8f7f1;color:#18785b}
+.cx-app .ccal-status.cancelled{background:#fff0f2;color:#a64a5d}
+.cx-app .ccal-day-item.scheduled{background:#eaf5fc;color:#146b9f;border-color:var(--cx-status-new)}
+.cx-app .ccal-day-item.completed{background:#e9f8f1;color:#18785b;border-color:var(--cx-status-won)}
+.cx-app .ccal-day-item.cancelled{background:#fff0f2;color:#a64a5d;border-color:var(--cx-status-lost)}
+@media(max-width:1180px){
+ .cx-app .cx-insight-panels{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .cx-app .cx-widget-pulse-channels{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:930px){
+ .cx-app .cx-insight-panels{grid-template-columns:minmax(0,1fr)}
+ .cx-app .cx-widget-double{grid-template-columns:1fr}
+ .cx-app .cx-widget-pulse{margin-inline:12px}
+ .cx-app .cx-kanban-column{flex-basis:230px}
+}
+@media(max-width:730px){
+ .cx-app .cx-page-heading{gap:12px;margin-bottom:17px}
+ .cx-app .cx-content{min-width:0}
+ .cx-app .cx-enquiry-heading,.cx-app .cx-contacts-directory-head{padding:15px 14px 11px}
+ .cx-app .cx-enquiry-toolbar{gap:8px;padding-inline:14px}
+ .cx-app .cx-report-filters{gap:10px;padding:14px}
+ .cx-app .cx-report-filters label{flex:1 1 155px}
+ .cx-app .cx-report-filters button{flex:1 1 auto}
+ .cx-app .cx-table th,.cx-app .cx-table td{padding:11px 12px}
+ .cx-app .cx-table-wrap{position:relative}
+ .cx-app .cx-kanban{gap:10px;padding-bottom:16px}
+ .cx-app .cx-kanban-column{flex-basis:min(80vw,270px);min-height:200px}
+ .cx-app .cx-metrics,.cx-app .cx-insight-metrics{gap:9px}
+ .cx-app .cx-widget-stages{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cx-app .cx-report-forms{padding:12px}
+}
+@media(max-width:480px){
+ .cx-app .cx-insight-panel,.cx-app .cx-widget{padding:13px}
+ .cx-app .cx-widget-stages{grid-template-columns:1fr}
+ .cx-app .cx-report-filters label{flex-basis:100%}
+ .cx-app .cx-enquiry-summary{width:100%}
+ .cx-app .cx-enquiry-summary>span,.cx-app .cx-enquiry-summary>button{flex:1 1 auto;justify-content:center}
+ .cx-app .cx-widget-pulse-channels{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cx-app .cx-widget-mini-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cx-app .cx-widget-bar-row{grid-template-columns:72px minmax(0,1fr) 38px}
+}
+@media(prefers-reduced-motion:reduce){
+ .cx-app :is(.cx-primary,.cx-secondary,.cx-widget-stage,.cx-widget-pulse-channel){
+  transition:none;
+ }
+}
