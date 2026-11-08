@@ -149,7 +149,7 @@ export function ContactManagementWorkspace({tenantId,onChanged,onClose,initialPe
      <label>City<input placeholder="Any city" value={draft.city} onChange={e=>changeFilter("city",e.target.value)}/></label>
      <label>Tag<input placeholder="e.g. Robotics" value={draft.tag} onChange={e=>changeFilter("tag",e.target.value)}/></label>
      <label>Lead source<input placeholder="Source name" value={draft.source} onChange={e=>changeFilter("source",e.target.value)}/></label>
-     <label>WhatsApp consent<select value={draft.consent} onChange={e=>changeFilter("consent",e.target.value as Filters["consent"])}><option value="all">All permission statuses</option><option value="unknown" disabled={editor.consent_status==="opted_out"}>Not verified</option><option value="opted_in">Verified opt-in</option><option value="opted_out">Opted out</option></select></label>
+     <label>WhatsApp consent<select value={draft.consent} onChange={e=>changeFilter("consent",e.target.value as Filters["consent"])}><option value="all">All permission statuses</option><option value="unknown">Not verified</option><option value="opted_in">Verified opt-in</option><option value="opted_out">Opted out</option></select></label>
     </div>
     <div className="cx-manage-filter-actions"><button type="button" onClick={()=>applyFilters(draft)}>Apply filters</button><button type="button" onClick={()=>applyFilters(blank)}>Clear</button><button type="button" onClick={()=>void exportCsv()} disabled={busy}>Export filtered CSV</button></div>
     <div className="cx-manage-segment-line"><label>Save current filters<input value={segmentName} maxLength={90} placeholder="e.g. Delhi Robotics enquiries" onChange={e=>setSegmentName(e.target.value)}/></label><button type="button" disabled={busy||!segmentName.trim()} onClick={()=>void saveSegment()}>Save segment</button></div>
@@ -191,7 +191,7 @@ export function ContactManagementWorkspace({tenantId,onChanged,onClose,initialPe
     <p>Changing a phone or email preserves previous identifiers for conversation history. Include the country calling code when updating phone numbers; review duplicates before using a shared number.</p>
     <button className="cx-manage-primary" type="button" disabled={busy||!edit.name.trim()} onClick={()=>void saveDetails()}>Save contact details</button>
     <div className="cx-manage-consent-editor"><h4>WhatsApp marketing permission</h4><p>Importing, finding or purchasing a contact does not establish marketing opt-in.</p>
-     <label>Status<select value={consent} onChange={e=>setConsent(e.target.value as Consent)}><option value="unknown">Not verified</option><option value="opted_in">Verified opt-in</option><option value="opted_out">Opted out</option></select></label>
+     <label>Status<select value={consent} onChange={e=>setConsent(e.target.value as Consent)}><option value="unknown" disabled={editor.consent_status==="opted_out"}>Not verified</option><option value="opted_in">Verified opt-in</option><option value="opted_out">Opted out</option></select></label>
      {consent==="opted_in"&&<label>Evidence of explicit permission<textarea rows={2} placeholder="How and when did this person agree to receive WhatsApp marketing?" value={evidence} onChange={e=>setEvidence(e.target.value)}/></label>}
      <button type="button" disabled={busy||consent==="opted_in"&&evidence.trim().length<12} onClick={()=>void saveConsent()}>Record permission change</button>
     </div></div>
