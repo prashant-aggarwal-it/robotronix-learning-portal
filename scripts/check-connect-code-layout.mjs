@@ -258,10 +258,10 @@ if(!importer.includes("parseCSV")||!importer.includes("Review import")||
  throw Error("Contact import mapping, tenant RPC, provenance or consent safeguard missing.");
 
 const provenanceView=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactImportProvenance.tsx"),"utf8");
-const contactProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+const importedContactProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
 const profileRpc=fs.readFileSync(path.join(root,"database/connect/saas/41_contact_import_provenance.sql"),"utf8");
 if(!page.includes("loadMoreContacts()")||!page.includes("peopleHasMore")||
- !contactProfile.includes("ContactImportProvenance")||!provenanceView.includes("WhatsApp marketing:")||
+ !importedContactProfile.includes("ContactImportProvenance")||!provenanceView.includes("WhatsApp marketing:")||
  !profileRpc.includes("connect_contact_import_profile"))
  throw Error("Bulk contact pagination and import provenance views are required.");
 

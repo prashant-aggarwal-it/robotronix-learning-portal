@@ -320,7 +320,9 @@ export default function ConnectPage(){
   return result;
  },[inquiries]);
  async function loadMoreContacts(){
-  if(loadingMorePeople||!peopleHasMore||!tenantId)return;
+  if(loadingMorePeople||!tenantId)return;
+  if(section==="contacts"&&search.trim().length>=2){if((directoryResults||[]).length>=directoryTotal)return;}
+  else if(!peopleHasMore)return;
   const generation=requestGeneration.current;
   const isSearch=section==="contacts"&&search.trim().length>=2;
   const offset=isSearch?(directoryResults?.length||0):people.length;
