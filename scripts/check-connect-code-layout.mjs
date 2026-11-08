@@ -211,3 +211,14 @@ if(!opsPage.includes('destination.outcome==="won"||destination.outcome==="lost"'
  !opsPage.includes('This will update the admission outcome.')||
  !contactTabs.includes('aria-orientation="horizontal"'))
  throw Error("Admission outcome safeguards or contact tab accessibility missing.");
+
+/* Overview right rail: compact scheduling and pipeline insight cards. */
+const overviewRail=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
+const overviewPage=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+const overviewStyles=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8");
+if(!overviewRail.includes("cx-overview-right-rail")||
+ !overviewRail.includes("Next appointments")||!overviewRail.includes("Pipeline snapshot")||
+ !overviewRail.includes('a.status==="scheduled"')||!overviewRail.includes('onNavigate("calendar")')||
+ !overviewPage.includes("appointments={appointments} people={people} pipelines={pipelines}")||
+ !overviewStyles.includes(".cx-overview-stage-list"))
+ throw Error("CRM Overview operational right-rail widgets or responsive styles are missing.");

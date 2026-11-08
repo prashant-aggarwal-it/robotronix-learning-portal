@@ -358,7 +358,7 @@ export default function ConnectPage(){
       <button type="button" className="cx-workflow-clear" onClick={()=>{setWorkflowContactId(null);setSearch("");}}>All records ×</button>
      </nav></div>}
     {section==="overview"&&<>
-     <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} tasks={tasks} advanced={advanced} onNavigate={setSection}
+     <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} appointments={appointments} people={people} pipelines={pipelines} tasks={tasks} advanced={advanced} onNavigate={setSection}
       onViewAllEnquiries={()=>{setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setEnquirySort("latest");setSection("enquiries");}}
       onOpenEnquiry={inquiry=>{
        setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");

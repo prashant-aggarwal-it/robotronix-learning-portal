@@ -1069,3 +1069,31 @@
 .cx-app .cx-report-tab:focus-visible,.cx-app .cx-contact360-tabs [role="tab"]:focus-visible{outline:2px solid #138fbe;outline-offset:2px}
 .cx-app .ccal-error:focus{outline:2px solid #cc7970;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.cx-app :is(.cx-modal,.cx-drawer,.ccal-modal){scroll-behavior:auto;transition:none}}
+
+/* Overview right rail: meaningful operational widgets, no forced blank card. */
+.cx-app .cx-insight-panels{align-items:start}
+.cx-app .cx-overview-right-rail{display:flex;flex-direction:column;gap:13px;min-width:0}
+.cx-app .cx-overview-right-rail .cx-insight-panel{min-height:0}
+.cx-app .cx-overview-right-rail .cx-insight-panel-heading{margin-bottom:12px}
+.cx-app .cx-overview-actions-panel .cx-priority-row{min-height:62px;margin-bottom:8px}
+.cx-app .cx-overview-actions-panel .cx-priority-row:last-child{margin-bottom:0}
+.cx-app .cx-overview-appointments{display:flex;flex-direction:column;gap:1px}
+.cx-app .cx-overview-appointment{appearance:none;width:100%;display:grid;grid-template-columns:83px minmax(0,1fr) 12px;align-items:center;gap:9px;text-align:left;padding:10px 3px;border:0;border-bottom:1px solid #eaf1f5;background:transparent;color:#224963;cursor:pointer}
+.cx-app .cx-overview-appointment:last-child{border-bottom:0}
+.cx-app .cx-overview-appointment:hover,.cx-app .cx-overview-stage-list button:hover{background:#f0f8fc;border-radius:8px}
+.cx-app .cx-overview-appointment:focus-visible,.cx-app .cx-overview-stage-list button:focus-visible{outline:2px solid #148bbd;outline-offset:1px;border-radius:7px}
+.cx-app .cx-overview-appointment-date{font-weight:800;font-size:11px;color:#187ca7;white-space:nowrap}
+.cx-app .cx-overview-appointment-info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cx-app .cx-overview-appointment-info strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#23445f}
+.cx-app .cx-overview-appointment-info small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#738b9c;font-size:10px}
+.cx-app .cx-overview-row-arrow{color:#83a5bb;font-size:18px}
+.cx-app .cx-overview-stage-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.cx-app .cx-overview-stage-list button{appearance:none;min-width:0;border:1px solid #e1ecf3;background:#f7fbfd;border-radius:9px;padding:10px;display:flex;align-items:center;gap:7px;text-align:left;color:#365971;cursor:pointer}
+.cx-app .cx-overview-stage-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.cx-app .cx-overview-stage-label{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.cx-app .cx-overview-stage-list strong{font-size:13px;font-variant-numeric:tabular-nums;color:#204461}
+.cx-app .cx-overview-widget-empty{padding:11px 13px;background:#f6fbfd;border:1px dashed #d8e9f2;border-radius:10px;color:#708b9e;font-size:11px;line-height:1.5}
+.cx-app .cx-overview-widget-empty p{margin:0 0 8px}
+.cx-app .cx-overview-widget-empty button{border:0;background:transparent;padding:0;color:#1383ad;font-weight:800;font-size:11px;cursor:pointer}
+@media(max-width:1180px){.cx-app .cx-overview-right-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.cx-app .cx-overview-actions-panel{grid-column:1/-1}}
+@media(max-width:690px){.cx-app .cx-overview-right-rail{display:flex}.cx-app .cx-overview-stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}.cx-app .cx-overview-appointment{grid-template-columns:80px minmax(0,1fr) 12px}}

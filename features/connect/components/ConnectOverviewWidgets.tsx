@@ -1,22 +1,31 @@
 "use client";
 import {ConnectEnquiryVisualizations} from "./ConnectEnquiryVisualizations";
-import {stageTone} from "../connect-palette";
-import type {ConnectInquiry,ConnectOverview,ConnectOpportunity,ConnectTask} from "@/features/connect/api/client";
+import {stageTone,toneColor} from "../connect-palette";
+import type {ConnectAppointment,ConnectPerson,ConnectPipeline,ConnectInquiry,ConnectOverview,ConnectOpportunity,ConnectTask} from "@/features/connect/api/client";
 import type {Section} from "@/features/connect/model";
 
 type Props={
  overview:ConnectOverview;inquiries:ConnectInquiry[];opportunities:ConnectOpportunity[];
+ appointments:ConnectAppointment[];people:ConnectPerson[];pipelines:ConnectPipeline[];
  tasks:ConnectTask[];advanced:boolean;onNavigate:(section:Section)=>void;
  onSelectSource?:(source:string)=>void;
  onOpenEnquiry:(enquiry:ConnectInquiry)=>void;
  onViewAllEnquiries:()=>void;
 };
 function nameSource(value:string){return value.trim().replace(/[_-]+/g," ").replace(/\b\w/g,x=>x.toUpperCase())||"Unknown";}
-export function ConnectOverviewWidgets({overview,inquiries,tasks,advanced,onNavigate,onSelectSource,onOpenEnquiry,onViewAllEnquiries}:Props){
+export function ConnectOverviewWidgets({overview,inquiries,opportunities,appointments,people,pipelines,tasks,advanced,onNavigate,onSelectSource,onOpenEnquiry,onViewAllEnquiries}:Props){
  const recent=[...inquiries].sort((a,b)=>Date.parse(b.received_at)-Date.parse(a.received_at)).slice(0,3);
  const indiaDay=(value:string)=>new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(value));
  const today=indiaDay(new Date().toISOString());
  const todayTasks=tasks.filter(t=>t.due_at&&indiaDay(t.due_at)===today&&!["completed","done","cancelled"].includes(t.status)).length;
+ const now=Date.now();
+ const upcoming=appointments.filter(a=>a.status==="scheduled"&&Number.isFinite(Date.parse(a.starts_at))&&Date.parse(a.starts_at)>=now)
+  .sort((a,b)=>Date.parse(a.starts_at)-Date.parse(b.starts_at)).slice(0,3);
+ const peopleById=new Map(people.map(p=>[p.id,p.full_name]));
+ const stageRows=pipelines.flatMap(p=>p.stages.map(stage=>({...stage,pipeline:p.name,count:opportunities.filter(o=>o.stage_id===stage.id).length})))
+  .filter(stage=>stage.count>0).sort((a,b)=>b.count-a.count||a.order-b.order).slice(0,4);
+ const timeLabel=(value:string)=>new Intl.DateTimeFormat("en-IN",{timeZone:"Asia/Kolkata",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date(value));
+ const upcomingName=(item:ConnectAppointment)=>peopleById.get(item.person_id||"")||"Customer not linked";
  const metrics=[
   {label:"New enquiries today",value:overview.newEnquiries,detail:"Captured today",icon:"✉",target:"enquiries" as Section},
   {label:"Open opportunities",value:overview.openOpportunities,detail:"Admissions in progress",icon:"▥",target:(advanced?"pipeline":"enquiries") as Section},
@@ -33,11 +42,29 @@ export function ConnectOverviewWidgets({overview,inquiries,tasks,advanced,onNavi
   </div>
   <div className="cx-insight-panels">
    <ConnectEnquiryVisualizations inquiries={inquiries} onSelectSource={onSelectSource}/>
-   <section className="cx-insight-panel"><div className="cx-insight-panel-heading"><div><h3>Action required</h3><p>Follow-ups and scheduled activities</p></div><button type="button" onClick={()=>onNavigate("followups")}>View tasks ↗</button></div>
-    <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-2">◷</span><span><strong>{overview.overdueTasks} overdue</strong><small>Follow-ups needing action</small></span><span aria-hidden="true">›</span></button>
-    <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-0">☑</span><span><strong>{todayTasks} due today</strong><small>From the latest {tasks.length} loaded tasks</small></span><span aria-hidden="true">›</span></button>
-    <button type="button" className="cx-priority-row" onClick={()=>onNavigate(advanced?"calendar":"followups")}><span className="cx-priority-symbol cx-insight-color-1">▦</span><span><strong>{overview.scheduledAppointments} upcoming appointments</strong><small>Demo and counselling schedule</small></span><span aria-hidden="true">›</span></button>
-   </section>
+   <div className="cx-overview-right-rail">
+    <section className="cx-insight-panel cx-overview-actions-panel"><div className="cx-insight-panel-heading"><div><h3>Action required</h3><p>Follow-ups and scheduled activities</p></div><button type="button" onClick={()=>onNavigate("followups")}>View tasks ↗</button></div>
+     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-2">◷</span><span><strong>{overview.overdueTasks} overdue</strong><small>Follow-ups needing action</small></span><span aria-hidden="true">›</span></button>
+     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-0">☑</span><span><strong>{todayTasks} due today</strong><small>From {tasks.length} loaded tasks</small></span><span aria-hidden="true">›</span></button>
+     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("calendar")}><span className="cx-priority-symbol cx-insight-color-1">▦</span><span><strong>{overview.scheduledAppointments} upcoming appointments</strong><small>Demo and counselling schedule</small></span><span aria-hidden="true">›</span></button>
+    </section>
+    <section className="cx-insight-panel cx-overview-schedule" aria-label="Upcoming appointment schedule">
+     <div className="cx-insight-panel-heading"><div><h3>Next appointments</h3><p>Next three scheduled sessions · IST</p></div><button type="button" onClick={()=>onNavigate("calendar")}>Calendar ↗</button></div>
+     {upcoming.length===0?<div className="cx-overview-widget-empty"><span aria-hidden="true">▦</span><p>No upcoming appointments. Schedule a demo or consultation from Calendar.</p><button type="button" onClick={()=>onNavigate("calendar")}>Open calendar ↗</button></div>:
+      <div className="cx-overview-appointments">{upcoming.map(a=><button key={a.id} type="button" className="cx-overview-appointment" onClick={()=>onNavigate("calendar")} aria-label={"Open Calendar for "+a.title}>
+       <span className="cx-overview-appointment-date">{timeLabel(a.starts_at)}</span>
+       <span className="cx-overview-appointment-info"><strong>{a.title}</strong><small>{upcomingName(a)} · {nameSource(a.kind)}</small></span><span className="cx-overview-row-arrow" aria-hidden="true">›</span>
+      </button>)}</div>}
+    </section>
+    {advanced&&<section className="cx-insight-panel cx-overview-pipeline" aria-label="Admissions pipeline snapshot">
+     <div className="cx-insight-panel-heading"><div><h3>Pipeline snapshot</h3><p>Current admissions by stage</p></div><button type="button" onClick={()=>onNavigate("pipeline")}>View pipeline ↗</button></div>
+     {stageRows.length===0?<div className="cx-overview-widget-empty"><p>No admissions in the loaded pipelines.</p><button type="button" onClick={()=>onNavigate("pipeline")}>View admissions ↗</button></div>:
+      <div className="cx-overview-stage-list">{stageRows.map(stage=><button type="button" key={stage.id} onClick={()=>onNavigate("pipeline")} title={stage.pipeline+" · "+stage.name}>
+       <span className="cx-overview-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}} aria-hidden="true"/>
+       <span className="cx-overview-stage-label">{stage.name}</span><strong>{stage.count}</strong>
+      </button>)}</div>}
+    </section>}
+   </div>
   </div>
   <section className="cx-insight-panel cx-overview-recent" aria-label="Recent enquiries">
    <div className="cx-insight-panel-heading"><div><h3>Latest enquiries</h3><p>The three most recent customer enquiries</p></div><button type="button" onClick={onViewAllEnquiries}>View all ↗</button></div>
