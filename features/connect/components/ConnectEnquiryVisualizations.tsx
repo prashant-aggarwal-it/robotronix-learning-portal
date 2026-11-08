@@ -1,7 +1,6 @@
 "use client";
 import {useMemo,useState} from "react";
 import type {ConnectInquiry} from "@/features/connect/api/client";
-import styles from "./ConnectEnquiryVisualizations.module.css";
 
 const colors=["#0d8bc6","#18a6a2","#f3a54b","#6483ed","#d979b2","#8e9cad"];
 const offsetMs=5.5*60*60*1000;
@@ -32,14 +31,14 @@ export function ConnectEnquiryVisualizations({inquiries,onSelectSource}:{inquiri
  const totalSources=data.sources.reduce((n,s)=>n+s[1],0);
  const circumference=2*Math.PI*46;
  let running=0;
- return <section className={styles.widget} aria-label="Enquiry activity and channel analytics">
-  <div className={styles.head}><div><h3>Enquiry insights</h3><p>Visual trends from {inquiries.length} loaded enquiries</p></div><span className={styles.label}>DEV / workspace data</span></div>
-  <div className={styles.trendHead}><div><strong>Enquiry activity</strong><span>{sum} enquiries in the last {period} days</span></div>
-   <div className={styles.switcher} role="group" aria-label="Enquiry chart time range">
-    {([7,14] as const).map(n=><button type="button" key={n} className={period===n?styles.selected:styles.range} aria-pressed={period===n} onClick={()=>{setPeriod(n);setSelectedDay(null);}}>{n} days</button>)}
+ return <section className={"cx-viz-widget"} aria-label="Enquiry activity and channel analytics">
+  <div className={"cx-viz-head"}><div><h3>Enquiry insights</h3><p>Visual trends from {inquiries.length} loaded enquiries</p></div><span className={"cx-viz-label"}>Loaded records</span></div>
+  <div className={"cx-viz-trend-head"}><div><strong>Enquiry activity</strong><span>{sum} enquiries in the last {period} days</span></div>
+   <div className={"cx-viz-switcher"} role="group" aria-label="Enquiry chart time range">
+    {([7,14] as const).map(n=><button type="button" key={n} className={period===n?"cx-viz-selected":"cx-viz-range"} aria-pressed={period===n} onClick={()=>{setPeriod(n);setSelectedDay(null);}}>{n} days</button>)}
    </div>
   </div>
-  <div className={styles.chart}>
+  <div className={"cx-viz-chart"}>
    <svg viewBox="0 0 625 177" role="img" aria-label={"Enquiries per day over the last "+period+" days"} preserveAspectRatio="xMidYMid meet">
     {[0,1,2,3].map(i=><g key={i}><line x1="34" x2="594" y1={143-i*35} y2={143-i*35} stroke="#e5eef5" strokeDasharray={i===0?"0":"4 5"}/>
      <text x="25" y={147-i*35} textAnchor="end" fontSize="10" fill="#8ca0af">{Math.round(max*i/3)}</text></g>)}
@@ -51,21 +50,21 @@ export function ConnectEnquiryVisualizations({inquiries,onSelectSource}:{inquiri
     <text x="594" y="166" textAnchor="end" fontSize="11" fill="#7b92a3">{dayLabel(data.days[data.days.length-1].date)}</text>
    </svg>
   </div>
-  <div className={styles.dayButtons} aria-label="Explore daily enquiry count">{data.days.map(d=><button key={d.date} type="button" aria-label={dayLabel(d.date)+": "+d.count+" enquiries"} aria-pressed={selectedDay===d.date} className={selectedDay===d.date?styles.dayActive:styles.day} onClick={()=>setSelectedDay(selectedDay===d.date?null:d.date)} title={dayLabel(d.date)+": "+d.count+" enquiries"}><span style={{height:Math.max(2,Math.round((d.count/max)*17))+"px"}}/></button>)}</div>
-  {selectedDay&&<p className={styles.dayDetail}>{dayLabel(selectedDay)}: <strong>{data.days.find(d=>d.date===selectedDay)?.count||0} enquiries</strong></p>}
-  <div className={styles.divider}/>
-  <div className={styles.mixTitle}><strong>Channel mix</strong><span>{totalSources} enquiries · Select a source to filter</span></div>
-  {totalSources===0?<p className={styles.empty}>No enquiries in this workspace yet.</p>:<div className={styles.mix}>
-   <svg className={styles.donut} viewBox="0 0 140 140" role="img" aria-label="Enquiries by channel">
+  <div className={"cx-viz-day-buttons"} aria-label="Explore daily enquiry count">{data.days.map(d=><button key={d.date} type="button" aria-label={dayLabel(d.date)+": "+d.count+" enquiries"} aria-pressed={selectedDay===d.date} className={selectedDay===d.date?"cx-viz-day-active":"cx-viz-day"} onClick={()=>setSelectedDay(selectedDay===d.date?null:d.date)} title={dayLabel(d.date)+": "+d.count+" enquiries"}><span style={{height:Math.max(2,Math.round((d.count/max)*17))+"px"}}/></button>)}</div>
+  {selectedDay&&<p className={"cx-viz-day-detail"}>{dayLabel(selectedDay)}: <strong>{data.days.find(d=>d.date===selectedDay)?.count||0} enquiries</strong></p>}
+  <div className={"cx-viz-divider"}/>
+  <div className={"cx-viz-mix-title"}><strong>Channel mix</strong><span>{totalSources} enquiries · Select a source to filter</span></div>
+  {totalSources===0?<p className={"cx-viz-empty"}>No enquiries in this workspace yet.</p>:<div className={"cx-viz-mix"}>
+   <svg className={"cx-viz-donut"} viewBox="0 0 140 140" role="img" aria-label="Enquiries by channel">
     <circle cx="70" cy="70" r="46" fill="none" stroke="#eef4f8" strokeWidth="16"/>
     {data.sources.map(([source,count],i)=>{const share=count/totalSources*circumference;const start=running;running+=share;return <circle key={source} cx="70" cy="70" r="46" fill="none" stroke={colors[i]} strokeWidth="16" strokeDasharray={share+" "+(circumference-share)} strokeDashoffset={-start} transform="rotate(-90 70 70)"><title>{sourceLabel(source)+": "+count}</title></circle>;})}
     <text x="70" y="69" textAnchor="middle" fill="#173951" fontSize="24" fontWeight="800">{totalSources}</text>
     <text x="70" y="84" textAnchor="middle" fill="#8193a0" fontSize="9">enquiries</text>
    </svg>
-   <div className={styles.legend}>{data.sources.map(([source,count],i)=><button type="button" key={source} className={styles.source} onClick={()=>onSelectSource?.(source)} disabled={!onSelectSource} aria-label={"Show "+sourceLabel(source)+" enquiries"}>
-    <span className={styles.sourceName}><i style={{background:colors[i]}}/>{sourceLabel(source)}</span><span><strong>{count}</strong><small>{Math.round(count/totalSources*100)}%</small></span>
+   <div className={"cx-viz-legend"}>{data.sources.map(([source,count],i)=><button type="button" key={source} className={"cx-viz-source"} onClick={()=>onSelectSource?.(source)} disabled={!onSelectSource} aria-label={"Show "+sourceLabel(source)+" enquiries"}>
+    <span className={"cx-viz-source-name"}><i style={{background:colors[i]}}/>{sourceLabel(source)}</span><span><strong>{count}</strong><small>{Math.round(count/totalSources*100)}%</small></span>
    </button>)}</div>
   </div>}
-  <p className={styles.note}>Charts use loaded workspace records, not projected revenue or inferred conversions.</p>
+  <p className={"cx-viz-note"}>Charts use loaded workspace records, not projected revenue or inferred conversions.</p>
  </section>;
 }
