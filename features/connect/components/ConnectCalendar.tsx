@@ -1,6 +1,6 @@
 "use client";
-import {useMemo,useState} from "react";
-import {crmCommand,type ConnectAppointment,type ConnectPerson,type ConnectOpportunity,type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
+import {useEffect,useMemo,useState} from "react";
+import {connectFetch,crmCommand,type ConnectAppointment,type ConnectPerson,type ConnectOpportunity,type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
 import {ConnectAppointmentEditor} from "./ConnectAppointmentEditor";
 
 type View="month"|"week"|"agenda";
@@ -38,6 +38,9 @@ export function ConnectCalendar({tenantId,appointments,people,opportunities,prog
  const [submitting,setSubmitting]=useState(false);
  const [actionError,setActionError]=useState("");
  const [actionNotice,setActionNotice]=useState("");
+ const [assignees,setAssignees]=useState<Array<{id:string;label:string;role:string}>>([]);
+ useEffect(()=>{let active=true;void connectFetch<{assignees:Array<{id:string;label:string;role:string}>}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/assignees")
+  .then(r=>{if(active)setAssignees(r.assignees||[]);}).catch(()=>{});return()=>{active=false;};},[tenantId]);
  const today=parts(new Date());
  const visible=useMemo(()=>appointments.filter(a=>status==="all"||appointmentStatus(a)===status).slice().sort((a,b)=>Date.parse(a.starts_at)-Date.parse(b.starts_at)),[appointments,status]);
  const byDay=useMemo(()=>{const map=new Map<string,ConnectAppointment[]>();for(const item of visible){const key=parts(new Date(item.starts_at));const list=map.get(key)||[];list.push(item);map.set(key,list);}return map;},[visible]);
@@ -96,6 +99,7 @@ export function ConnectCalendar({tenantId,appointments,people,opportunities,prog
    <span>When: {niceDay(parts(new Date(a.starts_at)),{weekday:"long",day:"numeric",month:"short",year:"numeric"})}, {atTime(a.starts_at)} – {atTime(a.ends_at)} IST</span>
    {a.person_id&&nameById.get(a.person_id)&&<span>Customer: {nameById.get(a.person_id)}</span>}
    {a.programme&&<span>Programme: {a.programme}</span>}
+   {a.owner_membership_id&&<span>Assigned to: {assignees.find(m=>m.id===a.owner_membership_id)?.label||"Team member"}</span>}
    {a.location&&<span>Location: {a.location}</span>}
    {a.meeting_url&&<span>Meeting: <a href={a.meeting_url} target="_blank" rel="noopener noreferrer">Open meeting link ↗</a></span>}
    {a.notes&&<p className="ccal-appointment-notes">{a.notes}</p>}
