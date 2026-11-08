@@ -193,3 +193,16 @@ const journeyInbox=fs.readFileSync(path.join(root,"features/connect/components/C
 const journeyProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
 const journeyTasks=fs.readFileSync(path.join(root,"features/connect/components/ConnectFollowupsBoard.tsx"),"utf8");
 if(!journeyPage.includes("openCustomerWorkflow=(personId:string")||!journeyPage.includes("setWorkflowContactId(null)")||!journeyInbox.includes("onOpenWorkflow(conversation.personId!")||!journeyInbox.includes("if(focusPersonId&&t.personId!==focusPersonId)")||!journeyProfile.includes("Customer journey")||!journeyTasks.includes("const scopedTasks=useMemo"))throw Error("CRM cross-screen workflow handoffs were lost.");
+
+/* Phase 5 keyboard and dialog safety checks. */
+const globalDialog=fs.readFileSync(path.join(root,"components/GlobalEscapeDismiss.tsx"),"utf8");
+const contactTabs=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+const appointmentForm=fs.readFileSync(path.join(root,"features/connect/components/ConnectAppointmentEditor.tsx"),"utf8");
+const opsPage=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+if(!globalDialog.includes('event.key==="Tab"')||!globalDialog.includes('event.key!=="Escape"')||
+ !globalDialog.includes("MutationObserver")||!globalDialog.includes("restore.focus")||
+ !contactTabs.includes('e.key==="ArrowRight"')||!contactTabs.includes('e.key==="Home"')||
+ !appointmentForm.includes("Discard unsaved appointment changes?")||
+ !opsPage.includes("Discard unsaved contact details?")||!opsPage.includes("Discard unsaved enquiry details?")||
+ !opsPage.includes('aria-busy={busy} aria-labelledby="cx-new-lead-title"'))
+ throw Error("Connect Phase 5 modal safety, focus management, or tab keyboard navigation is missing.");

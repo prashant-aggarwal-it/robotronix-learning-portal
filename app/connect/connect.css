@@ -1061,3 +1061,11 @@
 .cx-app .cx-workflow-nav button:hover,.cx-app .cx-contact360-workflow button:hover{background:#e6f5fc}
 .cx-app .cx-workflow-nav button:focus-visible,.cx-app .cx-contact360-workflow button:focus-visible{outline:2px solid #1688b6;outline-offset:2px}
 @media(max-width:680px){.cx-app .cx-workflow-nav{width:100%}.cx-app .cx-workflow-nav button{flex:1 1 auto}.cx-app .cx-contact360-workflow-links button{flex:1 1 45%}}
+
+/* Phase 5: accessible dialogs, keyboard focus, and clear interaction feedback */
+.cx-app [role="dialog"]:focus-visible{outline:2px solid #168db9;outline-offset:2px}
+.cx-app [role="dialog"] :is(button,input,select,textarea,a):focus-visible{outline:2px solid #148fbd;outline-offset:2px}
+.cx-app :is(.cx-primary,.cx-secondary,.cx-contact360-action)[disabled]{opacity:.53;cursor:not-allowed;filter:saturate(.6)}
+.cx-app .cx-report-tab:focus-visible,.cx-app .cx-contact360-tabs [role="tab"]:focus-visible{outline:2px solid #138fbe;outline-offset:2px}
+.cx-app .ccal-error:focus{outline:2px solid #cc7970;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.cx-app :is(.cx-modal,.cx-drawer,.ccal-modal){scroll-behavior:auto;transition:none}}

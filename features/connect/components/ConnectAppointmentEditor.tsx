@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useMemo,useState,type FormEvent} from "react";
+import {useEffect,useMemo,useRef,useState,type FormEvent} from "react";
 import {connectFetch, type ConnectAppointment,type ConnectPerson,type ConnectOpportunity,type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
 
 type FormData={
@@ -22,6 +22,8 @@ export function ConnectAppointmentEditor({tenantId,appointment,day,people,opport
  },[appointment,day]);
  const [value,setValue]=useState<FormData>(initial);
  const [busy,setBusy]=useState(false),[error,setError]=useState("");
+ const errorRef=useRef<HTMLParagraphElement>(null);
+ useEffect(()=>{if(error)errorRef.current?.focus();},[error]);
  const [staff,setStaff]=useState<Array<{id:string;label:string;role:string}>>([]);
  useEffect(()=>{if(!canManage)return;let active=true;
   void connectFetch<{assignees:Array<{id:string;label:string;role:string}>}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/assignees")
@@ -60,9 +62,9 @@ export function ConnectAppointmentEditor({tenantId,appointment,day,people,opport
  return <div className="ccal-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)requestClose();}}>
   <section className="ccal-modal" role="dialog" aria-modal="true" aria-busy={busy} aria-labelledby="ccal-modal-heading">
    <header className="ccal-modal-head"><div><h2 id="ccal-modal-heading">{appointment?"Edit appointment":"New appointment"}</h2><p>All dates and times are in India Standard Time (IST)</p></div><button type="button" aria-label="Close appointment form" data-escape-close="true" onClick={requestClose} disabled={busy}>×</button></header>
-   <form className="ccal-editor" onSubmit={save}>
-    {error&&<p className="ccal-error" role="alert">{error}</p>}
-    <label className="ccal-full">Appointment title<input required maxLength={250} value={value.title} onChange={e=>set("title",e.target.value)} placeholder="Robotics trial or parent counselling"/></label>
+   <form className="ccal-editor" onSubmit={save} aria-label="Appointment details">
+    {error&&<p className="ccal-error" role="alert" ref={errorRef} tabIndex={-1}>{error}</p>}
+    <label className="ccal-full">Appointment title<input autoFocus required maxLength={250} value={value.title} onChange={e=>set("title",e.target.value)} placeholder="Robotics trial or parent counselling"/></label>
     <label>Type<select value={value.kind} onChange={e=>set("kind",e.target.value)}><option value="demo">Demo</option><option value="trial">Trial</option><option value="counselling">Counselling</option><option value="meeting">Meeting</option></select></label>
     <label>Contact<select value={value.personId} onChange={e=>{const id=e.target.value;setValue(v=>({...v,personId:id,opportunityId:opportunities.some(o=>o.id===v.opportunityId&&o.contact_id===id)?v.opportunityId:""}));}}>
      <option value="">Choose contact</option>{people.map(p=><option key={p.id} value={p.id}>{p.full_name}</option>)}</select></label>
