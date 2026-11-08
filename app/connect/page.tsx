@@ -256,7 +256,12 @@ export default function ConnectPage(){
   }),"Admission reassigned.");
  }
  async function updateStage(opp:ConnectOpportunity,stageId:string){
-  if(opp.stage_id===stageId)return;
+  if(opp.stage_id===stageId||busy)return;
+  const destination=pipelines.find(p=>p.id===opp.pipeline_id)?.stages.find(stage=>stage.id===stageId);
+  if(!destination){setError("This admissions stage is no longer available. Refresh the workspace.");return;}
+  if(destination.outcome==="won"||destination.outcome==="lost"){
+   if(!window.confirm("Move \""+opp.title+"\" to \""+destination.name+"\"? This will update the admission outcome."))return;
+  }
   await run(()=>crmCommand(tenantId,"opportunities","move_opportunity",{
    opportunityId:opp.id,stageId,version:opp.version
   }),"Admissions stage updated.");

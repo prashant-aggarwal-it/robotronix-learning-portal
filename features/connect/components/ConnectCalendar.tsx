@@ -60,6 +60,7 @@ export function ConnectCalendar({tenantId,appointments,people,opportunities,prog
  const heading=view==="week"?niceDay(start,{day:"numeric",month:"short"})+" – "+niceDay(shiftDay(start,6),{day:"numeric",month:"short",year:"numeric"}):niceDay(monthStart(anchor),{month:"long",year:"numeric"});
  const openCard=(a:ConnectAppointment)=>setActiveId(current=>current===a.id?null:a.id);
  async function changeStatus(a:ConnectAppointment,status:"completed"|"cancelled"){
+  if(submitting)return;
   if(status==="cancelled"&&!window.confirm("Cancel this appointment? The customer will not be notified automatically."))return;
   setSubmitting(true);setActionError("");setActionNotice("");
   try{
@@ -70,6 +71,7 @@ export function ConnectCalendar({tenantId,appointments,people,opportunities,prog
   finally{setSubmitting(false);}
  }
  async function createFollowup(a:ConnectAppointment){
+  if(submitting)return;
   if(!followupTitle.trim()||!followupDate){setActionError("Enter a follow-up title and due date.");return;}
   setSubmitting(true);setActionError("");setActionNotice("");
   try{

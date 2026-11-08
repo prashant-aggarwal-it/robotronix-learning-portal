@@ -58,7 +58,7 @@ export function ContactProfile({person,opportunity,tenantId,refreshKey,allowAdmi
    <button type="button" onClick={()=>setTab("followups")}><span>Open follow-ups</span><strong>{openTasks.length}</strong><small>Loaded tasks</small></button>
    <button type="button" onClick={()=>setTab("followups")}><span>Appointments</span><strong>{relatedAppointments.length}</strong><small>Loaded schedule</small></button>
   </div>
-  <div className="cx-contact360-tabs" role="tablist" aria-label="Contact profile sections">
+  <div className="cx-contact360-tabs" role="tablist" aria-label="Contact profile sections" aria-orientation="horizontal">
    {tabs.map(t=><button key={t.id} id={"cx-contact-tab-"+t.id} type="button" role="tab" aria-selected={tab===t.id} aria-controls="cx-contact-tabpanel" tabIndex={tab===t.id?0:-1} className={tab===t.id?"active":""} onClick={()=>setTab(t.id)}
     onKeyDown={e=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(e.key))return;
      e.preventDefault();

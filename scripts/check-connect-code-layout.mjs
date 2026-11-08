@@ -206,3 +206,8 @@ if(!globalDialog.includes('event.key==="Tab"')||!globalDialog.includes('event.ke
  !opsPage.includes("Discard unsaved contact details?")||!opsPage.includes("Discard unsaved enquiry details?")||
  !opsPage.includes('aria-busy={busy} aria-labelledby="cx-new-lead-title"'))
  throw Error("Connect Phase 5 modal safety, focus management, or tab keyboard navigation is missing.");
+
+if(!opsPage.includes('destination.outcome==="won"||destination.outcome==="lost"')||
+ !opsPage.includes('This will update the admission outcome.')||
+ !contactTabs.includes('aria-orientation="horizontal"'))
+ throw Error("Admission outcome safeguards or contact tab accessibility missing.");
