@@ -61,6 +61,8 @@ export default function ConnectPage(){
  const [managerPersonId,setManagerPersonId]=useState<string|null>(null);
  const [selectedPerson,setSelectedPerson]=useState<string|null>(null);
  const [selectedOpportunity,setSelectedOpportunity]=useState<string|null>(null);
+ const [draggedOpportunityId,setDraggedOpportunityId]=useState<string|null>(null);
+ const [dropStageId,setDropStageId]=useState<string|null>(null);
  const [workflowContactId,setWorkflowContactId]=useState<string|null>(null);
  const [assignees,setAssignees]=useState<Array<{id:string;label:string;role:string}>>([]);
  const [activityNote,setActivityNote]=useState("");
@@ -543,9 +545,18 @@ export default function ConnectPage(){
      </section>:
      pipelines.map(p=><section key={p.id} className="cx-pipeline-section">
       <div className="cx-panel-header"><div><h2>{p.name}</h2><p>{p.stages.length} stages · {visibleOpportunities.filter(o=>o.pipeline_id===p.id).length} opportunities</p></div></div>
-      <div className="cx-kanban">{[...p.stages].sort((a,b)=>a.order-b.order).map(stage=><div className="cx-kanban-column" key={stage.id}>
+      <div className="cx-kanban">{[...p.stages].sort((a,b)=>a.order-b.order).map(stage=><div className="cx-kanban-column" key={stage.id}
+       data-drop-target={dropStageId===stage.id&&draggedOpportunityId?"true":undefined}
+       onDragOver={e=>{const moving=opportunities.find(o=>o.id===draggedOpportunityId);if(!busy&&canWrite&&moving?.pipeline_id===p.id&&moving.stage_id!==stage.id){e.preventDefault();e.dataTransfer.dropEffect="move";setDropStageId(stage.id);}}}
+       onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setDropStageId(current=>current===stage.id?null:current);}}
+       onDrop={e=>{e.preventDefault();const moving=opportunities.find(o=>o.id===draggedOpportunityId&&o.pipeline_id===p.id);setDraggedOpportunityId(null);setDropStageId(null);if(moving&&moving.stage_id!==stage.id&&canWrite&&!busy)void updateStage(moving,stage.id);}}>
        <div className="cx-column-heading"><span className="cx-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}}/><strong>{stage.name}</strong><span>{visibleOpportunities.filter(o=>o.stage_id===stage.id).length}</span></div>
-       {visibleOpportunities.filter(o=>o.stage_id===stage.id).map(o=><button key={o.id} className="cx-deal" onClick={()=>{setSelectedOpportunity(o.id);setSelectedPerson(o.contact_id);}}>
+       {visibleOpportunities.filter(o=>o.stage_id===stage.id).map(o=><button key={o.id} className="cx-deal" draggable={canWrite&&!busy}
+        data-dragging={draggedOpportunityId===o.id?"true":undefined}
+        title={canWrite?"Drag to another stage, or open to change the stage using the dropdown":"View admission"}
+        onDragStart={e=>{if(!canWrite||busy){e.preventDefault();return;}setDraggedOpportunityId(o.id);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",o.id);}}
+        onDragEnd={()=>{setDraggedOpportunityId(null);setDropStageId(null);}}
+        onClick={()=>{setSelectedOpportunity(o.id);setSelectedPerson(o.contact_id);}}>
         <strong>{o.title}</strong><small>{people.find(x=>x.id===o.contact_id)?.full_name||"Institutional opportunity"}</small>
         <span className="cx-deal-foot"><span>{o.expected_value==null?"No value specified":o.currency+" "+o.expected_value.toLocaleString("en-IN")}</span><span>View →</span></span></button>)}
        {!visibleOpportunities.some(o=>o.stage_id===stage.id)&&<span className="cx-stage-empty">No admissions in this stage</span>}
