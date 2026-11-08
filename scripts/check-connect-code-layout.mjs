@@ -276,3 +276,16 @@ const importIssueSql=fs.readFileSync(path.join(root,"database/connect/saas/43_co
 const importIssueUi=fs.readFileSync(path.join(root,"features/connect/components/ContactImportWizard.tsx"),"utf8");
 if(!importIssueSql.includes("connect_contact_import_issues")||!importIssueUi.includes("Review skipped rows")||!importIssueUi.includes("downloadIssueReport"))
  throw Error("Bulk contact import skipped-row review must remain available.");
+
+/* Phase 6: end-to-end contact administration regression checks. */
+const managerUI=fs.readFileSync(path.join(root,"features/connect/components/ContactManagementWorkspace.tsx"),"utf8");
+const managerAPI=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/manage/route.ts"),"utf8");
+const managerSQL=fs.readFileSync(path.join(root,"database/connect/saas/44_contact_management.sql"),"utf8");
+const mergeSQL=fs.readFileSync(path.join(root,"database/connect/saas/45_contact_safe_merge.sql"),"utf8");
+if(!managerUI.includes("saveConsent")||!managerUI.includes("saveSegment")||!managerUI.includes("exportCsv")||
+ !managerUI.includes("bulkApply")||!managerUI.includes("Duplicate review")||
+ !managerAPI.includes("connect_manage_contacts")||!managerAPI.includes("connect_merge_contacts")||
+ !managerSQL.includes("contact_saved_segments")||!managerSQL.includes("contacts_bulk_updated")||
+ !mergeSQL.includes("Cannot merge: source contact has connected CRM history")||
+ !page.includes("<ContactManagementWorkspace"))
+ throw Error("Contact administration, consent, segments, export, safe merge or routing missing.");

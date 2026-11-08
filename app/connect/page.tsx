@@ -18,6 +18,7 @@ import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
 import {ContactProfile} from "@/features/connect/components/contact/ContactProfile";
 import {ContactImportWizard} from "@/features/connect/components/ContactImportWizard";
+import {ContactManagementWorkspace} from "@/features/connect/components/ContactManagementWorkspace";
 import {ContactTimeline} from "@/features/connect/components/contact/ContactTimeline";
 import {ContactRelationships} from "@/features/connect/components/contact/ContactRelationships";
 import {WorkspaceIntelligence} from "@/features/connect/components/contact/ContactIntelligence";
@@ -56,6 +57,8 @@ export default function ConnectPage(){
  const [showLeadForm,setShowLeadForm]=useState(false);
  const [showContactForm,setShowContactForm]=useState(false);
  const [showContactImport,setShowContactImport]=useState(false);
+ const [showContactManager,setShowContactManager]=useState(false);
+ const [managerPersonId,setManagerPersonId]=useState<string|null>(null);
  const [selectedPerson,setSelectedPerson]=useState<string|null>(null);
  const [selectedOpportunity,setSelectedOpportunity]=useState<string|null>(null);
  const [workflowContactId,setWorkflowContactId]=useState<string|null>(null);
@@ -396,6 +399,7 @@ export default function ConnectPage(){
      section==="reports"?"Track conversion, counsellor performance and real recorded marketing ROI.":"Manage institute programmes and access."}</p></div>
      {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>＋ New enquiry</button>}
      {section==="contacts"&&<div className="cx-contacts-header-actions">
+      {canConfigure&&<button type="button" className="cx-secondary" onClick={()=>{setShowContactManager(v=>!v);setManagerPersonId(null);}}>{showContactManager?"← Contact directory":"Manage contacts"}</button>}
       {canConfigure&&<button type="button" className="cx-secondary" onClick={()=>setShowContactImport(true)}>↑ Import contacts</button>}
       {canWrite&&<button type="button" className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
      </div>}
@@ -485,7 +489,10 @@ export default function ConnectPage(){
     {showContactImport&&tenantId&&<ContactImportWizard key={tenantId} tenantId={tenantId}
       onClose={()=>setShowContactImport(false)}
       onImported={()=>{setRefreshCount(v=>v+1);setSearch("");setContactView("all");}}/>}
-    {section==="contacts"&&<section className="cx-panel cx-contacts-directory">
+    {section==="contacts"&&showContactManager&&canConfigure&&<ContactManagementWorkspace key={tenantId} tenantId={tenantId}
+      initialPersonId={managerPersonId} onClose={()=>{setShowContactManager(false);setManagerPersonId(null);}}
+      onChanged={()=>{setRefreshCount(v=>v+1);setSelectedPerson(null);setSelectedOpportunity(null);}}/>}
+    {section==="contacts"&&!showContactManager&&<section className="cx-panel cx-contacts-directory">
      <header className="cx-contacts-directory-head">
       <div><h2>Contact directory</h2><p>Search customers, review enquiry history and open Contact 360</p></div>
       <div className="cx-contacts-totals" aria-label="Contact summary">
@@ -649,7 +656,10 @@ export default function ConnectPage(){
    <aside className="cx-drawer" role="dialog" aria-modal="true" aria-busy={busy} aria-label="Contact 360 profile">
     <div className="cx-drawer-header"><span>CONTACT WORKSPACE</span><button aria-label="Close details" data-escape-close="true" disabled={busy} onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>×</button></div>
     <div className="cx-drawer-body">
-     <ContactProfile allowAdmissions={advanced} person={selectedContact} opportunity={selectedLead} tenantId={tenantId} refreshKey={refreshCount} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onNavigateWorkflow={destination=>{const id=selectedContact?.id||selectedLead?.contact_id;if(id)openCustomerWorkflow(id,destination);}}
+     <ContactProfile allowAdmissions={advanced} canManage={canConfigure}
+      onManageContact={()=>{const id=selectedContact?.id||selectedLead?.contact_id;if(!id)return;
+       setSection("contacts");setShowContactManager(true);setManagerPersonId(id);setSelectedPerson(null);setSelectedOpportunity(null);}}
+      person={selectedContact} opportunity={selectedLead} tenantId={tenantId} refreshKey={refreshCount} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onNavigateWorkflow={destination=>{const id=selectedContact?.id||selectedLead?.contact_id;if(id)openCustomerWorkflow(id,destination);}}
       onCreateEnquiry={()=>{if(!selectedContact)return;setLead({name:selectedContact.full_name,phone:selectedContact.contact_methods.find(m=>["phone","mobile"].includes(m.kind.toLowerCase()))?.value||"",email:selectedContact.contact_methods.find(m=>m.kind.toLowerCase()==="email")?.value||"",source:"phone",summary:"",pipelineId:"",personId:selectedContact.id});setSelectedPerson(null);setSelectedOpportunity(null);setShowLeadForm(true);}} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
       overviewContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Admission opportunity</h3><strong className="cx-detail-title">{selectedLead.title}</strong>
       <p className="cx-muted">Current stage: {selectedLead.stage_name} · Version {selectedLead.version}</p>

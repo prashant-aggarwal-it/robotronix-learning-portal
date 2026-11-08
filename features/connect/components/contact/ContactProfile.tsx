@@ -7,7 +7,7 @@ import {ContactImportProvenance} from "@/features/connect/components/contact/Con
 
 type ProfileTab="overview"|"insights"|"timeline"|"followups"|"relations"|"details";
 type Props={
- person:ConnectPerson|null|undefined;opportunity:ConnectOpportunity|null|undefined;tenantId:string;refreshKey:number;allowAdmissions?:boolean;
+ person:ConnectPerson|null|undefined;opportunity:ConnectOpportunity|null|undefined;tenantId:string;refreshKey:number;allowAdmissions?:boolean;canManage?:boolean;onManageContact?:()=>void;
  inquiries:ConnectInquiry[];opportunities:ConnectOpportunity[];tasks:ConnectTask[];appointments:ConnectAppointment[];canWrite:boolean;
  overviewContent:ReactNode;enquiriesContent:ReactNode;timelineContent:ReactNode;
  followupsContent:ReactNode;relationsContent:ReactNode;detailsContent:ReactNode;onCreateEnquiry:()=>void;onClose:()=>void;
@@ -17,7 +17,7 @@ const tabs:Array<{id:ProfileTab;label:string}>= [
  {id:"overview",label:"Overview"},{id:"insights",label:"Insights"},{id:"timeline",label:"Activity"},{id:"followups",label:"Follow-ups"},{id:"relations",label:"Relationships"},{id:"details",label:"Details"}
 ];
 function phoneNumber(value:string){const cleaned=value.replace(/[^+\d]/g,"");return /^\+?\d{7,15}$/.test(cleaned)?cleaned:null;}
-export function ContactProfile({person,opportunity,tenantId,refreshKey,allowAdmissions=true,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,relationsContent,detailsContent,onCreateEnquiry,onClose,onNavigateWorkflow}:Props){
+export function ContactProfile({person,opportunity,tenantId,refreshKey,allowAdmissions=true,canManage=false,onManageContact,inquiries,opportunities,tasks,appointments,canWrite,overviewContent,enquiriesContent,timelineContent,followupsContent,relationsContent,detailsContent,onCreateEnquiry,onClose,onNavigateWorkflow}:Props){
  const [tab,setTab]=useState<ProfileTab>("overview");
  useEffect(()=>setTab("overview"),[person?.id,opportunity?.id]);
  const contactId=person?.id;
@@ -37,6 +37,7 @@ export function ContactProfile({person,opportunity,tenantId,refreshKey,allowAdmi
     <p>{person?.roles.map(shortLabel).join(" · ")||"Opportunity"}{person?.status?" · "+shortLabel(person.status):""}{opportunity?.stage_name?" · "+opportunity.stage_name:""}</p></div>
    </div>
    <div className="cx-contact360-actions">
+    {person&&canManage&&onManageContact&&<button type="button" className="cx-contact360-action" onClick={onManageContact}>Edit contact</button>}
     {validPhone&&<a href={"tel:"+validPhone} className="cx-contact360-action" aria-label="Call contact">☎ Call</a>}
     {email&&<a href={"mailto:"+email} className="cx-contact360-action" aria-label="Email contact">✉ Email</a>}
     {person&&canWrite&&<button type="button" className="cx-contact360-action" onClick={onCreateEnquiry}>＋ Enquiry</button>}
