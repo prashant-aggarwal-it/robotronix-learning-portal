@@ -145,3 +145,10 @@ if(!metaEligibilitySql.includes("connect_whatsapp_test_reply_context")||
 if(!inbox.includes('sendTestReply')||!inbox.includes('Send test reply')||!inbox.includes('sendReady?.canSend'))
  throw Error("WhatsApp Phase 3 composer must only send to verified Meta test recipients.");
 if(waWebhook.includes('){\\n'))throw Error("Meta webhook contains literal escaped newlines that break TypeScript.");
+
+// Guard against calendar styling being loaded only from a client component.
+const calendarComponent=fs.readFileSync(path.join(root,"features/connect/components/ConnectCalendar.tsx"),"utf8");
+const crmStyles=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8");
+if(!calendarComponent.includes('className="ccal"')||!crmStyles.includes(".cx-app .ccal-grid{display:grid")||!crmStyles.includes(".cx-app .ccal-view button")||!crmStyles.includes(".cx-app .ccal-day-item")){
+ console.error("CRM calendar layout or critical stylesheet rules are missing.");process.exitCode=1;
+}

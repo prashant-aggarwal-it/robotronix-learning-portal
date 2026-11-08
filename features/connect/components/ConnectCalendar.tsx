@@ -1,7 +1,6 @@
 "use client";
 import {useMemo,useState} from "react";
 import type {ConnectAppointment,ConnectPerson} from "@/features/connect/api/client";
-import "./ConnectCalendar.css";
 
 type View="month"|"week"|"agenda";
 type StatusFilter="all"|"scheduled"|"completed"|"cancelled";
@@ -26,7 +25,7 @@ function titleCase(s:string){return s.replace(/[_-]+/g," ").replace(/\b\w/g,c=>c
 function appointmentStatus(a:ConnectAppointment):StatusFilter{return a.status==="scheduled"?"scheduled":a.status==="completed"?"completed":"cancelled";}
 export function ConnectCalendar({appointments,people,canWrite,busy,onComplete,onOpenContact}:Props){
  const [view,setView]=useState<View>("month");
- const [selectedDay,setSelectedDay]=useState(()=>{const today=parts(new Date());return appointments.filter(a=>a.status==="scheduled"&&parts(new Date(a.starts_at))>=today).sort((a,b)=>Date.parse(a.starts_at)-Date.parse(b.starts_at))[0]?.starts_at ? parts(new Date(appointments.filter(a=>a.status==="scheduled"&&parts(new Date(a.starts_at))>=today).sort((a,b)=>Date.parse(a.starts_at)-Date.parse(b.starts_at))[0].starts_at)):today;});
+ const [selectedDay,setSelectedDay]=useState(()=>parts(new Date()));
  const [anchor,setAnchor]=useState(()=>parts(new Date()));
  const [status,setStatus]=useState<StatusFilter>("all");
  const [activeId,setActiveId]=useState<string|null>(null);
