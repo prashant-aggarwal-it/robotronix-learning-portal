@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {connectSession,isConnectSession,connectFailure,connectRpcFailure,invokeConnect,noStore,uuid} from "@/lib/server/connect-auth";
 export const dynamic="force-dynamic";
 type Context={params:Promise<{tenantId:string}>};
-const allowedRead=new Set(["list","segments","duplicates"]);
+const allowedRead=new Set(["list","segments","duplicates","get"]);
 const allowedWrite=new Set(["edit","consent","bulk","save_segment","delete_segment","dismiss_duplicate","merge"]);
 export async function GET(request:NextRequest,{params}:Context){
  const {tenantId}=await params;
@@ -18,9 +18,13 @@ export async function GET(request:NextRequest,{params}:Context){
  if(!filters||typeof filters!=="object"||Array.isArray(filters))return connectFailure("Invalid filters.",400);
  const offset=Number(q.get("offset")||"0");
  if(!Number.isSafeInteger(offset)||offset<0||offset>100000)return connectFailure("Invalid page.",400);
- const result=await invokeConnect<Record<string,unknown>>(auth,"connect_manage_contacts",{
-  p_actor_id:auth.actorId,p_tenant_id:tenantId,p_action:action,p_data:{filters,offset,limit:Math.min(100,Math.max(1,Number(q.get("limit")||"50")||50))}
- });
+ const personId=q.get("id");
+ if(action==="get"&&!uuid(personId))return connectFailure("Invalid contact.",400);
+ const result=await invokeConnect<Record<string,unknown>>(auth,
+  action==="get"?"connect_contact_management_detail":"connect_manage_contacts",
+  action==="get"?{p_actor_id:auth.actorId,p_tenant_id:tenantId,p_person_id:personId}
+  :{p_actor_id:auth.actorId,p_tenant_id:tenantId,p_action:action,p_data:{filters,offset,limit:Math.min(100,Math.max(1,Number(q.get("limit")||"50")||50))}}
+ );
  if(result.error)return connectRpcFailure(result.error,result.code);
  return NextResponse.json({ok:true,...(result.data||{})},{headers:noStore});
 }

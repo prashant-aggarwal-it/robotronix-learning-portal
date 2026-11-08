@@ -47,12 +47,9 @@ export function ContactManagementWorkspace({tenantId,onChanged,onClose,initialPe
  useEffect(()=>{if(active==="duplicates")void loadDuplicates().catch(e=>setError(getMessage(e)));},[active,loadDuplicates,refresh]);
  useEffect(()=>{if(!initialPersonId)return;
   let alive=true;
-  const q=new URLSearchParams({action:"list",filters:JSON.stringify(blank),offset:"0",limit:"100"});
-  // If selected record is outside the first page, the user can search for it by name or number.
-  void connectFetch<List>(endpoint+"?"+q).then(r=>{
-   if(!alive)return;const row=r.items.find(x=>x.id===initialPersonId);
-   if(row)openEditor(row);
-  }).catch(()=>{});
+  void connectFetch<{item:Contact}>(endpoint+"?action=get&id="+encodeURIComponent(initialPersonId)).then(r=>{
+   if(alive&&r.item)openEditor(r.item);
+  }).catch(e=>{if(alive)setError(getMessage(e));});
   return()=>{alive=false;};
  },[endpoint,initialPersonId]);
  const allVisible=contacts.length>0&&contacts.every(x=>selected.includes(x.id));
@@ -72,6 +69,14 @@ export function ContactManagementWorkspace({tenantId,onChanged,onClose,initialPe
   finally{setBusy(false);}
  };
  const editTags=edit.tags.split(",").map(s=>s.trim()).filter(Boolean).slice(0,20);
+ const requestEditorClose=()=>{
+  if(busy||!editor)return;
+  const changed=edit.name!==editor.full_name||edit.phone!==(editor.phone||"")||edit.email!==(editor.email||"")||
+   edit.company!==(editor.company||"")||edit.city!==(editor.city||"")||edit.notes!==(editor.notes||"")||
+   edit.tags!==editor.tags.join(", ")||consent!==editor.consent_status||Boolean(evidence.trim());
+  if(changed&&!window.confirm("Discard unsaved contact changes?"))return;
+  setEditor(null);
+ };
  async function saveDetails(){
   if(!editor||!edit.name.trim())return;
   const ok=await action({action:"edit",id:editor.id,...edit,tags:editTags},"Contact details saved.");
@@ -178,12 +183,12 @@ export function ContactManagementWorkspace({tenantId,onChanged,onClose,initialPe
     </div>)}</div>}
    <button type="button" onClick={()=>void loadDuplicates()}>Refresh matches</button>
   </div>}
-  {editor&&<div className="cx-manage-overlay" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setEditor(null);}}>
+  {editor&&<div className="cx-manage-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)requestEditorClose();}}>
    <div className="cx-manage-editor" role="dialog" aria-modal="true" aria-labelledby="cx-manage-edit-title" aria-busy={busy}>
-    <header><h3 id="cx-manage-edit-title">Edit contact</h3><button type="button" data-escape-close="true" aria-label="Close edit contact" disabled={busy} onClick={()=>setEditor(null)}>×</button></header>
+    <header><h3 id="cx-manage-edit-title">Edit contact</h3><button type="button" data-escape-close="true" aria-label="Close edit contact" disabled={busy} onClick={requestEditorClose}>×</button></header>
     <div className="cx-manage-editor-content"><div className="cx-manage-editor-grid">{(["name","phone","email","company","city","notes","tags"] as const).map(key=><label key={key}>{key==="tags"?"Tags (comma separated)":key==="phone"?"Primary phone":key==="name"?"Contact name":key.charAt(0).toUpperCase()+key.slice(1)}
      {key==="notes"?<textarea value={edit[key]} onChange={e=>setEdit(p=>({...p,[key]:e.target.value}))} rows={3}/>:<input value={edit[key]} maxLength={254} onChange={e=>setEdit(p=>({...p,[key]:e.target.value}))}/>}</label>)}</div>
-    <p>Changing a phone or email preserves previous identifiers for existing conversation history. Review possible duplicates before adding a number shared with another contact.</p>
+    <p>Changing a phone or email preserves previous identifiers for conversation history. Include the country calling code when updating phone numbers; review duplicates before using a shared number.</p>
     <button className="cx-manage-primary" type="button" disabled={busy||!edit.name.trim()} onClick={()=>void saveDetails()}>Save contact details</button>
     <div className="cx-manage-consent-editor"><h4>WhatsApp marketing permission</h4><p>Importing, finding or purchasing a contact does not establish marketing opt-in.</p>
      <label>Status<select value={consent} onChange={e=>setConsent(e.target.value as Consent)}><option value="unknown">Not verified</option><option value="opted_in">Verified opt-in</option><option value="opted_out">Opted out</option></select></label>
