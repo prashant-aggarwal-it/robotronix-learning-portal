@@ -159,7 +159,7 @@ const visualizationSource=fs.readFileSync(path.join(root,"features/connect/compo
 const overviewSource=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
 const widgetSource=fs.readFileSync(path.join(root,"features/connect/components/ConnectDataWidgets.tsx"),"utf8");
 if(!paletteSource.includes("export function stageTone")||!paletteSource.includes("export function channelColor")||
- !visualizationSource.includes("channelColor(source)")||!overviewSource.includes("stageTone(stage)")||
+ !visualizationSource.includes("channelColor(source)")||!overviewSource.includes("stageTone(i.stage_name,i.outcome)")||
  !widgetSource.includes("toneColor(stageTone("))
  throw Error("Connect visual semantics must use the shared status/channel palette.");
 if(!crmStyles.includes('.cx-app .cx-status.won')||!crmStyles.includes('data-tone="contacted"')||
