@@ -182,7 +182,7 @@ export function ContactManagementWorkspace({tenantId,onChanged,onClose,initialPe
    <div className="cx-manage-editor" role="dialog" aria-modal="true" aria-labelledby="cx-manage-edit-title" aria-busy={busy}>
     <header><h3 id="cx-manage-edit-title">Edit contact</h3><button type="button" data-escape-close="true" aria-label="Close edit contact" disabled={busy} onClick={()=>setEditor(null)}>×</button></header>
     <div className="cx-manage-editor-content"><div className="cx-manage-editor-grid">{(["name","phone","email","company","city","notes","tags"] as const).map(key=><label key={key}>{key==="tags"?"Tags (comma separated)":key==="phone"?"Primary phone":key==="name"?"Contact name":key.charAt(0).toUpperCase()+key.slice(1)}
-     {key==="notes"?<textarea value={edit[key]} onChange={e=>setEdit(p=>({...p,[key]:e.target.value}))} rows={3}/>:<input value={edit[key]} maxLength={key==="notes"?1200:254} onChange={e=>setEdit(p=>({...p,[key]:e.target.value}))}/>}</label>)}</div>
+     {key==="notes"?<textarea value={edit[key]} onChange={e=>setEdit(p=>({...p,[key]:e.target.value}))} rows={3}/>:<input value={edit[key]} maxLength={254} onChange={e=>setEdit(p=>({...p,[key]:e.target.value}))}/>}</label>)}</div>
     <p>Changing a phone or email preserves previous identifiers for existing conversation history. Review possible duplicates before adding a number shared with another contact.</p>
     <button className="cx-manage-primary" type="button" disabled={busy||!edit.name.trim()} onClick={()=>void saveDetails()}>Save contact details</button>
     <div className="cx-manage-consent-editor"><h4>WhatsApp marketing permission</h4><p>Importing, finding or purchasing a contact does not establish marketing opt-in.</p>
