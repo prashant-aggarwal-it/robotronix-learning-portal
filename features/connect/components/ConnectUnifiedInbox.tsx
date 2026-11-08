@@ -12,9 +12,10 @@ type Conversation={personId:string|null;provider:string;channelName:string;statu
 type Attachment={messageId:string;id:string;filename:string;contentType:string;size:number};
 const base=(tenantId:string)=>"/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/unified";
 const stamp=(s:string)=>{const d=new Date(s);return Number.isNaN(d.getTime())?"":d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});};
-export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact,onOpenWorkflow,focusPersonId}:{
+export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact,onOpenWorkflow,focusPersonId,onDataChanged,allowAdmissions=true}:{
  tenantId:string;canWrite:boolean;onOpenContact?:(id:string)=>void;focusPersonId?:string|null;
  onOpenWorkflow?:(personId:string,destination:"enquiries"|"pipeline"|"followups")=>void;
+ onDataChanged?:()=>void;allowAdmissions?:boolean;
 }){
  const [threads,setThreads]=useState<Thread[]>([]),[selected,setSelected]=useState<string|null>(null),[conversation,setConversation]=useState<Conversation|null>(null);
  const [attachments,setAttachments]=useState<Attachment[]>([]),[replyContext,setReplyContext]=useState<Record<string,unknown>|null>(null);
@@ -60,7 +61,9 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact,onOpenWorkf
  }
  async function action(name:string,data:Record<string,unknown>={},id?:string){const target=id||selected;if(!target||busy)return;setBusy(true);setError("");setNotice("");
   try{await connectFetch(api+"/conversations/"+encodeURIComponent(target)+"/actions",{method:"PATCH",body:JSON.stringify(name==="link_contact"?{action:name,personId:data.personId}:{action:name,data})});
-   const r=await connectFetch<{conversation:Conversation}>(api+"/conversations/"+encodeURIComponent(target));setConversation(r.conversation);await refresh();setNotice("Changes saved.");
+   const r=await connectFetch<{conversation:Conversation}>(api+"/conversations/"+encodeURIComponent(target));setConversation(r.conversation);await refresh();
+   if(["mark_enquiry","not_enquiry","link_contact"].includes(name))onDataChanged?.();
+   setNotice("Changes saved.");
   }catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
  }
 
@@ -148,7 +151,7 @@ export function ConnectUnifiedInbox({tenantId,canWrite,onOpenContact,onOpenWorkf
       {conversation.personId&&onOpenWorkflow&&<nav className={styles.workflowSteps} aria-label="Customer next steps">
         <strong>Next steps</strong>
         <button type="button" onClick={()=>onOpenWorkflow(conversation.personId!,"enquiries")}>Enquiries ↗</button>
-        <button type="button" onClick={()=>onOpenWorkflow(conversation.personId!,"pipeline")}>Admissions ↗</button>
+        {allowAdmissions&&<button type="button" onClick={()=>onOpenWorkflow(conversation.personId!,"pipeline")}>Admissions ↗</button>}
         <button type="button" onClick={()=>onOpenWorkflow(conversation.personId!,"followups")}>Follow-ups ↗</button>
        </nav>}
       {!conversation.personId&&<p className={styles.workflowHint}>Link this conversation to a CRM contact under Enquiry &amp; contact actions to access admissions and follow-ups.</p>}
