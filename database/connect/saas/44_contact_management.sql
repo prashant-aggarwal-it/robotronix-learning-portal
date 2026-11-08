@@ -85,9 +85,10 @@ begin
       and cm.kind in ('mobile','phone','whatsapp') order by cm.is_primary desc,cm.created_at desc limit 1) phone,
     (select cm.display_value from connect.contact_methods cm where cm.tenant_id=p_tenant_id and cm.person_id=p.id
       and cm.kind='email' order by cm.is_primary desc,cm.created_at desc limit 1) email,
-    (select b.source_label from connect.contact_import_details cd
+    coalesce((select b.source_label from connect.contact_import_details cd
       join connect.contact_import_batches b on b.tenant_id=cd.tenant_id and b.id=cd.source_batch_id
-      where cd.tenant_id=p_tenant_id and cd.person_id=p.id order by cd.imported_at desc limit 1) source
+      where cd.tenant_id=p_tenant_id and cd.person_id=p.id order by cd.imported_at desc limit 1),
+      (select iq.source from connect.inquiries iq where iq.tenant_id=p_tenant_id and iq.person_id=p.id order by iq.received_at desc limit 1)) source
    from connect.people p left join connect.contact_profiles cp on cp.tenant_id=p.tenant_id and cp.person_id=p.id
     left join connect.contact_marketing_permissions mp on mp.tenant_id=p.tenant_id and mp.person_id=p.id and mp.channel='whatsapp'
    where p.tenant_id=p_tenant_id and p.status='active'
@@ -97,7 +98,7 @@ begin
      coalesce(f.email,'') ilike '%'||v_query||'%' or coalesce(f.company,'') ilike '%'||v_query||'%')
      and (v_city='' or coalesce(f.city,'') ilike '%'||v_city||'%')
      and (v_source='' or coalesce(f.source,'') ilike '%'||v_source||'%')
-     and (v_tag='' or v_tag=any(f.tags))
+     and (v_tag='' or exists(select 1 from unnest(f.tags) tag where lower(tag)=lower(v_tag)))
      and (v_consent='all' or f.consent_status=v_consent)
   )
   select count(*),coalesce((select jsonb_agg(to_jsonb(z) order by z.full_name,z.id)

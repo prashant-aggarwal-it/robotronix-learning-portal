@@ -15,9 +15,10 @@ begin
     and cm.kind in ('phone','mobile','whatsapp') order by cm.is_primary desc,cm.created_at desc limit 1) phone,
    (select cm.display_value from connect.contact_methods cm where cm.tenant_id=p_tenant_id and cm.person_id=p.id
     and cm.kind='email' order by cm.is_primary desc,cm.created_at desc limit 1) email,
-   (select b.source_label from connect.contact_import_details d join connect.contact_import_batches b
+   coalesce((select b.source_label from connect.contact_import_details d join connect.contact_import_batches b
     on b.tenant_id=d.tenant_id and b.id=d.source_batch_id
-    where d.tenant_id=p_tenant_id and d.person_id=p.id order by d.imported_at desc limit 1) source
+    where d.tenant_id=p_tenant_id and d.person_id=p.id order by d.imported_at desc limit 1),
+    (select iq.source from connect.inquiries iq where iq.tenant_id=p_tenant_id and iq.person_id=p.id order by iq.received_at desc limit 1)) source
   from connect.people p
   left join connect.contact_profiles cp on cp.tenant_id=p.tenant_id and cp.person_id=p.id
   left join connect.contact_marketing_permissions mp on mp.tenant_id=p.tenant_id and mp.person_id=p.id and mp.channel='whatsapp'
