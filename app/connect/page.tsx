@@ -10,6 +10,7 @@ import {ChannelSettings} from "@/features/connect/components/ChannelSettings";
 import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAutomationSettings";
 import {ConnectReminderInbox} from "@/features/connect/components/ConnectCommunications";
 import {ConnectFollowupsBoard} from "@/features/connect/components/ConnectFollowupsBoard";
+import {ConnectCalendar} from "@/features/connect/components/ConnectCalendar";
 import {PipelineVisual} from "@/features/connect/components/ConnectDataWidgets";
 import {ConnectUnifiedInbox} from "@/features/connect/components/ConnectUnifiedInbox";
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
@@ -454,15 +455,9 @@ export default function ConnectPage(){
      </details>
     </div>}
 
-    {section==="calendar"&&<section className="cx-panel cx-panel-full">
-     <div className="cx-panel-header"><div><h2>Counselling & trial appointments</h2><p>Scheduled, completed and cancelled sessions</p></div></div>
-     {!appointments.length?<EmptyState title="No appointments yet" description="Open a contact to book counselling or a demo."/>:
-      <div className="cx-task-list">{appointments.map(a=><div key={a.id} className="cx-task-row">
-       <span className="cx-calendar-date">▦</span><div><strong>{a.title}</strong><small>{shortLabel(a.kind)} · {dateLabel(a.starts_at)} – {dateLabel(a.ends_at)}</small></div>
-       <span className={"cx-status "+(a.status==="completed"?"won":"")}>{shortLabel(a.status)}</span>
-       {canWrite&&a.status==="scheduled"&&<button className="cx-secondary" disabled={busy} onClick={()=>void run(()=>crmCommand(tenantId,"appointments","finish_appointment",{appointmentId:a.id,status:"completed"}),"Appointment completed.")}>Complete</button>}
-      </div>)}</div>}
-    </section>}
+    {section==="calendar"&&<ConnectCalendar appointments={appointments} people={people} canWrite={canWrite} busy={busy}
+     onComplete={appointmentId=>void run(()=>crmCommand(tenantId,"appointments","finish_appointment",{appointmentId,status:"completed"}),"Appointment completed.")}
+     onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}/>}
 
     {section==="communications"&&<ConnectUnifiedInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} onOpenContact={personId=>{void (async()=>{try{if(!people.some(person=>person.id===personId)){const result=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});if(!result.items.length){setError("Contact is no longer available.");return;}setPeople(current=>current.some(person=>person.id===personId)?current:[...current,result.items[0]]);}setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}catch(e){setError(e instanceof Error?e.message:"Could not open linked CRM contact.");}})();}}/>}
 
