@@ -244,3 +244,15 @@ if(!masonryView.includes("cx-overview-left-column")||
  !masonryPage.includes("attentionWidget={<>")||
  !masonryStyles.includes(".cx-app .cx-insight-panels.cx-overview-masonry"))
  throw Error("Overview independent-column layout and customer attention slot are required.");
+
+/* Bulk contact imports must be explicitly mapped, audited, and never grant marketing permission. */
+const importer=fs.readFileSync(path.join(root,"features/connect/components/ContactImportWizard.tsx"),"utf8");
+const importApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/import/route.ts"),"utf8");
+const importMigration=fs.readFileSync(path.join(root,"database/connect/saas/40_bulk_contacts_import.sql"),"utf8");
+if(!importer.includes("parseCSV")||!importer.includes("Review import")||
+ !importer.includes("sourceType")||!importer.includes("contact-import-template.csv")||
+ !importApi.includes("connect_contacts_import")||
+ !importMigration.includes("contact_marketing_permissions")||
+ !importMigration.includes("'unknown'")||
+ !page.includes("ContactImportWizard"))
+ throw Error("Contact import mapping, tenant RPC, provenance or consent safeguard missing.");

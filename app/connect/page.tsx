@@ -17,6 +17,7 @@ import {ConnectUnifiedInbox} from "@/features/connect/components/ConnectUnifiedI
 import {ConnectReports} from "@/features/connect/components/ConnectReports";
 import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
 import {ContactProfile} from "@/features/connect/components/contact/ContactProfile";
+import {ContactImportWizard} from "@/features/connect/components/ContactImportWizard";
 import {ContactTimeline} from "@/features/connect/components/contact/ContactTimeline";
 import {ContactRelationships} from "@/features/connect/components/contact/ContactRelationships";
 import {WorkspaceIntelligence} from "@/features/connect/components/contact/ContactIntelligence";
@@ -54,6 +55,7 @@ export default function ConnectPage(){
  const [contactSort,setContactSort]=useState<"name"|"newest">("name");
  const [showLeadForm,setShowLeadForm]=useState(false);
  const [showContactForm,setShowContactForm]=useState(false);
+ const [showContactImport,setShowContactImport]=useState(false);
  const [selectedPerson,setSelectedPerson]=useState<string|null>(null);
  const [selectedOpportunity,setSelectedOpportunity]=useState<string|null>(null);
  const [workflowContactId,setWorkflowContactId]=useState<string|null>(null);
@@ -348,7 +350,10 @@ export default function ConnectPage(){
      section==="calendar"?"Counselling, demo and trial appointments.":
      section==="reports"?"Track conversion, counsellor performance and real recorded marketing ROI.":"Manage institute programmes and access."}</p></div>
      {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>＋ New enquiry</button>}
-     {section==="contacts"&&canWrite&&<button className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
+     {section==="contacts"&&<div className="cx-contacts-header-actions">
+      {canConfigure&&<button type="button" className="cx-secondary" onClick={()=>setShowContactImport(true)}>↑ Import contacts</button>}
+      {canWrite&&<button type="button" className="cx-primary" onClick={()=>setShowContactForm(true)}>＋ New contact</button>}
+     </div>}
     </div>}
 
     {workflowContactId&&["enquiries","pipeline","followups","communications"].includes(section)&&<div className="cx-workflow-context" role="region" aria-label="Customer workflow">
@@ -432,6 +437,9 @@ export default function ConnectPage(){
       </table></div>}
     </section>}
 
+    {showContactImport&&tenantId&&<ContactImportWizard key={tenantId} tenantId={tenantId}
+      onClose={()=>setShowContactImport(false)}
+      onImported={()=>{setRefreshCount(v=>v+1);setSearch("");setContactView("all");}}/>}
     {section==="contacts"&&<section className="cx-panel cx-contacts-directory">
      <header className="cx-contacts-directory-head">
       <div><h2>Contact directory</h2><p>Search customers, review enquiry history and open Contact 360</p></div>
