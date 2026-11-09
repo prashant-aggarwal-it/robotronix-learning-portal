@@ -13,16 +13,16 @@ import type { UserRole } from "@/lib/types";
 
 const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}>> = {
   student: [
-    {label:"Home",href:"/student"},{label:"My Calendar",href:"/student/calendar"},{label:"My Profile",href:"/student/profile"},{label:"My Course",href:"/student/course"},{label:"My Projects",href:"/student/portfolio"},{label:"Notifications",href:"/student/notifications"}
+    {label:"Home",href:"/student"},{label:"My Tasks",href:"/tasks"},{label:"My Calendar",href:"/student/calendar"},{label:"My Profile",href:"/student/profile"},{label:"My Course",href:"/student/course"},{label:"My Projects",href:"/student/portfolio"},{label:"Notifications",href:"/student/notifications"}
   ],
   parent: [
-    {label:"Family Dashboard",href:"/parent"},{label:"Calendar",href:"/parent/calendar"},{label:"Fees & Payments",href:"/parent/billing"},{label:"Family Profile",href:"/parent/profile"},{label:"Messages",href:"/parent/messages"},{label:"Notifications",href:"/parent/notifications"},{label:"Add learner",href:"/onboarding"}
+    {label:"Family Dashboard",href:"/parent"},{label:"My Tasks",href:"/tasks"},{label:"Calendar",href:"/parent/calendar"},{label:"Fees & Payments",href:"/parent/billing"},{label:"Family Profile",href:"/parent/profile"},{label:"Messages",href:"/parent/messages"},{label:"Notifications",href:"/parent/notifications"},{label:"Add learner",href:"/onboarding"}
   ],
   trainer: [
-    {label:"Home",href:"/trainer"},{label:"My Profile",href:"/trainer/profile"},{label:"Learner Progress",href:"/trainer/progress"},{label:"Demo Experience",href:"/trainer/demos"},{label:"My Classes",href:"/trainer/classes"},{label:"My Schedule",href:"/trainer/schedule"},{label:"My Courses",href:"/trainer/courses"},{label:"My Earnings",href:"/trainer/earnings"},{label:"Messages",href:"/trainer/messages"},{label:"Notifications",href:"/trainer/notifications"}
+    {label:"Home",href:"/trainer"},{label:"My Tasks",href:"/tasks"},{label:"My Profile",href:"/trainer/profile"},{label:"Learner Progress",href:"/trainer/progress"},{label:"Demo Experience",href:"/trainer/demos"},{label:"My Classes",href:"/trainer/classes"},{label:"My Schedule",href:"/trainer/schedule"},{label:"My Courses",href:"/trainer/courses"},{label:"My Earnings",href:"/trainer/earnings"},{label:"Messages",href:"/trainer/messages"},{label:"Notifications",href:"/trainer/notifications"}
   ],
   admin: [
-    {label:"Overview",href:"/admin",group:"Workspace"},{label:"My Account",href:"/admin/account",group:"Workspace"},{label:"Parent Community",href:"/admin/community",group:"Workspace"},
+    {label:"Overview",href:"/admin",group:"Workspace"},{label:"My Tasks",href:"/tasks",group:"Workspace"},{label:"My Account",href:"/admin/account",group:"Workspace"},{label:"Parent Community",href:"/admin/community",group:"Workspace"},
     {label:"Onboarding",href:"/admin/onboarding",group:"Learners"},
     {label:"Students",href:"/admin/students",group:"Learners"},
     {label:"Trainers",href:"/admin/trainers",group:"Delivery"},
@@ -47,6 +47,7 @@ const navByRole: Record<UserRole, Array<{label:string;href:string;group?:string}
 
 const adminIconPaths:Record<string,string>={
  "/admin":"M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
+ "/tasks":"M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z",
  "/admin/account":"M20 21a8 8 0 0 0-16 0 M12 13a5 5 0 1 0 0-10a5 5 0 0 0 0 10",
  "/admin/community":"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8 M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
  "/admin/onboarding":"M12 5v14 M5 12h14 M3 3h18v18H3z",
