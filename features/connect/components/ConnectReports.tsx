@@ -91,7 +91,6 @@ export function ConnectReports({tenantId}:{tenantId:string}){
  const currency=report?.summary.currency||"INR";
  const availableRevenue=report?.sources.reduce((sum,s)=>sum+(s.revenue||0),0)||0;
  const availableSpend=report?.sources.reduce((sum,s)=>sum+(s.spend||0),0)||0;
- const stageHistoryUnavailable=Boolean(report&&report.summary.opportunities>0&&report.stageJourney.length>0&&report.stageJourney.every(stage=>stage.reached===0));
  const tabItems:ReadonlyArray<{id:ReportTab;label:string;description:string}>=[
   {id:"performance",label:"Performance",description:"Enquiries, outcomes and team"},
   {id:"admissions",label:"Admissions Analytics",description:"Current stages and recorded history"},
@@ -169,13 +168,6 @@ export function ConnectReports({tenantId}:{tenantId:string}){
       </div>
      </div>;
     })()}
-   </section>
-   <section className="cx-panel">
-    <div className="cx-panel-header"><div><h2>Historical stage reach</h2><p>How many admissions have a recorded transition into each stage (not current stage distribution).</p></div></div>
-    {stageHistoryUnavailable?<div className="cx-report-data-warning" role="status">
-      <strong>Stage history isn't available for this cohort</strong>
-      <p>The database has admissions, but no recorded stage-entry events. Showing 0% here would be misleading. Newly tracked stage changes will populate this chart.</p>
-     </div>:<ReportVisuals report={report} view="stages"/>}
    </section>
    </div>}
    {tab==="marketing"&&<div className="cx-report-tab-panel" id="connect-report-panel-marketing" role="tabpanel" aria-labelledby="connect-report-tab-marketing">
