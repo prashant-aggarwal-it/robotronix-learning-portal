@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import {connectFetch,crmCommand,type ConnectAppointment,type ConnectPerson,type ConnectOpportunity,type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
 import {ConnectAppointmentEditor} from "./ConnectAppointmentEditor";
+import {ConnectPortalDemos} from "./ConnectPortalDemos";
 
 type View="month"|"week"|"agenda";
 type StatusFilter="all"|"scheduled"|"completed"|"cancelled";
@@ -123,6 +124,7 @@ export function ConnectCalendar({tenantId,appointments,people,opportunities,prog
   </div>}
  </div>;
  return <section className="ccal" aria-label="Counselling and trial calendar">
+  <ConnectPortalDemos tenantId={tenantId} people={people} opportunities={opportunities} canWrite={canWrite} canManage={canManage}/>
   <div className="ccal-heading"><div><h2>Appointments calendar</h2><p>See counselling, demos, trials and meetings at a glance</p></div><div className="ccal-heading-actions">{canWrite&&<button type="button" className="ccal-new-button" onClick={()=>setEditor({appointment:null,day:selectedDay})}>＋ New appointment</button>}<div className="ccal-view" role="group" aria-label="Calendar view">{(["month","week","agenda"] as View[]).map(v=><button type="button" key={v} aria-pressed={view===v} className={view===v?"active":""} onClick={()=>{setView(v);setActiveId(null);}}>{v==="agenda"?"List":titleCase(v)}</button>)}</div></div></div>
   {actionError&&<div className="ccal-banner-error" role="alert">{actionError}</div>}
   {actionNotice&&<div className="ccal-banner-notice" role="status">{actionNotice}</div>}
