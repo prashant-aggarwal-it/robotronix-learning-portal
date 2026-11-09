@@ -1387,3 +1387,50 @@
 @media(max-width:1050px){.cx-app .cx-insight-panels.cx-overview-masonry{grid-template-columns:1fr}.cx-app .cx-overview-stage-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.cx-app .cx-overview-stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}.cx-app .cx-overview-stage-summary{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.cx-app .cx-overview-stage-list button{transition:none}.cx-app .cx-overview-stage-list button:hover{transform:none}}
+
+
+/* Overview v3 — deliberate bento dashboard: every desktop row is full width.
+   Replaces independent columns; no faux filler data or minimum-height spacers. */
+.cx-app .cx-insight-panels.cx-overview-dashboard-grid{display:flex;flex-direction:column;align-items:stretch;gap:16px}
+.cx-app .cx-overview-dashboard-grid>div{min-width:0;width:100%}
+.cx-app .cx-overview-dashboard-grid .cx-overview-duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
+.cx-app .cx-overview-dashboard-grid .cx-overview-duo.cx-overview-solo{grid-template-columns:1fr}
+.cx-app .cx-overview-dashboard-grid .cx-insight-panel{height:100%;margin:0;border-radius:19px;padding:22px 24px}
+.cx-app .cx-overview-dashboard-grid .cx-overview-hero-chart .cx-viz-widget{padding:22px 24px;border-radius:19px}
+.cx-app .cx-overview-dashboard-grid .cx-insight-panel-heading h3,.cx-app .cx-overview-dashboard-grid .cx-viz-head h3{font-size:17px;letter-spacing:-.35px}
+.cx-app .cx-overview-dashboard-grid .cx-insight-panel-heading p{font-size:12px}
+.cx-app .cx-viz-dashboard-body{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;margin-top:15px;align-items:stretch}
+.cx-app .cx-viz-trend-panel,.cx-app .cx-viz-channel-panel{min-width:0;padding:18px;border:1px solid #e0edf4;border-radius:16px;background:linear-gradient(155deg,#f7fbfe,#fff)}
+.cx-app .cx-viz-trend-panel{display:flex;flex-direction:column;justify-content:space-between}
+.cx-app .cx-viz-trend-panel .cx-viz-trend-head{margin:0 0 10px}
+.cx-app .cx-viz-trend-panel .cx-viz-chart{height:170px;min-height:170px;max-height:170px;margin:0}
+.cx-app .cx-viz-trend-panel .cx-viz-chart svg{max-height:170px}
+.cx-app .cx-viz-trend-panel .cx-viz-day-buttons{margin-top:1px}
+.cx-app .cx-viz-channel-panel{background:linear-gradient(145deg,#fff,#f7fcfd)}
+.cx-app .cx-viz-channel-panel .cx-viz-mix-title{margin-bottom:13px}
+.cx-app .cx-viz-channel-panel .cx-viz-mix{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;align-items:center}
+.cx-app .cx-viz-channel-panel .cx-viz-donut{width:126px;max-width:100%;height:auto}
+.cx-app .cx-viz-channel-panel .cx-viz-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.cx-app .cx-viz-channel-panel .cx-viz-source{min-width:0;padding:8px;border-radius:11px;background:#f3f8fb;border:1px solid #e2edf3}
+.cx-app .cx-viz-channel-panel .cx-viz-source-name{font-size:11px}
+.cx-app .cx-viz-channel-panel .cx-viz-note{margin:15px 0 0;line-height:1.45}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-summary{padding:4px 0 15px}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list button{min-height:116px;padding:16px;gap:7px;border-radius:15px;background:linear-gradient(145deg,#fff 25%,#f1f8fc);border:1px solid #deebf4;box-shadow:0 4px 15px rgba(25,76,104,.025)}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list button::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:#d0e8f4;border-radius:15px 15px 0 0}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list button:nth-child(2)::before{background:#21ada7}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list button:nth-child(3)::before{background:#f0a036}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list button:nth-child(4)::before{background:#159b78}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list button:nth-child(5)::before{background:#d4677a}
+.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list strong{font-size:28px}
+.cx-app .cx-overview-dashboard-grid .cx-overview-actions-panel{background:#fff}
+.cx-app .cx-overview-dashboard-grid .cx-priority-row{min-height:66px}
+.cx-app .cx-overview-dashboard-grid .cx-overview-appointments{gap:2px}
+.cx-app .cx-overview-dashboard-grid .cx-overview-appointment{min-height:72px;padding:10px 4px}
+.cx-app .cx-overview-dashboard-grid .cx-record-list{display:flex;flex-direction:column;gap:3px}
+.cx-app .cx-overview-dashboard-grid .cx-record{min-height:72px;padding:12px 10px;border:1px solid transparent;border-radius:12px}
+.cx-app .cx-overview-dashboard-grid .cx-record:hover{border-color:#dceaf3;background:#f3f9fd}
+.cx-app .cx-overview-dashboard-grid .cx-overview-people>.cx-insight-panel,.cx-app .cx-overview-dashboard-grid .cx-overview-people>.cx-intelligence-board{min-width:0;height:100%}
+@media(max-width:1250px){.cx-app .cx-viz-dashboard-body{grid-template-columns:1fr 1fr}.cx-app .cx-viz-channel-panel .cx-viz-mix{grid-template-columns:110px minmax(0,1fr)}.cx-app .cx-viz-channel-panel .cx-viz-donut{width:110px}.cx-app .cx-viz-channel-panel .cx-viz-legend{grid-template-columns:1fr}}
+@media(max-width:980px){.cx-app .cx-viz-dashboard-body{grid-template-columns:1fr}.cx-app .cx-viz-channel-panel .cx-viz-mix{grid-template-columns:130px minmax(0,1fr)}.cx-app .cx-viz-channel-panel .cx-viz-legend{grid-template-columns:repeat(2,minmax(0,1fr))}.cx-app .cx-overview-dashboard-grid .cx-overview-duo{grid-template-columns:1fr}}
+@media(max-width:540px){.cx-app .cx-overview-dashboard-grid .cx-insight-panel,.cx-app .cx-overview-dashboard-grid .cx-overview-hero-chart .cx-viz-widget{padding:15px}.cx-app .cx-viz-trend-panel,.cx-app .cx-viz-channel-panel{padding:12px}.cx-app .cx-viz-channel-panel .cx-viz-mix{grid-template-columns:1fr;justify-items:center}.cx-app .cx-viz-channel-panel .cx-viz-legend{width:100%}.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}.cx-app .cx-overview-dashboard-grid .cx-overview-stage-list button{min-height:108px;padding:12px}}
