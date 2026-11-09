@@ -1,5 +1,5 @@
 "use client";
-import {FormEvent,useCallback,useEffect,useMemo,useRef,useState} from "react";
+import {FormEvent,useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {getCurrentProfile} from "@/lib/repository";
 import {connectFetch,crmCommand,crmList,
@@ -40,6 +40,9 @@ export default function ConnectPage(){
  const [workspacesReady,setWorkspacesReady]=useState(false);
  const [tenantId,setTenantId]=useState("");
  const [section,setSection]=useState<Section>("overview");
+ // Section changes are client-side state transitions, so the browser does not reset scroll automatically.
+ // Reset before paint for sidebar, overview shortcut and workflow navigation alike.
+ useLayoutEffect(()=>{window.scrollTo({top:0,left:0,behavior:"instant"});},[section]);
  const [enquiryPrefs,setEnquiryPrefs]=useState<EnquiryPreferences|null>(null);
  const [categoryFilter,setCategoryFilter]=useState("");
  const [enquirySourceFilter,setEnquirySourceFilter]=useState("all");
