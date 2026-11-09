@@ -9,6 +9,7 @@ const access=read("lib/server/connect-portal-access.ts");
 const lifecycle=read("database/connect/saas/58_portal_lifecycle_renewals.sql");
 const admissions=read("database/connect/saas/53_portal_admissions_rpc.sql");
 const health=read("app/api/connect/jobs/reminders/route.ts");
+const triggerGrants=read("database/04_existing_db_migrations/20261109_restrict_privileged_trigger_function_execute.sql");
 
 // Fail when CI stops running the actual Connect feature contracts.
 for(const name of ["check:connect-hardening","check:security","npm audit --omit=dev","connect-api-boundaries.spec.ts"])
@@ -27,4 +28,6 @@ assert.match(lifecycle,/payment_attention else null/,"Sensitive finance flag mus
 assert.match(admissions,/v_h\.status='enrollment_confirmed'/,"Enrollment handoff must be idempotent");
 assert.match(health,/timingSafeEqual/,"Scheduler bearer secret must be compared in constant time");
 assert.match(health,/"Cache-Control":"no-store"/,"Job responses must not be cached");
+for(const name of ["audit_core_change","protect_profile_privileges","notify_admin_on_onboarding_submission","lock_trainer_payout_instructions","trg_sync_trainer_earning"])
+ assert.ok(triggerGrants.includes(`revoke execute on function public.${name}()`),`Trigger-only RPC grant reintroduced: ${name}`);
 console.log("Connect engineering gates passed: workflow, authorization, privacy and scheduler contract checks.");
