@@ -35,11 +35,17 @@ export function ReportVisuals({report,view="both"}:{report:ReportGraphic;view?:"
   {(view==="channels"||view==="both")&&<>  <section className="cx-widget"><header className="cx-widget-head"><div><h3>Channel performance</h3><p>Comparison for the selected reporting period</p></div>
    <select value={metric} onChange={e=>setMetric(e.target.value==="won"?"won":e.target.value==="opportunities"?"opportunities":"inquiries")} aria-label="Channel performance metric"><option value="inquiries">Enquiries</option><option value="opportunities">Admissions</option><option value="won">Won</option></select>
   </header>
-  {entries.length===0?<p className="cx-widget-empty">No channel activity recorded for this period.</p>:<div className="cx-report-channel-grid">
-   {entries.map(s=><div key={s.source} className="cx-report-channel-card">
-    <div className="cx-report-channel-head"><span className="cx-report-channel-label"><i style={{background:channelColor(s.source)}} aria-hidden="true"/>{label(s.source)}</span><strong>{s[metric]}</strong></div>
-    <div className="cx-report-channel-track" role="meter" aria-label={label(s.source)+" "+metric} aria-valuemin={0} aria-valuemax={max} aria-valuenow={s[metric]}><span style={{width:s[metric]/max*100+"%",background:channelColor(s.source)}}/></div>
-   </div>)}
+  {entries.length===0?<p className="cx-widget-empty">No channel activity recorded for this period.</p>:<div className="cx-report-channel-tiles">
+   {entries.map(item=>{
+    const sum=entries.reduce((total,row)=>total+row[metric],0);
+    const share=sum?Math.round(item[metric]/sum*100):0;
+    return <article key={item.source} className="cx-report-channel-tile" style={{"--channel-accent":channelColor(item.source)} as React.CSSProperties}>
+     <div className="cx-report-channel-tile-top"><span className="cx-report-channel-monogram" aria-hidden="true">{label(item.source).slice(0,1)}</span><span className="cx-report-channel-share">{share}% share</span></div>
+     <div className="cx-report-channel-tile-name">{label(item.source)}</div>
+     <div className="cx-report-channel-tile-bottom"><strong>{item[metric].toLocaleString("en-IN")}</strong><span>{metric==="inquiries"?"enquiries":metric==="opportunities"?"admissions":"won"}</span></div>
+     <div className="cx-report-channel-tile-meter" role="meter" aria-label={label(item.source)+" share of "+metric} aria-valuemin={0} aria-valuemax={100} aria-valuenow={sum?item[metric]/sum*100:0}><span style={{width:(sum?item[metric]/sum*100:0)+"%"}}/></div>
+    </article>;
+   })}
   </div>}
   <p className="cx-widget-caption">Showing recorded counts for the selected metric and reporting dates.</p>
   </section>
