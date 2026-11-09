@@ -44,10 +44,24 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
     <span className="cx-insight-number">{m.value.toLocaleString()}</span><span className="cx-insight-label">{m.label}</span><small>{m.detail}</small>
    </button>)}
   </div>
-  <div className="cx-insight-panels cx-overview-masonry">
-   <div className="cx-overview-left-column">
-    <ConnectEnquiryVisualizations inquiries={inquiries} onSelectSource={onSelectSource}/>
-    {advanced&&<section className="cx-insight-panel cx-overview-pipeline" aria-label="Admissions pipeline snapshot">
+  <div className="cx-insight-panels cx-overview-dashboard-grid">
+    <div className="cx-overview-hero-chart"><ConnectEnquiryVisualizations inquiries={inquiries} onSelectSource={onSelectSource}/></div>
+    <div className="cx-overview-duo cx-overview-operations">
+      <section className="cx-insight-panel cx-overview-actions-panel"><div className="cx-insight-panel-heading"><div><h3>Action required</h3><p>Follow-ups and scheduled activities</p></div><button type="button" onClick={()=>onNavigate("followups")}>View tasks ↗</button></div>
+     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-2">◷</span><span><strong>{overview.overdueTasks} overdue</strong><small>Follow-ups needing action</small></span><span aria-hidden="true">›</span></button>
+     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-0">☑</span><span><strong>{todayTasks} due today</strong><small>From {tasks.length} loaded tasks</small></span><span aria-hidden="true">›</span></button>
+     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("calendar")}><span className="cx-priority-symbol cx-insight-color-1">▦</span><span><strong>{overview.scheduledAppointments} upcoming appointments</strong><small>Demo and counselling schedule</small></span><span aria-hidden="true">›</span></button>
+    </section>
+      <section className="cx-insight-panel cx-overview-schedule" aria-label="Upcoming appointment schedule">
+     <div className="cx-insight-panel-heading"><div><h3>Next appointments</h3><p>Next three scheduled sessions · IST</p></div><button type="button" onClick={()=>onNavigate("calendar")}>Calendar ↗</button></div>
+     {upcoming.length===0?<div className="cx-overview-widget-empty"><span aria-hidden="true">▦</span><p>No upcoming appointments. Schedule a demo or consultation from Calendar.</p><button type="button" onClick={()=>onNavigate("calendar")}>Open calendar ↗</button></div>:
+      <div className="cx-overview-appointments">{upcoming.map(a=><button key={a.id} type="button" className="cx-overview-appointment" onClick={()=>onNavigate("calendar")} aria-label={"Open Calendar for "+a.title}>
+       <span className="cx-overview-appointment-date"><strong>{appointmentDate(a.starts_at)}</strong><small>{appointmentMonth(a.starts_at)}</small></span>
+       <span className="cx-overview-appointment-info"><strong>{a.title}</strong><small>{appointmentTime(a.starts_at)} · {upcomingName(a)} · {nameSource(a.kind)}</small></span><span className="cx-overview-row-arrow" aria-hidden="true">›</span>
+      </button>)}</div>}
+    </section>
+    </div>
+    <div className="cx-overview-wide-pipeline">{advanced&&<section className="cx-insight-panel cx-overview-pipeline" aria-label="Admissions pipeline snapshot">
      <div className="cx-insight-panel-heading"><div><h3>Pipeline snapshot</h3><p>Current admissions by stage</p></div><button type="button" onClick={()=>onNavigate("pipeline")}>View pipeline ↗</button></div>
      {stageRows.length>0&&<div className="cx-overview-stage-summary"><span><strong>{stageRows.reduce((sum,stage)=>sum+stage.count,0)}</strong> opportunities in current stages</span><span>{stageRows.filter(stage=>stage.count>0).length} active stages</span></div>}
      {stageRows.length===0?<div className="cx-overview-widget-empty"><p>No admissions in the loaded pipelines.</p><button type="button" onClick={()=>onNavigate("pipeline")}>View admissions ↗</button></div>:
@@ -55,9 +69,9 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
        <span className="cx-overview-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}} aria-hidden="true"/>
        <span className="cx-overview-stage-label">{stage.name}</span><strong>{stage.count}</strong><small>{stageRows.reduce((sum,row)=>sum+row.count,0)?Math.round(stage.count/stageRows.reduce((sum,row)=>sum+row.count,0)*100):0}%</small>
       </button>)}</div>}
-    </section>}
-
-  <section className="cx-insight-panel cx-overview-recent" aria-label="Recent enquiries">
+    </section>}</div>
+    <div className={"cx-overview-duo cx-overview-people"+(!attentionWidget?" cx-overview-solo":"")}>
+      <section className="cx-insight-panel cx-overview-recent" aria-label="Recent enquiries">
    <div className="cx-insight-panel-heading"><div><h3>Latest enquiries</h3><p>The three most recent customer enquiries</p></div><button type="button" onClick={onViewAllEnquiries}>View all ↗</button></div>
    {recent.length===0?<p className="cx-insight-empty">No enquiries recorded yet. Create an enquiry to get started.</p>:
     <div className="cx-record-list">{recent.map(i=><button type="button" className="cx-record" key={i.id}
@@ -68,24 +82,8 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
       <span className="cx-record-end"><span className="cx-pill" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||"New"}</span><small>{nameSource(i.source)} · {new Date(i.received_at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</small></span>
     </button>)}</div>}
   </section>
-
-   </div>
-   <div className="cx-overview-right-rail">
-    <section className="cx-insight-panel cx-overview-actions-panel"><div className="cx-insight-panel-heading"><div><h3>Action required</h3><p>Follow-ups and scheduled activities</p></div><button type="button" onClick={()=>onNavigate("followups")}>View tasks ↗</button></div>
-     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-2">◷</span><span><strong>{overview.overdueTasks} overdue</strong><small>Follow-ups needing action</small></span><span aria-hidden="true">›</span></button>
-     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("followups")}><span className="cx-priority-symbol cx-insight-color-0">☑</span><span><strong>{todayTasks} due today</strong><small>From {tasks.length} loaded tasks</small></span><span aria-hidden="true">›</span></button>
-     <button type="button" className="cx-priority-row" onClick={()=>onNavigate("calendar")}><span className="cx-priority-symbol cx-insight-color-1">▦</span><span><strong>{overview.scheduledAppointments} upcoming appointments</strong><small>Demo and counselling schedule</small></span><span aria-hidden="true">›</span></button>
-    </section>
-    <section className="cx-insight-panel cx-overview-schedule" aria-label="Upcoming appointment schedule">
-     <div className="cx-insight-panel-heading"><div><h3>Next appointments</h3><p>Next three scheduled sessions · IST</p></div><button type="button" onClick={()=>onNavigate("calendar")}>Calendar ↗</button></div>
-     {upcoming.length===0?<div className="cx-overview-widget-empty"><span aria-hidden="true">▦</span><p>No upcoming appointments. Schedule a demo or consultation from Calendar.</p><button type="button" onClick={()=>onNavigate("calendar")}>Open calendar ↗</button></div>:
-      <div className="cx-overview-appointments">{upcoming.map(a=><button key={a.id} type="button" className="cx-overview-appointment" onClick={()=>onNavigate("calendar")} aria-label={"Open Calendar for "+a.title}>
-       <span className="cx-overview-appointment-date"><strong>{appointmentDate(a.starts_at)}</strong><small>{appointmentMonth(a.starts_at)}</small></span>
-       <span className="cx-overview-appointment-info"><strong>{a.title}</strong><small>{appointmentTime(a.starts_at)} · {upcomingName(a)} · {nameSource(a.kind)}</small></span><span className="cx-overview-row-arrow" aria-hidden="true">›</span>
-      </button>)}</div>}
-    </section>
-    {attentionWidget}
-   </div>
+      {attentionWidget}
+    </div>
   </div>
  </div>;
 }
