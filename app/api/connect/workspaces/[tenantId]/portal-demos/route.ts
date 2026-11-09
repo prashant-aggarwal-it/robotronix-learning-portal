@@ -21,13 +21,20 @@ export async function GET(request:NextRequest,{params}:Context){
  const links=(linkResult?.items||[]) as Array<{id:string;opportunity_id:string;person_id:string;portal_session_id:string|null;status:string;version:number;created_at:string}>;
  const sessionIds=(links||[]).map(l=>l.portal_session_id).filter((x):x is string=>Boolean(x));
  const {data:sessions}=sessionIds.length?await db.from("demo_sessions")
-  .select("id,status,trainer_id,schedule_event:schedule_events(date,start_time,end_time,timezone,status)")
+  .select("id,status,trainer_id,schedule_event:schedule_events(date,start_time,end_time,timezone,status),participants:demo_session_participants(id,attendance,engagement,understanding,fit,summary_published_at,parent_rating)")
   .in("id",sessionIds):{data:[]};
  const byId=new Map((sessions||[]).map(s=>[s.id,s]));
  return NextResponse.json({ok:true,installed:true,trainers:trainers||[],demos:(links||[]).map(link=>({
   ...link,portalStatus:link.portal_session_id?byId.get(link.portal_session_id)?.status||null:null,
   trainerId:link.portal_session_id?byId.get(link.portal_session_id)?.trainer_id||null:null,
-  schedule:link.portal_session_id?byId.get(link.portal_session_id)?.schedule_event||null:null
+  schedule:link.portal_session_id?byId.get(link.portal_session_id)?.schedule_event||null:null,
+  feedback:link.portal_session_id?(byId.get(link.portal_session_id)?.participants||[]).map(p=>({
+   attendance:p.attendance,summaryPublished:Boolean(p.summary_published_at),
+   engagement:p.summary_published_at?p.engagement:null,
+   understanding:p.summary_published_at?p.understanding:null,
+   fit:p.summary_published_at?p.fit:null,
+   parentRating:p.summary_published_at?p.parent_rating:null
+  })):[]
  }))},{headers:noStore});
 }
 

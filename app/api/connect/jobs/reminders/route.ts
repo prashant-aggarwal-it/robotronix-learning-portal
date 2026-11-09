@@ -17,7 +17,11 @@ export async function POST(req:NextRequest){
   const db=ingestionClient();
   const {data,error}=await db.rpc("connect_run_reminders",{p_batch_size:500});
   if(error)throw new Error(error.code);
-  return NextResponse.json({ok:true,result:data},{headers:{"Cache-Control":"no-store"}});
+  const {data:demoFollowups,error:demoError}=await db.rpc("connect_process_portal_demo_followups",{p_batch_size:100});
+  if(demoError)throw new Error(demoError.code);
+  const {data:enrollmentConfirmations,error:enrollmentError}=await db.rpc("connect_reconcile_portal_enrollments",{p_batch_size:100});
+  if(enrollmentError)throw new Error(enrollmentError.code);
+  return NextResponse.json({ok:true,result:data,demoFollowups,enrollmentConfirmations},{headers:{"Cache-Control":"no-store"}});
  }catch{
   return NextResponse.json({ok:false,error:"Reminder processing unavailable"},{status:503,headers:{"Cache-Control":"no-store"}});
  }

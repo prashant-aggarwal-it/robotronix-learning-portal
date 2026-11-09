@@ -30,6 +30,8 @@ export async function invokeConnect<T>(
 }
 export function connectRpcFailure(error:string,code?:string){
  // Avoid returning database internals to callers.
+ if(code==="23514"&&error.includes("Portal enrollment confirmation required"))
+  return connectFailure("This admission moves to Won after the Learning Portal confirms the learner's active enrollment. Use the Admission → Learning Portal section.",409);
  if(code==="23505")return connectFailure("An entry with these details already exists.",409);
  if(code==="40001")return connectFailure("This record has changed. Refresh it and try again.",409);
  if(code==="42501"||code==="28000")return connectFailure("Not authorized for this workspace or invitation.",403);

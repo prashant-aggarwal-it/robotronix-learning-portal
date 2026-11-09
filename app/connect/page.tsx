@@ -1,751 +1,6 @@
-"use client";
-import {FormEvent,useCallback,useEffect,useMemo,useRef,useState} from "react";
-import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
-import {getCurrentProfile} from "@/lib/repository";
-import {connectFetch,crmCommand,crmList,
- type ConnectWorkspace,type ConnectPerson,type ConnectInquiry,type ConnectOpportunity,
- type ConnectPipeline,type ConnectTask,type ConnectAppointment,type ConnectOverview,
- type ConnectProgram,type ConnectMember} from "@/features/connect/api/client";
-import {ChannelSettings} from "@/features/connect/components/ChannelSettings";
-import {ConnectAutomationSettings} from "@/features/connect/components/ConnectAutomationSettings";
-import {ConnectReminderInbox} from "@/features/connect/components/ConnectCommunications";
-import {ConnectFollowupsBoard} from "@/features/connect/components/ConnectFollowupsBoard";
-import {ConnectCalendar} from "@/features/connect/components/ConnectCalendar";
-import {PipelineVisual} from "@/features/connect/components/ConnectDataWidgets";
-import {stageTone,channelColor,toneColor} from "@/features/connect/connect-palette";
-import {ConnectUnifiedInbox} from "@/features/connect/components/ConnectUnifiedInbox";
-import {ConnectReports} from "@/features/connect/components/ConnectReports";
-import {ConnectOverviewWidgets} from "@/features/connect/components/ConnectOverviewWidgets";
-import {ContactProfile} from "@/features/connect/components/contact/ContactProfile";
-import {ContactImportWizard} from "@/features/connect/components/ContactImportWizard";
-import {ContactManagementWorkspace} from "@/features/connect/components/ContactManagementWorkspace";
-import {ContactTimeline} from "@/features/connect/components/contact/ContactTimeline";
-import {ContactRelationships} from "@/features/connect/components/contact/ContactRelationships";
-import {WorkspaceIntelligence} from "@/features/connect/components/contact/ContactIntelligence";
-import {EnquirySettings,readEnquiryPreferences} from "@/features/connect/components/EnquirySettings";
-import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
-import {navigation,emptyOverview,dateLabel,initials,shortLabel,suggestEnquiryCategory,type Section} from "@/features/connect/model";
-import {ErrorMessage,EmptyState} from "@/features/connect/EmptyStates";
-import {ConnectSidebar} from "@/features/connect/ConnectSidebar";
-import {ConnectTopbar} from "@/features/connect/ConnectTopbar";
-import {ConnectSignInGate,ConnectNoWorkspaceGate} from "@/features/connect/ConnectAuthGates";
-
-export default function ConnectPage(){
- const [signedIn,setSignedIn]=useState<boolean|null>(null);
- const [canOpenPortal,setCanOpenPortal]=useState(false);
- const [accountEmail,setAccountEmail]=useState("");
- const [workspaces,setWorkspaces]=useState<ConnectWorkspace[]>([]);
- const [workspacesReady,setWorkspacesReady]=useState(false);
- const [tenantId,setTenantId]=useState("");
- const [section,setSection]=useState<Section>("overview");
- const [enquiryPrefs,setEnquiryPrefs]=useState<EnquiryPreferences|null>(null);
- const [categoryFilter,setCategoryFilter]=useState("");
- const [enquirySourceFilter,setEnquirySourceFilter]=useState("all");
- const [enquiryView,setEnquiryView]=useState<"all"|"unclassified"|"linked">("all");
- const [enquirySort,setEnquirySort]=useState<"latest"|"oldest">("latest");
- const [leadCategory,setLeadCategory]=useState("");
- const [busy,setBusy]=useState(false);
- const [loading,setLoading]=useState(false);
- const requestGeneration=useRef(0);
- const loadedTenant=useRef("");
- const [error,setError]=useState("");
- const [notice,setNotice]=useState("");
- const [refreshCount,setRefreshCount]=useState(0);
- const [search,setSearch]=useState("");
- const [contactView,setContactView]=useState<"all"|"with_details"|"missing_details">("all");
- const [contactRole,setContactRole]=useState("all");
- const [contactSort,setContactSort]=useState<"name"|"newest">("name");
- const [showLeadForm,setShowLeadForm]=useState(false);
- const [showContactForm,setShowContactForm]=useState(false);
- const [showContactImport,setShowContactImport]=useState(false);
- const [showContactManager,setShowContactManager]=useState(false);
- const [managerPersonId,setManagerPersonId]=useState<string|null>(null);
- const [selectedPerson,setSelectedPerson]=useState<string|null>(null);
- const [selectedOpportunity,setSelectedOpportunity]=useState<string|null>(null);
- const [draggedOpportunityId,setDraggedOpportunityId]=useState<string|null>(null);
- const [dropStageId,setDropStageId]=useState<string|null>(null);
- const [workflowContactId,setWorkflowContactId]=useState<string|null>(null);
- const [assignees,setAssignees]=useState<Array<{id:string;label:string;role:string}>>([]);
- const [activityNote,setActivityNote]=useState("");
- const [overview,setOverview]=useState<ConnectOverview>(emptyOverview);
- const [people,setPeople]=useState<ConnectPerson[]>([]);
- const [peopleHasMore,setPeopleHasMore]=useState(false);
- const [directoryResults,setDirectoryResults]=useState<ConnectPerson[]|null>(null);
- const [directoryTotal,setDirectoryTotal]=useState(0);
- const [directoryLoading,setDirectoryLoading]=useState(false);
- const [loadingMorePeople,setLoadingMorePeople]=useState(false);
- const [inquiries,setInquiries]=useState<ConnectInquiry[]>([]);
- const [opportunities,setOpportunities]=useState<ConnectOpportunity[]>([]);
- const [pipelines,setPipelines]=useState<ConnectPipeline[]>([]);
- const [tasks,setTasks]=useState<ConnectTask[]>([]);
- const [appointments,setAppointments]=useState<ConnectAppointment[]>([]);
- const [programs,setPrograms]=useState<ConnectProgram[]>([]);
- const [members,setMembers]=useState<ConnectMember[]>([]);
- const [showMobileNav,setShowMobileNav]=useState(false);
-
- useEffect(()=>{
-  const client=getSupabaseBrowserClient();
-  if(!client){setSignedIn(false);return;}
-  let mounted=true;
-  void client.auth.getSession().then(({data})=>{
-   if(!mounted)return;
-   setSignedIn(Boolean(data.session));setAccountEmail(data.session?.user.email||"");
-  });
-  const {data:{subscription}}=client.auth.onAuthStateChange((_event,session)=>{
-   if(!mounted)return;
-   setSignedIn(Boolean(session));setAccountEmail(session?.user.email||"");
-  });
-  return()=>{mounted=false;subscription.unsubscribe();};
- },[]);
-
- useEffect(()=>{
-  if(!signedIn){setCanOpenPortal(false);return;}
-  let active=true;
-  void getCurrentProfile().then(profile=>{if(active)setCanOpenPortal(profile?.role==="admin");}).catch(()=>{if(active)setCanOpenPortal(false);});
-  return()=>{active=false;};
- },[signedIn]);
-
- const loadWorkspaces=useCallback(async()=>{
-  const result=await connectFetch<{workspaces:ConnectWorkspace[]}>("/api/connect/workspaces");
-  setWorkspaces(result.workspaces||[]);setWorkspacesReady(true);
-  setTenantId(previous=>result.workspaces.some(x=>x.tenant_id===previous)?previous:(result.workspaces[0]?.tenant_id||""));
- },[]);
- useEffect(()=>{
-  if(!signedIn){setWorkspaces([]);setTenantId("");setWorkspacesReady(false);return;}
-  setWorkspacesReady(false);
-  void loadWorkspaces().catch(e=>{setError(e instanceof Error?e.message:"Could not load your institutes.");setWorkspacesReady(true);});
- },[signedIn,loadWorkspaces]);
-
- // Ignore responses from a previous institute, refresh or logged-out session.
- // Clear old data immediately on institute switching so it can never flash on the new screen.
- useEffect(()=>{
-  const generation=++requestGeneration.current;
-  // Keep the board mounted during ordinary refreshes. Clear immediately only when
-  // switching institutes or signing out, to avoid leaking another tenant's data.
-  if(loadedTenant.current!==tenantId||!signedIn){
-   setOverview(emptyOverview);setInquiries([]);setPeople([]);setPeopleHasMore(false);setOpportunities([]);
-   setPipelines([]);setTasks([]);setAppointments([]);setPrograms([]);setMembers([]);
-  }
-  loadedTenant.current=signedIn?tenantId:"";
-  setLoading(Boolean(tenantId&&signedIn));setError("");
-  if(!tenantId||!signedIn)return ()=>{requestGeneration.current++;};
-  void (async()=>{
-   try{
-    const r=await Promise.all([
-     crmList<ConnectOverview>(tenantId,"overview"),
-     crmList<ConnectInquiry>(tenantId,"inquiries",{limit:"100"}),
-     crmList<ConnectPerson>(tenantId,"people",{limit:"100"}),
-     crmList<ConnectOpportunity>(tenantId,"opportunities",{limit:"100"}),
-     crmList<ConnectPipeline>(tenantId,"pipelines",{limit:"100"}),
-     crmList<ConnectTask>(tenantId,"tasks",{limit:"100"}),
-     connectFetch<{ok:true;items:ConnectAppointment[]}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/calendar"),
-     crmList<ConnectProgram>(tenantId,"programs",{limit:"100"})
-    ]);
-    if(requestGeneration.current!==generation)return;
-    setOverview(r[0].items[0]||emptyOverview);setInquiries(r[1].items);setPeople(r[2].items);setPeopleHasMore(r[2].items.length===100);
-    setOpportunities(r[3].items);setPipelines(r[4].items);setTasks(r[5].items);
-    setAppointments(r[6].items);setPrograms(r[7].items);
-   }catch(e){
-    if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Unable to load Connect workspace.");
-   }finally{
-    if(requestGeneration.current===generation)setLoading(false);
-   }
-  })();
-  return ()=>{requestGeneration.current++;};
- },[tenantId,refreshCount,signedIn]);
-
- const tenant=workspaces.find(x=>x.tenant_id===tenantId);
- const canConfigure=["owner","admin","manager"].includes(tenant?.membership_role||"");
- const canWrite=Boolean(tenant&&tenant.membership_role!=="viewer");
- const advanced=enquiryPrefs?.mode==="advanced";
- const visibleNavigation=navigation.filter(n=>advanced||["overview","enquiries","contacts","followups","communications","settings"].includes(n.id));
- useEffect(()=>{let live=true;setEnquiryPrefs(null);setCategoryFilter("");setLeadCategory("");if(tenantId)void readEnquiryPreferences(tenantId).then(p=>{if(live)setEnquiryPrefs(p);}).catch(e=>{if(live)setError(e instanceof Error?e.message:"Unable to load enquiry preferences");});return()=>{live=false;};},[tenantId]);
- useEffect(()=>{if(!advanced&&!["overview","enquiries","contacts","followups","communications","settings"].includes(section))setSection("overview");},[advanced,section]);
- useEffect(()=>{
-  let cancelled=false;
-  setAssignees([]);
-  if(!tenantId||!selectedOpportunity||!canConfigure)return;
-  void connectFetch<{assignees:Array<{id:string;label:string;role:string}>}>(
-   "/api/connect/workspaces/"+tenantId+"/assignees"
-  ).then(r=>{if(!cancelled)setAssignees(r.assignees||[]);}).catch(()=>{if(!cancelled)setAssignees([]);});
-  return ()=>{cancelled=true;};
- },[tenantId,selectedOpportunity,canConfigure]);
- const [loginEmail,setLoginEmail]=useState("");
- const [loginPassword,setLoginPassword]=useState("");
- const [lead,setLead]=useState({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:"",personId:""});
- const [newContact,setNewContact]=useState({name:"",email:"",phone:"",role:"contact"});
- const [taskTitle,setTaskTitle]=useState("");
- const [taskDue,setTaskDue]=useState("");
- const [pipelineName,setPipelineName]=useState("");
- const [programName,setProgramName]=useState("");
- const [newAdmissionTitle,setNewAdmissionTitle]=useState("");
- const [newAdmissionPipeline,setNewAdmissionPipeline]=useState("");
- const [appointmentTitle,setAppointmentTitle]=useState("");
- const [appointmentStarts,setAppointmentStarts]=useState("");
- const [appointmentEnds,setAppointmentEnds]=useState("");
-
- async function run(task:()=>Promise<unknown>,success:string){
-  if(busy)return;setBusy(true);setError("");setNotice("");
-  try{await task();setNotice(success);setRefreshCount(v=>v+1);}
-  catch(e){setError(e instanceof Error?e.message:"Unable to save changes.");}
-  finally{setBusy(false);}
- }
- async function signIn(e:FormEvent){
-  e.preventDefault();setError("");setBusy(true);
-  try{
-   const client=getSupabaseBrowserClient();
-   if(!client)throw new Error("Authentication is not configured.");
-   const {error:authError}=await client.auth.signInWithPassword({email:loginEmail,password:loginPassword});
-   if(authError)throw new Error(authError.message);
-  }catch(e){setError(e instanceof Error?e.message:"Could not sign in.");}
-  finally{setBusy(false);}
- }
- async function captureLead(e:FormEvent){
-  e.preventDefault();
-  const pipeline=pipelines.find(x=>x.id===lead.pipelineId);
-  const stage=pipeline?.stages.filter(s=>s.outcome==="open").sort((a,b)=>a.order-b.order)[0];
-  await run(async()=>{
-   await crmCommand(tenantId,"inquiries","capture_lead",{
-    name:lead.name,phone:lead.phone,email:lead.email,source:lead.source,
-    ...(lead.personId?{personId:lead.personId}:{}),
-    summary:lead.summary,...(leadCategory?{categoryId:leadCategory}:{}),...(pipeline&&stage?{pipelineId:pipeline.id,stageId:stage.id}:{})
-   });
-   setLead({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:"",personId:""});setLeadCategory("");setShowLeadForm(false);
-  },"Enquiry captured successfully.");
- }
- async function startAdmission(e:FormEvent){
-  e.preventDefault();
-  if(!selectedPerson)return;
-  const pipeline=pipelines.find(p=>p.id===newAdmissionPipeline);
-  const initial=pipeline?.stages.filter(x=>x.outcome==="open").sort((a,b)=>a.order-b.order)[0];
-  if(!pipeline||!initial){setError("Choose a pipeline with an open stage.");return;}
-  await run(async()=>{
-   const outcome=await crmCommand(tenantId,"opportunities","create_opportunity",{
-    title:newAdmissionTitle.trim()||(selectedContact?.full_name||"New")+" â€” admission",
-    contactId:selectedPerson,pipelineId:pipeline.id,stageId:initial.id
-   });
-   setNewAdmissionTitle("");setNewAdmissionPipeline("");
-   if(outcome.id)setSelectedOpportunity(outcome.id);
-  },"Admission opportunity created.");
- }
- async function createContact(e:FormEvent){
-  e.preventDefault();
-  await run(async()=>{
-   const result=await crmCommand(tenantId,"people","create_contact",newContact);
-   setNewContact({name:"",email:"",phone:"",role:"contact"});setShowContactForm(false);
-   if(result.id)setSelectedPerson(result.id);
-  },"Contact created.");
- }
- async function saveTask(e:FormEvent){
-  e.preventDefault();
-  await run(async()=>{
-   await crmCommand(tenantId,"tasks","create_task",{
-    title:taskTitle,personId:selectedPerson||undefined,opportunityId:selectedOpportunity||undefined,
-    dueAt:taskDue?new Date(taskDue).toISOString():undefined
-   });
-   setTaskTitle("");setTaskDue("");
-  },"Follow-up added.");
- }
- async function saveAppointment(e:FormEvent){
-  e.preventDefault();
-  await run(async()=>{
-   await crmCommand(tenantId,"appointments","create_appointment",{
-    title:appointmentTitle,personId:selectedPerson||undefined,opportunityId:selectedOpportunity||undefined,
-    kind:"counselling",startsAt:new Date(appointmentStarts).toISOString(),
-    endsAt:new Date(appointmentEnds).toISOString()
-   });
-   setAppointmentTitle("");setAppointmentStarts("");setAppointmentEnds("");
-  },"Appointment scheduled.");
- }
- async function saveNote(e:FormEvent){
-  e.preventDefault();if(!activityNote.trim()||(!selectedOpportunity&&!selectedPerson))return;
-  await run(async()=>{
-   await crmCommand(tenantId,"activities","log_activity",{
-    opportunityId:selectedOpportunity||undefined,personId:selectedPerson||undefined,
-    kind:"note",summary:activityNote.trim()
-   });
-   setActivityNote("");
-  },"Activity note saved.");
- }
- async function updateAssignment(opp:ConnectOpportunity,memberId:string){
-  if(!memberId||memberId===opp.owner_membership_id)return;
-  await run(()=>crmCommand(tenantId,"opportunities","assign_opportunity",{
-   opportunityId:opp.id,ownerMemberId:memberId,version:opp.version
-  }),"Admission reassigned.");
- }
- async function updateStage(opp:ConnectOpportunity,stageId:string){
-  if(opp.stage_id===stageId||busy)return;
-  const destination=pipelines.find(p=>p.id===opp.pipeline_id)?.stages.find(stage=>stage.id===stageId);
-  if(!destination){setError("This admissions stage is no longer available. Refresh the workspace.");return;}
-  if(destination.outcome==="won"||destination.outcome==="lost"){
-   if(!window.confirm("Move \""+opp.title+"\" to \""+destination.name+"\"? This will update the admission outcome."))return;
-  }
-  setBusy(true);setError("");setNotice("");
-  const updated={...opp,stage_id:stageId,stage_name:destination.name,outcome:destination.outcome,
-   version:opp.version+1,updated_at:new Date().toISOString(),closed_at:destination.outcome==="open"?null:opp.closed_at||new Date().toISOString()};
-  setOpportunities(current=>current.map(item=>item.id===opp.id?updated:item));
-  try{
-   await crmCommand(tenantId,"opportunities","move_opportunity",{
-    opportunityId:opp.id,stageId,version:opp.version
-   });
-   if(loadedTenant.current!==tenantId)return;
-   setNotice("Moved to "+destination.name+".");
-   // Reconcile server-calculated fields without resetting the board or other sections.
-   try{
-    const result=await crmList<ConnectOpportunity>(tenantId,"opportunities",{limit:"100"});
-    if(loadedTenant.current===tenantId)setOpportunities(result.items);
-   }catch{
-    // The move succeeded; retain the locally updated card if refreshing fails.
-   }
-  }catch(e){
-   if(loadedTenant.current!==tenantId)return;
-   setOpportunities(current=>current.map(item=>item.id===opp.id?opp:item));
-   setError((e instanceof Error?e.message:"Unable to move admission.")+" The card was returned to its previous stage.");
-  }finally{setBusy(false);}
- }
- const openCustomerWorkflow=(personId:string,destination:"communications"|"enquiries"|"pipeline"|"followups")=>{
-  if(!personId)return;
-  setWorkflowContactId(personId);setSelectedPerson(null);setSelectedOpportunity(null);
-  setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setSection(destination);
- };
- const workflowContact=people.find(x=>x.id===workflowContactId);
- const visibleOpportunities=workflowContactId?opportunities.filter(x=>x.contact_id===workflowContactId):opportunities;
- const contactDraftDirty=Boolean(newContact.name.trim()||newContact.phone.trim()||newContact.email.trim()||newContact.role!=="contact");
- const leadDraftDirty=Boolean(lead.name.trim()||lead.phone.trim()||lead.email.trim()||lead.summary.trim()||leadCategory||lead.pipelineId||lead.personId||lead.source!=="whatsapp");
- const closeContactForm=()=>{
-  if(busy)return;
-  if(contactDraftDirty&&!window.confirm("Discard unsaved contact details?"))return;
-  setShowContactForm(false);setNewContact({name:"",email:"",phone:"",role:"contact"});
- };
- const closeLeadForm=()=>{
-  if(busy)return;
-  if(leadDraftDirty&&!window.confirm("Discard unsaved enquiry details?"))return;
-  setShowLeadForm(false);setLead({name:"",phone:"",email:"",source:"whatsapp",summary:"",pipelineId:"",personId:""});setLeadCategory("");
- };
- const selectedContact=people.find(x=>x.id===selectedPerson);
- const selectedLead=opportunities.find(x=>x.id===selectedOpportunity);
- const matchingInquiries=useMemo(()=>inquiries.filter(i=>{
-  if(workflowContactId&&i.person_id!==workflowContactId)return false;
-  if(categoryFilter&&i.category_id!==categoryFilter)return false;
-  if(enquirySourceFilter!=="all"&&i.source.toLowerCase()!==enquirySourceFilter)return false;
-  if(enquiryView==="unclassified"&&i.category_id)return false;
-  if(enquiryView==="linked"&&!i.opportunity_id)return false;
-  const q=search.trim().toLowerCase();
-  return !q||[i.contact_name,i.summary,i.source,i.stage_name,i.category_label,i.contact_detail].some(v=>(v||"").toLowerCase().includes(q));
- }).sort((a,b)=>enquirySort==="latest"?Date.parse(b.received_at)-Date.parse(a.received_at):Date.parse(a.received_at)-Date.parse(b.received_at)),
- [inquiries,search,categoryFilter,enquirySourceFilter,enquiryView,enquirySort,workflowContactId]);
- const unclassifiedCount=inquiries.filter(i=>!i.category_id).length;
- const linkedCount=inquiries.filter(i=>Boolean(i.opportunity_id)).length;
- const enquirySources=[...new Set(inquiries.map(i=>i.source.toLowerCase()))].sort();
-
- const enquiryByPerson=useMemo(()=>{
-  const result=new Map<string,{count:number;summary:string;source:string;date:string}>();
-  for(const item of [...inquiries].sort((a,b)=>Date.parse(b.received_at)-Date.parse(a.received_at))){
-   if(!item.person_id)continue;
-   const old=result.get(item.person_id);
-   if(old){old.count+=1;}else{
-    result.set(item.person_id,{count:1,summary:item.summary||"Enquiry received",source:item.source,date:item.received_at});
-   }
-  }
-  return result;
- },[inquiries]);
- async function loadMoreContacts(){
-  if(loadingMorePeople||!tenantId)return;
-  if(section==="contacts"&&search.trim().length>=2){if((directoryResults||[]).length>=directoryTotal)return;}
-  else if(!peopleHasMore)return;
-  const generation=requestGeneration.current;
-  const isSearch=section==="contacts"&&search.trim().length>=2;
-  const offset=isSearch?(directoryResults?.length||0):people.length;
-  setLoadingMorePeople(true);
-  try{
-   if(isSearch){
-    const params=new URLSearchParams({search:search.trim(),sort:contactSort,offset:String(offset)});
-    const r=await connectFetch<{items:ConnectPerson[];total:number}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/contacts/directory?"+params.toString());
-    if(requestGeneration.current!==generation)return;
-    setDirectoryResults(current=>[...(current||[]),...r.items.filter(person=>!(current||[]).some(x=>x.id===person.id))]);
-    setDirectoryTotal(r.total);
-   }else{
-    const r=await crmList<ConnectPerson>(tenantId,"people",{limit:"100",offset:String(offset)});
-    if(requestGeneration.current!==generation)return;
-    setPeople(current=>[...current,...r.items.filter(person=>!current.some(x=>x.id===person.id))]);
-    setPeopleHasMore(r.items.length===100);
-   }
-  }catch(e){if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Could not load more contacts.");}
-  finally{if(requestGeneration.current===generation)setLoadingMorePeople(false);}
- }
- useEffect(()=>{
-  if(section!=="contacts"||!tenantId||!signedIn||search.trim().length<2){
-   setDirectoryResults(null);setDirectoryTotal(0);setDirectoryLoading(false);return;
-  }
-  let cancelled=false;
-  setDirectoryLoading(true);
-  const timer=window.setTimeout(()=>{
-   const params=new URLSearchParams({search:search.trim(),sort:contactSort,offset:"0"});
-   void connectFetch<{items:ConnectPerson[];total:number}>("/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/contacts/directory?"+params.toString())
-    .then(r=>{if(cancelled)return;setDirectoryResults(r.items);setDirectoryTotal(r.total);})
-    .catch(e=>{if(!cancelled){setDirectoryResults([]);setDirectoryTotal(0);setError(e instanceof Error?e.message:"Unable to search contacts.");}})
-    .finally(()=>{if(!cancelled)setDirectoryLoading(false);});
-  },280);
-  return()=>{cancelled=true;window.clearTimeout(timer);};
- },[tenantId,signedIn,section,search,contactSort,refreshCount]);
- const contactsWithDetails=people.filter(p=>p.contact_methods.some(m=>m.value.trim())).length;
- const contactsMissingDetails=people.length-contactsWithDetails;
- const contactRoles=[...new Set(people.flatMap(p=>p.roles))].sort();
- const searchingDirectory=section==="contacts"&&search.trim().length>=2;
- const matchingPeople=useMemo(()=>(searchingDirectory?(directoryResults||[]):people).filter(p=>{
-  const hasDetails=p.contact_methods.some(m=>m.value.trim());
-  if(contactView==="with_details"&&!hasDetails)return false;
-  if(contactView==="missing_details"&&hasDetails)return false;
-  if(contactRole!=="all"&&!p.roles.includes(contactRole))return false;
-  const q=search.trim().toLowerCase();
-  const lastEnquiry=enquiryByPerson.get(p.id);
-  return !q||[p.full_name,...p.contact_methods.map(m=>m.value),...p.roles,lastEnquiry?.summary,lastEnquiry?.source].some(v=>(v||"").toLowerCase().includes(q));
- }).sort((a,b)=>contactSort==="newest"?Date.parse(b.created_at)-Date.parse(a.created_at)||a.full_name.localeCompare(b.full_name):a.full_name.localeCompare(b.full_name)),
- [people,search,contactView,contactRole,contactSort,enquiryByPerson,searchingDirectory,directoryResults]);
-
- if(signedIn===null)return <main className="cx-gate">Checking your Connect sessionâ€¦</main>;
- if(!signedIn)return <ConnectSignInGate error={error} busy={busy} email={loginEmail} password={loginPassword} onEmailChange={setLoginEmail} onPasswordChange={setLoginPassword} onSubmit={signIn}/>;
- if(!workspacesReady)return <main className="cx-gate">Loading your Connect workspaceâ€¦</main>;
- if(!workspaces.length)return <ConnectNoWorkspaceGate error={error} onRetry={()=>{setWorkspacesReady(false);void loadWorkspaces().catch(e=>{setError(e instanceof Error?e.message:"Unable to check workspace access.");setWorkspacesReady(true);});}} onSignOut={()=>{setSignedIn(false);void getSupabaseBrowserClient()?.auth.signOut();}}/>;
- 
-  return <main className="cx-app">
-  <ConnectSidebar showMobileNav={showMobileNav} onToggleMobile={()=>setShowMobileNav(v=>!v)} canOpenPortal={canOpenPortal} tenantId={tenantId} tenantRole={tenant?.membership_role||"member"} workspaces={workspaces} accountEmail={accountEmail} section={section} visibleNavigation={visibleNavigation} onWorkspaceChange={value=>{setTenantId(value);setSelectedPerson(null);setSelectedOpportunity(null);setWorkflowContactId(null);}} onSectionChange={value=>{setSection(value);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setWorkflowContactId(null);setShowMobileNav(false);}}/>
-  <div className="cx-main">
-   <ConnectTopbar section={section} loading={loading} canOpenPortal={canOpenPortal} onRefresh={()=>setRefreshCount(v=>v+1)}/>
-   <div className="cx-content">
-    <ErrorMessage error={error}/>
-    {notice&&<div className="cx-success" role="status">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss notice">Ã—</button></div>}
-    {section!=="communications"&&<div className="cx-page-heading"><div><span className="cx-kicker">{tenant?.workspace_name}</span>
-     <h1>{section==="overview"?"Business overview":navigation.find(n=>n.id===section)?.label}</h1>
-     <p>{section==="overview"?"Stay on top of every enquiry, follow-up and admission.":
-     section==="enquiries"?"Capture, qualify and respond to every incoming enquiry.":
-     section==="contacts"?"One place for people, families and their relationships.":
-     section==="pipeline"?"Track every admission from first conversation to enrolment.":
-     section==="followups"?"Your team's calls, tasks and next actions.":
-     section==="calendar"?"Counselling, demo and trial appointments.":
-     section==="reports"?"Track conversion, counsellor performance and real recorded marketing ROI.":"Manage institute programmes and access."}</p></div>
-     {(section==="overview"||section==="enquiries")&&canWrite&&<button className="cx-primary" onClick={()=>setShowLeadForm(true)}>ï¼‹ New enquiry</button>}
-     {section==="contacts"&&<div className="cx-contacts-header-actions">
-      {canConfigure&&<button type="button" className="cx-secondary" onClick={()=>{setShowContactManager(v=>!v);setManagerPersonId(null);}}>{showContactManager?"â† Contact directory":"Manage contacts"}</button>}
-      {canConfigure&&<button type="button" className="cx-secondary" onClick={()=>setShowContactImport(true)}>â†‘ Import contacts</button>}
-      {canWrite&&<button type="button" className="cx-primary" onClick={()=>setShowContactForm(true)}>ï¼‹ New contact</button>}
-     </div>}
-    </div>}
-
-    {workflowContactId&&["enquiries","pipeline","followups","communications"].includes(section)&&<div className="cx-workflow-context" role="region" aria-label="Customer workflow">
-     <div className="cx-workflow-identity"><span>CUSTOMER WORKFLOW</span><strong>{workflowContact?.full_name||"Selected customer"}</strong><small>Related records only</small></div>
-     <nav className="cx-workflow-nav" aria-label="Customer journey sections">
-      {(["communications","enquiries","pipeline","followups"] as const).filter(x=>advanced||x!=="pipeline").map(x=><button key={x} type="button" aria-current={section===x?"page":undefined} onClick={()=>{setSection(x);setSearch("");setEnquiryView("all");setCategoryFilter("");setEnquirySourceFilter("all");}}>{x==="communications"?"Conversations":x==="pipeline"?"Admissions":x==="followups"?"Follow-ups":"Enquiries"}</button>)}
-      <button type="button" className="cx-workflow-clear" onClick={()=>{setWorkflowContactId(null);setSearch("");}}>All records Ã—</button>
-     </nav></div>}
-    {section==="overview"&&<>
-     <ConnectOverviewWidgets overview={overview} inquiries={inquiries} opportunities={opportunities} appointments={appointments} people={people} pipelines={pipelines} tasks={tasks} advanced={advanced} onNavigate={setSection}
-      onViewAllEnquiries={()=>{setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setEnquirySort("latest");setSection("enquiries");}}
-      onOpenEnquiry={inquiry=>{
-       setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");
-       if(inquiry.person_id||inquiry.opportunity_id){
-        setSelectedPerson(inquiry.person_id);setSelectedOpportunity(inquiry.opportunity_id);
-       }else{
-        setSearch(inquiry.summary||inquiry.contact_name||"");
-        setSection("enquiries");
-       }
-      }}
-      onSelectSource={source=>{setEnquirySourceFilter(source.toLowerCase());setCategoryFilter("");setEnquiryView("all");setSearch("");setSection("enquiries");}} attentionWidget={<><WorkspaceIntelligence tenantId={tenantId} refreshKey={refreshCount} onViewAll={()=>{setSearch("");setSection("contacts");}} onOpenContact={personId=>{const generation=requestGeneration.current;void (async()=>{
-      try{
-       if(!people.some(contact=>contact.id===personId)){
-        const response=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});
-        if(requestGeneration.current!==generation)return;
-        if(!response.items.length){setError("Contact is not available in this workspace.");return;}
-        setPeople(current=>current.some(contact=>contact.id===personId)?current:[...current,response.items[0]]);
-       }
-       if(requestGeneration.current!==generation)return;
-       setSection("contacts");setSelectedPerson(personId);setSelectedOpportunity(null);
-      }catch(e){if(requestGeneration.current===generation)setError(e instanceof Error?e.message:"Unable to open contact.");}
-     })();}}/></>}/>
-
-    </>}
-
-    {section==="enquiries"&&<section className="cx-panel cx-panel-full cx-enquiry-workspace">
-     <div className="cx-enquiry-heading">
-      <div><h2>Enquiry inbox</h2><p>{inquiries.length} recent enquiries loaded Â· Classify and move qualified leads forward</p></div>
-      <div className="cx-enquiry-summary">
-       <span><strong>{inquiries.length}</strong> Total</span>
-       <button type="button" className={enquiryView==="unclassified"?"is-active":""} aria-pressed={enquiryView==="unclassified"} onClick={()=>setEnquiryView(enquiryView==="unclassified"?"all":"unclassified")}><strong>{unclassifiedCount}</strong> Unclassified</button>
-       <button type="button" className={enquiryView==="linked"?"is-active":""} aria-pressed={enquiryView==="linked"} onClick={()=>setEnquiryView(enquiryView==="linked"?"all":"linked")}><strong>{linkedCount}</strong> Linked to admissions</button>
-      </div>
-     </div>
-     <div className="cx-enquiry-toolbar">
-      <label className="cx-enquiry-search"><span className="cx-sr-only">Search enquiries</span>
-       <input type="search" aria-label="Search enquiries" placeholder="Search name, message or sourceâ€¦" value={search} onChange={e=>setSearch(e.target.value)}/></label>
-      <label><span className="cx-sr-only">Filter enquiry source</span><select aria-label="Filter enquiry source" value={enquirySourceFilter} onChange={e=>setEnquirySourceFilter(e.target.value)}>
-       <option value="all">All channels</option>{enquirySources.map(source=><option key={source} value={source}>{shortLabel(source)}</option>)}
-      </select></label>
-      <label><span className="cx-sr-only">Filter enquiry category</span><select aria-label="Filter enquiry category" value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}>
-       <option value="">All categories</option>{enquiryPrefs?.categories.filter(c=>c.active||c.id===categoryFilter).map(c=><option value={c.id} key={c.id}>{c.label}</option>)}
-      </select></label>
-      <label><span className="cx-sr-only">Sort enquiries</span><select aria-label="Sort enquiries" value={enquirySort} onChange={e=>setEnquirySort(e.target.value==="oldest"?"oldest":"latest")}>
-       <option value="latest">Newest first</option><option value="oldest">Oldest first</option>
-      </select></label>
-      {(search||categoryFilter||enquirySourceFilter!=="all"||enquiryView!=="all"||enquirySort!=="latest")&&<button type="button" className="cx-enquiry-clear" onClick={()=>{setSearch("");setCategoryFilter("");setEnquirySourceFilter("all");setEnquiryView("all");setEnquirySort("latest");}}>Clear filters</button>}
-     </div>
-     <div className="cx-enquiry-result-count" role="status">{matchingInquiries.length} of {inquiries.length} enquiries shown{enquiryView==="unclassified"?" Â· Unclassified only":enquiryView==="linked"?" Â· Linked to admissions":""}</div>
-     {matchingInquiries.length===0?<EmptyState title="No matching enquiries" description="Try changing the search or filters, or capture a new enquiry."/>:
-      <div className="cx-table-wrap cx-enquiry-table-scroll"><table className="cx-table cx-enquiry-table">
-       <thead><tr><th scope="col">Customer &amp; enquiry</th><th scope="col">Channel</th><th scope="col">Classification</th><th scope="col">Progress</th><th scope="col">Received</th><th scope="col"><span className="cx-sr-only">Actions</span></th></tr></thead>
-       <tbody>{matchingInquiries.map(i=>{
-        const suggestion=!i.category_id&&canWrite?suggestEnquiryCategory(i.summary||"",enquiryPrefs?.categories||[]):null;
-        return <tr key={i.id}>
-         <td><div className="cx-enquiry-person"><span className="cx-avatar" aria-hidden="true">{initials(i.contact_name||"Lead")}</span><span><strong className="cx-cell-title">{i.contact_name||"New enquiry"}</strong><small className="cx-cell-secondary">{i.summary||i.contact_detail||"No enquiry description"}</small></span></div></td>
-         <td><span className="cx-pill cx-channel-badge" style={{borderLeftColor:channelColor(i.source)}}>{shortLabel(i.source)}</span></td>
-         <td><div className="cx-enquiry-category">
-          {suggestion&&<button type="button" className="cx-category-suggestion" disabled={busy} title={"Apply suggested category: "+suggestion.label} onClick={()=>void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId:suggestion.id}})}),"Suggested category applied.")}>Suggested: {suggestion.label} Â· Apply</button>}
-          <select aria-label={"Category for "+(i.contact_name||"enquiry")} disabled={!canWrite||busy} value={i.category_id||""} onChange={e=>{const categoryId=e.target.value;if(!categoryId)return;void run(()=>connectFetch("/api/connect/workspaces/"+tenantId+"/enquiry-preferences",{method:"PATCH",body:JSON.stringify({action:"classify_inquiry",data:{inquiryId:i.id,categoryId}})}),"Enquiry categorized.");}}>
-           <option value="">Unclassified</option>{enquiryPrefs?.categories.filter(c=>c.active||c.id===i.category_id).map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
-          </select></div></td>
-         <td><div className="cx-enquiry-progress"><span className="cx-status" data-tone={stageTone(i.stage_name,i.outcome)}>{i.stage_name||"New enquiry"}</span>{i.opportunity_title&&<small title={i.opportunity_title}>{i.opportunity_title}</small>}</div></td>
-         <td><time className="cx-enquiry-date" dateTime={i.received_at}>{dateLabel(i.received_at)}</time></td>
-         <td><div className="cx-enquiry-quick-actions">
-        <button type="button" className="cx-link-button cx-enquiry-view" aria-label={"View details for "+(i.contact_name||"enquiry")} onClick={()=>{setSelectedPerson(i.person_id);setSelectedOpportunity(i.opportunity_id);}}>View details â†’</button>
-        {i.person_id&&<button type="button" className="cx-link-button" onClick={()=>openCustomerWorkflow(i.person_id!,"followups")}>Follow-ups â†—</button>}
-       </div></td>
-        </tr>;
-       })}</tbody>
-      </table></div>}
-    </section>}
-
-    {showContactImport&&tenantId&&<ContactImportWizard key={tenantId} tenantId={tenantId}
-      onClose={()=>setShowContactImport(false)}
-      onImported={()=>{setRefreshCount(v=>v+1);setSearch("");setContactView("all");}}/>}
-    {section==="contacts"&&showContactManager&&canConfigure&&<ContactManagementWorkspace key={tenantId} tenantId={tenantId}
-      initialPersonId={managerPersonId} onClose={()=>{setShowContactManager(false);setManagerPersonId(null);}}
-      onChanged={()=>{setRefreshCount(v=>v+1);setSelectedPerson(null);setSelectedOpportunity(null);}}/>}
-    {section==="contacts"&&!showContactManager&&<section className="cx-panel cx-contacts-directory">
-     <header className="cx-contacts-directory-head">
-      <div><h2>Contact directory</h2><p>Search customers, review enquiry history and open Contact 360</p></div>
-      <div className="cx-contacts-totals" aria-label="Contact summary">
-       <span><strong>{people.length}</strong> Loaded</span>
-       <button type="button" className={contactView==="with_details"?"active":""} aria-pressed={contactView==="with_details"} onClick={()=>setContactView(contactView==="with_details"?"all":"with_details")}><strong>{contactsWithDetails}</strong> With details</button>
-       <button type="button" className={contactView==="missing_details"?"active":""} aria-pressed={contactView==="missing_details"} onClick={()=>setContactView(contactView==="missing_details"?"all":"missing_details")}><strong>{contactsMissingDetails}</strong> Missing details</button>
-      </div>
-     </header>
-     <div className="cx-contacts-directory-controls">
-      <label className="cx-contacts-search"><span className="cx-sr-only">Search contacts</span><input type="search" aria-label="Search contacts" placeholder="Search name, contact info or enquiryâ€¦" value={search} onChange={e=>setSearch(e.target.value)}/></label>
-      <label><span className="cx-sr-only">Contact role</span><select aria-label="Filter contact role" value={contactRole} onChange={e=>setContactRole(e.target.value)}><option value="all">All roles</option>{contactRoles.map(role=><option key={role} value={role}>{shortLabel(role)}</option>)}</select></label>
-      <label><span className="cx-sr-only">Sort contacts</span><select aria-label="Sort contacts" value={contactSort} onChange={e=>setContactSort(e.target.value==="newest"?"newest":"name")}><option value="name">Name Aâ€“Z</option><option value="newest">Recently added</option></select></label>
-      {(search||contactRole!=="all"||contactSort!=="name"||contactView!=="all")&&<button type="button" className="cx-contacts-clear" onClick={()=>{setSearch("");setContactRole("all");setContactView("all");setContactSort("name");}}>Clear filters</button>}
-     </div>
-     <div className="cx-contacts-directory-count" role="status">{directoryLoading?"Searching full contact directoryâ€¦":searchingDirectory?matchingPeople.length+" of "+directoryTotal+" matching contacts":matchingPeople.length+" of "+people.length+" loaded contacts shown"}</div>
-     {matchingPeople.length===0?<EmptyState title={directoryLoading?"Searching contactsâ€¦":"No matching contacts"} description={people.length?"Try changing the search or filters.":"New contacts will appear here when they are created or linked to an enquiry."}/>:
-      <div className="cx-contacts-directory-list">
-       <div className="cx-contacts-directory-columns" aria-hidden="true"><span>Contact</span><span>Latest enquiry</span><span>Contact information</span><span> </span></div>
-       {matchingPeople.map(p=>{
-        const latest=enquiryByPerson.get(p.id);
-        const primary=p.contact_methods.find(m=>m.primary&&m.value.trim())||p.contact_methods.find(m=>m.value.trim());
-        return <button type="button" className="cx-contacts-directory-row" key={p.id} onClick={()=>{setPeople(current=>current.some(x=>x.id===p.id)?current:[...current,p]);setSelectedOpportunity(null);setSelectedPerson(p.id);}} aria-label={"Open contact profile for "+p.full_name}>
-         <span className="cx-contacts-person"><span className="cx-avatar" aria-hidden="true">{initials(p.full_name)}</span><span className="cx-contacts-person-details"><strong>{p.full_name}</strong><small>{p.roles.length?p.roles.map(shortLabel).join(" Â· "):"Contact"}</small></span></span>
-         <span className="cx-contacts-enquiry">{latest?<><span title={latest.summary}>{latest.summary}</span><small>{shortLabel(latest.source)} Â· {latest.count} {latest.count===1?"enquiry":"enquiries"} in loaded records</small></>:<small>No enquiries in loaded records</small>}</span>
-         <span className="cx-contacts-method">{primary?<><span title={primary.value}>{primary.value}</span><small>{shortLabel(primary.kind)}</small></>:<span className="cx-contacts-missing">Contact details needed</span>}</span>
-         <span className="cx-contacts-open" aria-hidden="true">View â†—</span>
-        </button>;
-       })}
-      </div>}
-     {(searchingDirectory?(directoryResults||[]).length<directoryTotal:peopleHasMore)&&!directoryLoading&&<div className="cx-contacts-load-more"><span>{searchingDirectory?"More matching contacts are available.":"Showing loaded contacts. More records are available in this workspace."}</span>
-      <button type="button" className="cx-secondary" disabled={loadingMorePeople} onClick={()=>void loadMoreContacts()}>{loadingMorePeople?"Loadingâ€¦":"Load 100 more contacts"}</button>
-     </div>}
-    </section>}
-
-    {section==="pipeline"&&<div className="cx-pipeline-stack">
-     {pipelines.length>0&&<PipelineVisual pipelines={pipelines} opportunities={visibleOpportunities} onOpen={id=>{const item=opportunities.find(o=>o.id===id);if(item){setSelectedOpportunity(id);setSelectedPerson(item.contact_id);}}}/>}
-     {pipelines.length===0?<section className="cx-panel">
-      <EmptyState title="Set up your first admissions pipeline" description="Track every opportunity from initial enquiry to enrolment. Start with a ready-made five-stage pipeline."/>
-      {canConfigure?<form className="cx-inline-form" aria-label="Create admissions pipeline" style={{maxWidth:520,margin:"0 auto 22px",display:"flex",flexWrap:"wrap",justifyContent:"center",gap:10}} onSubmit={e=>{e.preventDefault();const name=pipelineName.trim()||"Student Admissions";void run(async()=>{
-       await crmCommand(tenantId,"pipelines","bootstrap_pipeline",{name});
-       setPipelineName("");
-      },"Admissions pipeline created. You can now add and track opportunities.");}}>
-       <label htmlFor="cx-pipeline-quick-name" style={{width:"100%",textAlign:"center",fontWeight:600,fontSize:13}}>Pipeline name</label>
-       <input id="cx-pipeline-quick-name" style={{flex:"1 1 230px",minWidth:0}} value={pipelineName} maxLength={100} onChange={e=>setPipelineName(e.target.value)} placeholder="Student Admissions"/>
-       <button type="submit" className="cx-primary" disabled={busy}>{busy?"Creatingâ€¦":"Create pipeline"}</button>
-       <small style={{flexBasis:"100%",textAlign:"center",color:"#657e92"}}>Default stages: New â†’ Contacted â†’ Trial â†’ Won / Lost. You can manage additional pipelines in Institute settings.</small>
-      </form>:<p style={{textAlign:"center",margin:"0 0 24px",color:"#657e92",fontSize:13}}>Ask your workspace owner, admin or manager to create the first pipeline.</p>}
-     </section>:
-     pipelines.map(p=><section key={p.id} className="cx-pipeline-section">
-      <div className="cx-panel-header"><div><h2>{p.name}</h2><p>{p.stages.length} stages Â· {visibleOpportunities.filter(o=>o.pipeline_id===p.id).length} opportunities</p></div></div>
-      <div className="cx-kanban">{[...p.stages].sort((a,b)=>a.order-b.order).map(stage=><div className="cx-kanban-column" key={stage.id}
-       data-drop-target={dropStageId===stage.id&&draggedOpportunityId?"true":undefined}
-       onDragOver={e=>{const moving=opportunities.find(o=>o.id===draggedOpportunityId);if(!busy&&canWrite&&moving?.pipeline_id===p.id&&moving.stage_id!==stage.id){e.preventDefault();e.dataTransfer.dropEffect="move";setDropStageId(stage.id);}}}
-       onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setDropStageId(current=>current===stage.id?null:current);}}
-       onDrop={e=>{e.preventDefault();const moving=opportunities.find(o=>o.id===draggedOpportunityId&&o.pipeline_id===p.id);setDraggedOpportunityId(null);setDropStageId(null);if(moving&&moving.stage_id!==stage.id&&canWrite&&!busy)void updateStage(moving,stage.id);}}>
-       <div className="cx-column-heading"><span className="cx-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}}/><strong>{stage.name}</strong><span>{visibleOpportunities.filter(o=>o.stage_id===stage.id).length}</span></div>
-       {visibleOpportunities.filter(o=>o.stage_id===stage.id).map(o=><button key={o.id} className="cx-deal" draggable={canWrite&&!busy}
-        data-dragging={draggedOpportunityId===o.id?"true":undefined}
-        title={canWrite?"Drag to another stage, or open to change the stage using the dropdown":"View admission"}
-        onDragStart={e=>{if(!canWrite||busy){e.preventDefault();return;}setDraggedOpportunityId(o.id);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",o.id);}}
-        onDragEnd={()=>{setDraggedOpportunityId(null);setDropStageId(null);}}
-        onClick={()=>{setSelectedOpportunity(o.id);setSelectedPerson(o.contact_id);}}>
-        <strong>{o.title}</strong><small>{people.find(x=>x.id===o.contact_id)?.full_name||"Institutional opportunity"}</small>
-        <span className="cx-deal-foot"><span>{o.expected_value==null?"No value specified":o.currency+" "+o.expected_value.toLocaleString("en-IN")}</span><span>View â†’</span></span></button>)}
-       {!visibleOpportunities.some(o=>o.stage_id===stage.id)&&<span className="cx-stage-empty">No admissions in this stage</span>}
-      </div>)}</div>
-     </section>)}
-    </div>}
-
-    {section==="followups"&&<div className="cx-followups-workspace">
-     <ConnectFollowupsBoard tasks={tasks} people={people} opportunities={opportunities} focusPersonId={workflowContactId} canWrite={canWrite} busy={busy}
-      onComplete={taskId=>void run(()=>crmCommand(tenantId,"tasks","complete_task",{taskId}),"Follow-up completed.")}
-      onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}
-      onOpenOpportunity={(personId,opportunityId)=>{setSelectedPerson(personId);setSelectedOpportunity(opportunityId);}}/>
-     <details className="cx-followups-reminders">
-      <summary>My reminder notifications <span>Alerts from the reminder scheduler</span></summary>
-      <ConnectReminderInbox key={tenantId} tenantId={tenantId}/>
-     </details>
-    </div>}
-
-    {section==="calendar"&&<ConnectCalendar tenantId={tenantId} appointments={appointments} people={people} opportunities={opportunities}
-     programs={programs} members={members} canWrite={canWrite} canManage={canConfigure}
-     onChanged={()=>setRefreshCount(v=>v+1)}
-     onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}
-     onOpenOpportunity={opportunityId=>{const opp=opportunities.find(o=>o.id===opportunityId);if(opp){setSelectedOpportunity(opportunityId);setSelectedPerson(opp.contact_id);}}}/>}
-
-    {section==="communications"&&<ConnectUnifiedInbox key={tenantId} tenantId={tenantId} canWrite={canWrite} focusPersonId={workflowContactId}
-     onOpenWorkflow={(id,destination)=>openCustomerWorkflow(id,destination)} allowAdmissions={advanced}
-     onDataChanged={()=>setRefreshCount(v=>v+1)} onOpenContact={personId=>{void (async()=>{try{if(!people.some(person=>person.id===personId)){const result=await crmList<ConnectPerson>(tenantId,"people",{id:personId,limit:"1"});if(!result.items.length){setError("Contact is no longer available.");return;}setPeople(current=>current.some(person=>person.id===personId)?current:[...current,result.items[0]]);}setSection("contacts");setSelectedOpportunity(null);setSelectedPerson(personId);}catch(e){setError(e instanceof Error?e.message:"Could not open linked CRM contact.");}})();}}/>}
-
-    {section==="reports"&&(canConfigure?<ConnectReports key={tenantId} tenantId={tenantId}/>:
-     <section className="cx-panel"><div className="cx-empty"><strong>Reporting access restricted</strong><p>Ask your institute manager for access.</p></div></section>)}
-
-    {section==="settings"&&<div className="cx-settings-workspace">
-    <EnquirySettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")} onSaved={setEnquiryPrefs}/>
-    {advanced&&<details className="cx-settings-section cx-settings-business">
-     <summary><span><strong>Business configuration</strong><small>Team access, programmes and admissions pipelines</small></span><span className="cx-settings-section-action">Manage</span></summary>
-     <div className="cx-settings-grid">
-     <section className="cx-panel"><div className="cx-panel-header"><div><h2>Institute access</h2><p>Who can manage this workspace</p></div></div>
-      <dl className="cx-settings-list"><div><dt>Institute</dt><dd>{tenant?.workspace_name}</dd></div><div><dt>Workspace</dt><dd>{tenant?.slug}</dd></div><div><dt>Your role</dt><dd>{shortLabel(tenant?.membership_role||"")}</dd></div></dl>
-      {canConfigure&&<button className="cx-secondary" onClick={()=>void connectFetch<{members:ConnectMember[]}>("/api/connect/workspaces/"+tenantId+"/members").then(r=>setMembers(r.members)).catch(e=>setError(e instanceof Error?e.message:"Could not load members."))}>View team members</button>}
-      {members.length>0&&<div className="cx-member-list">{members.map(m=><div key={m.member_id}>{m.member_user_id.slice(0,8)}â€¦ <span>{shortLabel(m.member_role)} Â· {m.member_status}</span></div>)}</div>}
-     </section>
-     <section className="cx-panel"><div className="cx-panel-header"><div><h2>Programmes</h2><p>{programs.length} courses or services configured</p></div></div>
-      <div className="cx-chip-row">{programs.map(p=><span className="cx-pill" key={p.id}>{p.name}</span>)}</div>
-      {canConfigure&&<form className="cx-inline-form" onSubmit={e=>{e.preventDefault();void run(async()=>{await crmCommand(tenantId,"programs","create_program",{name:programName});setProgramName("");},"Programme created.");}}>
-       <input required placeholder="New programme name" aria-label="Programme name" value={programName} onChange={e=>setProgramName(e.target.value)}/>
-       <button disabled={busy} className="cx-secondary">Add</button></form>}
-     </section>
-     <section className="cx-panel"><div className="cx-panel-header"><div><h2>Admissions pipelines</h2><p>{pipelines.length} configured pipelines</p></div></div>
-      <div className="cx-chip-row">{pipelines.map(p=><span className="cx-pill" key={p.id}>{p.name}</span>)}</div>
-      {canConfigure&&<form className="cx-inline-form" onSubmit={e=>{e.preventDefault();void run(async()=>{
-       await crmCommand(tenantId,"pipelines","bootstrap_pipeline",{name:pipelineName});
-       setPipelineName("");
-      },"Pipeline created with five default stages.");}}>
-       <input required placeholder="New pipeline name" aria-label="Pipeline name" value={pipelineName} onChange={e=>setPipelineName(e.target.value)}/>
-       <button disabled={busy} className="cx-secondary">Add</button></form>}
-     </section>
-     </div>
-    </details>}
-    {advanced&&<details className="cx-settings-section">
-     <summary><span><strong>Automation &amp; reminders</strong><small>Assignments, first follow-ups and in-app reminder timing</small></span><span className="cx-settings-section-action">Configure</span></summary>
-     <ConnectAutomationSettings key={tenantId} tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>
-    </details>}
-    {canConfigure&&<details className="cx-settings-section" id="cx-integration-settings">
-     <summary><span><strong>Channel integrations</strong><small>WhatsApp, email, Meta and website lead capture</small></span><span className="cx-settings-section-action">Manage channels</span></summary>
-     <ChannelSettings tenantId={tenantId} canManage={["owner","admin"].includes(tenant?.membership_role||"")}/>
-    </details>}
-    </div>}
-   </div>
-  </div>
-
-  {showContactForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)closeContactForm();}}><section className="cx-modal" role="dialog" aria-modal="true" aria-busy={busy} aria-labelledby="cx-new-contact-title">
-   <div className="cx-modal-header"><div><span className="cx-kicker">CONTACT DIRECTORY</span><h2 id="cx-new-contact-title">New contact</h2><p>Add a person without generating an enquiry.</p></div><button aria-label="Close new contact" data-escape-close="true" disabled={busy} onClick={closeContactForm}>Ã—</button></div>
-   <form className="cx-form" onSubmit={createContact}>
-    <label>Full name <span>*</span><input required autoFocus maxLength={150} value={newContact.name} onChange={e=>setNewContact(v=>({...v,name:e.target.value}))}/></label>
-    <label>Relationship<select value={newContact.role} onChange={e=>setNewContact(v=>({...v,role:e.target.value}))}>
-     {["contact","guardian","learner","customer","staff","other"].map(r=><option key={r} value={r}>{shortLabel(r)}</option>)}
-    </select></label>
-    <div className="cx-form-columns"><label>Phone<input type="tel" maxLength={35} value={newContact.phone} onChange={e=>setNewContact(v=>({...v,phone:e.target.value}))}/></label>
-     <label>Email<input type="email" value={newContact.email} onChange={e=>setNewContact(v=>({...v,email:e.target.value}))}/></label></div>
-    <div className="cx-form-actions"><button type="button" className="cx-secondary" disabled={busy} onClick={closeContactForm}>Cancel</button><button disabled={busy} className="cx-primary">Save contact</button></div>
-   </form></section></div>}
-  {showLeadForm&&<div className="cx-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)closeLeadForm();}}><section className="cx-modal" role="dialog" aria-modal="true" aria-busy={busy} aria-labelledby="cx-new-lead-title">
-   <div className="cx-modal-header"><div><span className="cx-kicker">QUICK CAPTURE</span><h2 id="cx-new-lead-title">New enquiry</h2><p>Capture the important details now. Qualify the lead later.</p></div><button aria-label="Close new enquiry" data-escape-close="true" disabled={busy} onClick={closeLeadForm}>Ã—</button></div>
-   <form onSubmit={captureLead} className="cx-form"><label>Contact name <span>*</span><input required maxLength={150} autoFocus value={lead.name} readOnly={Boolean(lead.personId)}
-     onChange={e=>setLead(v=>({...v,name:e.target.value,personId:""}))} placeholder="Parent or contact name"/></label>
-    {!lead.personId&&lead.name.trim().length>=2&&people.filter(p=>p.full_name.toLowerCase().includes(lead.name.trim().toLowerCase())).slice(0,5).length>0&&
-    <div className="cx-suggestions"><small>Existing contacts â€” select one to avoid duplicates</small>
-     {people.filter(p=>p.full_name.toLowerCase().includes(lead.name.trim().toLowerCase())).slice(0,5).map(p=><button type="button" key={p.id}
-      onClick={()=>setLead(v=>({...v,personId:p.id,name:p.full_name,email:p.contact_methods.find(m=>m.kind==="email")?.value||"",phone:p.contact_methods.find(m=>m.kind==="mobile")?.value||""}))}>
-      {p.full_name}<span>{p.contact_methods.map(m=>m.value).join(" Â· ")||"Existing contact"}</span></button>)}
-    </div>}
-    {lead.personId&&<div className="cx-selected-contact"><span>Using existing contact â€” no duplicate will be created.</span>
-      <button type="button" onClick={()=>setLead(v=>({...v,personId:""}))}>Change</button></div>}
-    <div className="cx-form-columns"><label>Phone<input type="tel" maxLength={35} readOnly={Boolean(lead.personId)} value={lead.phone} onChange={e=>setLead(v=>({...v,phone:e.target.value}))} placeholder="+91 â€¦"/></label>
-    <label>Email<input type="email" readOnly={Boolean(lead.personId)} value={lead.email} onChange={e=>setLead(v=>({...v,email:e.target.value}))} placeholder="name@example.com"/></label></div>
-    <label>Source <span>*</span><select value={lead.source} onChange={e=>setLead(v=>({...v,source:e.target.value}))}>
-     {["whatsapp","phone","website","instagram","facebook","walk_in","referral","email","other"].map(x=><option key={x} value={x}>{shortLabel(x)}</option>)}
-    </select></label>
-    <label>Enquiry category<select value={leadCategory} onChange={e=>setLeadCategory(e.target.value)}><option value="">Unclassified â€” decide later</option>{enquiryPrefs?.categories.filter(c=>c.active).map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
-    <label>Admissions pipeline <small>(optional)</small><select value={lead.pipelineId} onChange={e=>setLead(v=>({...v,pipelineId:e.target.value}))}>
-     <option value="">Capture enquiry only</option>{pipelines.filter(p=>p.stages.some(s=>s.outcome==="open")).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-    </select></label>
-    <label>Enquiry details<textarea rows={3} maxLength={2000} value={lead.summary} onChange={e=>setLead(v=>({...v,summary:e.target.value}))} placeholder="What programme are they interested in?"/></label>
-    <div className="cx-form-actions"><button type="button" className="cx-secondary" disabled={busy} onClick={closeLeadForm}>Cancel</button><button className="cx-primary" disabled={busy}>{busy?"Savingâ€¦":"Save enquiry"}</button></div>
-   </form></section></div>}
-
-  {(selectedContact||selectedLead)&&<div className="cx-drawer-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy){setSelectedPerson(null);setSelectedOpportunity(null);}}}>
-   <aside className="cx-drawer" role="dialog" aria-modal="true" aria-busy={busy} aria-label="Contact 360 profile">
-    <div className="cx-drawer-header"><span>CONTACT WORKSPACE</span><button aria-label="Close details" data-escape-close="true" disabled={busy} onClick={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}>Ã—</button></div>
-    <div className="cx-drawer-body">
-     <ContactProfile allowAdmissions={advanced} canManage={canConfigure}
-      onManageContact={()=>{const id=selectedContact?.id||selectedLead?.contact_id;if(!id)return;
-       setSection("contacts");setShowContactManager(true);setManagerPersonId(id);setSelectedPerson(null);setSelectedOpportunity(null);}}
-      person={selectedContact} opportunity={selectedLead} tenantId={tenantId} refreshKey={refreshCount} inquiries={inquiries} opportunities={opportunities} tasks={tasks} appointments={appointments} canWrite={canWrite} onNavigateWorkflow={destination=>{const id=selectedContact?.id||selectedLead?.contact_id;if(id)openCustomerWorkflow(id,destination);}}
-      onCreateEnquiry={()=>{if(!selectedContact)return;setLead({name:selectedContact.full_name,phone:selectedContact.contact_methods.find(m=>["phone","mobile"].includes(m.kind.toLowerCase()))?.value||"",email:selectedContact.contact_methods.find(m=>m.kind.toLowerCase()==="email")?.value||"",source:"phone",summary:"",pipelineId:"",personId:selectedContact.id});setSelectedPerson(null);setSelectedOpportunity(null);setShowLeadForm(true);}} onClose={()=>{setSelectedPerson(null);setSelectedOpportunity(null);}}
-      overviewContent={<>{selectedLead&&<section className="cx-detail-card"><h3>Admission opportunity</h3><strong className="cx-detail-title">{selectedLead.title}</strong>
-      <p className="cx-muted">Current stage: {selectedLead.stage_name} Â· Version {selectedLead.version}</p>
-      {canWrite&&<label>Move to stage<select value={selectedLead.stage_id} disabled={busy} onChange={e=>void updateStage(selectedLead,e.target.value)}>
-       {pipelines.find(p=>p.id===selectedLead.pipeline_id)?.stages.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-      </select></label>}
-      {!canWrite&&<span className="cx-status">{selectedLead.stage_name}</span>}
-      {canConfigure&&<label>Assigned counsellor
-       <select value={selectedLead.owner_membership_id||""} disabled={busy||!assignees.length}
-        onChange={e=>void updateAssignment(selectedLead,e.target.value)}>
-        <option value="">Unassigned</option>
-        {assignees.map(a=><option key={a.id} value={a.id}>{a.label} Â· {shortLabel(a.role)}</option>)}
-       </select></label>}
-     </section>}
-{selectedContact&&opportunities.filter(o=>o.contact_id===selectedPerson).length>0&&<section className="cx-detail-card"><h3>Admissions</h3>
-      {opportunities.filter(o=>o.contact_id===selectedPerson).map(o=><button className="cx-detail-link" key={o.id} onClick={()=>setSelectedOpportunity(o.id)}>{o.title} <span>{o.stage_name} â†’</span></button>)}</section>}</>}
-      enquiriesContent={<>{selectedContact&&<section className="cx-detail-card"><h3>Recent enquiries</h3>
-      {inquiries.filter(i=>i.person_id===selectedPerson).length?
-       inquiries.filter(i=>i.person_id===selectedPerson).map(i=><div className="cx-detail-row" key={i.id}><span>{shortLabel(i.source)}</span><strong>{dateLabel(i.received_at)}</strong></div>):
-       <p className="cx-muted">No linked enquiries loaded.</p>}</section>}</>}
-      timelineContent={<>{(selectedContact?.id||selectedLead?.contact_id)&&<ContactTimeline key={tenantId+"-"+(selectedContact?.id||selectedLead?.contact_id)} tenantId={tenantId} personId={(selectedContact?.id||selectedLead?.contact_id)!} refreshKey={refreshCount}/>}
-{canWrite&&(selectedContact||selectedLead)&&<section className="cx-detail-card"><h3>Record a call or counselling note</h3>
-      <form className="cx-form" onSubmit={saveNote}><label>Note<textarea required rows={3} maxLength={3000} placeholder="What was discussed and what happens next?"
-       value={activityNote} onChange={e=>setActivityNote(e.target.value)}/></label>
-       <button className="cx-secondary" disabled={busy||!activityNote.trim()}>Save note</button>
-      </form></section>}
-</>}
-      followupsContent={<>{canWrite&&<section className="cx-detail-card"><h3>Schedule a follow-up</h3>
-      <form className="cx-form" onSubmit={saveTask}><label>Next action<input required maxLength={250} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} placeholder="Call to discuss programme"/></label>
-       <label>Due at<input type="datetime-local" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/></label><button className="cx-primary" disabled={busy}>Save follow-up</button></form></section>}
-{canWrite&&<section className="cx-detail-card"><h3>Book counselling / demo</h3>
-      <form className="cx-form" onSubmit={saveAppointment}><label>Title<input required value={appointmentTitle} onChange={e=>setAppointmentTitle(e.target.value)} placeholder="Introductory counselling"/></label>
-       <div className="cx-form-columns"><label>Starts<input required type="datetime-local" value={appointmentStarts} onChange={e=>setAppointmentStarts(e.target.value)}/></label>
-       <label>Ends<input required type="datetime-local" value={appointmentEnds} onChange={e=>setAppointmentEnds(e.target.value)}/></label></div>
-       <button className="cx-secondary" disabled={busy}>Schedule appointment</button></form></section>}</>}
-      relationsContent={<>{selectedContact&&<ContactRelationships key={tenantId+"-"+selectedContact.id} tenantId={tenantId} personId={selectedContact.id} canWrite={canWrite} canManage={["owner","admin","manager"].includes(tenant?.membership_role||"")}/>}</>}
-      detailsContent={<>{selectedContact&&<section className="cx-detail-card"><h3>Contact details</h3>{selectedContact.contact_methods.length?
-      selectedContact.contact_methods.map((m,i)=><div className="cx-detail-row" key={i}><span>{shortLabel(m.kind)}</span><strong>{m.value}</strong></div>):
-      <p className="cx-muted">No contact methods recorded.</p>}</section>}
-{canWrite&&selectedContact&&pipelines.length>0&&<section className="cx-detail-card"><h3>Start a new admission</h3>
-      <form className="cx-form" onSubmit={startAdmission}>
-       <label>Admissions pipeline<select required value={newAdmissionPipeline} onChange={e=>setNewAdmissionPipeline(e.target.value)}><option value="">Choose a pipeline</option>
-        {pipelines.filter(p=>p.stages.some(st=>st.outcome==="open")).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-       </select></label>
-       <label>Admission title<input value={newAdmissionTitle} maxLength={200} onChange={e=>setNewAdmissionTitle(e.target.value)} placeholder="e.g. Python Beginner Course"/></label>
-       <button className="cx-secondary" disabled={busy}>Start admission</button>
-      </form></section>}</>}
-     />
-    </div>
-   </aside>
-  </div>}
- </main>;
-}
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíÛ^öÝ:-jZ.¶›­–)Þ³R'W6R6Æ–VçB#°¦–×÷'B´f÷&ÔWfVçBÇW6T6ÆÆ&6²ÇW6TVffV7BÇW6TÖVÖòÇW6U&VbÇW6U7FFWÒg&öÒ'&V7B#°¦–×÷'B¶vWE7W&6T'&÷w6W$6Æ–VçGÒg&öÒ$öÆ–"÷7W&6Rö'&÷w6W"#°¦–×÷'B¶vWD7W'&VçE&öf–ÆWÒg&öÒ$öÆ–"÷&W÷6—F÷'’#°¦–×÷'B¶6öææV7DfWF6‚Æ7&Ô6öÖÖæBÆ7&ÔÆ—7BÀ¢G—R6öææV7Ev÷&·76RÇG—R6öææV7EW'6öâÇG—R6öææV7D–çV—'’ÇG—R6öææV7D÷÷'GVæ—G’À¢G—R6öææV7E—VÆ–æRÇG—R6öææV7EF6²ÇG—R6öææV7Dö–çFÖVçBÇG—R6öææV7D÷fW'f–WrÀ¢G—R6öææV7E&öw&ÒÇG—R6öææV7DÖVÖ&W'Òg&öÒ$öfVGW&W2ö6öææV7Bö’ö6Æ–VçB#°¦–×÷'B´6†ææVÅ6WGF–æw7Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6†ææVÅ6WGF–æw2#°¦–×÷'B´6öææV7DWFöÖF–öå6WGF–æw7Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7DWFöÖF–öå6WGF–æw2#°¦–×÷'B´6öææV7E&VÖ–æFW$–æ&÷‡Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7D6öÖ×Væ–6F–öç2#°¦–×÷'B´6öææV7DföÆÆ÷wW4&ö&GÒg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7DföÆÆ÷wW4&ö&B#°¦–×÷'B´6öææV7D6ÆVæF'Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7D6ÆVæF"#°¦–×÷'B´6öææV7DFÖ—76–öä†æFöfg7Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7DFÖ—76–öä†æFöfg2#°¦–×÷'Bµ—VÆ–æUf—7VÇÒg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7DFFv–FvWG2#°¦–×÷'B·7FvUFöæRÆ6†ææVÄ6öÆ÷"ÇFöæT6öÆ÷'Òg&öÒ$öfVGW&W2ö6öææV7Bö6öææV7B×ÆWGFR#°¦–×÷'B´6öææV7EVæ–f–VD–æ&÷‡Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7EVæ–f–VD–æ&÷‚#°¦–×÷'B´6öææV7E&W÷'G7Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7E&W÷'G2#°¦–×÷'B´6öææV7D÷fW'f–Wuv–FvWG7Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öææV7D÷fW'f–Wuv–FvWG2#°¦–×÷'B´6öçF7E&öf–ÆWÒg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ö6öçF7Bô6öçF7E&öf–ÆR#°¦–×÷'B´6öçF7D–×÷'Ev—¦&GÒg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öçF7D–×÷'Ev—¦&B#°¦–×÷'B´6öçF7DÖævVÖVçEv÷&·76WÒg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ô6öçF7DÖævVÖVçEv÷&·76R#°¦–×÷'B´6öçF7EF–ÖVÆ–æWÒg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ö6öçF7Bô6öçF7EF–ÖVÆ–æR#°¦–×÷'B´6öçF7E&VÆF–öç6†—7Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ö6öçF7Bô6öçF7E&VÆF–öç6†—2#°¦–×÷'Bµv÷&·76T–çFVÆÆ–vVæ6WÒg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ö6öçF7Bô6öçF7D–çFVÆÆ–vVæ6R#°¦–×÷'B´VçV—'•6WGF–æw2Ç&VDVçV—'•&VfW&Væ6W7Òg&öÒ$öfVGW&W2ö6öææV7Bö6ö×öæVçG2ôVçV—'•6WGF–æw2#°¦–×÷'BG—R´VçV—'•&VfW&Væ6W7Òg&öÒ$öfVGW&W2ö6öææV7B÷G—W2öVçV—&–W2#°¦–×÷'B¶æf–vF–öâÆV×G”÷fW'f–WrÆFFTÆ&VÂÆ–æ—F–Ç2Ç6†÷'DÆ&VÂÇ7VvvW7DVçV—'”6FVv÷'’ÇG—R6V7F–öçÒg&öÒ$öfVGW&W2ö6öææV7BöÖöFVÂ#°¦–×÷'B´W'&÷$ÖW76vRÄV×G•7FFWÒg&öÒ$öfVGW&W2ö6öææV7BôV×G•7FFW2#°¦–×÷'B´6öææV7E6–FV&'Òg&öÒ$öfVGW&W2ö6öææV7Bô6öææV7E6–FV&"#°¦–×÷'B´6öææV7EF÷&'Òg&öÒ$öfVGW&W2ö6öææV7Bô6öææV7EF÷&"#°¦–×÷'B´6öææV7E6–vä–ävFRÄ6öææV7Dæõv÷&·76TvFWÒg&öÒ$öfVGW&W2ö6öææV7Bô6öææV7DWF„vFW2#° ¦W‡÷'BFVfVÇBgVæ7F–öâ6öææV7EvR‚—°¢6öç7B·6–væVD–âÇ6WE6–væVD–åÓ×W6U7FFSÆ&ööÆVçÆçVÆÃâ†çVÆÂ“°¢6öç7B¶6ä÷Vå÷'FÂÇ6WD6ä÷Vå÷'FÅÓ×W6U7FFR†fÇ6R“°¢6öç7B¶66÷VçDVÖ–ÂÇ6WD66÷VçDVÖ–ÅÓ×W6U7FFR‚""“°¢6öç7B·v÷&·76W2Ç6WEv÷&·76W5Ó×W6U7FFSÄ6öææV7Ev÷&·76UµÓâ…µÒ“°¢6öç7B·v÷&·76W5&VG’Ç6WEv÷&·76W5&VG•Ó×W6U7FFR†fÇ6R“°¢6öç7B·FVæçD–BÇ6WEFVæçD–EÓ×W6U7FFR‚""“°¢6öç7B·6V7F–öâÇ6WE6V7F–öåÓ×W6U7FFSÅ6V7F–öãâ‚&÷fW'f–Wr"“°¢6öç7B¶VçV—'•&Vg2Ç6WDVçV—'•&Vg5Ó×W6U7FFSÄVçV—'•&VfW&Væ6W7ÆçVÆÃâ†çVÆÂ“°¢6öç7B¶6FVv÷'”f–ÇFW"Ç6WD6FVv÷'”f–ÇFW%Ó×W6U7FFR‚""“°¢6öç7B¶VçV—'•6÷W&6Tf–ÇFW"Ç6WDVçV—'•6÷W&6Tf–ÇFW%Ó×W6U7FFR‚&ÆÂ"“°¢6öç7B¶VçV—'•f–WrÇ6WDVçV—'•f–WuÓ×W6U7FFSÂ&ÆÂ'Â'Væ6Æ76–f–VB'Â&Æ–æ¶VB#â‚&ÆÂ"“°¢6öç7B¶VçV—'•6÷'BÇ6WDVçV—'•6÷'EÓ×W6U7FFSÂ&ÆFW7B'Â&öÆFW7B#â‚&ÆFW7B"“°¢6öç7B¶ÆVD6FVv÷'’Ç6WDÆVD6FVv÷'•Ó×W6U7FFR‚""“°¢6öç7B¶'W7’Ç6WD'W7•Ó×W6U7FFR†fÇ6R“°¢6öç7B¶ÆöF–ærÇ6WDÆöF–æuÓ×W6U7FFR†fÇ6R“°¢6öç7B&WVW7DvVæW&F–öã×W6U&Vbƒ“°¢6öç7BÆöFVEFVæçC×W6U&Vb‚""“°¢6öç7B¶W'&÷"Ç6WDW'&÷%Ó×W6U7FFR‚""“°¢6öç7B¶æ÷F–6RÇ6WDæ÷F–6UÓ×W6U7FFR‚""“°¢6öç7B·&Vg&W6„6÷VçBÇ6WE&Vg&W6„6÷VçEÓ×W6U7FFRƒ“°¢6öç7B·6V&6‚Ç6WE6V&6…Ó×W6U7FFR‚""“°¢6öç7B¶6öçF7Ef–WrÇ6WD6öçF7Ef–WuÓ×W6U7FFSÂ&ÆÂ'Â'v—F…öFWF–Ç2'Â&Ö—76–æuöFWF–Ç2#â‚&ÆÂ"“°¢6öç7B¶6öçF7E&öÆRÇ6WD6öçF7E&öÆUÓ×W6U7FFR‚&ÆÂ"“°¢6öç7B¶6öçF7E6÷'BÇ6WD6öçF7E6÷'EÓ×W6U7FFSÂ&æÖR'Â&æWvW7B#â‚&æÖR"“°¢6öç7B·6†÷tÆVDf÷&ÒÇ6WE6†÷tÆVDf÷&ÕÓ×W6U7FFR†fÇ6R“°¢6öç7B·6†÷t6öçF7Df÷&ÒÇ6WE6†÷t6öçF7Df÷&ÕÓ×W6U7FFR†fÇ6R“°¢6öç7B·6†÷t6öçF7D–×÷'BÇ6WE6†÷t6öçF7D–×÷'EÓ×W6U7FFR†fÇ6R“°¢6öç7B·6†÷t6öçF7DÖævW"Ç6WE6†÷t6öçF7DÖævW%Ó×W6U7FFR†fÇ6R“°¢6öç7B¶ÖævW%W'6öä–BÇ6WDÖævW%W'6öä–EÓ×W6U7FFSÇ7G&–æwÆçVÆÃâ†çVÆÂ“°¢6öç7B·6VÆV7FVEW'6öâÇ6WE6VÆV7FVEW'6öåÓ×W6U7FFSÇ7G&–æwÆçVÆÃâ†çVÆÂ“°¢6öç7B·6VÆV7FVD÷÷'GVæ—G’Ç6WE6VÆV7FVD÷÷'GVæ—G•Ó×W6U7FFSÇ7G&–æwÆçVÆÃâ†çVÆÂ“°¢6öç7B¶G&vvVD÷÷'GVæ—G”–BÇ6WDG&vvVD÷÷'GVæ—G”–EÓ×W6U7FFSÇ7G&–æwÆçVÆÃâ†çVÆÂ“°¢6öç7B¶G&÷7FvT–BÇ6WDG&÷7FvT–EÓ×W6U7FFSÇ7G&–æwÆçVÆÃâ†çVÆÂ“°¢6öç7B·v÷&¶fÆ÷t6öçF7D–BÇ6WEv÷&¶fÆ÷t6öçF7D–EÓ×W6U7FFSÇ7G&–æwÆçVÆÃâ†çVÆÂ“°¢6öç7B¶76–væVW2Ç6WD76–væVW5Ó×W6U7FFSÄ'&“Ç¶–C§7G&–æs¶Æ&VÃ§7G&–æs·&öÆS§7G&–æwÓãâ…µÒ“°¢6öç7B¶7F—f—G”æ÷FRÇ6WD7F—f—G”æ÷FUÓ×W6U7FFR‚""“°¢6öç7B¶÷fW'f–WrÇ6WD÷fW'f–WuÓ×W6U7FFSÄ6öææV7D÷fW'f–Wsâ†V×G”÷fW'f–Wr“°¢6öç7B·V÷ÆRÇ6WEV÷ÆUÓ×W6U7FFSÄ6öææV7EW'6öåµÓâ…µÒ“°¢6öç7B·V÷ÆT†4Ö÷&RÇ6WEV÷ÆT†4Ö÷&UÓ×W6U7FFR†fÇ6R“°¢6öç7B¶F—&V7F÷'•&W7VÇG2Ç6WDF—&V7F÷'•&W7VÇG5Ó×W6U7FFSÄ6öææV7EW'6öåµ×ÆçVÆÃâ†çVÆÂ“°¢6öç7B¶F—&V7F÷'•F÷FÂÇ6WDF—&V7F÷'•F÷FÅÓ×W6U7FFRƒ“°¢6öç7B¶F—&V7F÷'”ÆöF–ærÇ6WDF—&V7F÷'”ÆöF–æuÓ×W6U7FFR†fÇ6R“°¢6öç7B¶ÆöF–ætÖ÷&UV÷ÆRÇ6WDÆöF–ætÖ÷&UV÷ÆUÓ×W6U7FFR†fÇ6R“°¢6öç7B¶–çV—&–W2Ç6WD–çV—&–W5Ó×W6U7FFSÄ6öææV7D–çV—'•µÓâ…µÒ“°¢6öç7B¶÷÷'GVæ—F–W2Ç6WD÷÷'GVæ—F–W5Ó×W6U7FFSÄ6öææV7D÷÷'GVæ—G•µÓâ…µÒ“°¢6öç7B·—VÆ–æW2Ç6WE—VÆ–æW5Ó×W6U7FFSÄ6öææV7E—VÆ–æUµÓâ…µÒ“°¢6öç7B·F6·2Ç6WEF6·5Ó×W6U7FFSÄ6öææV7EF6µµÓâ…µÒ“°¢6öç7B¶ö–çFÖVçG2Ç6WDö–çFÖVçG5Ó×W6U7FFSÄ6öææV7Dö–çFÖVçEµÓâ…µÒ“°¢6öç7B·&öw&×2Ç6WE&öw&×5Ó×W6U7FFSÄ6öææV7E&öw&ÕµÓâ…µÒ“°¢6öç7B¶ÖVÖ&W'2Ç6WDÖVÖ&W'5Ó×W6U7FFSÄ6öææV7DÖVÖ&W%µÓâ…µÒ“°¢6öç7B·6†÷tÖö&–ÆTæbÇ6WE6†÷tÖö&–ÆTæeÓ×W6U7FFR†fÇ6R“° ¢W6TVffV7B‚‚“Óç°¢6öç7B6Æ–VçCÖvWE7W&6T'&÷w6W$6Æ–VçB‚“°¢–b‚6Æ–VçB—·6WE6–væVD–â†fÇ6R“·&WGW&ã·Ð¢ÆWBÖ÷VçFVC×G'VS°¢fö–B6Æ–VçBæWF‚ævWE6W76–öâ‚’çF†Vâ‚‡¶FFÒ“Óç°¢–b‚Ö÷VçFVB—&WGW&ã°¢6WE6–væVD–â„&ööÆVâ†FFç6W76–öâ’“·6WD66÷VçDVÖ–Â†FFç6W76–öãòçW6W"æVÖ–ÇÇÂ""“°¢Ò“°¢6öç7B¶FF§·7V'67&—F–öç×ÓÖ6Æ–VçBæWF‚æöäWF…7FFT6†ævR‚…öWfVçBÇ6W76–öâ“Óç°¢–b‚Ö÷VçFVB—&WGW&ã°¢6WE6–væVD–â„&ööÆVâ‡6W76–öâ’“·6WD66÷VçDVÖ–Â‡6W76–öãòçW6W"æVÖ–ÇÇÂ""“°¢Ò“°¢&WGW&â‚“Óç¶Ö÷VçFVCÖfÇ6S·7V'67&—F–öâçVç7V'67&–&R‚“·Ó°¢ÒÅµÒ“° ¢W6TVffV7B‚‚“Óç°¢–b‚6–væVD–â—·6WD6ä÷Vå÷'FÂ†fÇ6R“·&WGW&ã·Ð¢ÆWB7F—fS×G'VS°¢fö–BvWD7W'&VçE&öf–ÆR‚’çF†Vâ‡&öf–ÆSÓç¶–b†7F—fR—6WD6ä÷Vå÷'FÂ‡&öf–ÆSòç&öÆSÓÓÒ&FÖ–â"“·Ò’æ6F6‚‚‚“Óç¶–b†7F—fR—6WD6ä÷Vå÷'FÂ†fÇ6R“·Ò“°¢&WGW&â‚“Óç¶7F—fSÖfÇ6S·Ó°¢ÒÅ·6–væVD–åÒ“° ¢6öç7BÆöEv÷&·76W3×W6T6ÆÆ&6²†7–æ2‚“Óç°¢6öç7B&W7VÇCÖv—B6öææV7DfWF6ƒÇ·v÷&·76W3¤6öææV7Ev÷&·76Uµ×Óâ‚"ö’ö6öææV7B÷v÷&·76W2"“°¢6WEv÷&·76W2‡&W7VÇBçv÷&·76W7ÇÅµÒ“·6WEv÷&·76W5&VG’‡G'VR“°¢6WEFVæçD–B‡&Wf–÷W3Óç&W7VÇBçv÷&·76W2ç6öÖR‡ƒÓç‚çFVæçEö–CÓÓ×&Wf–÷W2“÷&Wf–÷W3¢‡&W7VÇBçv÷&·76W5³ÓòçFVæçEö–GÇÂ""’“°¢ÒÅµÒ“°¢W6TVffV7B‚‚“Óç°¢–b‚6–væVD–â—·6WEv÷&·76W2…µÒ“·6WEFVæçD–B‚""“·6WEv÷&·76W5&VG’†fÇ6R“·&WGW&ã·Ð¢6WEv÷&·76W5&VG’†fÇ6R“°¢fö–BÆöEv÷&·76W2‚’æ6F6‚†SÓç·6WDW'&÷"†R–ç7Fæ6VöbW'&÷#öRæÖW76vS¢$6÷VÆBæ÷BÆöB–÷W"–ç7F—GWFW2â"“·6WEv÷&·76W5&VG’‡G'VR“·Ò“°¢ÒÅ·6–væVD–âÆÆöEv÷&·76W5Ò“° ¢òò–væ÷&R&W7öç6W2g&öÒ&Wf–÷W2–ç7F—GWFRÂ&Vg&W6‚÷"ÆövvVBÖ÷WB6W76–öâà¢òò6ÆV"öÆBFF–ÖÖVF–FVÇ’öâ–ç7F—GWFR7v—F6†–ær6ò—B6âæWfW"fÆ6‚öâF†RæWr67&VVâà¢W6TVffV7B‚‚“Óç°¢6öç7BvVæW&F–öãÒ²·&WVW7DvVæW&F–öâæ7W'&VçC°¢òò¶VWF†R&ö&BÖ÷VçFVBGW&–ær÷&F–æ'’&Vg&W6†W2â6ÆV"–ÖÖVF–FVÇ’öæÇ’v†Và¢òò7v—F6†–ær–ç7F—GWFW2÷"6–væ–ær÷WBÂFòfö–BÆV¶–æræ÷F†W"FVæçBw2FFà¢–b†ÆöFVEFVæçBæ7W'&VçBÓ×FVæçD–GÇÂ6–væVD–â—°¢6WD÷fW'f–Wr†V×G”÷fW'f–Wr“·6WD–çV—&–W2…µÒ“·6WEV÷ÆR…µÒ“·6WEV÷ÆT†4Ö÷&R†fÇ6R“·6WD÷÷'GVæ—F–W2…µÒ“°¢6WE—VÆ–æW2…µÒ“·6WEF6·2…µÒ“·6WDö–çFÖVçG2…µÒ“·6WE&öw&×2…µÒ“·6WDÖVÖ&W'2…µÒ“°¢Ð¢ÆöFVEFVæçBæ7W'&VçC×6–væVD–ã÷FVæçD–C¢"#°¢6WDÆöF–ær„&ööÆVâ‡FVæçD–Bbg6–væVD–â’“·6WDW'&÷"‚""“°¢–b‚FVæçD–GÇÂ6–væVD–â—&WGW&â‚“Óç·&WVW7DvVæW&F–öâæ7W'&VçB²³·Ó°¢fö–B†7–æ2‚“Óç°¢G'—°¢6öç7B#Öv—B&öÖ—6RæÆÂ…°¢7&ÔÆ—7CÄ6öææV7D÷fW'f–Wsâ‡FVæçD–BÂ&÷fW'f–Wr"’À¢7&ÔÆ—7CÄ6öææV7D–çV—'“â‡FVæçD–BÂ&–çV—&–W2"Ç¶Æ–Ö—C¢#'Ò’À¢7&ÔÆ—7CÄ6öææV7EW'6öãâ‡FVæçD–BÂ'V÷ÆR"Ç¶Æ–Ö—C¢#'Ò’À¢7&ÔÆ—7CÄ6öææV7D÷÷'GVæ—G“â‡FVæçD–BÂ&÷÷'GVæ—F–W2"Ç¶Æ–Ö—C¢#'Ò’À¢7&ÔÆ—7CÄ6öææV7E—VÆ–æSâ‡FVæçD–BÂ'—VÆ–æW2"Ç¶Æ–Ö—C¢#'Ò’À¢7&ÔÆ—7CÄ6öææV7EF6³â‡FVæçD–BÂ'F6·2"Ç¶Æ–Ö—C¢#'Ò’À¢6öææV7DfWF6ƒÇ¶ö³§G'VS¶—FV×3¤6öææV7Dö–çFÖVçEµ×Óâ‚"ö’ö6öææV7B÷v÷&·76W2ò"¶Væ6öFUU$”6ö×öæVçB‡FVæçD–B’²"ö6ÆVæF""’À¢7&ÔÆ—7CÄ6öææV7E&öw&Óâ‡FVæçD–BÂ'&öw&×2"Ç¶Æ–Ö—C¢#'Ò¢Ò“°¢–b‡&WVW7DvVæW&F–öâæ7W'&VçBÓÖvVæW&F–öâ—&WGW&ã°¢6WD÷fW'f–Wr‡%³Òæ—FV×5³×ÇÆV×G”÷fW'f–Wr“·6WD–çV—&–W2‡%³Òæ—FV×2“·6WEV÷ÆR‡%³%Òæ—FV×2“·6WEV÷ÆT†4Ö÷&R‡%³%Òæ—FV×2æÆVæwFƒÓÓÓ“°¢6WD÷÷'GVæ—F–W2‡%³5Òæ—FV×2“·6WE—VÆ–æW2‡%³EÒæ—FV×2“·6WEF6·2‡%³UÒæ—FV×2“°¢6WDö–çFÖVçG2‡%³eÒæ—FV×2“·6WE&öw&×2‡%³uÒæ—FV×2“°¢Ö6F6‚†R—°¢–b‡&WVW7DvVæW&F–öâæ7W'&VçCÓÓÖvVæW&F–öâ—6WDW'&÷"†R–ç7Fæ6VöbW'&÷#öRæÖW76vS¢%Væ&ÆRFòÆöB6öææV7Bv÷&·76Râ"“°¢Öf–æÆÇ—°¢–b‡&WVW7DvVæW&F–öâæ7W'&VçCÓÓÖvVæW&F–öâ—6WDÆöF–ær†fÇ6R“°¢Ð¢Ò’‚“°¢&WGW&â‚“Óç·&WVW7DvVæW&F–öâæ7W'&VçB²³·Ó°¢ÒÅ·FVæçD–BÇ&Vg&W6„6÷VçBÇ6–væVD–åÒ“° ¢6öç7BFVæçC×v÷&·76W2æf–æB‡ƒÓç‚çFVæçEö–CÓÓ×FVæçD–B“°¢6öç7B6ä6öæf–wW&SÕ²&÷væW""Â&FÖ–â"Â&ÖævW"%Òæ–æ6ÇVFW2‡FVæçCòæÖVÖ&W'6†—÷&öÆWÇÂ""“°¢6öç7B6åw&—FSÔ&ööÆVâ‡FVæçBbgFVæçBæÖVÖ&W'6†—÷&öÆRÓÒ'f–WvW""“°¢6öç7BGfæ6VCÖVçV—'•&Vg3òæÖöFSÓÓÒ&Gfæ6VB#°¢6öç7Bf—6–&ÆTæf–vF–öãÖæf–vF–öâæf–ÇFW"†ãÓæGfæ6VGÇÅ²&÷fW'f–Wr"Â&VçV—&–W2"Â&6öçF7G2"Â&föÆÆ÷wW2"Â&6öÖ×Væ–6F–öç2"Â'6WGF–æw2%Òæ–æ6ÇVFW2†âæ–B’“°¢W6TVffV7B‚‚“Óç¶ÆWBÆ—fS×G'VS·6WDVçV—'•&Vg2†çVÆÂ“·6WD6FVv÷'”f–ÇFW"‚""“·6WDÆVD6FVv÷'’‚""“¶–b‡FVæçD–B—fö–B&VDVçV—'•&VfW&Væ6W2‡FVæçD–B’çF†Vâ‡Óç¶–b†Æ—fR—6WDVçV—'•&Vg2‡“·Ò’æ6F6‚†SÓç¶–b†Æ—fR—6WDW'&÷"†R–ç7Fæ6VöbW'&÷#öRæÖW76vS¢%Væ&ÆRFòÆöBVçV—'’&VfW&Væ6W2"“·Ò“·&WGW&â‚“Óç¶Æ—fSÖfÇ6S·Ó·ÒÅ·FVæçD–EÒ“°¢W6TVffV7B‚‚“Óç¶–b‚Gfæ6VBbb²&÷fW'f–Wr"Â&VçV—&–W2"Â&6öçF7G2"Â&föÆÆ÷wW2"Â&6öÖ×Væ–6F–öç2"Â'6WGF–æw2%Òæ–æ6ÇVFW2‡6V7F–öâ’—6WE6V7F–öâ‚&÷fW'f–Wr"“·ÒÅ¶Gfæ6VBÇ6V7F–öåÒ“°¢W6TVffV7B‚‚“Óç°¢ÆWB6æ6VÆÆVCÖfÇ6S°¢6WD76–væVW2…µÒ“°¢–b‚FVæçD–GÇÂ6VÆV7FVD÷÷'GVæ—G—ÇÂ6ä6öæf–wW&R—&WGW&ã°¢fö–B6öææV7DfWF6ƒÇ¶76–væVW3¤'&“Ç¶–C§7G&–æs¶Æ&VÃ§7G&–æs·&öÆS§7G&–æwÓçÓâ€¢"ö’ö6öææV7B÷v÷&·76W2ò"·FVæçD–B²"ö76–væVW2 ¢’çF†Vâ‡#Óç¶–b‚6æ6VÆÆVB—6WD76–væVW2‡"æ76–væVW7ÇÅµÒ“·Ò’æ6F6‚‚‚“Óç¶–b‚6æ6VÆÆVB—6WD76–væVW2…µÒ“·Ò“°¢&WGW&â‚“Óç¶6æ6VÆÆVC×G'VS·Ó°¢ÒÅ·FVæçD–BÇ6VÆV7FVD÷÷'GVæ—G’Æ6ä6öæf–wW&UÒ“°¢6öç7B¶Æöv–äVÖ–ÂÇ6WDÆöv–äVÖ–ÅÓ×W6U7FFR‚""“°¢6öç7B¶Æöv–å77v÷&BÇ6WDÆöv–å77v÷&EÓ×W6U7FFR‚""“°¢6öç7B¶ÆVBÇ6WDÆVEÓ×W6U7FFR‡¶æÖS¢""Ç†öæS¢""ÆVÖ–Ã¢""Ç6÷W&6S¢'v†G6"Ç7VÖÖ'“¢""Ç—VÆ–æT–C¢""ÇW'6öä–C¢"'Ò“°¢6öç7B¶æWt6öçF7BÇ6WDæWt6öçF7EÓ×W6U7FFR‡¶æÖS¢""ÆVÖ–Ã¢""Ç†öæS¢""Ç&öÆS¢&6öçF7B'Ò“°¢6öç7B·F6µF—FÆRÇ6WEF6µF—FÆUÓ×W6U7FFR‚""“°¢6öç7B·F6´GVRÇ6WEF6´GVUÓ×W6U7FFR‚""“°¢6öç7B·—VÆ–æTæÖRÇ6WE—VÆ–æTæÖUÓ×W6U7FFR‚""“°¢6öç7B·&öw&ÔæÖRÇ6WE&öw&ÔæÖUÓ×W6U7FFR‚""“°¢6öç7B¶æWtFÖ—76–öåF—FÆRÇ6WDæWtFÖ—76–öåF—FÆUÓ×W6U7FFR‚""“°¢6öç7B¶æWtFÖ—76–öå—VÆ–æRÇ6WDæWtFÖ—76–öå—VÆ–æUÓ×W6U7FFR‚""“°¢6öç7B¶ö–çFÖVçEF—FÆRÇ6WDö–çFÖVçEF—FÆUÓ×W6U7FFR‚""“°¢6öç7B¶ö–çFÖVçE7F'G2Ç6WDö–çFÖVçE7F'G5Ó×W6U7FFR‚""“°¢6öç7B¶ö–çFÖVçDVæG2Ç6WDö–çFÖVçDVæG5Ó×W6U7FFR‚""“° ¢7–æ2gVæ7F–öâ'Vâ‡F6³¢‚“Óå&öÖ—6SÇVæ¶æ÷vãâÇ7V66W73§7G&–ær—°¢–b†'W7’—&WGW&ã·6WD'W7’‡G'VR“·6WDW'&÷"‚""“·6WDæ÷F–6R‚""“°¢G'—¶v—BF6²‚“·6WDæ÷F–6R‡7V66W72“·6WE&Vg&W6„6÷VçB‡cÓçb³“·Ð¢6F6‚†R—·6WDW'&÷"†R–ç7Fæ6VöbW'&÷#öRæÖW76vS¢%Væ&ÆRFò6fR6†ævW2â"“·Ð¢f–æÆÇ—·6WD'W7’†fÇ6R“·Ð¢Ð¢7–æ2gVæ7F–öâ6–vä–â†S¤f÷&ÔWfVçB—°¢Rç&WfVçDFVfVÇB‚“·6WDW'&÷"‚""“·6WD'W7’‡G'VR“°¢G'—°¢6öç7B6Æ–VçCÖvWE7W&6T'&÷w6W$6Æ–VçB‚“°¢–b‚6Æ–VçB—F‡&÷ræWrW'&÷"‚$WF†VçF–6F–öâ—2æ÷B6öæf–wW&VBâ"“°¢6öç7B¶W'&÷#¦WF„W'&÷'ÓÖv—B6Æ–VçBæWF‚ç6–vä–åv—F…77v÷&B‡¶VÖ–Ã¦Æöv–äVÖ–ÂÇ77v÷&C¦Æöv–å77v÷&GÒ“°¢–b†WF„W'&÷"—F‡&÷ræWrW'&÷"†WF„W'&÷"æÖW76vR“°¢Ö6F6‚†R—·6WDW'&÷"†R–ç7Fæ6VöbW'&÷#öRæÖW76vS¢$6÷VÆBæ÷B6–vâ–ââ"“·Ð¢f–æÆÇ—·6WD'W7’†fÇ6R“·Ð¢Ð¢7–æ2gVæ7F–öâ6GW&TÆVB†S¤f÷&ÔWfVçB—°¢Rç&WfVçDFVfVÇB‚“°¢6öç7B—VÆ–æS×—VÆ–æW2æf–æB‡ƒÓç‚æ–CÓÓÖÆVBç—VÆ–æT–B“°¢6öç7B7FvS×—VÆ–æSòç7FvW2æf–ÇFW"‡3Óç2æ÷WF6öÖSÓÓÒ&÷Vâ"’ç6÷'B‚†Æ"“Óææ÷&FW"Ö"æ÷&FW"•³Ó°¢v—B'Vâ†7–æ2‚“Óç°¢v—B7&Ô6öÖÖæB‡FVæçD–BÂ&–çV—&–W2"Â&6GW&UöÆVB"Ç°¢æÖS¦ÆVBææÖRÇ†öæS¦ÆVBç†öæRÆVÖ–Ã¦ÆVBæVÖ–ÂÇ6÷W&6S¦ÆVBç6÷W&6RÀ¢âââ†ÆVBçW'6öä–C÷·W'6öä–C¦ÆVBçW'6öä–GÓ§·Ò’À¢7VÖÖ'“¦ÆVBç7VÖÖ'’Ââââ†ÆVD6FVv÷'“÷¶6FVv÷'”–C¦ÆVD6FVv÷'—Ó§·Ò’Ââââ‡—VÆ–æRbg7FvS÷·—VÆ–æT–C§—VÆ–æRæ–BÇ7FvT–C§7FvRæ–GÓ§·Ò¢Ò“°¢6WDÆVB‡¶æÖS¢""Ç†öæS¢""ÆVÖ–Ã¢""Ç6÷W&6S¢'v†G6"Ç7VÖÖ'“¢""Ç—VÆ–æT–C¢""ÇW'6öä–C¢"'Ò“·6WDÆVD6FVv÷'’‚""“·6WE6†÷tÆVDf÷&Ò†fÇ6R“°¢ÒÂ$VçV—'’6GW&VB7V66W76gVÆÇ’â"“°¢Ð¢7–æ2gVæ7F–öâ7F'DFÖ—76–öâ†S¤f÷&ÔWfVçB—°¢Rç&WfVçDFVfVÇB‚“°¢–b‚6VÆV7FVEW'6öâ—&WGW&ã°¢6öç7B—VÆ–æS×—VÆ–æW2æf–æB‡Óçæ–CÓÓÖæWtFÖ—76–öå—VÆ–æR“°¢6öç7B–æ—F–Ã×—VÆ–æSòç7FvW2æf–ÇFW"‡ƒÓç‚æ÷WF6öÖSÓÓÒ&÷Vâ"’ç6÷'B‚†Æ"“Óææ÷&FW"Ö"æ÷&FW"•³Ó°¢–b‚—VÆ–æWÇÂ–æ—F–Â—·6WDW'&÷"‚$6†ö÷6R—VÆ–æRv—F‚â÷Vâ7FvRâ"“·&WGW&ã·Ð¢v—B'Vâ†7–æ2‚“Óç°¢6öç7B÷WF6öÖSÖv—B7&Ô6öÖÖæB‡FVæçD–BÂ&÷÷'GVæ—F–W2"Â&7&VFUö÷÷'GVæ—G’"Ç°¢F—FÆS¦æWtFÖ—76–öåF—FÆRçG&–Ò‚—ÇÂ‡6VÆV7FVD6öçF7CòægVÆÅöæÖWÇÂ$æWr"’²"(	BFÖ—76–öâ"À¢6öçF7D–C§6VÆV7FVEW'6öâÇ—VÆ–æT–C§—VÆ–æRæ–BÇ7FvT–C¦–æ—F–Âæ–@¢Ò“°¢6WDæWtFÖ—76–öåF—FÆR‚""“·6WDæWtFÖ—76–öå—VÆ–æR‚""“°¢–b†÷WF6öÖRæ–B—6WE6VÆV7FVD÷÷'GVæ—G’†÷WF6öÖRæ–B“°¢ÒÂ$FÖ—76–öâ÷÷'GVæ—G’7&VFVBâ"“°¢Ð¢7–æ2gVæ7F–öâ7&VFT6öçF7B†S¤f÷&ÔWfVçB—°¢Rç&WfVçDFVfVÇB‚“°¢v—B'Vâ†7–æ2‚“Óç°¢6öç7B&W7VÇCÖv—B7&Ô6öÖÖæB‡FVæçD–BÂ'V÷ÆR"Â&7&VFUö6öçF7B"ÆæWt6öçF7B“°¢6WDæWt6öçF7B‡¶æÖS¢""ÆVÖ–Ã¢""Ç†öæS¢""Ç&öÆS¢&6öçF7B'Ò“·6WE6†÷t6öçF7Df÷&Ò†fÇ6R“°¢–b‡&W7VÇBæ–B—6WE6VÆV7FVEW'6öâ‡&W7VÇBæ–B“°¢ÒÂ$6öçF7B7&VFVBâ"“°¢Ð¢7–æ2gVæ7F–öâ6fUF6²†S¤f÷&ÔWfVçB—°¢Rç&WfVçDFVfVÇB‚“°¢v—B'Vâ†7–æ2‚“Óç°¢v—B7&Ô6öÖÖæB‡FVæçD–BÂ'F6·2"Â&7&VFU÷F6²"Ç°¢F—FÆS§F6µF—FÆRÇW'6öä–C§6VÆV7FVEW'6öçÇÇVæFVf–æVBÆ÷÷'GVæ—G”–C§6VÆV7FVD÷÷'GVæ—G—ÇÇVæFVf–æVBÀ¢GVTC§F6´GVSöæWrFFR‡F6´GVR’çFô•4õ7G&–ær‚“§VæFVf–æV@¢Ò“°¢6WEF6µF—FÆR‚""“·6WEF6´GVR‚""“°¢ÒÂ$föÆÆ÷r×WFFVBâ"“°¢Ð¢7–æ2gVæ7F–öâ6fTö–çFÖVçB†S¤f÷&ÔWfVçB—°¢Rç&WfVçDFVfVÇB‚“°¢v—B'Vâ†7–æ2‚“Óç°¢v—B7&Ô6öÖÖæB‡FVæçD–BÂ&ö–çFÖVçG2"Â&7&VFUöö–çFÖVçB"Ç°¢F—FÆS¦ö–çFÖVçEF—FÆRÇW'6öä–C§6VÆV7FVEW'6öçÇÇVæFVf–æVBÆ÷÷'GVæ—G”–C§6VÆV7FVD÷÷'GVæ—G—ÇÇVæFVf–æVBÀ¢¶–æC¢&6÷Vç6VÆÆ–ær"Ç7F'G4C¦æWrFFR†ö–çFÖVçE7F'G2’çFô•4õ7G&–ær‚’À¢VæG4C¦æWrFFR†ö–çFÖVçDVæG2’çFô•4õ7G&–ær‚¢Ò“°¢6WDö–çFÖVçEF—FÆR‚""“·6WDö–çFÖVçE7F'G2‚""“·6WDö–çFÖVçDVæG2‚""“°¢ÒÂ$ö–çFÖVçB66†VGVÆVBâ"“°¢Ð¢7–æ2gVæ7F–öâ6fTæ÷FR†S¤f÷&ÔWfVçB—°¢Rç&WfVçDFVfVÇB‚“¶–b‚7F—f—G”æ÷FRçG&–Ò‚—ÇÂ‚6VÆV7FVD÷÷'GVæ—G’bb6VÆV7FVEW'6öâ’—&WGW&ã°¢v—B'Vâ†7–æ2‚“Óç°¢v—B7&Ô6öÖÖæB‡FVæçD–BÂ&7F—f—F–W2"Â&Æöuö7F—f—G’"Ç°¢÷÷'GVæ—G”–C§6VÆV7FVD÷÷'GVæ—G—ÇÇVæFVf–æVBÇW'6öä–C§6VÆV7FVEW'6öçÇÇVæFVf–æVBÀ¢¶–æC¢&æ÷FR"Ç7VÖÖ'“¦7F—f—G”æ÷FRçG&–Ò‚¢Ò“°¢6WD7F—f—G”æ÷FR‚""“°¢ÒÂ$7F—f—G’æ÷FR6fVBâ"“°¢Ð¢7–æ2gVæ7F–öâWFFT76–væÖVçB†÷¤6öææV7D÷÷'GVæ—G’ÆÖVÖ&W$–C§7G&–ær—°¢–b‚ÖVÖ&W$–GÇÆÖVÖ&W$–CÓÓÖ÷æ÷væW%öÖVÖ&W'6†—ö–B—&WGW&ã°¢v—B'Vâ‚‚“Óæ7&Ô6öÖÖæB‡FVæçD–BÂ&÷÷'GVæ—F–W2"Â&76–våö÷÷'GVæ—G’"Ç°¢÷÷'GVæ—G”–C¦÷æ–BÆ÷væW$ÖVÖ&W$–C¦ÖVÖ&W$–BÇfW'6–öã¦÷çfW'6–öà¢Ò’Â$FÖ—76–öâ&V76–væVBâ"“°¢Ð¢7–æ2gVæ7F–öâWFFU7FvR†÷¤6öææV7D÷÷'GVæ—G’Ç7FvT–C§7G&–ær—°¢–b†÷ç7FvUö–CÓÓ×7FvT–GÇÆ'W7’—&WGW&ã°¢6öç7BFW7F–æF–öã×—VÆ–æW2æf–æB‡Óçæ–CÓÓÖ÷ç—VÆ–æUö–B“òç7FvW2æf–æB‡7FvSÓç7FvRæ–CÓÓ×7FvT–B“°¢–b‚FW7F–æF–öâ—·6WDW'&÷"‚%F†—2FÖ—76–öç27FvR—2æòÆöævW"f–Æ&ÆRâ&Vg&W6‚F†Rv÷&·76Râ"“·&WGW&ã·Ð¢–b†FW7F–æF–öâæ÷WF6öÖSÓÓÒ'vöâ'ÇÆFW7F–æF–öâæ÷WF6öÖSÓÓÒ&Æ÷7B"—°¢–b‚v–æF÷ræ6öæf—&Ò‚$Ö÷fRÂ""¶÷çF—FÆR²%Â"FòÂ""¶FW7F–æF–öâææÖR²%Â#òF†—2v–ÆÂWFFRF†RFÖ—76–öâ÷WF6öÖRâ"’—&WGW&ã°¢Ð¢6WD'W7’‡G'VR“·6WDW'&÷"‚""“·6WDæ÷F–6R‚""“°¢6öç7BWFFVC×²ââæ÷Ç7FvUö–C§7FvT–BÇ7FvUöæÖS¦FW7F–æF–öâææÖRÆ÷WF6öÖS¦FW7F–æF–öâæ÷WF6öÖRÀ¢fW'6–öã¦÷çfW'6–öâ³ÇWFFVEöC¦æWrFFR‚’çFô•4õ7G&–ær‚’Æ6Æ÷6VEöC¦FW7F–æF–öâæ÷WF6öÖSÓÓÒ&÷Vâ#öçVÆÃ¦÷æ6Æ÷6VEöGÇÆæWrFFR‚’çFô•4õ7G&–ær‚—Ó°¢6WD÷÷'GVæ—F–W2†7W'&VçCÓæ7W'&VçBæÖ†—FVÓÓæ—FVÒæ–CÓÓÖ÷æ–C÷WFFVC¦—FVÒ’“°¢G'—°¢v—B7&Ô6öÖÖæB‡FVæçD–BÂ&÷÷'GVæ—F–W2"Â&Ö÷fUö÷÷'GVæ—G’"Ç°¢÷÷'GVæ—G”–C¦÷æ–BÇ7FvT–BÇfW'6–öã¦÷çfW'6–öà¢Ò“°¢–b†ÆöFVEFVæçBæ7W'&VçBÓ×FVæçD–B—&WGW&ã°¢6WDæ÷F–6R‚$Ö÷fVBFò"¶FW7F–æF–öâææÖR²"â"“°¢òò&V6öæ6–ÆR6W'fW"Ö6Æ7VÆFVBf–VÆG2v—F†÷WB&W6WGF–ærF†R&ö&B÷"÷F†W"6V7F–öç2à¢G'—°¢6öç7B&W7VÇCÖv—B7&ÔÆ—7CÄ6öææV7D÷÷'GVæ—G“â‡FVæçD–BÂ&÷÷'GVæ—F–W2"Ç¶Æ–Ö—C¢#'Ò“°¢–b†ÆöFVEFVæçBæ7W'&VçCÓÓ×FVæçD–B—6WD÷÷'GVæ—F–W2‡&W7VÇBæ—FV×2“°¢Ö6F6‡°¢òòF†RÖ÷fR7V66VVFVC²&WF–âF†RÆö6ÆÇ’WFFVB6&B–b&Vg&W6†–ærf–Ç2à¢Ð¢Ö6F6‚†R—°¢–b†ÆöFVEFVæçBæ7W'&VçBÓ×FVæçD–B—&WGW&ã°¢6WD÷÷'GVæ—F–W2†7W'&VçCÓæ7W'&VçBæÖ†—FVÓÓæ—FVÒæ–CÓÓÖ÷æ–Cö÷¦—FVÒ’“°¢6WDW'&÷"‚†R–ç7Fæ6VöbW'&÷#öRæÖW76vS¢%Væ&ÆRFòÖ÷fRFÖ—76–öââ"’²"F†R6&Bv2&WGW&æVBFò—G2&Wf–÷W27FvRâ"“°¢Öf–æÆÇ—·6WD'W7’†fÇ6R“·Ð¢Ð¢6öç7B÷Vä7W7FöÖW%v÷&¶fÆ÷sÒ‡W'6öä–C§7G&–ærÆFW7F–æF–öã¢&6öÖ×Væ–6F–öç2'Â&VçV—&–W2'Â'—VÆ–æR'Â&föÆÆ÷wW2"“Óç°¢–b‚W'6öä–B—&WGW&ã°¢6WEv÷&¶fÆ÷t6öçF7D–B‡W'6öä–B“·6WE6VÆV7FVEW'6öâ†çVÆÂ“·6WE6VÆV7FVD÷÷'GVæ—G’†çVÆÂ“°¢6WE6V&6‚‚""“·6WD6FVv÷'”f–ÇFW"‚""“·6WDVçV—'•6÷W&6Tf–ÇFW"‚&ÆÂ"“·6WDVçV—'•f–Wr‚&ÆÂ"“·6WE6V7F–öâ†FW7F–æF–öâ“°¢Ó°¢6öç7Bv÷&¶fÆ÷t6öçF7C×V÷ÆRæf–æB‡ƒÓç‚æ–CÓÓ×v÷&¶fÆ÷t6öçF7D–B“°¢6öç7Bf—6–&ÆT÷÷'GVæ—F–W3×v÷&¶fÆ÷t6öçF7D–Cö÷÷'GVæ—F–W2æf–ÇFW"‡ƒÓç‚æ6öçF7Eö–CÓÓ×v÷&¶fÆ÷t6öçF7D–B“¦÷÷'GVæ—F–W3°¢6öç7B6öçF7DG&gDF—'G“Ô&ööÆVâ†æWt6öçF7BææÖRçG&–Ò‚—ÇÆæWt6öçF7Bç†öæRçG&–Ò‚—ÇÆæWt6öçF7BæVÖ–ÂçG&–Ò‚—ÇÆæWt6öçF7Bç&öÆRÓÒ&6öçF7B"“°¢6öç7BÆVDG&gDF—'G“Ô&ööÆVâ†ÆVBææÖRçG&–Ò‚—ÇÆÆVBç†öæRçG&–Ò‚—ÇÆÆVBæVÖ–ÂçG&–Ò‚—ÇÆÆVBç7VÖÖ'’çG&–Ò‚—ÇÆÆVD6FVv÷'—ÇÆÆVBç—VÆ–æT–GÇÆÆVBçW'6öä–GÇÆÆVBç6÷W&6RÓÒ'v†G6"“°¢6öç7B6Æ÷6T6öçF7Df÷&ÓÒ‚“Óç°¢–b†'W7’—&WGW&ã°¢–b†6öçF7DG&gDF—'G’bbv–æF÷ræ6öæf—&Ò‚$F—66&BVç6fVB6öçF7BFWF–Ç3ò"’—&WGW&ã°¢6WE6†÷t6öçF7Df÷&Ò†fÇ6R“·6WDæWt6öçF7B‡¶æÖS¢""ÆVÖ–Ã¢""Ç†öæS¢""Ç&öÆS¢&6öçF7B'Ò“°¢Ó°¢6öç7B6Æ÷6TÆVDf÷&ÓÒ‚“Óç°¢–b†'W7’—&WGW&ã°¢–b†ÆVDG&gDF—'G’bbv–æF÷ræ6öæf—&Ò‚$F—66&BVç6fVBVçV—'’FWF–Ç3ò"’—&WGW&ã°¢6WE6†÷tÆVDf÷&Ò†fÇ6R“·6WDÆVB‡¶æÖS¢""Ç†öæS¢""ÆVÖ–Ã¢""Ç6÷W&6S¢'v†G6"Ç7VÖÖ'“¢""Ç—VÆ–æT–C¢""ÇW'6öä–C¢"'Ò“·6WDÆVD6FVv÷'’‚""“°¢Ó°¢6öç7B6VÆV7FVD6öçF7C×V÷ÆRæf–æB‡ƒÓç‚æ–CÓÓ×6VÆV7FVEW'6öâ“°¢6öç7B6VÆV7FVDÆVCÖ÷÷'GVæ—F–W2æf–æB‡ƒÓç‚æ–CÓÓ×6VÆV7FVD÷÷'GVæ—G’“°¢6öç7BÖF6†–æt–çV—&–W3×W6TÖVÖò‚‚“Óæ–çV—&–W2æf–ÇFW"†“Óç°¢–b‡v÷&¶fÆ÷t6öçF7D–Bbf’çW'6öåö–BÓ×v÷&¶fÆ÷t6öçF7D–B—&WGW&âfÇ6S°¢–b†6FVv÷'”f–ÇFW"bf’æ6FVv÷'•ö–BÓÖ6FVv÷'”f–ÇFW"—&WGW&âfÇ6S°¢–b†VçV—'•6÷W&6Tf–ÇFW"ÓÒ&ÆÂ"bf’ç6÷W&6RçFôÆ÷vW$66R‚’ÓÖVçV—'•6÷W&6Tf–ÇFW"—&WGW&âfÇ6S°¢–b†VçV—'•f–WsÓÓÒ'Væ6Æ76–f–VB"bf’æ6FVv÷'•ö–B—&WGW&âfÇ6S°¢–b†VçV—'•f–WsÓÓÒ&Æ–æ¶VB"bb’æ÷÷'GVæ—G•ö–B—&WGW&âfÇ6S°¢6öç7B×6V&6‚çG&–Ò‚’çFôÆ÷vW$66R‚“°¢&WGW&âÇÅ¶’æ6öçF7EöæÖRÆ’ç7VÖÖ'’Æ’ç6÷W&6RÆ’ç7FvUöæÖRÆ’æ6FVv÷'•öÆ&VÂÆ’æ6öçF7EöFWF–ÅÒç6öÖR‡cÓâ‡gÇÂ""’çFôÆ÷vW$66R‚’æ–æ6ÇVFW2‡’“°¢Ò’ç6÷'B‚†Æ"“ÓæVçV—'•6÷'CÓÓÒ&ÆFW7B#ôFFRç'6R†"ç&V6V—fVEöB’ÔFFRç'6R†ç&V6V—fVEöB“¤FFRç'6R†ç&V6V—fVEöB’ÔFFRç'6R†"ç&V6V—fVEöB’’À¢¶–çV—&–W2Ç6V&6‚Æ6FVv÷'”f–ÇFW"ÆVçV—'•6÷W&6Tf–ÇFW"ÆVçV—'•f–WrÆVçV—'•6÷'BÇv÷&¶fÆ÷t6öçF7D–EÒ“°¢6öç7BVæ6Æ76–f–VD6÷VçCÖ–çV—&–W2æf–ÇFW"†“Óâ’æ6FVv÷'•ö–B’æÆVæwFƒ°¢6öç7BÆ–æ¶VD6÷VçCÖ–çV—&–W2æf–ÇFW"†“Óä&ööÆVâ†’æ÷÷'GVæ—G•ö–B’’æÆVæwFƒ°¢6öç7BVçV—'•6÷W&6W3Õ²ââææWr6WB†–çV—&–W2æÖ†“Óæ’ç6÷W&6RçFôÆ÷vW$66R‚’’•Òç6÷'B‚“° ¢6öç7BVçV—'”'•W'6öã×W6TÖVÖò‚‚“Óç°¢6öç7B&W7VÇCÖæWrÖÇ7G&–ærÇ¶6÷VçC¦çVÖ&W#·7VÖÖ'“§7G&–æs·6÷W&6S§7G&–æs¶FFS§7G&–æwÓâ‚“°¢f÷"†6öç7B—FVÒöb²ââæ–çV—&–W5Òç6÷'B‚†Æ"“ÓäFFRç'6R†"ç&V6V—fVEöB’ÔFFRç'6R†ç&V6V—fVEöB’’—°¢–b‚—FVÒçW'6öåö–B–6öçF–çVS°¢6öç7BöÆC×&W7VÇBævWB†—FVÒçW'6öåö–B“°¢–b†öÆB—¶öÆBæ6÷VçB³Ó·ÖVÇ6W°¢&W7VÇBç6WB†—FVÒçW'6öåö–BÇ¶6÷VçC£Ç7VÖÖ'“¦—FVÒç7VÖÖ'—ÇÂ$VçV—'’&V6V—fVB"Ç6÷W&6S¦—FVÒç6÷W&6RÆFFS¦—FVÒç&V6V—fVEöGÒ“°¢Ð¢Ð¢&WGW&â&W7VÇC°¢ÒÅ¶–çV—&–W5Ò“°¢7–æ2gVæ7F–öâÆöDÖ÷&T6öçF7G2‚—°¢–b†ÆöF–ætÖ÷&UV÷ÆWÇÂFVæçD–B—&WGW&ã°¢–b‡6V7F–öãÓÓÒ&6öçF7G2"bg6V&6‚çG&–Ò‚’æÆVæwFƒãÓ"—¶–b‚†F—&V7F÷'•&W7VÇG7ÇÅµÒ’æÆVæwFƒãÖF—&V7F÷'•F÷FÂ—&WGW&ã·Ð¢VÇ6R–b‚V÷ÆT†4Ö÷&R—&WGW&ã°¢6öç7BvVæW&F–öã×&WVW7DvVæW&F–öâæ7W'&VçC°¢6öç7B—56V&6ƒ×6V7F–öãÓÓÒ&6öçF7G2"bg6V&6‚çG&–Ò‚’æÆVæwFƒãÓ#°¢6öç7Böfg6WCÖ—56V&6ƒò†F—&V7F÷'•&W7VÇG3òæÆVæwF‡ÇÃ“§V÷ÆRæÆVæwFƒ°¢6WDÆöF–ætÖ÷&UV÷ÆR‡G'VR“°¢G'—°¢–b†—56V&6‚—°¢6öç7B&×3ÖæWrU$Å6V&6…&×2‡·6V&6ƒ§6V&6‚çG&–Ò‚’Ç6÷'C¦6öçF7E6÷'BÆöfg6WC¥7G&–ær†öfg6WB—Ò“°¢6öç7B#Öv—B6öææV7DfWF6ƒÇ¶—FV×3¤6öææV7EW'6öåµÓ·F÷FÃ¦çVÖ&W'Óâ‚"ö’ö6öææV7B÷v÷&·76W2ò"¶Væ6öFUU$”6ö×öæVçB‡FVæçD–B’²"ö6öçF7G2öF—&V7F÷'“ò"·&×2çFõ7G&–ær‚’“°¢–b‡&WVW7DvVæW&F–öâæ7W'&VçBÓÖvVæW&F–öâ—&WGW&ã°¢6WDF—&V7F÷'•&W7VÇG2†7W'&VçCÓå²âââ†7W'&VçGÇÅµÒ’Âââç"æ—FV×2æf–ÇFW"‡W'6öãÓâ†7W'&VçGÇÅµÒ’ç6öÖR‡ƒÓç‚æ–CÓÓ×W'6öâæ–B’•Ò“°¢6WDF—&V7F÷'•F÷FÂ‡"çF÷FÂ“°¢ÖVÇ6W°¢6öç7B#Öv—B7&ÔÆ—7CÄ6öææV7EW'6öãâ‡FVæçD–BÂ'V÷ÆR"Ç¶Æ–Ö—C¢#"Æöfg6WC¥7G&–ær†öfg6WB—Ò“°¢–b‡&WVW7DvVæW&F–öâæ7W'&VçBÓÖvVæW&F–öâ—&WGW&ã°¢6WEV÷ÆR†7W'&VçCÓå²ââæ7W'&VçBÂââç"æ—FV×2æf–ÇFW"‡W'6öãÓâ7W'&VçBç6öÖR‡ƒÓç‚æ–CÓÓ×W'6öâæ–B’•Ò“°¢6WEV÷ÆT†4Ö÷&R‡"æ—FV×2æÆVæwFƒÓÓÓ“°¢Ð¢Ö6F6‚†R—¶–b‡&WVW7DvVæW&F–öâæ7W'&VçCÓÓÖvVæW&F–öâ—6WDW'&÷"†R–ç7Fæ6VöbW'&÷#öRæÖW76vS¢$6÷VÆBæ÷BÆöBÖ÷&R6öçF7G2â"“·Ð¢f–æÆÇ—¶–b‡&WVW7DvVæW&F–öâæ7W'&VçCÓÓÖvVæW&F–öâ—6WDÆöF–ætÖ÷&UV÷ÆR†fÇ6R“·Ð¢Ð¢W6TVffV7B‚‚“Óç°¢–b‡6V7F–öâÓÒ&6öçF7G2'ÇÂFVæçD–GÇÂ6–væVD–çÇÇ6V&6‚çG&–Ò‚’æÆVæwFƒÃ"—°¢6WDF—&V7F÷'•&W7VÇG2†çVÆÂ“·6WDF—&V7F÷'•F÷FÂƒ“·6WDF—&V7F÷'”ÆöF–ær†fÇ6R“·&WGW&ã°¢Ð¢ÆWB6æ6VÆÆVCÖfÇ6S°¢6WDF—&V7F÷'”ÆöF–ær‡G'VR“°¢6öç7BF–ÖW#×v–æF÷rç6WEF–ÖV÷WB‚‚“Óç°¢6öç7B&×3ÖæWrU$Å6V&6…&×2‡·6V&6ƒ§6V&6‚çG&–Ò‚’Ç6÷'C¦6öçF7E6÷'BÆöfg6WC¢#'Ò“°¢fö–B6öææV7DfWF6ƒÇ¶—FV×3¤6öææV7EW'6öåµÓ·F÷FÃ¦çVÖ&W'Óâ‚"ö’ö6öææV7B÷v÷&·76W2ò"¶Væ6öFUU$”6ö×öæVçB‡FVæçD–B’²"ö6öçF7G2öF—&V7F÷'“ò"·&×2çFõ7G&–ær‚’¢çF†Vâ‡#Óç¶–b†6æ6VÆÆVB—&WGW&ã·6WDF—&V7F÷'•&W7VÇG2‡"æ—FV×2“·6WDF—&V7F÷'•F÷FÂ‡"çF÷FÂ“·Ò¢æ6F6‚†SÓç¶–b‚6æ6VÆÆVB—·6WDF—&V7F÷'•&W7VÇG2…µÒ“·6WDF—&V7F÷'•F÷FÂƒ“·6WDW'&÷"†R–ç7Fæ6VöbW'&÷#öRæÖW76vS¢%Væ&ÆRFò6V&6‚6öçF7G2â"“·×Ò¢æf–æÆÇ’‚‚“Óç¶–b‚6æ6VÆÆVB—6WDF—&V7F÷'”ÆöF–ær†fÇ6R“·Ò“°¢ÒÃ#ƒ“°¢&WGW&â‚“Óç¶6æ6VÆÆVC×G'VS·v–æF÷ræ6ÆV%F–ÖV÷WB‡F–ÖW"“·Ó°¢ÒÅ·FVæçD–BÇ6–væVD–âÇ6V7F–öâÇ6V&6‚Æ6öçF7E6÷'BÇ&Vg&W6„6÷VçEÒ“°¢6öç7B6öçF7G5v—F„FWF–Ç3×V÷ÆRæf–ÇFW"‡Óçæ6öçF7EöÖWF†öG2ç6öÖR†ÓÓæÒçfÇVRçG&–Ò‚’’’æÆVæwFƒ°¢6öç7B6öçF7G4Ö—76–ætFWF–Ç3×V÷ÆRæÆVæwF‚Ö6öçF7G5v—F„FWF–Ç3°¢6öç7B6öçF7E&öÆW3Õ²ââææWr6WB‡V÷ÆRæfÆDÖ‡Óçç&öÆW2’•Òç6÷'B‚“°¢6öç7B6V&6†–ætF—&V7F÷'“×6V7F–öãÓÓÒ&6öçF7G2"bg6V&6‚çG&–Ò‚’æÆVæwFƒãÓ#°¢6öç7BÖF6†–æuV÷ÆS×W6TÖVÖò‚‚“Óâ‡6V&6†–ætF—&V7F÷'“ò†F—&V7F÷'•&W7VÇG7ÇÅµÒ“§V÷ÆR’æf–ÇFW"‡Óç°¢6öç7B†4FWF–Ç3×æ6öçF7EöÖWF†öG2ç6öÖR†ÓÓæÒçfÇVRçG&–Ò‚’“°¢–b†6öçF7Ef–WsÓÓÒ'v—F…öFWF–Ç2"bb†4FWF–Ç2—&WGW&âfÇ6S°¢–b†6öçF7Ef–WsÓÓÒ&Ö—76–æuöFWF–Ç2"bf†4FWF–Ç2—&WGW&âfÇ6S°¢–b†6öçF7E&öÆRÓÒ&ÆÂ"bbç&öÆW2æ–æ6ÇVFW2†6öçF7E&öÆR’—&WGW&âfÇ6S°¢6öç7B×6V&6‚çG&–Ò‚’çFôÆ÷vW$66R‚“°¢6öç7BÆ7DVçV—'“ÖVçV—'”'•W'6öâævWB‡æ–B“°¢&WGW&âÇÅ·ægVÆÅöæÖRÂââçæ6öçF7EöÖWF†öG2æÖ†ÓÓæÒçfÇVR’Âââçç&öÆW2ÆÆ7DVçV—'“òç7VÖÖ'’ÆÆ7DVçV—'“òç6÷W&6UÒç6öÖR‡cÓâ‡gÇÂ""’çFôÆ÷vW$66R‚’æ–æ6ÇVFW2‡’“°¢Ò’ç6÷'B‚†Æ"“Óæ6öçF7E6÷'CÓÓÒ&æWvW7B#ôFFRç'6R†"æ7&VFVEöB’ÔFFRç'6R†æ7&VFVEöB—ÇÆægVÆÅöæÖRæÆö6ÆT6ö×&R†"ægVÆÅöæÖR“¦ægVÆÅöæÖRæÆö6ÆT6ö×&R†"ægVÆÅöæÖR’’À¢·V÷ÆRÇ6V&6‚Æ6öçF7Ef–^{Û{h‘éì¶»§q«^u­¥¹¥ôð½Íµ…±°øð¼øèñÍÁ…¸±…ÍÍ9…µ”ô‰àµ½¹Ñ…ÑÌµµ¥ÍÍ¥¹œˆù½¹Ñ…Ð‘•Ñ…¥±Ì¹••‘•ð½ÍÁ…¸ùôð½ÍÁ…¸ø(€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰àµ½¹Ñ…ÑÌµ½Á•¸ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆùY¥•ÜƒŠ\ð½ÍÁ…¸ø(€€€€€€€€ð½‰ÕÑÑ½¸øì(€€€€€€ô¥ô(€€€€€€ð½‘¥Øùô(€€€€ì¡Í•…É¡¥¹¥É•Ñ½Éäü¡‘¥É•Ñ½ÉåI•ÍÕ±ÑÍññmt¤¹±•¹Ñ ñ‘¥É•Ñ½ÉåQ½Ñ…°éÁ•½Á±•!…Í5½É”¤˜˜…‘¥É•Ñ½Éå1½…‘¥¹œ˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ½¹Ñ…ÑÌµ±½…µµ½É”ˆøñÍÁ…¸ùíÍ•…É¡¥¹¥É•Ñ½Éäü‰5½É”µ…Ñ¡¥¹œ½¹Ñ…ÑÌ…É”…Ù…¥±…‰±”¸ˆè‰M¡½Ý¥¹œ±½…‘•½¹Ñ…ÑÌ¸5½É”É•½É‘Ì…É”…Ù…¥±…‰±”¥¸Ñ¡¥ÌÝ½É­ÍÁ…”¸‰ôð½ÍÁ…¸ø(€€€€€€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆ‘¥Í…‰±•õí±½…‘¥¹5½É•A•½Á±•ô½¹±¥¬õì ¤ôùÙ½¥±½…‘5½É•½¹Ñ…ÑÌ ¥ôùí±½…‘¥¹5½É•A•½Á±”ü‰1½…‘¥¹ŸŠ˜ˆè‰1½…€ÄÀÀµ½É”½¹Ñ…ÑÌ‰ôð½‰ÕÑÑ½¸ø(€€€€€ð½‘¥Øùô(€€€€ð½Í•Ñ¥½¸ùô((€€€íÍ•Ñ¥½¸ôôô‰Á¥Á•±¥¹”ˆ˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµÁ¥Á•±¥¹”µÍÑ…¬ˆø(€€€€€ñ½¹¹•Ñ‘µ¥ÍÍ¥½¹!…¹‘½™™ÌÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ô½ÁÁ½ÉÑÕ¹¥Ñ¥•Ìõí½ÁÁ½ÉÑÕ¹¥Ñ¥•ÍôÁ•½Á±”õíÁ•½Á±•ô…¹]É¥Ñ”õí…¹]É¥Ñ•ô…¹5…¹…”õí…¹½¹™¥ÕÉ•ô½¹¡…¹•õì ¤ôùÍ•ÑI•™É•Í¡½Õ¹Ð¡ØôùØ¬Ä¥ô¼ø(€€€€íÁ¥Á•±¥¹•Ì¹±•¹Ñ øÀ˜˜ñA¥Á•±¥¹•Y¥ÍÕ…°Á¥Á•±¥¹•ÌõíÁ¥Á•±¥¹•Íô½ÁÁ½ÉÑÕ¹¥Ñ¥•ÌõíÙ¥Í¥‰±•=ÁÁ½ÉÑÕ¹¥Ñ¥•Íô½¹=Á•¸õí¥ôùí½¹ÍÐ¥Ñ•´õ½ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥¹¡¼ôù¼¹¥ôôõ¥¤í¥˜¡¥Ñ•´¥íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¥¤íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡¥Ñ•´¹½¹Ñ…Ñ}¥¤íõõô¼ùô(€€€€íÁ¥Á•±¥¹•Ì¹±•¹Ñ ôôôÀüñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµÁ…¹•°ˆø(€€€€€€ñµÁÑåMÑ…Ñ”Ñ¥Ñ±”ô‰M•ÐÕÀå½ÕÈ™¥ÉÍÐ…‘µ¥ÍÍ¥½¹ÌÁ¥Á•±¥¹”ˆ‘•ÍÉ¥ÁÑ¥½¸ô‰QÉ…¬•Ù•Éä½ÁÁ½ÉÑÕ¹¥Ñä™É½´¥¹¥Ñ¥…°•¹ÅÕ¥ÉäÑ¼•¹É½±µ•¹Ð¸MÑ…ÉÐÝ¥Ñ „É•…‘äµµ…‘”™¥Ù”µÍÑ…”Á¥Á•±¥¹”¸ˆ¼ø(€€€€€í…¹½¹™¥ÕÉ”üñ™½É´±…ÍÍ9…µ”ô‰àµ¥¹±¥¹”µ™½É´ˆ…É¥„µ±…‰•°ô‰É•…Ñ”…‘µ¥ÍÍ¥½¹ÌÁ¥Á•±¥¹”ˆÍÑå±”õííµ…á]¥‘Ñ èÔÈÀ±µ…É¥¸èˆÀ…ÕÑ¼€ÈÉÁàˆ±‘¥ÍÁ±…äè‰™±•àˆ±™±•á]É…Àè‰ÝÉ…Àˆ±©ÕÍÑ¥™å½¹Ñ•¹Ðè‰•¹Ñ•Èˆ±…ÀèÄÁõô½¹MÕ‰µ¥Ðõí”ôùí”¹ÁÉ•Ù•¹Ñ•™…Õ±Ð ¤í½¹ÍÐ¹…µ”õÁ¥Á•±¥¹•9…µ”¹ÑÉ¥´ ¥ñð‰MÑÕ‘•¹Ð‘µ¥ÍÍ¥½¹ÌˆíÙ½¥ÉÕ¸¡…Íå¹Œ ¤ôùì(€€€€€€…Ý…¥ÐÉµ½µµ…¹¡Ñ•¹…¹Ñ%°‰Á¥Á•±¥¹•Ìˆ°‰‰½½ÑÍÑÉ…Á}Á¥Á•±¥¹”ˆ±í¹…µ•ô¤ì(€€€€€€Í•ÑA¥Á•±¥¹•9…µ” ˆˆ¤ì(€€€€€ô°‰‘µ¥ÍÍ¥½¹ÌÁ¥Á•±¥¹”É•…Ñ•¸e½Ô…¸¹½Ü…‘…¹ÑÉ…¬½ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¸ˆ¤íõôø(€€€€€€€ñ±…‰•°¡Ñµ±½Èô‰àµÁ¥Á•±¥¹”µÅÕ¥¬µ¹…µ”ˆÍÑå±”õííÝ¥‘Ñ èˆÄÀÀ”ˆ±Ñ•áÑ±¥¸è‰•¹Ñ•Èˆ±™½¹Ñ]•¥¡ÐèØÀÀ±™½¹ÑM¥é”èÄÍõôùA¥Á•±¥¹”¹…µ”ð½±…‰•°ø(€€€€€€€ñ¥¹ÁÕÐ¥ô‰àµÁ¥Á•±¥¹”µÅÕ¥¬µ¹…µ”ˆÍÑå±”õíí™±•àèˆÄ€Ä€ÈÌÁÁàˆ±µ¥¹]¥‘Ñ èÁõôÙ…±Õ”õíÁ¥Á•±¥¹•9…µ•ôµ…á1•¹Ñ õìÄÀÁô½¹¡…¹”õí”ôùÍ•ÑA¥Á•±¥¹•9…µ”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ôÁ±…•¡½±‘•Èô‰MÑÕ‘•¹Ð‘µ¥ÍÍ¥½¹Ìˆ¼ø(€€€€€€€ñ‰ÕÑÑ½¸ÑåÁ”ô‰ÍÕ‰µ¥Ðˆ±…ÍÍ9…µ”ô‰àµÁÉ¥µ…Éäˆ‘¥Í…‰±•õí‰ÕÍåôùí‰ÕÍäü‰É•…Ñ¥¹ŸŠ˜ˆè‰É•…Ñ”Á¥Á•±¥¹”‰ôð½‰ÕÑÑ½¸ø(€€€€€€€ñÍµ…±°ÍÑå±”õíí™±•á	…Í¥ÌèˆÄÀÀ”ˆ±Ñ•áÑ±¥¸è‰•¹Ñ•Èˆ±½±½ÈèˆŒØÔÝ”äÈ‰õôù•™…Õ±ÐÍÑ…•Ìè9•ÜƒŠH½¹Ñ…Ñ•ƒŠHQÉ¥…°ƒŠH]½¸€¼1½ÍÐ¸e½Ô…¸µ…¹…”…‘‘¥Ñ¥½¹…°Á¥Á•±¥¹•Ì¥¸%¹ÍÑ¥ÑÕÑ”Í•ÑÑ¥¹Ì¸ð½Íµ…±°ø(€€€€€€ð½™½É´øèñÀÍÑå±”õííÑ•áÑ±¥¸è‰•¹Ñ•Èˆ±µ…É¥¸èˆÀ€À€ÈÑÁàˆ±½±½ÈèˆŒØÔÝ”äÈˆ±™½¹ÑM¥é”èÄÍõôùÍ¬å½ÕÈÝ½É­ÍÁ…”½Ý¹•È°…‘µ¥¸½Èµ…¹…•ÈÑ¼É•…Ñ”Ñ¡”™¥ÉÍÐÁ¥Á•±¥¹”¸ð½Àùô(€€€€€ð½Í•Ñ¥½¸øè(€€€€Á¥Á•±¥¹•Ì¹µ…À¡ÀôøñÍ•Ñ¥½¸­•äõíÀ¹¥‘ô±…ÍÍ9…µ”ô‰àµÁ¥Á•±¥¹”µÍ•Ñ¥½¸ˆø(€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµÁ…¹•°µ¡•…‘•Èˆøñ‘¥Øøñ ÈùíÀ¹¹…µ•ôð½ ÈøñÀùíÀ¹ÍÑ…•Ì¹±•¹Ñ¡ôÍÑ…•Ìƒ
+ÜíÙ¥Í¥‰±•=ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥±Ñ•È¡¼ôù¼¹Á¥Á•±¥¹•}¥ôôõÀ¹¥¤¹±•¹Ñ¡ô½ÁÁ½ÉÑÕ¹¥Ñ¥•Ìð½Àøð½‘¥Øøð½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ­…¹‰…¸ˆùíl¸¸¹À¹ÍÑ…•Ít¹Í½ÉÐ ¡„±ˆ¤ôù„¹½É‘•Èµˆ¹½É‘•È¤¹µ…À¡ÍÑ…”ôøñ‘¥Ø±…ÍÍ9…µ”ô‰àµ­…¹‰…¸µ½±Õµ¸ˆ­•äõíÍÑ…”¹¥‘ô(€€€€€€‘…Ñ„µ‘É½ÀµÑ…É•Ðõí‘É½ÁMÑ…•%ôôõÍÑ…”¹¥˜™‘É…•‘=ÁÁ½ÉÑÕ¹¥Ñå%ü‰ÑÉÕ”ˆéÕ¹‘•™¥¹•‘ô(€€€€€€½¹É…=Ù•Èõí”ôùí½¹ÍÐµ½Ù¥¹œõ½ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥¹¡¼ôù¼¹¥ôôõ‘É…•‘=ÁÁ½ÉÑÕ¹¥Ñå%¤í¥˜ …‰ÕÍä˜™…¹]É¥Ñ”˜™µ½Ù¥¹œü¹Á¥Á•±¥¹•}¥ôôõÀ¹¥˜™µ½Ù¥¹œ¹ÍÑ…•}¥„ôõÍÑ…”¹¥¥í”¹ÁÉ•Ù•¹Ñ•™…Õ±Ð ¤í”¹‘…Ñ…QÉ…¹Í™•È¹‘É½Á™™•Ðô‰µ½Ù”ˆíÍ•ÑÉ½ÁMÑ…•%¡ÍÑ…”¹¥¤íõõô(€€€€€€½¹É…1•…Ù”õí”ôùí¥˜ …”¹ÕÉÉ•¹ÑQ…É•Ð¹½¹Ñ…¥¹Ì¡”¹É•±…Ñ•‘Q…É•Ð…Ì9½‘”¤¥Í•ÑÉ½ÁMÑ…•%¡ÕÉÉ•¹ÐôùÕÉÉ•¹ÐôôõÍÑ…”¹¥ý¹Õ±°éÕÉÉ•¹Ð¤íõô(€€€€€€½¹É½Àõí”ôùí”¹ÁÉ•Ù•¹Ñ•™…Õ±Ð ¤í½¹ÍÐµ½Ù¥¹œõ½ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥¹¡¼ôù¼¹¥ôôõ‘É…•‘=ÁÁ½ÉÑÕ¹¥Ñå%˜™¼¹Á¥Á•±¥¹•}¥ôôõÀ¹¥¤íÍ•ÑÉ…•‘=ÁÁ½ÉÑÕ¹¥Ñå%¡¹Õ±°¤íÍ•ÑÉ½ÁMÑ…•%¡¹Õ±°¤í¥˜¡µ½Ù¥¹œ˜™µ½Ù¥¹œ¹ÍÑ…•}¥„ôõÍÑ…”¹¥˜™…¹]É¥Ñ”˜˜…‰ÕÍä¥Ù½¥ÕÁ‘…Ñ•MÑ…”¡µ½Ù¥¹œ±ÍÑ…”¹¥¤íõôø(€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ½±Õµ¸µ¡•…‘¥¹œˆøñÍÁ…¸±…ÍÍ9…µ”ô‰àµÍÑ…”µ‘½ÐˆÍÑå±”õíí‰…­É½Õ¹éÑ½¹•½±½È¡ÍÑ…•Q½¹”¡ÍÑ…”¹¹…µ”±ÍÑ…”¹½ÕÑ½µ”¤¥õô¼øñÍÑÉ½¹œùíÍÑ…”¹¹…µ•ôð½ÍÑÉ½¹œøñÍÁ…¸ùíÙ¥Í¥‰±•=ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥±Ñ•È¡¼ôù¼¹ÍÑ…•}¥ôôõÍÑ…”¹¥¤¹±•¹Ñ¡ôð½ÍÁ…¸øð½‘¥Øø(€€€€€€íÙ¥Í¥‰±•=ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥±Ñ•È¡¼ôù¼¹ÍÑ…•}¥ôôõÍÑ…”¹¥¤¹µ…À¡¼ôøñ‰ÕÑÑ½¸­•äõí¼¹¥‘ô±…ÍÍ9…µ”ô‰àµ‘•…°ˆ‘É……‰±”õí…¹]É¥Ñ”˜˜…‰ÕÍåô(€€€€€€€‘…Ñ„µ‘É…¥¹œõí‘É…•‘=ÁÁ½ÉÑÕ¹¥Ñå%ôôõ¼¹¥ü‰ÑÉÕ”ˆéÕ¹‘•™¥¹•‘ô(€€€€€€€Ñ¥Ñ±”õí…¹]É¥Ñ”ü‰É…œÑ¼…¹½Ñ¡•ÈÍÑ…”°½È½Á•¸Ñ¼¡…¹”Ñ¡”ÍÑ…”ÕÍ¥¹œÑ¡”‘É½Á‘½Ý¸ˆè‰Y¥•Ü…‘µ¥ÍÍ¥½¸‰ô(€€€€€€€½¹É…MÑ…ÉÐõí”ôùí¥˜ ……¹]É¥Ñ•ññ‰ÕÍä¥í”¹ÁÉ•Ù•¹Ñ•™…Õ±Ð ¤íÉ•ÑÕÉ¸íõÍ•ÑÉ…•‘=ÁÁ½ÉÑÕ¹¥Ñå%¡¼¹¥¤í”¹‘…Ñ…QÉ…¹Í™•È¹•™™•Ñ±±½Ý•ô‰µ½Ù”ˆí”¹‘…Ñ…QÉ…¹Í™•È¹Í•Ñ…Ñ„ ‰Ñ•áÐ½Á±…¥¸ˆ±¼¹¥¤íõô(€€€€€€€½¹É…¹õì ¤ôùíÍ•ÑÉ…•‘=ÁÁ½ÉÑÕ¹¥Ñå%¡¹Õ±°¤íÍ•ÑÉ½ÁMÑ…•%¡¹Õ±°¤íõô(€€€€€€€½¹±¥¬õì ¤ôùíÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¼¹¥¤íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡¼¹½¹Ñ…Ñ}¥¤íõôø(€€€€€€€€ñÍÑÉ½¹œùí¼¹Ñ¥Ñ±•ôð½ÍÑÉ½¹œøñÍµ…±°ùíÁ•½Á±”¹™¥¹¡àôùà¹¥ôôõ¼¹½¹Ñ…Ñ}¥¤ü¹™Õ±±}¹…µ•ñð‰%¹ÍÑ¥ÑÕÑ¥½¹…°½ÁÁ½ÉÑÕ¹¥Ñä‰ôð½Íµ…±°ø(€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰àµ‘•…°µ™½½ÐˆøñÍÁ…¸ùí¼¹•áÁ•Ñ•‘}Ù…±Õ”ôõ¹Õ±°ü‰9¼Ù…±Õ”ÍÁ•¥™¥•ˆé¼¹ÕÉÉ•¹ä¬ˆ€ˆ­¼¹•áÁ•Ñ•‘}Ù…±Õ”¹Ñ½1½…±•MÑÉ¥¹œ ‰•¸µ%8ˆ¥ôð½ÍÁ…¸øñÍÁ…¸ùY¥•ÜƒŠHð½ÍÁ…¸øð½ÍÁ…¸øð½‰ÕÑÑ½¸ø¥ô(€€€€€€ì…Ù¥Í¥‰±•=ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹Í½µ”¡¼ôù¼¹ÍÑ…•}¥ôôõÍÑ…”¹¥¤˜˜ñÍÁ…¸±…ÍÍ9…µ”ô‰àµÍÑ…”µ•µÁÑäˆù9¼…‘µ¥ÍÍ¥½¹Ì¥¸Ñ¡¥ÌÍÑ…”ð½ÍÁ…¸ùô(€€€€€€ð½‘¥Øø¥ôð½‘¥Øø(€€€€€ð½Í•Ñ¥½¸ø¥ô(€€€€ð½‘¥Øùô((€€€íÍ•Ñ¥½¸ôôô‰™½±±½ÝÕÁÌˆ˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ™½±±½ÝÕÁÌµÝ½É­ÍÁ…”ˆø(€€€€€ñ½¹¹•Ñ½±±½ÝÕÁÍ	½…ÉÑ…Í­ÌõíÑ…Í­ÍôÁ•½Á±”õíÁ•½Á±•ô½ÁÁ½ÉÑÕ¹¥Ñ¥•Ìõí½ÁÁ½ÉÑÕ¹¥Ñ¥•Íô™½ÕÍA•ÉÍ½¹%õíÝ½É­™±½Ý½¹Ñ…Ñ%‘ô…¹]É¥Ñ”õí…¹]É¥Ñ•ô‰ÕÍäõí‰ÕÍåô(€€€€€½¹½µÁ±•Ñ”õíÑ…Í­%ôùÙ½¥ÉÕ¸  ¤ôùÉµ½µµ…¹¡Ñ•¹…¹Ñ%°‰Ñ…Í­Ìˆ°‰½µÁ±•Ñ•}Ñ…Í¬ˆ±íÑ…Í­%‘ô¤°‰½±±½ÜµÕÀ½µÁ±•Ñ•¸ˆ¥ô(€€€€€½¹=Á•¹½¹Ñ…ÐõíÁ•ÉÍ½¹%ôùíÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¹Õ±°¤íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡Á•ÉÍ½¹%¤íõô(€€€€€½¹=Á•¹=ÁÁ½ÉÑÕ¹¥Ñäõì¡Á•ÉÍ½¹%±½ÁÁ½ÉÑÕ¹¥Ñå%¤ôùíÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡Á•ÉÍ½¹%¤íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡½ÁÁ½ÉÑÕ¹¥Ñå%¤íõô¼ø(€€€€€ñ‘•Ñ…¥±Ì±…ÍÍ9…µ”ô‰àµ™½±±½ÝÕÁÌµÉ•µ¥¹‘•ÉÌˆø(€€€€€€ñÍÕµµ…Éäù5äÉ•µ¥¹‘•È¹½Ñ¥™¥…Ñ¥½¹Ì€ñÍÁ…¸ù±•ÉÑÌ™É½´Ñ¡”É•µ¥¹‘•ÈÍ¡•‘Õ±•Èð½ÍÁ…¸øð½ÍÕµµ…Éäø(€€€€€€ñ½¹¹•ÑI•µ¥¹‘•É%¹‰½à­•äõíÑ•¹…¹Ñ%‘ôÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ô¼ø(€€€€€ð½‘•Ñ…¥±Ìø(€€€€ð½‘¥Øùô((€€€íÍ•Ñ¥½¸ôôô‰…±•¹‘…Èˆ˜˜ñ½¹¹•Ñ…±•¹‘…ÈÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ô…ÁÁ½¥¹Ñµ•¹ÑÌõí…ÁÁ½¥¹Ñµ•¹ÑÍôÁ•½Á±”õíÁ•½Á±•ô½ÁÁ½ÉÑÕ¹¥Ñ¥•Ìõí½ÁÁ½ÉÑÕ¹¥Ñ¥•Íô(€€€€ÁÉ½É…µÌõíÁÉ½É…µÍôµ•µ‰•ÉÌõíµ•µ‰•ÉÍô…¹]É¥Ñ”õí…¹]É¥Ñ•ô…¹5…¹…”õí…¹½¹™¥ÕÉ•ô(€€€€½¹¡…¹•õì ¤ôùÍ•ÑI•™É•Í¡½Õ¹Ð¡ØôùØ¬Ä¥ô(€€€€½¹=Á•¹½¹Ñ…ÐõíÁ•ÉÍ½¹%ôùíÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¹Õ±°¤íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡Á•ÉÍ½¹%¤íõô(€€€€½¹=Á•¹=ÁÁ½ÉÑÕ¹¥Ñäõí½ÁÁ½ÉÑÕ¹¥Ñå%ôùí½¹ÍÐ½ÁÀõ½ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥¹¡¼ôù¼¹¥ôôõ½ÁÁ½ÉÑÕ¹¥Ñå%¤í¥˜¡½ÁÀ¥íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡½ÁÁ½ÉÑÕ¹¥Ñå%¤íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡½ÁÀ¹½¹Ñ…Ñ}¥¤íõõô¼ùô((€€€íÍ•Ñ¥½¸ôôô‰½µµÕ¹¥…Ñ¥½¹Ìˆ˜˜ñ½¹¹•ÑU¹¥™¥•‘%¹‰½à­•äõíÑ•¹…¹Ñ%‘ôÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ô…¹]É¥Ñ”õí…¹]É¥Ñ•ô™½ÕÍA•ÉÍ½¹%õíÝ½É­™±½Ý½¹Ñ…Ñ%‘ô(€€€€½¹=Á•¹]½É­™±½Üõì¡¥±‘•ÍÑ¥¹…Ñ¥½¸¤ôù½Á•¹ÕÍÑ½µ•É]½É­™±½Ü¡¥±‘•ÍÑ¥¹…Ñ¥½¸¥ô…±±½Ý‘µ¥ÍÍ¥½¹Ìõí…‘Ù…¹•‘ô(€€€€½¹…Ñ…¡…¹•õì ¤ôùÍ•ÑI•™É•Í¡½Õ¹Ð¡ØôùØ¬Ä¥ô½¹=Á•¹½¹Ñ…ÐõíÁ•ÉÍ½¹%ôùíÙ½¥€¡…Íå¹Œ ¤ôùíÑÉåí¥˜ …Á•½Á±”¹Í½µ”¡Á•ÉÍ½¸ôùÁ•ÉÍ½¸¹¥ôôõÁ•ÉÍ½¹%¤¥í½¹ÍÐÉ•ÍÕ±Ðõ…Ý…¥ÐÉµ1¥ÍÐñ½¹¹•ÑA•ÉÍ½¸ø¡Ñ•¹…¹Ñ%°‰Á•½Á±”ˆ±í¥éÁ•ÉÍ½¹%±±¥µ¥ÐèˆÄ‰ô¤í¥˜ …É•ÍÕ±Ð¹¥Ñ•µÌ¹±•¹Ñ ¥íÍ•ÑÉÉ½È ‰½¹Ñ…Ð¥Ì¹¼±½¹•È…Ù…¥±…‰±”¸ˆ¤íÉ•ÑÕÉ¸íõÍ•ÑA•½Á±”¡ÕÉÉ•¹ÐôùÕÉÉ•¹Ð¹Í½µ”¡Á•ÉÍ½¸ôùÁ•ÉÍ½¸¹¥ôôõÁ•ÉÍ½¹%¤ýÕÉÉ•¹Ðél¸¸¹ÕÉÉ•¹Ð±É•ÍÕ±Ð¹¥Ñ•µÍlÁut¤íõÍ•ÑM•Ñ¥½¸ ‰½¹Ñ…ÑÌˆ¤íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¹Õ±°¤íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡Á•ÉÍ½¹%¤íõ…Ñ ¡”¥íÍ•ÑÉÉ½È¡”¥¹ÍÑ…¹•½˜ÉÉ½Èý”¹µ•ÍÍ…”è‰½Õ±¹½Ð½Á•¸±¥¹­•I4½¹Ñ…Ð¸ˆ¤íõô¤ ¤íõô¼ùô((€€€íÍ•Ñ¥½¸ôôô‰É•Á½ÉÑÌˆ˜˜¡…¹½¹™¥ÕÉ”üñ½¹¹•ÑI•Á½ÉÑÌ­•äõíÑ•¹…¹Ñ%‘ôÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ô¼øè(€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµÁ…¹•°ˆøñ‘¥Ø±…ÍÍ9…µ”ô‰àµ•µÁÑäˆøñÍÑÉ½¹œùI•Á½ÉÑ¥¹œ…•ÍÌÉ•ÍÑÉ¥Ñ•ð½ÍÑÉ½¹œøñÀùÍ¬å½ÕÈ¥¹ÍÑ¥ÑÕÑ”µ…¹…•È™½È…•ÍÌ¸ð½Àøð½‘¥Øøð½Í•Ñ¥½¸ø¥ô((€€€íÍ•Ñ¥½¸ôôô‰Í•ÑÑ¥¹Ìˆ˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹ÌµÝ½É­ÍÁ…”ˆø(€€€€ñ¹ÅÕ¥ÉåM•ÑÑ¥¹Ì­•äõíÑ•¹…¹Ñ%‘ôÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ô…¹5…¹…”õíl‰½Ý¹•Èˆ°‰…‘µ¥¸‰t¹¥¹±Õ‘•Ì¡Ñ•¹…¹Ðü¹µ•µ‰•ÉÍ¡¥Á}É½±•ñðˆˆ¥ô½¹M…Ù•õíÍ•Ñ¹ÅÕ¥ÉåAÉ•™Íô¼ø(€€€í…‘Ù…¹•˜˜ñ‘•Ñ…¥±Ì±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹ÌµÍ•Ñ¥½¸àµÍ•ÑÑ¥¹Ìµ‰ÕÍ¥¹•ÍÌˆø(€€€€€ñÍÕµµ…ÉäøñÍÁ…¸øñÍÑÉ½¹œù	ÕÍ¥¹•ÍÌ½¹™¥ÕÉ…Ñ¥½¸ð½ÍÑÉ½¹œøñÍµ…±°ùQ•…´…•ÍÌ°ÁÉ½É…µµ•Ì…¹…‘µ¥ÍÍ¥½¹ÌÁ¥Á•±¥¹•Ìð½Íµ…±°øð½ÍÁ…¸øñÍÁ…¸±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹ÌµÍ•Ñ¥½¸µ…Ñ¥½¸ˆù5…¹…”ð½ÍÁ…¸øð½ÍÕµµ…Éäø(€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹ÌµÉ¥ˆø(€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµÁ…¹•°ˆøñ‘¥Ø±…ÍÍ9…µ”ô‰àµÁ…¹•°µ¡•…‘•Èˆøñ‘¥Øøñ Èù%¹ÍÑ¥ÑÕÑ”…•ÍÌð½ ÈøñÀù]¡¼…¸µ…¹…”Ñ¡¥ÌÝ½É­ÍÁ…”ð½Àøð½‘¥Øøð½‘¥Øø(€€€€€€ñ‘°±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹Ìµ±¥ÍÐˆøñ‘¥Øøñ‘Ðù%¹ÍÑ¥ÑÕÑ”ð½‘Ðøñ‘ùíÑ•¹…¹Ðü¹Ý½É­ÍÁ…•}¹…µ•ôð½‘øð½‘¥Øøñ‘¥Øøñ‘Ðù]½É­ÍÁ…”ð½‘Ðøñ‘ùíÑ•¹…¹Ðü¹Í±Õôð½‘øð½‘¥Øøñ‘¥Øøñ‘Ðùe½ÕÈÉ½±”ð½‘Ðøñ‘ùíÍ¡½ÉÑ1…‰•°¡Ñ•¹…¹Ðü¹µ•µ‰•ÉÍ¡¥Á}É½±•ñðˆˆ¥ôð½‘øð½‘¥Øøð½‘°ø(€€€€€í…¹½¹™¥ÕÉ”˜˜ñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆ½¹±¥¬õì ¤ôùÙ½¥½¹¹•Ñ•Ñ ñíµ•µ‰•ÉÌé½¹¹•Ñ5•µ‰•Émuôø ˆ½…Á¤½½¹¹•Ð½Ý½É­ÍÁ…•Ì¼ˆ­Ñ•¹…¹Ñ%¬ˆ½µ•µ‰•ÉÌˆ¤¹Ñ¡•¸¡ÈôùÍ•Ñ5•µ‰•ÉÌ¡È¹µ•µ‰•ÉÌ¤¤¹…Ñ ¡”ôùÍ•ÑÉÉ½È¡”¥¹ÍÑ…¹•½˜ÉÉ½Èý”¹µ•ÍÍ…”è‰½Õ±¹½Ð±½…µ•µ‰•ÉÌ¸ˆ¤¥ôùY¥•ÜÑ•…´µ•µ‰•ÉÌð½‰ÕÑÑ½¸ùô(€€€€€íµ•µ‰•ÉÌ¹±•¹Ñ øÀ˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµµ•µ‰•Èµ±¥ÍÐˆùíµ•µ‰•ÉÌ¹µ…À¡´ôøñ‘¥Ø­•äõí´¹µ•µ‰•É}¥‘ôùí´¹µ•µ‰•É}ÕÍ•É}¥¹Í±¥” À°à¥÷Š˜€ñÍÁ…¸ùíÍ¡½ÉÑ1…‰•°¡´¹µ•µ‰•É}É½±”¥ôƒ
+Üí´¹µ•µ‰•É}ÍÑ…ÑÕÍôð½ÍÁ…¸øð½‘¥Øø¥ôð½‘¥Øùô(€€€€€ð½Í•Ñ¥½¸ø(€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµÁ…¹•°ˆøñ‘¥Ø±…ÍÍ9…µ”ô‰àµÁ…¹•°µ¡•…‘•Èˆøñ‘¥Øøñ ÈùAÉ½É…µµ•Ìð½ ÈøñÀùíÁÉ½É…µÌ¹±•¹Ñ¡ô½ÕÉÍ•Ì½ÈÍ•ÉÙ¥•Ì½¹™¥ÕÉ•ð½Àøð½‘¥Øøð½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ¡¥ÀµÉ½ÜˆùíÁÉ½É…µÌ¹µ…À¡ÀôøñÍÁ…¸±…ÍÍ9…µ”ô‰àµÁ¥±°ˆ­•äõíÀ¹¥‘ôùíÀ¹¹…µ•ôð½ÍÁ…¸ø¥ôð½‘¥Øø(€€€€€í…¹½¹™¥ÕÉ”˜˜ñ™½É´±…ÍÍ9…µ”ô‰àµ¥¹±¥¹”µ™½É´ˆ½¹MÕ‰µ¥Ðõí”ôùí”¹ÁÉ•Ù•¹Ñ•™…Õ±Ð ¤íÙ½¥ÉÕ¸¡…Íå¹Œ ¤ôùí…Ý…¥ÐÉµ½µµ…¹¡Ñ•¹…¹Ñ%°‰ÁÉ½É…µÌˆ°‰É•…Ñ•}ÁÉ½É…´ˆ±í¹…µ”éÁÉ½É…µ9…µ•ô¤íÍ•ÑAÉ½É…µ9…µ” ˆˆ¤íô°‰AÉ½É…µµ”É•…Ñ•¸ˆ¤íõôø(€€€€€€€ñ¥¹ÁÕÐÉ•ÅÕ¥É•Á±…•¡½±‘•Èô‰9•ÜÁÉ½É…µµ”¹…µ”ˆ…É¥„µ±…‰•°ô‰AÉ½É…µµ”¹…µ”ˆÙ…±Õ”õíÁÉ½É…µ9…µ•ô½¹¡…¹”õí”ôùÍ•ÑAÉ½É…µ9…µ”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ô¼ø(€€€€€€€ñ‰ÕÑÑ½¸‘¥Í…‰±•õí‰ÕÍåô±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆù‘ð½‰ÕÑÑ½¸øð½™½É´ùô(€€€€€ð½Í•Ñ¥½¸ø(€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµÁ…¹•°ˆøñ‘¥Ø±…ÍÍ9…µ”ô‰àµÁ…¹•°µ¡•…‘•Èˆøñ‘¥Øøñ Èù‘µ¥ÍÍ¥½¹ÌÁ¥Á•±¥¹•Ìð½ ÈøñÀùíÁ¥Á•±¥¹•Ì¹±•¹Ñ¡ô½¹™¥ÕÉ•Á¥Á•±¥¹•Ìð½Àøð½‘¥Øøð½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ¡¥ÀµÉ½ÜˆùíÁ¥Á•±¥¹•Ì¹µ…À¡ÀôøñÍÁ…¸±…ÍÍ9…µ”ô‰àµÁ¥±°ˆ­•äõíÀ¹¥‘ôùíÀ¹¹…µ•ôð½ÍÁ…¸ø¥ôð½‘¥Øø(€€€€€í…¹½¹™¥ÕÉ”˜˜ñ™½É´±…ÍÍ9…µ”ô‰àµ¥¹±¥¹”µ™½É´ˆ½¹MÕ‰µ¥Ðõí”ôùí”¹ÁÉ•Ù•¹Ñ•™…Õ±Ð ¤íÙ½¥ÉÕ¸¡…Íå¹Œ ¤ôùì(€€€€€€…Ý…¥ÐÉµ½µµ…¹¡Ñ•¹…¹Ñ%°‰Á¥Á•±¥¹•Ìˆ°‰‰½½ÑÍÑÉ…Á}Á¥Á•±¥¹”ˆ±í¹…µ”éÁ¥Á•±¥¹•9…µ•ô¤ì(€€€€€€Í•ÑA¥Á•±¥¹•9…µ” ˆˆ¤ì(€€€€€ô°‰A¥Á•±¥¹”É•…Ñ•Ý¥Ñ ™¥Ù”‘•™…Õ±ÐÍÑ…•Ì¸ˆ¤íõôø(€€€€€€€ñ¥¹ÁÕÐÉ•ÅÕ¥É•Á±…•¡½±‘•Èô‰9•ÜÁ¥Á•±¥¹”¹…µ”ˆ…É¥„µ±…‰•°ô‰A¥Á•±¥¹”¹…µ”ˆÙ…±Õ”õíÁ¥Á•±¥¹•9…µ•ô½¹¡…¹”õí”ôùÍ•ÑA¥Á•±¥¹•9…µ”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ô¼ø(€€€€€€€ñ‰ÕÑÑ½¸‘¥Í…‰±•õí‰ÕÍåô±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆù‘ð½‰ÕÑÑ½¸øð½™½É´ùô(€€€€€ð½Í•Ñ¥½¸ø(€€€€€ð½‘¥Øø(€€€€ð½‘•Ñ…¥±Ìùô(€€€í…‘Ù…¹•˜˜ñ‘•Ñ…¥±Ì±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹ÌµÍ•Ñ¥½¸ˆø(€€€€€ñÍÕµµ…ÉäøñÍÁ…¸øñÍÑÉ½¹œùÕÑ½µ…Ñ¥½¸€™…µÀìÉ•µ¥¹‘•ÉÌð½ÍÑÉ½¹œøñÍµ…±°ùÍÍ¥¹µ•¹ÑÌ°™¥ÉÍÐ™½±±½ÜµÕÁÌ…¹¥¸µ…ÁÀÉ•µ¥¹‘•ÈÑ¥µ¥¹œð½Íµ…±°øð½ÍÁ…¸øñÍÁ…¸±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹ÌµÍ•Ñ¥½¸µ…Ñ¥½¸ˆù½¹™¥ÕÉ”ð½ÍÁ…¸øð½ÍÕµµ…Éäø(€€€€€ñ½¹¹•ÑÕÑ½µ…Ñ¥½¹M•ÑÑ¥¹Ì­•äõíÑ•¹…¹Ñ%‘ôÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ô…¹5…¹…”õíl‰½Ý¹•Èˆ°‰…‘µ¥¸‰t¹¥¹±Õ‘•Ì¡Ñ•¹…¹Ðü¹µ•µ‰•ÉÍ¡¥Á}É½±•ñðˆˆ¥ô¼ø(€€€€ð½‘•Ñ…¥±Ìùô(€€€í…¹½¹™¥ÕÉ”˜˜ñ‘•Ñ…¥±Ì±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹ÌµÍ•Ñ¥½¸ˆ¥ô‰àµ¥¹Ñ•É…Ñ¥½¸µÍ•ÑÑ¥¹Ìˆø(€€€€€ñÍÕµµ…ÉäøñÍÁ…¸øñÍÑÉ½¹œù¡…¹¹•°¥¹Ñ•É…Ñ¥½¹Ìð½ÍÑÉ½¹œøñÍµ…±°ù]¡…ÑÍÁÀ°•µ…¥°°5•Ñ„…¹Ý•‰Í¥Ñ”±•……ÁÑÕÉ”ð½Íµ…±°øð½ÍÁ…¸øñÍÁ…¸±…ÍÍ9…µ”ô‰àµÍ•ÑÑ¥¹ÌµÍ•Ñ¥½¸µ…Ñ¥½¸ˆù5…¹…”¡…¹¹•±Ìð½ÍÁ…¸øð½ÍÕµµ…Éäø(€€€€€ñ¡…¹¹•±M•ÑÑ¥¹ÌÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ô…¹5…¹…”õíl‰½Ý¹•Èˆ°‰…‘µ¥¸‰t¹¥¹±Õ‘•Ì¡Ñ•¹…¹Ðü¹µ•µ‰•ÉÍ¡¥Á}É½±•ñðˆˆ¥ô¼ø(€€€€ð½‘•Ñ…¥±Ìùô(€€€€ð½‘¥Øùô(€€€ð½‘¥Øø(€€ð½‘¥Øø((€íÍ¡½Ý½¹Ñ…Ñ½É´˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµµ½‘…°µ‰…­‘É½Àˆ½¹5½ÕÍ•½Ý¸õí”ôùí¥˜¡”¹Ñ…É•Ðôôõ”¹ÕÉÉ•¹ÑQ…É•Ð¥±½Í•½¹Ñ…Ñ½É´ ¤íõôøñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµµ½‘…°ˆÉ½±”ô‰‘¥…±½œˆ…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ…É¥„µ‰ÕÍäõí‰ÕÍåô…É¥„µ±…‰•±±•‘‰äô‰àµ¹•Üµ½¹Ñ…ÐµÑ¥Ñ±”ˆø(€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµµ½‘…°µ¡•…‘•Èˆøñ‘¥ØøñÍÁ…¸±…ÍÍ9…µ”ô‰àµ­¥­•Èˆù=9QP%IQ=Idð½ÍÁ…¸øñ È¥ô‰àµ¹•Üµ½¹Ñ…ÐµÑ¥Ñ±”ˆù9•Ü½¹Ñ…Ðð½ ÈøñÀù‘„Á•ÉÍ½¸Ý¥Ñ¡½ÕÐ•¹•É…Ñ¥¹œ…¸•¹ÅÕ¥Éä¸ð½Àøð½‘¥Øøñ‰ÕÑÑ½¸…É¥„µ±…‰•°ô‰±½Í”¹•Ü½¹Ñ…Ðˆ‘…Ñ„µ•Í…Á”µ±½Í”ô‰ÑÉÕ”ˆ‘¥Í…‰±•õí‰ÕÍåô½¹±¥¬õí±½Í•½¹Ñ…Ñ½Éµôû\ð½‰ÕÑÑ½¸øð½‘¥Øø(€€€ñ™½É´±…ÍÍ9…µ”ô‰àµ™½É´ˆ½¹MÕ‰µ¥ÐõíÉ•…Ñ•½¹Ñ…Ñôø(€€€€ñ±…‰•°ùÕ±°¹…µ”€ñÍÁ…¸ø¨ð½ÍÁ…¸øñ¥¹ÁÕÐÉ•ÅÕ¥É•…ÕÑ½½ÕÌµ…á1•¹Ñ õìÄÔÁôÙ…±Õ”õí¹•Ý½¹Ñ…Ð¹¹…µ•ô½¹¡…¹”õí”ôùÍ•Ñ9•Ý½¹Ñ…Ð¡Øôø¡ì¸¸¹Ø±¹…µ”é”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ô¼øð½±…‰•°ø(€€€€ñ±…‰•°ùI•±…Ñ¥½¹Í¡¥ÀñÍ•±•ÐÙ…±Õ”õí¹•Ý½¹Ñ…Ð¹É½±•ô½¹¡…¹”õí”ôùÍ•Ñ9•Ý½¹Ñ…Ð¡Øôø¡ì¸¸¹Ø±É½±”é”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ôø(€€€€íl‰½¹Ñ…Ðˆ°‰Õ…É‘¥…¸ˆ°‰±•…É¹•Èˆ°‰ÕÍÑ½µ•Èˆ°‰ÍÑ…™˜ˆ°‰½Ñ¡•È‰t¹µ…À¡Èôøñ½ÁÑ¥½¸­•äõíÉôÙ…±Õ”õíÉôùíÍ¡½ÉÑ1…‰•°¡È¥ôð½½ÁÑ¥½¸ø¥ô(€€€€ð½Í•±•Ðøð½±…‰•°ø(€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ™½É´µ½±Õµ¹Ìˆøñ±…‰•°ùA¡½¹”ñ¥¹ÁÕÐÑåÁ”ô‰Ñ•°ˆµ…á1•¹Ñ õìÌÕôÙ…±Õ”õí¹•Ý½¹Ñ…Ð¹Á¡½¹•ô½¹¡…¹”õí”ôùÍ•Ñ9•Ý½¹Ñ…Ð¡Øôø¡ì¸¸¹Ø±Á¡½¹”é”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ô¼øð½±…‰•°ø(€€€€€ñ±…‰•°ùµ…¥°ñ¥¹ÁÕÐÑåÁ”ô‰•µ…¥°ˆÙ…±Õ”õí¹•Ý½¹Ñ…Ð¹•µ…¥±ô½¹¡…¹”õí”ôùÍ•Ñ9•Ý½¹Ñ…Ð¡Øôø¡ì¸¸¹Ø±•µ…¥°é”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ô¼øð½±…‰•°øð½‘¥Øø(€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ™½É´µ…Ñ¥½¹Ìˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆ‘¥Í…‰±•õí‰ÕÍåô½¹±¥¬õí±½Í•½¹Ñ…Ñ½Éµôù…¹•°ð½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸‘¥Í…‰±•õí‰ÕÍåô±…ÍÍ9…µ”ô‰àµÁÉ¥µ…ÉäˆùM…Ù”½¹Ñ…Ðð½‰ÕÑÑ½¸øð½‘¥Øø(€€€ð½™½É´øð½Í•Ñ¥½¸øð½‘¥Øùô(€íÍ¡½Ý1•…‘½É´˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµµ½‘…°µ‰…­‘É½Àˆ½¹5½ÕÍ•½Ý¸õí”ôùí¥˜¡”¹Ñ…É•Ðôôõ”¹ÕÉÉ•¹ÑQ…É•Ð¥±½Í•1•…‘½É´ ¤íõôøñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµµ½‘…°ˆÉ½±”ô‰‘¥…±½œˆ…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ…É¥„µ‰ÕÍäõí‰ÕÍåô…É¥„µ±…‰•±±•‘‰äô‰àµ¹•Üµ±•…µÑ¥Ñ±”ˆø(€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµµ½‘…°µ¡•…‘•Èˆøñ‘¥ØøñÍÁ…¸±…ÍÍ9…µ”ô‰àµ­¥­•ÈˆùEU%,AQUIð½ÍÁ…¸øñ È¥ô‰àµ¹•Üµ±•…µÑ¥Ñ±”ˆù9•Ü•¹ÅÕ¥Éäð½ ÈøñÀù…ÁÑÕÉ”Ñ¡”¥µÁ½ÉÑ…¹Ð‘•Ñ…¥±Ì¹½Ü¸EÕ…±¥™äÑ¡”±•…±…Ñ•È¸ð½Àøð½‘¥Øøñ‰ÕÑÑ½¸…É¥„µ±…‰•°ô‰±½Í”¹•Ü•¹ÅÕ¥Éäˆ‘…Ñ„µ•Í…Á”µ±½Í”ô‰ÑÉÕ”ˆ‘¥Í…‰±•õí‰ÕÍåô½¹±¥¬õí±½Í•1•…‘½Éµôû\ð½‰ÕÑÑ½¸øð½‘¥Øø(€€€ñ™½É´½¹MÕ‰µ¥Ðõí…ÁÑÕÉ•1•…‘ô±…ÍÍ9…µ”ô‰àµ™½É´ˆøñ±…‰•°ù½¹Ñ…Ð¹…µ”€ñÍÁ…¸ø¨ð½ÍÁ…¸øñ¥¹ÁÕÐÉ•ÅÕ¥É•µ…á1•¹Ñ õìÄÔÁô…ÕÑ½½ÕÌÙ…±Õ”õí±•…¹¹…µ•ôÉ•…‘=¹±äõí	½½±•…¸¡±•…¹Á•ÉÍ½¹%¥ô(€€€€½¹¡…¹”õí”ôùÍ•Ñ1•…¡Øôø¡ì¸¸¹Ø±¹…µ”é”¹Ñ…É•Ð¹Ù…±Õ”±Á•ÉÍ½¹%èˆ‰ô¤¥ôÁ±…•¡½±‘•Èô‰A…É•¹Ð½È½¹Ñ…Ð¹…µ”ˆ¼øð½±…‰•°ø(€€€ì…±•…¹Á•ÉÍ½¹%˜™±•…¹¹…µ”¹ÑÉ¥´ ¤¹±•¹Ñ øôÈ˜™Á•½Á±”¹™¥±Ñ•È¡ÀôùÀ¹™Õ±±}¹…µ”¹Ñ½1½Ý•É…Í” ¤¹¥¹±Õ‘•Ì¡±•…¹¹…µ”¹ÑÉ¥´ ¤¹Ñ½1½Ý•É…Í” ¤¤¤¹Í±¥” À°Ô¤¹±•¹Ñ øÀ˜˜(€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµÍÕ•ÍÑ¥½¹ÌˆøñÍµ…±°ùá¥ÍÑ¥¹œ½¹Ñ…ÑÌƒŠPÍ•±•Ð½¹”Ñ¼…Ù½¥‘ÕÁ±¥…Ñ•Ìð½Íµ…±°ø(€€€€íÁ•½Á±”¹™¥±Ñ•È¡ÀôùÀ¹™Õ±±}¹…µ”¹Ñ½1½Ý•É…Í” ¤¹¥¹±Õ‘•Ì¡±•…¹¹…µ”¹ÑÉ¥´ ¤¹Ñ½1½Ý•É…Í” ¤¤¤¹Í±¥” À°Ô¤¹µ…À¡Àôøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ­•äõíÀ¹¥‘ô(€€€€€½¹±¥¬õì ¤ôùÍ•Ñ1•…¡Øôø¡ì¸¸¹Ø±Á•ÉÍ½¹%éÀ¹¥±¹…µ”éÀ¹™Õ±±}¹…µ”±•µ…¥°éÀ¹½¹Ñ…Ñ}µ•Ñ¡½‘Ì¹™¥¹¡´ôù´¹­¥¹ôôô‰•µ…¥°ˆ¤ü¹Ù…±Õ•ñðˆˆ±Á¡½¹”éÀ¹½¹Ñ…Ñ}µ•Ñ¡½‘Ì¹™¥¹¡´ôù´¹­¥¹ôôô‰µ½‰¥±”ˆ¤ü¹Ù…±Õ•ñðˆ‰ô¤¥ôø(€€€€€íÀ¹™Õ±±}¹…µ•ôñÍÁ…¸ùíÀ¹½¹Ñ…Ñ}µ•Ñ¡½‘Ì¹µ…À¡´ôù´¹Ù…±Õ”¤¹©½¥¸ ˆƒ
+Ü€ˆ¥ñð‰á¥ÍÑ¥¹œ½¹Ñ…Ð‰ôð½ÍÁ…¸øð½‰ÕÑÑ½¸ø¥ô(€€€€ð½‘¥Øùô(€€€í±•…¹Á•ÉÍ½¹%˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµÍ•±•Ñ•µ½¹Ñ…ÐˆøñÍÁ…¸ùUÍ¥¹œ•á¥ÍÑ¥¹œ½¹Ñ…ÐƒŠP¹¼‘ÕÁ±¥…Ñ”Ý¥±°‰”É•…Ñ•¸ð½ÍÁ…¸ø(€€€€€€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ½¹±¥¬õì ¤ôùÍ•Ñ1•…¡Øôø¡ì¸¸¹Ø±Á•ÉÍ½¹%èˆ‰ô¤¥ôù¡…¹”ð½‰ÕÑÑ½¸øð½‘¥Øùô(€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ™½É´µ½±Õµ¹Ìˆøñ±…‰•°ùA¡½¹”ñ¥¹ÁÕÐÑåÁ”ô‰Ñ•°ˆµ…á1•¹Ñ õìÌÕôÉ•…‘=¹±äõí	½½±•…¸¡±•…¹Á•ÉÍ½¹%¥ôÙ…±Õ”õí±•…¹Á¡½¹•ô½¹¡…¹”õí”ôùÍ•Ñ1•…¡Øôø¡ì¸¸¹Ø±Á¡½¹”é”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ôÁ±…•¡½±‘•Èôˆ¬äÄƒŠ˜ˆ¼øð½±…‰•°ø(€€€€ñ±…‰•°ùµ…¥°ñ¥¹ÁÕÐÑåÁ”ô‰•µ…¥°ˆÉ•…‘=¹±äõí	½½±•…¸¡±•…¹Á•ÉÍ½¹%¥ôÙ…±Õ”õí±•…¹•µ…¥±ô½¹¡…¹”õí”ôùÍ•Ñ1•…¡Øôø¡ì¸¸¹Ø±•µ…¥°é”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ôÁ±…•¡½±‘•Èô‰¹…µ••á…µÁ±”¹½´ˆ¼øð½±…‰•°øð½‘¥Øø(€€€€ñ±…‰•°ùM½ÕÉ”€ñÍÁ…¸ø¨ð½ÍÁ…¸øñÍ•±•ÐÙ…±Õ”õí±•…¹Í½ÕÉ•ô½¹¡…¹”õí”ôùÍ•Ñ1•…¡Øôø¡ì¸¸¹Ø±Í½ÕÉ”é”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ôø(€€€€íl‰Ý¡…ÑÍ…ÁÀˆ°‰Á¡½¹”ˆ°‰Ý•‰Í¥Ñ”ˆ°‰¥¹ÍÑ…É…´ˆ°‰™…•‰½½¬ˆ°‰Ý…±­}¥¸ˆ°‰É•™•ÉÉ…°ˆ°‰•µ…¥°ˆ°‰½Ñ¡•È‰t¹µ…À¡àôøñ½ÁÑ¥½¸­•äõíáôÙ…±Õ”õíáôùíÍ¡½ÉÑ1…‰•°¡à¥ôð½½ÁÑ¥½¸ø¥ô(€€€€ð½Í•±•Ðøð½±…‰•°ø(€€€€ñ±…‰•°ù¹ÅÕ¥Éä…Ñ•½ÉäñÍ•±•ÐÙ…±Õ”õí±•…‘…Ñ•½Éåô½¹¡…¹”õí”ôùÍ•Ñ1•…‘…Ñ•½Éä¡”¹Ñ…É•Ð¹Ù…±Õ”¥ôøñ½ÁÑ¥½¸Ù…±Õ”ôˆˆùU¹±…ÍÍ¥™¥•ƒŠP‘•¥‘”±…Ñ•Èð½½ÁÑ¥½¸ùí•¹ÅÕ¥ÉåAÉ•™Ìü¹…Ñ•½É¥•Ì¹™¥±Ñ•È¡ŒôùŒ¹…Ñ¥Ù”¤¹µ…À¡Œôøñ½ÁÑ¥½¸­•äõíŒ¹¥‘ôÙ…±Õ”õíŒ¹¥‘ôùíŒ¹±…‰•±ôð½½ÁÑ¥½¸ø¥ôð½Í•±•Ðøð½±…‰•°ø(€€€€ñ±…‰•°ù‘µ¥ÍÍ¥½¹ÌÁ¥Á•±¥¹”€ñÍµ…±°ø¡½ÁÑ¥½¹…°¤ð½Íµ…±°øñÍ•±•ÐÙ…±Õ”õí±•…¹Á¥Á•±¥¹•%‘ô½¹¡…¹”õí”ôùÍ•Ñ1•…¡Øôø¡ì¸¸¹Ø±Á¥Á•±¥¹•%é”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ôø(€€€€€ñ½ÁÑ¥½¸Ù…±Õ”ôˆˆù…ÁÑÕÉ”•¹ÅÕ¥Éä½¹±äð½½ÁÑ¥½¸ùíÁ¥Á•±¥¹•Ì¹™¥±Ñ•È¡ÀôùÀ¹ÍÑ…•Ì¹Í½µ”¡ÌôùÌ¹½ÕÑ½µ”ôôô‰½Á•¸ˆ¤¤¹µ…À¡Àôøñ½ÁÑ¥½¸­•äõíÀ¹¥‘ôÙ…±Õ”õíÀ¹¥‘ôùíÀ¹¹…µ•ôð½½ÁÑ¥½¸ø¥ô(€€€€ð½Í•±•Ðøð½±…‰•°ø(€€€€ñ±…‰•°ù¹ÅÕ¥Éä‘•Ñ…¥±ÌñÑ•áÑ…É•„É½ÝÌõìÍôµ…á1•¹Ñ õìÈÀÀÁôÙ…±Õ”õí±•…¹ÍÕµµ…Éåô½¹¡…¹”õí”ôùÍ•Ñ1•…¡Øôø¡ì¸¸¹Ø±ÍÕµµ…Éäé”¹Ñ…É•Ð¹Ù…±Õ•ô¤¥ôÁ±…•¡½±‘•Èô‰]¡…ÐÁÉ½É…µµ”…É”Ñ¡•ä¥¹Ñ•É•ÍÑ•¥¸üˆ¼øð½±…‰•°ø(€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ™½É´µ…Ñ¥½¹Ìˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆ‘¥Í…‰±•õí‰ÕÍåô½¹±¥¬õí±½Í•1•…‘½Éµôù…¹•°ð½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰àµÁÉ¥µ…Éäˆ‘¥Í…‰±•õí‰ÕÍåôùí‰ÕÍäü‰M…Ù¥¹ŸŠ˜ˆè‰M…Ù”•¹ÅÕ¥Éä‰ôð½‰ÕÑÑ½¸øð½‘¥Øø(€€€ð½™½É´øð½Í•Ñ¥½¸øð½‘¥Øùô((€ì¡Í•±•Ñ•‘½¹Ñ…ÑññÍ•±•Ñ•‘1•…¤˜˜ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ‘É…Ý•Èµ‰…­‘É½Àˆ½¹5½ÕÍ•½Ý¸õí”ôùí¥˜¡”¹Ñ…É•Ðôôõ”¹ÕÉÉ•¹ÑQ…É•Ð˜˜…‰ÕÍä¥íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡¹Õ±°¤íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¹Õ±°¤íõõôø(€€€ñ…Í¥‘”±…ÍÍ9…µ”ô‰àµ‘É…Ý•ÈˆÉ½±”ô‰‘¥…±½œˆ…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ…É¥„µ‰ÕÍäõí‰ÕÍåô…É¥„µ±…‰•°ô‰½¹Ñ…Ð€ÌØÀÁÉ½™¥±”ˆø(€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ‘É…Ý•Èµ¡•…‘•ÈˆøñÍÁ…¸ù=9QP]=I-MAð½ÍÁ…¸øñ‰ÕÑÑ½¸…É¥„µ±…‰•°ô‰±½Í”‘•Ñ…¥±Ìˆ‘…Ñ„µ•Í…Á”µ±½Í”ô‰ÑÉÕ”ˆ‘¥Í…‰±•õí‰ÕÍåô½¹±¥¬õì ¤ôùíÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡¹Õ±°¤íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¹Õ±°¤íõôû\ð½‰ÕÑÑ½¸øð½‘¥Øø(€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ‘É…Ý•Èµ‰½‘äˆø(€€€€€ñ½¹Ñ…ÑAÉ½™¥±”…±±½Ý‘µ¥ÍÍ¥½¹Ìõí…‘Ù…¹•‘ô…¹5…¹…”õí…¹½¹™¥ÕÉ•ô(€€€€€½¹5…¹…•½¹Ñ…Ðõì ¤ôùí½¹ÍÐ¥õÍ•±•Ñ•‘½¹Ñ…Ðü¹¥‘ññÍ•±•Ñ•‘1•…ü¹½¹Ñ…Ñ}¥í¥˜ …¥¥É•ÑÕÉ¸ì(€€€€€€Í•ÑM•Ñ¥½¸ ‰½¹Ñ…ÑÌˆ¤íÍ•ÑM¡½Ý½¹Ñ…Ñ5…¹…•È¡ÑÉÕ”¤íÍ•Ñ5…¹…•ÉA•ÉÍ½¹%¡¥¤íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡¹Õ±°¤íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¹Õ±°¤íõô(€€€€€Á•ÉÍ½¸õíÍ•±•Ñ•‘½¹Ñ…Ñô½ÁÁ½ÉÑÕ¹¥ÑäõíÍ•±•Ñ•‘1•…‘ôÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ôÉ•™É•Í¡-•äõíÉ•™É•Í¡½Õ¹Ñô¥¹ÅÕ¥É¥•Ìõí¥¹ÅÕ¥É¥•Íô½ÁÁ½ÉÑÕ¹¥Ñ¥•Ìõí½ÁÁ½ÉÑÕ¹¥Ñ¥•ÍôÑ…Í­ÌõíÑ…Í­Íô…ÁÁ½¥¹Ñµ•¹ÑÌõí…ÁÁ½¥¹Ñµ•¹ÑÍô…¹]É¥Ñ”õí…¹]É¥Ñ•ô½¹9…Ù¥…Ñ•]½É­™±½Üõí‘•ÍÑ¥¹…Ñ¥½¸ôùí½¹ÍÐ¥õÍ•±•Ñ•‘½¹Ñ…Ðü¹¥‘ññÍ•±•Ñ•‘1•…ü¹½¹Ñ…Ñ}¥í¥˜¡¥¥½Á•¹ÕÍÑ½µ•É]½É­™±½Ü¡¥±‘•ÍÑ¥¹…Ñ¥½¸¤íõô(€€€€€½¹É•…Ñ•¹ÅÕ¥Éäõì ¤ôùí¥˜ …Í•±•Ñ•‘½¹Ñ…Ð¥É•ÑÕÉ¸íÍ•Ñ1•…¡í¹…µ”éÍ•±•Ñ•‘½¹Ñ…Ð¹™Õ±±}¹…µ”±Á¡½¹”éÍ•±•Ñ•‘½¹Ñ…Ð¹½¹Ñ…Ñ}µ•Ñ¡½‘Ì¹™¥¹¡´ôùl‰Á¡½¹”ˆ°‰µ½‰¥±”‰t¹¥¹±Õ‘•Ì¡´¹­¥¹¹Ñ½1½Ý•É…Í” ¤¤¤ü¹Ù…±Õ•ñðˆˆ±•µ…¥°éÍ•±•Ñ•‘½¹Ñ…Ð¹½¹Ñ…Ñ}µ•Ñ¡½‘Ì¹™¥¹¡´ôù´¹­¥¹¹Ñ½1½Ý•É…Í” ¤ôôô‰•µ…¥°ˆ¤ü¹Ù…±Õ•ñðˆˆ±Í½ÕÉ”è‰Á¡½¹”ˆ±ÍÕµµ…Éäèˆˆ±Á¥Á•±¥¹•%èˆˆ±Á•ÉÍ½¹%éÍ•±•Ñ•‘½¹Ñ…Ð¹¥‘ô¤íÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡¹Õ±°¤íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¹Õ±°¤íÍ•ÑM¡½Ý1•…‘½É´¡ÑÉÕ”¤íõô½¹±½Í”õì ¤ôùíÍ•ÑM•±•Ñ•‘A•ÉÍ½¸¡¹Õ±°¤íÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¹Õ±°¤íõô(€€€€€½Ù•ÉÙ¥•Ý½¹Ñ•¹ÐõìðùíÍ•±•Ñ•‘1•…˜˜ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ…Éˆøñ Ìù‘µ¥ÍÍ¥½¸½ÁÁ½ÉÑÕ¹¥Ñäð½ ÌøñÍÑÉ½¹œ±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µÑ¥Ñ±”ˆùíÍ•±•Ñ•‘1•…¹Ñ¥Ñ±•ôð½ÍÑÉ½¹œø(€€€€€€ñÀ±…ÍÍ9…µ”ô‰àµµÕÑ•ˆùÕÉÉ•¹ÐÍÑ…”èíÍ•±•Ñ•‘1•…¹ÍÑ…•}¹…µ•ôƒ
+ÜY•ÉÍ¥½¸íÍ•±•Ñ•‘1•…¹Ù•ÉÍ¥½¹ôð½Àø(€€€€€í…¹]É¥Ñ”˜˜ñ±…‰•°ù5½Ù”Ñ¼ÍÑ…”ñÍ•±•ÐÙ…±Õ”õíÍ•±•Ñ•‘1•…¹ÍÑ…•}¥‘ô‘¥Í…‰±•õí‰ÕÍåô½¹¡…¹”õí”ôùÙ½¥ÕÁ‘…Ñ•MÑ…”¡Í•±•Ñ•‘1•…±”¹Ñ…É•Ð¹Ù…±Õ”¥ôø(€€€€€€íÁ¥Á•±¥¹•Ì¹™¥¹¡ÀôùÀ¹¥ôôõÍ•±•Ñ•‘1•…¹Á¥Á•±¥¹•}¥¤ü¹ÍÑ…•Ì¹µ…À¡Ìôøñ½ÁÑ¥½¸­•äõíÌ¹¥‘ôÙ…±Õ”õíÌ¹¥‘ôùíÌ¹¹…µ•ôð½½ÁÑ¥½¸ø¥ô(€€€€€€ð½Í•±•Ðøð½±…‰•°ùô(€€€€€ì……¹]É¥Ñ”˜˜ñÍÁ…¸±…ÍÍ9…µ”ô‰àµÍÑ…ÑÕÌˆùíÍ•±•Ñ•‘1•…¹ÍÑ…•}¹…µ•ôð½ÍÁ…¸ùô(€€€€€í…¹½¹™¥ÕÉ”˜˜ñ±…‰•°ùÍÍ¥¹•½Õ¹Í•±±½È(€€€€€€€ñÍ•±•ÐÙ…±Õ”õíÍ•±•Ñ•‘1•…¹½Ý¹•É}µ•µ‰•ÉÍ¡¥Á}¥‘ñðˆ‰ô‘¥Í…‰±•õí‰ÕÍåñð……ÍÍ¥¹••Ì¹±•¹Ñ¡ô(€€€€€€€½¹¡…¹”õí”ôùÙ½¥ÕÁ‘…Ñ•ÍÍ¥¹µ•¹Ð¡Í•±•Ñ•‘1•…±”¹Ñ…É•Ð¹Ù…±Õ”¥ôø(€€€€€€€€ñ½ÁÑ¥½¸Ù…±Õ”ôˆˆùU¹…ÍÍ¥¹•ð½½ÁÑ¥½¸ø(€€€€€€€í…ÍÍ¥¹••Ì¹µ…À¡„ôøñ½ÁÑ¥½¸­•äõí„¹¥‘ôÙ…±Õ”õí„¹¥‘ôùí„¹±…‰•±ôƒ
+ÜíÍ¡½ÉÑ1…‰•°¡„¹É½±”¥ôð½½ÁÑ¥½¸ø¥ô(€€€€€€€ð½Í•±•Ðøð½±…‰•°ùô(€€€€€ð½Í•Ñ¥½¸ùô)íÍ•±•Ñ•‘½¹Ñ…Ð˜™½ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥±Ñ•È¡¼ôù¼¹½¹Ñ…Ñ}¥ôôõÍ•±•Ñ•‘A•ÉÍ½¸¤¹±•¹Ñ øÀ˜˜ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ…Éˆøñ Ìù‘µ¥ÍÍ¥½¹Ìð½ Ìø(€€€€€í½ÁÁ½ÉÑÕ¹¥Ñ¥•Ì¹™¥±Ñ•È¡¼ôù¼¹½¹Ñ…Ñ}¥ôôõÍ•±•Ñ•‘A•ÉÍ½¸¤¹µ…À¡¼ôøñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ±¥¹¬ˆ­•äõí¼¹¥‘ô½¹±¥¬õì ¤ôùÍ•ÑM•±•Ñ•‘=ÁÁ½ÉÑÕ¹¥Ñä¡¼¹¥¥ôùí¼¹Ñ¥Ñ±•ô€ñÍÁ…¸ùí¼¹ÍÑ…•}¹…µ•ôƒŠHð½ÍÁ…¸øð½‰ÕÑÑ½¸ø¥ôð½Í•Ñ¥½¸ùôð¼ùô(€€€€€•¹ÅÕ¥É¥•Í½¹Ñ•¹ÐõìðùíÍ•±•Ñ•‘½¹Ñ…Ð˜˜ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ…Éˆøñ ÌùI••¹Ð•¹ÅÕ¥É¥•Ìð½ Ìø(€€€€€í¥¹ÅÕ¥É¥•Ì¹™¥±Ñ•È¡¤ôù¤¹Á•ÉÍ½¹}¥ôôõÍ•±•Ñ•‘A•ÉÍ½¸¤¹±•¹Ñ ü(€€€€€€¥¹ÅÕ¥É¥•Ì¹™¥±Ñ•È¡¤ôù¤¹Á•ÉÍ½¹}¥ôôõÍ•±•Ñ•‘A•ÉÍ½¸¤¹µ…À¡¤ôøñ‘¥Ø±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µÉ½Üˆ­•äõí¤¹¥‘ôøñÍÁ…¸ùíÍ¡½ÉÑ1…‰•°¡¤¹Í½ÕÉ”¥ôð½ÍÁ…¸øñÍÑÉ½¹œùí‘…Ñ•1…‰•°¡¤¹É••¥Ù•‘}…Ð¥ôð½ÍÑÉ½¹œøð½‘¥Øø¤è(€€€€€€€ñÀ±…ÍÍ9…µ”ô‰àµµÕÑ•ˆù9¼±¥¹­••¹ÅÕ¥É¥•Ì±½…‘•¸ð½Àùôð½Í•Ñ¥½¸ùôð¼ùô(€€€€€Ñ¥µ•±¥¹•½¹Ñ•¹Ðõìðùì¡Í•±•Ñ•‘½¹Ñ…Ðü¹¥‘ññÍ•±•Ñ•‘1•…ü¹½¹Ñ…Ñ}¥¤˜˜ñ½¹Ñ…ÑQ¥µ•±¥¹”­•äõíÑ•¹…¹Ñ%¬ˆ´ˆ¬¡Í•±•Ñ•‘½¹Ñ…Ðü¹¥‘ññÍ•±•Ñ•‘1•…ü¹½¹Ñ…Ñ}¥¥ôÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ôÁ•ÉÍ½¹%õì¡Í•±•Ñ•‘½¹Ñ…Ðü¹¥‘ññÍ•±•Ñ•‘1•…ü¹½¹Ñ…Ñ}¥¤…ôÉ•™É•Í¡-•äõíÉ•™É•Í¡½Õ¹Ñô¼ùô)í…¹]É¥Ñ”˜˜¡Í•±•Ñ•‘½¹Ñ…ÑññÍ•±•Ñ•‘1•…¤˜˜ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ…Éˆøñ ÌùI•½É„…±°½È½Õ¹Í•±±¥¹œ¹½Ñ”ð½ Ìø(€€€€€€ñ™½É´±…ÍÍ9…µ”ô‰àµ™½É´ˆ½¹MÕ‰µ¥ÐõíÍ…Ù•9½Ñ•ôøñ±…‰•°ù9½Ñ”ñÑ•áÑ…É•„É•ÅÕ¥É•É½ÝÌõìÍôµ…á1•¹Ñ õìÌÀÀÁôÁ±…•¡½±‘•Èô‰]¡…ÐÝ…Ì‘¥ÍÕÍÍ•…¹Ý¡…Ð¡…ÁÁ•¹Ì¹•áÐüˆ(€€€€€€Ù…±Õ”õí…Ñ¥Ù¥Ñå9½Ñ•ô½¹¡…¹”õí”ôùÍ•ÑÑ¥Ù¥Ñå9½Ñ”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ô¼øð½±…‰•°ø(€€€€€€€ñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆ‘¥Í…‰±•õí‰ÕÍåñð……Ñ¥Ù¥Ñå9½Ñ”¹ÑÉ¥´ ¥ôùM…Ù”¹½Ñ”ð½‰ÕÑÑ½¸ø(€€€€€€ð½™½É´øð½Í•Ñ¥½¸ùô(ð¼ùô(€€€€€™½±±½ÝÕÁÍ½¹Ñ•¹Ðõìðùí…¹]É¥Ñ”˜˜ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ…Éˆøñ ÌùM¡•‘Õ±”„™½±±½ÜµÕÀð½ Ìø(€€€€€€ñ™½É´±…ÍÍ9…µ”ô‰àµ™½É´ˆ½¹MÕ‰µ¥ÐõíÍ…Ù•Q…Í­ôøñ±…‰•°ù9•áÐ…Ñ¥½¸ñ¥¹ÁÕÐÉ•ÅÕ¥É•µ…á1•¹Ñ õìÈÔÁôÙ…±Õ”õíÑ…Í­Q¥Ñ±•ô½¹¡…¹”õí”ôùÍ•ÑQ…Í­Q¥Ñ±”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ôÁ±…•¡½±‘•Èô‰…±°Ñ¼‘¥ÍÕÍÌÁÉ½É…µµ”ˆ¼øð½±…‰•°ø(€€€€€€€ñ±…‰•°ùÕ”…Ðñ¥¹ÁÕÐÑåÁ”ô‰‘…Ñ•Ñ¥µ”µ±½…°ˆÙ…±Õ”õíÑ…Í­Õ•ô½¹¡…¹”õí”ôùÍ•ÑQ…Í­Õ”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ô¼øð½±…‰•°øñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰àµÁÉ¥µ…Éäˆ‘¥Í…‰±•õí‰ÕÍåôùM…Ù”™½±±½ÜµÕÀð½‰ÕÑÑ½¸øð½™½É´øð½Í•Ñ¥½¸ùô)í…¹]É¥Ñ”˜˜ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ…Éˆøñ Ìù	½½¬½Õ¹Í•±±¥¹œ€¼‘•µ¼ð½ Ìø(€€€€€€ñ™½É´±…ÍÍ9…µ”ô‰àµ™½É´ˆ½¹MÕ‰µ¥ÐõíÍ…Ù•ÁÁ½¥¹Ñµ•¹Ñôøñ±…‰•°ùQ¥Ñ±”ñ¥¹ÁÕÐÉ•ÅÕ¥É•Ù…±Õ”õí…ÁÁ½¥¹Ñµ•¹ÑQ¥Ñ±•ô½¹¡…¹”õí”ôùÍ•ÑÁÁ½¥¹Ñµ•¹ÑQ¥Ñ±”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ôÁ±…•¡½±‘•Èô‰%¹ÑÉ½‘ÕÑ½Éä½Õ¹Í•±±¥¹œˆ¼øð½±…‰•°ø(€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰àµ™½É´µ½±Õµ¹Ìˆøñ±…‰•°ùMÑ…ÉÑÌñ¥¹ÁÕÐÉ•ÅÕ¥É•ÑåÁ”ô‰‘…Ñ•Ñ¥µ”µ±½…°ˆÙ…±Õ”õí…ÁÁ½¥¹Ñµ•¹ÑMÑ…ÉÑÍô½¹¡…¹”õí”ôùÍ•ÑÁÁ½¥¹Ñµ•¹ÑMÑ…ÉÑÌ¡”¹Ñ…É•Ð¹Ù…±Õ”¥ô¼øð½±…‰•°ø(€€€€€€€ñ±…‰•°ù¹‘Ìñ¥¹ÁÕÐÉ•ÅÕ¥É•ÑåÁ”ô‰‘…Ñ•Ñ¥µ”µ±½…°ˆÙ…±Õ”õí…ÁÁ½¥¹Ñµ•¹Ñ¹‘Íô½¹¡…¹”õí”ôùÍ•ÑÁÁ½¥¹Ñµ•¹Ñ¹‘Ì¡”¹Ñ…É•Ð¹Ù…±Õ”¥ô¼øð½±…‰•°øð½‘¥Øø(€€€€€€€ñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆ‘¥Í…‰±•õí‰ÕÍåôùM¡•‘Õ±”…ÁÁ½¥¹Ñµ•¹Ðð½‰ÕÑÑ½¸øð½™½É´øð½Í•Ñ¥½¸ùôð¼ùô(€€€€€É•±…Ñ¥½¹Í½¹Ñ•¹ÐõìðùíÍ•±•Ñ•‘½¹Ñ…Ð˜˜ñ½¹Ñ…ÑI•±…Ñ¥½¹Í¡¥ÁÌ­•äõíÑ•¹…¹Ñ%¬ˆ´ˆ­Í•±•Ñ•‘½¹Ñ…Ð¹¥‘ôÑ•¹…¹Ñ%õíÑ•¹…¹Ñ%‘ôÁ•ÉÍ½¹%õíÍ•±•Ñ•‘½¹Ñ…Ð¹¥‘ô…¹]É¥Ñ”õí…¹]É¥Ñ•ô…¹5…¹…”õíl‰½Ý¹•Èˆ°‰…‘µ¥¸ˆ°‰µ…¹…•È‰t¹¥¹±Õ‘•Ì¡Ñ•¹…¹Ðü¹µ•µ‰•ÉÍ¡¥Á}É½±•ñðˆˆ¥ô¼ùôð¼ùô(€€€€€‘•Ñ…¥±Í½¹Ñ•¹ÐõìðùíÍ•±•Ñ•‘½¹Ñ…Ð˜˜ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ…Éˆøñ Ìù½¹Ñ…Ð‘•Ñ…¥±Ìð½ ÌùíÍ•±•Ñ•‘½¹Ñ…Ð¹½¹Ñ…Ñ}µ•Ñ¡½‘Ì¹±•¹Ñ ü(€€€€€Í•±•Ñ•‘½¹Ñ…Ð¹½¹Ñ…Ñ}µ•Ñ¡½‘Ì¹µ…À ¡´±¤¤ôøñ‘¥Ø±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µÉ½Üˆ­•äõí¥ôøñÍÁ…¸ùíÍ¡½ÉÑ1…‰•°¡´¹­¥¹¥ôð½ÍÁ…¸øñÍÑÉ½¹œùí´¹Ù…±Õ•ôð½ÍÑÉ½¹œøð½‘¥Øø¤è(€€€€€€ñÀ±…ÍÍ9…µ”ô‰àµµÕÑ•ˆù9¼½¹Ñ…Ðµ•Ñ¡½‘ÌÉ•½É‘•¸ð½Àùôð½Í•Ñ¥½¸ùô)í…¹]É¥Ñ”˜™Í•±•Ñ•‘½¹Ñ…Ð˜™Á¥Á•±¥¹•Ì¹±•¹Ñ øÀ˜˜ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰àµ‘•Ñ…¥°µ…Éˆøñ ÌùMÑ…ÉÐ„¹•Ü…‘µ¥ÍÍ¥½¸ð½ Ìø(€€€€€€ñ™½É´±…ÍÍ9…µ”ô‰àµ™½É´ˆ½¹MÕ‰µ¥ÐõíÍÑ…ÉÑ‘µ¥ÍÍ¥½¹ôø(€€€€€€€ñ±…‰•°ù‘µ¥ÍÍ¥½¹ÌÁ¥Á•±¥¹”ñÍ•±•ÐÉ•ÅÕ¥É•Ù…±Õ”õí¹•Ý‘µ¥ÍÍ¥½¹A¥Á•±¥¹•ô½¹¡…¹”õí”ôùÍ•Ñ9•Ý‘µ¥ÍÍ¥½¹A¥Á•±¥¹”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ôøñ½ÁÑ¥½¸Ù…±Õ”ôˆˆù¡½½Í”„Á¥Á•±¥¹”ð½½ÁÑ¥½¸ø(€€€€€€€íÁ¥Á•±¥¹•Ì¹™¥±Ñ•È¡ÀôùÀ¹ÍÑ…•Ì¹Í½µ”¡ÍÐôùÍÐ¹½ÕÑ½µ”ôôô‰½Á•¸ˆ¤¤¹µ…À¡Àôøñ½ÁÑ¥½¸­•äõíÀ¹¥‘ôÙ…±Õ”õíÀ¹¥‘ôùíÀ¹¹…µ•ôð½½ÁÑ¥½¸ø¥ô(€€€€€€€ð½Í•±•Ðøð½±…‰•°ø(€€€€€€€ñ±…‰•°ù‘µ¥ÍÍ¥½¸Ñ¥Ñ±”ñ¥¹ÁÕÐÙ…±Õ”õí¹•Ý‘µ¥ÍÍ¥½¹Q¥Ñ±•ôµ…á1•¹Ñ õìÈÀÁô½¹¡…¹”õí”ôùÍ•Ñ9•Ý‘µ¥ÍÍ¥½¹Q¥Ñ±”¡”¹Ñ…É•Ð¹Ù…±Õ”¥ôÁ±…•¡½±‘•Èô‰”¹œ¸AåÑ¡½¸	•¥¹¹•È½ÕÉÍ”ˆ¼øð½±…‰•°ø(€€€€€€€ñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰àµÍ•½¹‘…Éäˆ‘¥Í…‰±•õí‰ÕÍåôùMÑ…ÉÐ…‘µ¥ÍÍ¥½¸ð½‰ÕÑÑ½¸ø(€€€€€€ð½™½É´øð½Í•Ñ¥½¸ùôð¼ùô(€€€€€¼ø(€€€€ð½‘¥Øø(€€€ð½…Í¥‘”ø(€€ð½‘¥Øùô(€ð½µ…¥¸øì)ô
