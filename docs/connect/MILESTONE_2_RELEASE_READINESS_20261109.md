@@ -1,6 +1,6 @@
 # Milestone 2 — Integration QA and release-readiness evidence
 
-**Audit date:** 2026-11-09  
+**Audit date:** 2026-11-09 (updated after Development fixture preparation)  
 **Branch:** `feature/robotronix-connect-crm`  
 **Decision:** **NO-GO for a production release**, pending authenticated Development journey tests and repository merge-rule verification. This is a QA finding, not a failure of the currently passing local checks.
 
@@ -21,23 +21,25 @@ This pass examined Connect CRM and the Learning Portal through the Phase B/C/D c
 | Authenticated cross-app Playwright and real Zoom/provider/billing workflows | **BLOCKED — NOT EXECUTED** | Insufficient Development test identities, records, and configured credentials. Do not interpret as passed. |
 | Real browser responsiveness, WCAG conformance, load and recovery rehearsal | **NOT CERTIFIED** | Require authenticated preview, representative data, testing infrastructure and isolated recovery target. |
 
-## Development fixture inventory (read-only)
+## Development fixture inventory and subsequent preparation
 
 | Entity | Count |
 | --- | ---: |
 | Supabase Auth users | 10 |
 | Connect workspaces / active memberships | 1 / 1 |
 | Portal admin profiles | 1 |
-| Portal trainer / parent / learner profiles | 0 / 0 / 0 |
-| Portal enrolments / scheduled classes | 0 / 0 |
+| Portal trainer / parent / learner profiles, at initial audit | 0 / 0 / 0 |
+| Portal enrolments / scheduled classes, at initial audit | 0 / 0 |
 | Confirmed Connect admission handoffs | 0 |
 
-This database is not yet an end-to-end QA fixture. Existing Auth users alone do not establish the trainer, guardian, learner, counsellor and viewer permissions required by the tests.
+**Fixture update:** Eight expected QA Auth identities were already present in Development. The existing `01_PREPARE_DEV_QA_PROFILES.sql` and `02_RUN_DEV_QA_DATA.sql` were then executed against Development only. The seed committed five synthetic students and five enrolments, and `03_VERIFY_DEV_QA.sql` returned **13/13 PASS** assertions, including trainers, parents, schedule, attendance, onboarding and finance examples. The new `04_PREPARE_DEV_CONNECT_ROLES.sql` gives two existing QA accounts counsellor and viewer CRM memberships; Development now has one owner, one counsellor and one viewer. **No confirmed admission handoff was fabricated**: it must be exercised through the actual Phase C workflow.
+
+Seven of the eight QA Auth accounts have confirmed emails; **`qa-student@robotronix.local` is unconfirmed**. All eight have password credentials stored by Auth, but the usable plaintext passwords were not provided to this execution environment. Confirm that account through the supported Auth administrator interface. The authenticated E2E suite still cannot run until controlled credentials and a reachable DEV app are configured.
 
 ## Blocking setup: minimum administrator actions
 
-1. **On Development only**, create or reuse dedicated QA accounts through Supabase Auth Admin (not direct `auth.users` SQL). Assign linked Portal roles: admin, trainer, parent and learner; assign Connect counsellor and viewer memberships. Ensure each role signs in successfully. Use synthetic names and emails.
-2. In Development, create a representative trainer schedule/availability, parent–learner relationship, course/cohort, enrolment, fee package and at least one class; create one CRM enquiry, linked demo, verified accepted offer and confirmed admission handoff. Include a second Connect workspace to test denial of foreign-tenant access. Avoid real parent or child information.
+1. **On Development only**, confirm the one outstanding QA Auth email and provide/reset controlled test passwords through Supabase Auth Admin, not direct `auth.users` SQL. Eight role-linked Portal identities, the synthetic learning dataset and CRM counsellor/viewer memberships are already prepared. Ensure each role signs in successfully.
+2. In Development, use the CRM application to create a synthetic enquiry, book a demo and exercise verified offer acceptance and confirmed admission handoff. Do not insert fake successful outcomes. Cross-tenant denial needs an explicit isolated tenancy test design: the current integration has a single-institution guard, so adding an arbitrary second production-like tenant is not appropriate without reviewing that guard.
 3. Configure GitHub **environment `qa`**. Variables: `E2E_QA_BASE_URL` (reachable Development preview only), `E2E_SUPABASE_PROJECT_REF=fflejkqcspivnhsmkdtn`. Secrets: `E2E_SUPABASE_URL`, `E2E_SUPABASE_ANON_KEY`, `E2E_SUPABASE_SERVICE_ROLE_KEY`, and `E2E_QA_{ADMIN,TRAINER,PARENT,STUDENT,CONNECT_COUNSELLOR,CONNECT_VIEWER}_{EMAIL,PASSWORD}`. Do not commit or paste secrets into reports. The workflow refuses an unconfigured or non-development target.
 4. Run GitHub Actions **Integrated authenticated E2E (isolated QA only)** via `workflow_dispatch` on this feature branch. Review uploaded Playwright failures; then test a real demo booking/reschedule/cancel with Zoom test accounts, role denial, offer redemption, idempotent handoff, attendance, billing summary, renewal and retry/reconciliation. Test write journeys on disposable QA records with teardown.
 5. In GitHub Rulesets/branch protection for `main`, require PR review, up-to-date branch and passing `Connect branch validation / validate` plus applicable existing release/security checks. Confirm enforcement with a deliberately failing PR check; merely storing workflow YAML does not enforce a protected branch.
