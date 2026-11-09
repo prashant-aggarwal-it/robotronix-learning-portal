@@ -1,10 +1,11 @@
 import type {ConnectOverview} from "@/features/connect/api/client";
 import type {EnquiryPreferences} from "@/features/connect/types/enquiries";
 
-export type Section="overview"|"enquiries"|"contacts"|"pipeline"|"followups"|"calendar"|"communications"|"reports"|"settings";
+export type Section="overview"|"enquiries"|"contacts"|"pipeline"|"lifecycle"|"followups"|"calendar"|"communications"|"reports"|"settings";
 export const navigation:Array<{id:Section;label:string;icon:string}>= [
  {id:"overview",label:"Overview",icon:"◫"},{id:"enquiries",label:"Enquiries",icon:"◎"},
  {id:"contacts",label:"Contacts",icon:"♙"},{id:"pipeline",label:"Admissions pipeline",icon:"▥"},
+ {id:"lifecycle",label:"Learner lifecycle",icon:"◉"},
  {id:"followups",label:"Follow-ups",icon:"☑"},{id:"calendar",label:"Calendar",icon:"▦"},
  {id:"communications",label:"Communications",icon:"✉"},
  {id:"reports",label:"Reports & ROI",icon:"▤"},
