@@ -25,8 +25,10 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
   .sort((a,b)=>Date.parse(a.starts_at)-Date.parse(b.starts_at)).slice(0,3);
  const peopleById=new Map(people.map(p=>[p.id,p.full_name]));
  const stageRows=pipelines.flatMap(p=>p.stages.map(stage=>({...stage,pipeline:p.name,count:opportunities.filter(o=>o.stage_id===stage.id).length})))
-  .filter(stage=>stage.count>0).sort((a,b)=>b.count-a.count||a.order-b.order).slice(0,4);
- const timeLabel=(value:string)=>new Intl.DateTimeFormat("en-IN",{timeZone:"Asia/Kolkata",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date(value));
+  .sort((a,b)=>a.order-b.order);
+ const appointmentDate=(value:string)=>new Intl.DateTimeFormat("en-IN",{timeZone:"Asia/Kolkata",day:"2-digit"}).format(new Date(value));
+ const appointmentMonth=(value:string)=>new Intl.DateTimeFormat("en-IN",{timeZone:"Asia/Kolkata",month:"short"}).format(new Date(value));
+ const appointmentTime=(value:string)=>new Intl.DateTimeFormat("en-IN",{timeZone:"Asia/Kolkata",hour:"numeric",minute:"2-digit"}).format(new Date(value));
  const upcomingName=(item:ConnectAppointment)=>peopleById.get(item.person_id||"")||"Customer not linked";
  const metrics=[
   {label:"New enquiries today",value:overview.newEnquiries,detail:"Captured today",icon:"✉",target:"enquiries" as Section},
@@ -68,8 +70,8 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
      <div className="cx-insight-panel-heading"><div><h3>Next appointments</h3><p>Next three scheduled sessions · IST</p></div><button type="button" onClick={()=>onNavigate("calendar")}>Calendar ↗</button></div>
      {upcoming.length===0?<div className="cx-overview-widget-empty"><span aria-hidden="true">▦</span><p>No upcoming appointments. Schedule a demo or consultation from Calendar.</p><button type="button" onClick={()=>onNavigate("calendar")}>Open calendar ↗</button></div>:
       <div className="cx-overview-appointments">{upcoming.map(a=><button key={a.id} type="button" className="cx-overview-appointment" onClick={()=>onNavigate("calendar")} aria-label={"Open Calendar for "+a.title}>
-       <span className="cx-overview-appointment-date">{timeLabel(a.starts_at)}</span>
-       <span className="cx-overview-appointment-info"><strong>{a.title}</strong><small>{upcomingName(a)} · {nameSource(a.kind)}</small></span><span className="cx-overview-row-arrow" aria-hidden="true">›</span>
+       <span className="cx-overview-appointment-date"><strong>{appointmentDate(a.starts_at)}</strong><small>{appointmentMonth(a.starts_at)}</small></span>
+       <span className="cx-overview-appointment-info"><strong>{a.title}</strong><small>{appointmentTime(a.starts_at)} · {upcomingName(a)} · {nameSource(a.kind)}</small></span><span className="cx-overview-row-arrow" aria-hidden="true">›</span>
       </button>)}</div>}
     </section>
     {advanced&&<section className="cx-insight-panel cx-overview-pipeline" aria-label="Admissions pipeline snapshot">
@@ -77,7 +79,7 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
      {stageRows.length===0?<div className="cx-overview-widget-empty"><p>No admissions in the loaded pipelines.</p><button type="button" onClick={()=>onNavigate("pipeline")}>View admissions ↗</button></div>:
       <div className="cx-overview-stage-list">{stageRows.map(stage=><button type="button" key={stage.id} onClick={()=>onNavigate("pipeline")} title={stage.pipeline+" · "+stage.name}>
        <span className="cx-overview-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}} aria-hidden="true"/>
-       <span className="cx-overview-stage-label">{stage.name}</span><strong>{stage.count}</strong>
+       <span className="cx-overview-stage-label">{stage.name}</span><strong>{stage.count}</strong><span className="cx-overview-stage-mini-track" aria-hidden="true"><i style={{background:toneColor(stageTone(stage.name,stage.outcome)),width:(stage.count/Math.max(1,...stageRows.map(row=>row.count))*100)+"%"}}/></span>
       </button>)}</div>}
     </section>}
     {attentionWidget}
