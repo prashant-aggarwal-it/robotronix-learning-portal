@@ -27,6 +27,10 @@ jobs:
       QA_PARENT_PASSWORD: ${{ secrets.E2E_QA_PARENT_PASSWORD }}
       QA_STUDENT_EMAIL: ${{ secrets.E2E_QA_STUDENT_EMAIL }}
       QA_STUDENT_PASSWORD: ${{ secrets.E2E_QA_STUDENT_PASSWORD }}
+      QA_CONNECT_COUNSELLOR_EMAIL: ${{ secrets.E2E_QA_CONNECT_COUNSELLOR_EMAIL }}
+      QA_CONNECT_COUNSELLOR_PASSWORD: ${{ secrets.E2E_QA_CONNECT_COUNSELLOR_PASSWORD }}
+      QA_CONNECT_VIEWER_EMAIL: ${{ secrets.E2E_QA_CONNECT_VIEWER_EMAIL }}
+      QA_CONNECT_VIEWER_PASSWORD: ${{ secrets.E2E_QA_CONNECT_VIEWER_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,6 +44,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run authenticated workflow suite
         run: npm run qa:integrated-e2e
+      - name: Connected CRM integration role and privacy checks
+        run: npx playwright test qa/connect-dev-integration.spec.ts --project=desktop-chromium --no-deps
+      - name: Connect desktop and mobile accessibility smoke
+        run: npx playwright test qa/connect-responsive-a11y.spec.ts --project=desktop-chromium --no-deps
       - name: Upload Playwright reports (including failures)
         if: always()
         uses: actions/upload-artifact@v4
