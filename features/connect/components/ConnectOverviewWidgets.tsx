@@ -47,6 +47,16 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
   <div className="cx-insight-panels cx-overview-masonry">
    <div className="cx-overview-left-column">
     <ConnectEnquiryVisualizations inquiries={inquiries} onSelectSource={onSelectSource}/>
+    {advanced&&<section className="cx-insight-panel cx-overview-pipeline" aria-label="Admissions pipeline snapshot">
+     <div className="cx-insight-panel-heading"><div><h3>Pipeline snapshot</h3><p>Current admissions by stage</p></div><button type="button" onClick={()=>onNavigate("pipeline")}>View pipeline ↗</button></div>
+     {stageRows.length>0&&<div className="cx-overview-stage-summary"><span><strong>{stageRows.reduce((sum,stage)=>sum+stage.count,0)}</strong> opportunities in current stages</span><span>{stageRows.filter(stage=>stage.count>0).length} active stages</span></div>}
+     {stageRows.length===0?<div className="cx-overview-widget-empty"><p>No admissions in the loaded pipelines.</p><button type="button" onClick={()=>onNavigate("pipeline")}>View admissions ↗</button></div>:
+      <div className="cx-overview-stage-list">{stageRows.map(stage=><button type="button" key={stage.id} onClick={()=>onNavigate("pipeline")} title={stage.pipeline+" · "+stage.name}>
+       <span className="cx-overview-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}} aria-hidden="true"/>
+       <span className="cx-overview-stage-label">{stage.name}</span><strong>{stage.count}</strong><small>{stageRows.reduce((sum,row)=>sum+row.count,0)?Math.round(stage.count/stageRows.reduce((sum,row)=>sum+row.count,0)*100):0}%</small>
+      </button>)}</div>}
+    </section>}
+
   <section className="cx-insight-panel cx-overview-recent" aria-label="Recent enquiries">
    <div className="cx-insight-panel-heading"><div><h3>Latest enquiries</h3><p>The three most recent customer enquiries</p></div><button type="button" onClick={onViewAllEnquiries}>View all ↗</button></div>
    {recent.length===0?<p className="cx-insight-empty">No enquiries recorded yet. Create an enquiry to get started.</p>:
@@ -74,14 +84,6 @@ export function ConnectOverviewWidgets({overview,inquiries,opportunities,appoint
        <span className="cx-overview-appointment-info"><strong>{a.title}</strong><small>{appointmentTime(a.starts_at)} · {upcomingName(a)} · {nameSource(a.kind)}</small></span><span className="cx-overview-row-arrow" aria-hidden="true">›</span>
       </button>)}</div>}
     </section>
-    {advanced&&<section className="cx-insight-panel cx-overview-pipeline" aria-label="Admissions pipeline snapshot">
-     <div className="cx-insight-panel-heading"><div><h3>Pipeline snapshot</h3><p>Current admissions by stage</p></div><button type="button" onClick={()=>onNavigate("pipeline")}>View pipeline ↗</button></div>
-     {stageRows.length===0?<div className="cx-overview-widget-empty"><p>No admissions in the loaded pipelines.</p><button type="button" onClick={()=>onNavigate("pipeline")}>View admissions ↗</button></div>:
-      <div className="cx-overview-stage-list">{stageRows.map(stage=><button type="button" key={stage.id} onClick={()=>onNavigate("pipeline")} title={stage.pipeline+" · "+stage.name}>
-       <span className="cx-overview-stage-dot" style={{background:toneColor(stageTone(stage.name,stage.outcome))}} aria-hidden="true"/>
-       <span className="cx-overview-stage-label">{stage.name}</span><strong>{stage.count}</strong><span className="cx-overview-stage-mini-track" aria-hidden="true"><i style={{background:toneColor(stageTone(stage.name,stage.outcome)),width:(stage.count/Math.max(1,...stageRows.map(row=>row.count))*100)+"%"}}/></span>
-      </button>)}</div>}
-    </section>}
     {attentionWidget}
    </div>
   </div>
