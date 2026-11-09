@@ -1,0 +1,42 @@
+{
+  "contractVersion": "1.0.0",
+  "status": "design-only-not-deployed",
+  "products": {"caller": "connect", "authority": "learning-portal"},
+  "independence": {"connectRequiresPortal": false, "portalRequiresConnect": false},
+  "scope": "edtech",
+  "requiredRequestHeaders": ["Authorization", "X-Integration-Id", "X-Correlation-Id"],
+  "mutationHeaders": ["Idempotency-Key"],
+  "responseEnvelope": {"success": ["ok", "data", "correlationId"], "failure": ["ok", "error.code", "error.message", "correlationId"]},
+  "errorCodes": ["UNAUTHENTICATED", "FORBIDDEN", "TENANT_MISMATCH", "LINK_UNVERIFIED", "INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "SLOT_CONFLICT", "STALE_VERSION", "ALREADY_FINAL", "CONSENT_REQUIRED", "DEPENDENCY_UNAVAILABLE", "RETRYABLE", "NOT_FOUND"],
+  "operations": [
+    {"id": "demo.capabilities", "method": "GET", "path": "/v1/demo-capabilities", "scope": "demo.read", "authority": "portal", "idempotent": true},
+    {"id": "demo.availability", "method": "GET", "path": "/v1/demo-availability", "scope": "demo.read", "authority": "portal", "idempotent": true},
+    {"id": "demo.book", "method": "POST", "path": "/v1/demo-bookings", "scope": "demo.book", "authority": "portal", "idempotent": true, "requiredBody": ["requestId", "externalOpportunityId", "programmeRef", "trainerId", "slotStart", "durationMinutes", "timezone", "learner", "guardianConsentRef"], "result": ["bookingId", "state", "version", "participantId"]},
+    {"id": "demo.reschedule", "method": "POST", "path": "/v1/demo-bookings/{bookingId}/reschedule", "scope": "demo.reschedule", "authority": "portal", "idempotent": true, "requiredBody": ["requestId", "expectedVersion", "trainerId", "slotStart", "durationMinutes", "timezone"]},
+    {"id": "demo.cancel", "method": "POST", "path": "/v1/demo-bookings/{bookingId}/cancel", "scope": "demo.cancel", "authority": "portal", "idempotent": true, "requiredBody": ["requestId", "expectedVersion", "reason"]},
+    {"id": "enrollment.handoff", "method": "POST", "path": "/v1/enrollment-handoffs", "scope": "enrollment.handoff", "authority": "portal", "idempotent": true, "requiredBody": ["requestId", "externalOpportunityId", "verifiedPersonLinks", "acceptedOfferSnapshot", "programmeRef", "guardianConsentRef"]},
+    {"id": "lifecycle.read", "method": "GET", "path": "/v1/customer-lifecycle/{linkId}", "scope": "lifecycle.read", "authority": "portal", "idempotent": true}
+  ],
+  "demoStates": ["requested", "confirming", "confirmed", "in_progress", "completed", "rejected", "cancelled", "no_show", "failed_retryable"],
+  "demoTransitions": {
+    "requested": ["confirming", "rejected", "cancelled"],
+    "confirming": ["confirmed", "rejected", "failed_retryable"],
+    "confirmed": ["in_progress", "cancelled", "no_show"],
+    "in_progress": ["completed", "no_show", "cancelled"],
+    "failed_retryable": ["confirming", "cancelled"],
+    "completed": [], "rejected": [], "cancelled": [], "no_show": []
+  },
+  "eventEnvelope": {
+    "required": ["eventId", "eventType", "schemaVersion", "occurredAt", "sourceInstitutionId", "connectionId", "subjectType", "subjectId", "subjectVersion", "correlationId", "payload"],
+    "delivery": "at-least-once",
+    "deduplicateBy": ["connectionId", "eventId"],
+    "orderWithinSubjectBy": "subjectVersion",
+    "acknowledgeBeforeProcessing": true,
+    "replaySupported": true
+  },
+  "events": ["DemoBookingConfirmed", "DemoBookingRejected", "DemoRescheduled", "DemoCancelled", "DemoAttendanceRecorded", "DemoOutcomeRecorded", "EnrollmentHandoffStatusChanged", "EnrollmentConfirmed", "EnrollmentPaused", "EnrollmentEnded", "CourseCompleted", "PaymentStatusChanged", "NextProgrammeRecommended"],
+  "accessScopes": ["demo.read", "demo.book", "demo.reschedule", "demo.cancel", "enrollment.handoff", "lifecycle.read", "finance.summary.read"],
+  "privacy": {"defaultTrainerView": ["learnerDisplayName", "gradeOrAgeBand", "interest", "preparationNotes"], "excludedFromTrainerView": ["guardianPrivateContact", "crmSalesNotes", "acceptedOfferPrice", "marketingConsent"], "publicCertificateData": "guardian-consent-controlled"},
+  "recordLinks": {"scope": ["connectTenantId", "portalInstitutionId", "integrationId"], "types": ["person", "guardian", "learner", "opportunity", "demo", "demo_participant", "enrollment", "invoice_summary"], "identityRule": "verified-link-or-manual-review-never-phone-only"},
+  "goLive": {"requiresSeparateAuthReview": true, "requiresMigrationReconciliation": true, "requiresContractTests": true, "requiresAuthenticatedUat": true}
+}
