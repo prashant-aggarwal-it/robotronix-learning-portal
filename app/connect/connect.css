@@ -1287,3 +1287,38 @@
 .cx-app .cx-manage-consent-editor p{margin:0;font-size:11px;color:#728a9a}
 @media(max-width:900px){.cx-app .cx-manage-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.cx-app .cx-manage-filter-grid,.cx-app .cx-manage-editor-grid{grid-template-columns:1fr}.cx-app .cx-manage-tabs{overflow-x:auto}.cx-app .cx-manage-card{padding:12px}.cx-app .cx-manage-editor-grid label:nth-child(6),.cx-app .cx-manage-editor-grid label:nth-child(7){grid-column:auto}}
+
+
+/* Compact Reports & ROI visualizations */
+.cx-app .cx-report-channel-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:16px}
+.cx-app .cx-report-channel-tile{min-width:0;border:1px solid #dce8ef;border-radius:17px;background:linear-gradient(155deg,#fff 5%,#f6fafd 100%);padding:18px;box-shadow:0 4px 16px rgba(20,60,90,.035);transition:transform .18s ease,box-shadow .18s ease}
+.cx-app .cx-report-channel-tile:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(20,60,90,.09)}
+.cx-app .cx-report-channel-tile-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cx-app .cx-report-channel-monogram{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--channel-accent) 12%,white);color:var(--channel-accent);font-size:17px;font-weight:850}
+.cx-app .cx-report-channel-share{color:#577487;background:#edf4f8;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:700;white-space:nowrap}
+.cx-app .cx-report-channel-tile-name{margin-top:18px;font-size:13px;color:#597387;font-weight:700}
+.cx-app .cx-report-channel-tile-bottom{display:flex;align-items:baseline;gap:8px;margin:4px 0 16px}
+.cx-app .cx-report-channel-tile-bottom strong{font-size:30px;line-height:1.1;color:#173b56;font-weight:850;letter-spacing:-.7px}
+.cx-app .cx-report-channel-tile-bottom span{font-size:11px;color:#7790a0}
+.cx-app .cx-report-channel-tile-meter{height:5px;background:#e8f0f5;border-radius:10px;overflow:hidden}
+.cx-app .cx-report-channel-tile-meter span{display:block;height:100%;border-radius:10px;background:var(--channel-accent)}
+.cx-app .cx-report-stage-layout{display:grid;grid-template-columns:minmax(230px, .75fr) minmax(0,1.5fr);gap:30px;align-items:center;padding:22px 8px 8px}
+.cx-app .cx-report-stage-donut-wrap{display:flex;align-items:center;flex-direction:column;gap:12px}
+.cx-app .cx-report-stage-donut{width:205px;height:205px;max-width:100%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;box-shadow:0 8px 25px rgba(23,63,91,.06)}
+.cx-app .cx-report-stage-donut-center{width:73%;height:73%;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px #eaf1f5}
+.cx-app .cx-report-stage-donut-center strong{font-size:36px;line-height:1;color:#163a56;font-weight:850}
+.cx-app .cx-report-stage-donut-center span{font-size:12px;color:#6f879a;margin-top:8px}
+.cx-app .cx-report-stage-donut-wrap p{font-size:12px;color:#7a90a0;text-align:center;margin:0}
+.cx-app .cx-report-stage-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.cx-app .cx-report-stage-tile{display:flex;align-items:center;gap:11px;padding:14px;border:1px solid #e0ebf1;border-radius:13px;background:#f8fbfd;min-width:0}
+.cx-app .cx-report-stage-tile-dot{width:11px;height:11px;flex:none;border-radius:50%}
+.cx-app .cx-report-stage-tile-details{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}
+.cx-app .cx-report-stage-tile-details strong{font-size:13px;color:#1d415b;overflow-wrap:anywhere}
+.cx-app .cx-report-stage-tile-details small{font-size:10px;color:#8297a7;overflow-wrap:anywhere}
+.cx-app .cx-report-stage-tile-value{text-align:right;display:flex;flex-direction:column;gap:4px}
+.cx-app .cx-report-stage-tile-value strong{font-size:21px;line-height:1;color:#173b56}
+.cx-app .cx-report-stage-tile-value small{font-size:11px;color:#7892a4}
+@media(max-width:1100px){.cx-app .cx-report-channel-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:780px){.cx-app .cx-report-stage-layout{grid-template-columns:1fr;gap:22px}.cx-app .cx-report-stage-donut{width:175px;height:175px}}
+@media(max-width:540px){.cx-app .cx-report-channel-tiles,.cx-app .cx-report-stage-tiles{grid-template-columns:1fr}.cx-app .cx-report-channel-tile{padding:15px}.cx-app .cx-report-stage-layout{padding:15px 0 0}}
+@media(prefers-reduced-motion:reduce){.cx-app .cx-report-channel-tile{transition:none}.cx-app .cx-report-channel-tile:hover{transform:none}}
