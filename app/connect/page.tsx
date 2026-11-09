@@ -47,6 +47,7 @@ export default function ConnectPage(){
  const [busy,setBusy]=useState(false);
  const [loading,setLoading]=useState(false);
  const requestGeneration=useRef(0);
+ const loadedTenant=useRef("");
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const [refreshCount,setRefreshCount]=useState(0);
@@ -119,8 +120,13 @@ export default function ConnectPage(){
  // Clear old data immediately on institute switching so it can never flash on the new screen.
  useEffect(()=>{
   const generation=++requestGeneration.current;
-  setOverview(emptyOverview);setInquiries([]);setPeople([]);setPeopleHasMore(false);setOpportunities([]);
-  setPipelines([]);setTasks([]);setAppointments([]);setPrograms([]);setMembers([]);
+  // Keep the board mounted during ordinary refreshes. Clear immediately only when
+  // switching institutes or signing out, to avoid leaking another tenant's data.
+  if(loadedTenant.current!==tenantId||!signedIn){
+   setOverview(emptyOverview);setInquiries([]);setPeople([]);setPeopleHasMore(false);setOpportunities([]);
+   setPipelines([]);setTasks([]);setAppointments([]);setPrograms([]);setMembers([]);
+  }
+  loadedTenant.current=signedIn?tenantId:"";
   setLoading(Boolean(tenantId&&signedIn));setError("");
   if(!tenantId||!signedIn)return ()=>{requestGeneration.current++;};
   void (async()=>{
@@ -274,9 +280,28 @@ export default function ConnectPage(){
   if(destination.outcome==="won"||destination.outcome==="lost"){
    if(!window.confirm("Move \""+opp.title+"\" to \""+destination.name+"\"? This will update the admission outcome."))return;
   }
-  await run(()=>crmCommand(tenantId,"opportunities","move_opportunity",{
-   opportunityId:opp.id,stageId,version:opp.version
-  }),"Admissions stage updated.");
+  setBusy(true);setError("");setNotice("");
+  const updated={...opp,stage_id:stageId,stage_name:destination.name,outcome:destination.outcome,
+   version:opp.version+1,updated_at:new Date().toISOString(),closed_at:destination.outcome==="open"?null:opp.closed_at||new Date().toISOString()};
+  setOpportunities(current=>current.map(item=>item.id===opp.id?updated:item));
+  try{
+   await crmCommand(tenantId,"opportunities","move_opportunity",{
+    opportunityId:opp.id,stageId,version:opp.version
+   });
+   if(loadedTenant.current!==tenantId)return;
+   setNotice("Moved to "+destination.name+".");
+   // Reconcile server-calculated fields without resetting the board or other sections.
+   try{
+    const result=await crmList<ConnectOpportunity>(tenantId,"opportunities",{limit:"100"});
+    if(loadedTenant.current===tenantId)setOpportunities(result.items);
+   }catch{
+    // The move succeeded; retain the locally updated card if refreshing fails.
+   }
+  }catch(e){
+   if(loadedTenant.current!==tenantId)return;
+   setOpportunities(current=>current.map(item=>item.id===opp.id?opp:item));
+   setError((e instanceof Error?e.message:"Unable to move admission.")+" The card was returned to its previous stage.");
+  }finally{setBusy(false);}
  }
  const openCustomerWorkflow=(personId:string,destination:"communications"|"enquiries"|"pipeline"|"followups")=>{
   if(!personId)return;
