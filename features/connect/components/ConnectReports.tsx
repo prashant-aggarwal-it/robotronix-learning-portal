@@ -144,17 +144,31 @@ export function ConnectReports({tenantId}:{tenantId:string}){
    {tab==="admissions"&&<div className="cx-report-tab-panel" id="connect-report-panel-admissions" role="tabpanel" aria-labelledby="connect-report-tab-admissions">
    <section className="cx-panel">
     <div className="cx-panel-header"><div><h2>Admissions stage distribution</h2><p>Current stages of admissions created during the selected dates. Not historical stage-entry conversion.</p></div></div>
-    <div className="cx-report-bars">
-     {report.funnel.length===0?<p className="cx-muted">Configure an admissions pipeline to see its stages.</p>:
-      report.funnel.map(stage=>{
-       const total=report.funnel.filter(x=>x.pipelineId===stage.pipelineId).reduce((sum,x)=>sum+x.opportunities,0);
-       return <div className="cx-report-bar-row" key={stage.stageId}>
-        <div><strong>{stage.stage}</strong><small>{stage.pipeline} · {stage.outcome}</small></div>
-        <div className="cx-bar-track"><div style={{width:(total?100*stage.opportunities/total:0)+"%",background:toneColor(stageTone(stage.stage,stage.outcome))}}/></div>
-        <span>{stage.opportunities}</span>
-       </div>;
-      })}
-    </div>
+    {report.funnel.length===0?<p className="cx-muted">Configure an admissions pipeline to see its stages.</p>:(()=>{
+     const total=report.funnel.reduce((sum,stage)=>sum+stage.opportunities,0);
+     let offset=0;
+     const segments=report.funnel.map(stage=>{
+      const start=offset;
+      offset+=total?stage.opportunities/total*100:0;
+      return {stage,start,end:offset,color:toneColor(stageTone(stage.stage,stage.outcome))};
+     });
+     const gradient=total?"conic-gradient("+segments.filter(s=>s.end>s.start).map(s=>s.color+" "+s.start+"% "+s.end+"%").join(", ")+")":"conic-gradient(#e5eef3 0% 100%)";
+     return <div className="cx-report-stage-layout">
+      <div className="cx-report-stage-donut-wrap">
+       <div className="cx-report-stage-donut" style={{background:gradient}} role="img" aria-label={report.funnel.map(s=>s.stage+": "+s.opportunities+" opportunities").join(", ")}>
+        <div className="cx-report-stage-donut-center"><strong>{total.toLocaleString("en-IN")}</strong><span>Opportunities</span></div>
+       </div>
+       <p>Current distribution across {report.funnel.length} stages</p>
+      </div>
+      <div className="cx-report-stage-tiles">
+       {report.funnel.map(stage=><div className="cx-report-stage-tile" key={stage.stageId}>
+        <span className="cx-report-stage-tile-dot" style={{background:toneColor(stageTone(stage.stage,stage.outcome))}} aria-hidden="true"/>
+        <div className="cx-report-stage-tile-details"><strong>{stage.stage}</strong><small>{stage.pipeline} · {stage.outcome}</small></div>
+        <div className="cx-report-stage-tile-value"><strong>{stage.opportunities}</strong><small>{total?Math.round(stage.opportunities/total*100):0}%</small></div>
+       </div>)}
+      </div>
+     </div>;
+    })()}
    </section>
    <section className="cx-panel">
     <div className="cx-panel-header"><div><h2>Historical stage reach</h2><p>How many admissions have a recorded transition into each stage (not current stage distribution).</p></div></div>
