@@ -33,6 +33,8 @@ export function ConnectEnquiryVisualizations({inquiries,onSelectSource}:{inquiri
  let running=0;
  return <section className={"cx-viz-widget"} aria-label="Enquiry activity and channel analytics">
   <div className={"cx-viz-head"}><div><h3>Enquiry insights</h3><p>Visual trends from {inquiries.length} loaded enquiries</p></div><span className={"cx-viz-label"}>Loaded records</span></div>
+  <div className="cx-viz-dashboard-body">
+   <div className="cx-viz-trend-panel">
   <div className={"cx-viz-trend-head"}><div><strong>Enquiry activity</strong><span>{sum} enquiries in the last {period} days</span></div>
    <div className={"cx-viz-switcher"} role="group" aria-label="Enquiry chart time range">
     {([7,14] as const).map(n=><button type="button" key={n} className={period===n?"cx-viz-selected":"cx-viz-range"} aria-pressed={period===n} onClick={()=>{setPeriod(n);setSelectedDay(null);}}>{n} days</button>)}
@@ -52,7 +54,8 @@ export function ConnectEnquiryVisualizations({inquiries,onSelectSource}:{inquiri
   </div>
   <div className={"cx-viz-day-buttons"} aria-label="Explore daily enquiry count">{data.days.map(d=><button key={d.date} type="button" aria-label={dayLabel(d.date)+": "+d.count+" enquiries"} aria-pressed={selectedDay===d.date} className={selectedDay===d.date?"cx-viz-day-active":"cx-viz-day"} onClick={()=>setSelectedDay(selectedDay===d.date?null:d.date)} title={dayLabel(d.date)+": "+d.count+" enquiries"}><span style={{height:Math.max(2,Math.round((d.count/max)*17))+"px"}}/></button>)}</div>
   {selectedDay&&<p className={"cx-viz-day-detail"}>{dayLabel(selectedDay)}: <strong>{data.days.find(d=>d.date===selectedDay)?.count||0} enquiries</strong></p>}
-  <div className={"cx-viz-divider"}/>
+   </div>
+   <div className="cx-viz-channel-panel">
   <div className={"cx-viz-mix-title"}><strong>Channel mix</strong><span>{totalSources} enquiries · Select a source to filter</span></div>
   {totalSources===0?<p className={"cx-viz-empty"}>No enquiries in this workspace yet.</p>:<div className={"cx-viz-mix"}>
    <svg className={"cx-viz-donut"} viewBox="0 0 140 140" role="img" aria-label="Enquiries by channel">
@@ -66,5 +69,7 @@ export function ConnectEnquiryVisualizations({inquiries,onSelectSource}:{inquiri
    </button>)}</div>
   </div>}
   <p className={"cx-viz-note"}>Charts use loaded workspace records, not projected revenue or inferred conversions.</p>
+   </div>
+  </div>
  </section>;
 }
