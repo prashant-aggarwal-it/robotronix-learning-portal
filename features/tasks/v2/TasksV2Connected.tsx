@@ -4,6 +4,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
+import {TasksPrimaryNav} from "./TasksPrimaryNav";
 import {getCurrentProfile} from "@/lib/repository";
 import {TeamSpaces} from "@/features/tasks/TaskCollaboration";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
@@ -145,14 +146,7 @@ export function TasksV2Connected(){
    <div className="mt2-product">My Tasks <span>CONNECTED WORK</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks">
-    <Link href="/tasks"><span className="mt2-nav-emoji">✦</span> My Day</Link>
-    <Link href="/tasks/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
-    <Link href="/tasks/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
-    <Link href="/tasks/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
-    <Link href="/tasks/connected" className="is-active" aria-current="page"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
-    <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
-   </nav>
+   <TasksPrimaryNav section="connected"/>
    <div className="mt2-sidebar-bottom"><Link href="/tasks">← Return to My Day</Link></div>
   </aside>
   <main className="mt2-main">
