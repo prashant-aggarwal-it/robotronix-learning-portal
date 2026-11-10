@@ -128,6 +128,7 @@ export function TasksWorkspace(){
  const selectView=views.find(v=>v.key===view)||views[0];
  return <div className="tw-shell">
   <aside className={`tw-sidebar ${mobileNav?"tw-sidebar-open":""}`}><Link href="/tasks" className="tw-logo" aria-label="Robotronix My Tasks"><img src="/brand/robotronix-horizontal.png" alt="Robotronix Future Ready Skills"/></Link><div className="tw-product-name">My Tasks<span>PERSONAL WORKSPACE</span></div><ApplicationSwitcher current="tasks"/>
+   <Link href="/tasks/v2" className="tw-v2-link" onClick={()=>setMobileNav(false)}>✦ Try the new visual My Day <span>V2</span></Link>
    <div className="tw-side-label">WORKSPACE</div><nav aria-label="Tasks navigation">{views.map(item=><Link key={item.key} href={"/tasks"+(item.key?"/"+item.key:"")} onClick={()=>setMobileNav(false)} className={view===item.key?"active":""}><span>{item.icon}</span>{item.label}{item.key==="inbox"&&<i>{active.filter(t=>!atDay(t)).length}</i>}</Link>)}</nav>
    <div className="tw-sidebar-bottom"><div className="tw-private"><Icon name="lock"/><div><b>Private by default</b><small>Share selectively with your team</small></div></div><Link href="/" className="tw-back"><Icon name="back"/> Back to Portal</Link></div>
   </aside>
