@@ -5,6 +5,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
 import {TasksPrimaryNav} from "./TasksPrimaryNav";
+import {TasksContextTabs} from "./TasksContextTabs";
 import type {V2Task,V2Area,V2Project,V2Response,V2Request} from "./model";
 
 type FocusMode="timebox"|"pomodoro"|"stopwatch"|"five_minutes";
@@ -205,6 +206,7 @@ export function TasksV2Focus(){
    </header>
    <div className="mt2-page mt2-focus-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">DO THE RIGHT WORK · KNOW WHEN TO STOP</p><h1>Focus. Finish. Switch.</h1><p className="mt2-subtitle">One task at a time. Park new ideas. Protect time for other priorities.</p></div></div>
+    <TasksContextTabs context="day" active="focus"/>
     {error&&<div className="mt2-error" role="alert">{error}<button onClick={()=>setError("")} aria-label="Dismiss">✕</button></div>}
     {notice&&<div className="mt2-notice" role="status">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss">✕</button></div>}
     {loading?<div className="mt2-loading">Loading your focus workspace…</div>:<>

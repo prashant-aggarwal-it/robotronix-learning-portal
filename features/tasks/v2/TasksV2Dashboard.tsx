@@ -6,6 +6,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
 import {TasksPrimaryNav} from "./TasksPrimaryNav";
+import {TasksContextTabs} from "./TasksContextTabs";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project} from "./model";
 
@@ -46,6 +47,7 @@ function Icon({name}:{name:string}){
 export function TasksV2Dashboard(){
  const router=useRouter();
  const inputRef=useRef<HTMLInputElement|null>(null);
+ useEffect(()=>{if(new URLSearchParams(window.location.search).has("capture"))requestAnimationFrame(()=>inputRef.current?.focus())},[]);
  const [tasks,setTasks]=useState<Task[]>([]);
  const [areas,setAreas]=useState<Area[]>([]);
  const [projects,setProjects]=useState<Project[]>([]);
@@ -276,6 +278,7 @@ export function TasksV2Dashboard(){
     <div className="mt2-heading"><div><p className="mt2-eyebrow">{view==="day"?"YOUR DAILY COMMAND CENTRE":view==="all"?"EVERYTHING IN VIEW":"CAPTURE FIRST, ORGANISE LATER"}</p><h1>{view==="day"?"Make today count.":view==="all"?"All your tasks. Clearly organised.":"Capture now. Plan later."}</h1><p className="mt2-subtitle">{dateTitle(today)} · Small steps, meaningful progress.</p></div><div className="mt2-heading-art"><Icon name="sparkle"/></div></div>
     {error&&<div role="alert" className="mt2-error">{error}<button aria-label="Dismiss error" onClick={()=>setError("")}><Icon name="close"/></button></div>}
     {notice&&<div role="status" className="mt2-notice">{notice}<button aria-label="Dismiss notification" onClick={()=>setNotice("")}><Icon name="close"/></button></div>}
+    <TasksContextTabs context={view==="day"?"day":"all"} active={view==="inbox"?"inbox":"list"} onChoose={tab=>{const next=tab==="inbox"?"inbox":view==="day"?"day":"all";setView(next);router.replace(next==="day"?"/tasks":"/tasks?view="+next,{scroll:false})}}/>
     <form className="mt2-capture" onSubmit={capture}>
      <div className="mt2-capture-top"><span className="mt2-capture-icon"><Icon name="plus"/></span><input ref={inputRef} aria-label="Quick add task" value={quick} onChange={e=>setQuick(e.target.value)} placeholder="What do you need to do? Just type and press Enter…" maxLength={240}/><button type="submit" disabled={busy||!quick.trim()}>Add task <Icon name="arrow"/></button></div>
      <div className="mt2-capture-options">

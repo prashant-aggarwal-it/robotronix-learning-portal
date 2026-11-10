@@ -5,6 +5,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
 import {TasksPrimaryNav} from "./TasksPrimaryNav";
+import {TasksContextTabs} from "./TasksContextTabs";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project,V2Priority,V2Status,V2Response,V2Request,V2ModuleLink} from "./model";
 import {v2Colors,v2Statuses,v2StatusNames} from "./model";
@@ -198,6 +199,7 @@ export function TasksV2Board(){
    </header>
    <div className="mt2-page mt2-board-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">VISUAL WORKFLOW</p><h1>Task board</h1><p className="mt2-subtitle">See what is next, underway and waiting for a response.</p></div><div className="mt2-board-summary"><strong>{totalOpen}</strong><span>Open</span><strong>{totalDone}</strong><span>Done</span></div></div>
+    <TasksContextTabs context="all" active="board"/>
     {error&&<div className="mt2-error" role="alert">{error}<button aria-label="Dismiss" onClick={()=>setError("")}>✕</button></div>}
     {notice&&<div className="mt2-notice" role="status">{notice}<button aria-label="Dismiss" onClick={()=>setNotice("")}>✕</button></div>}
     <form className="mt2-board-capture" onSubmit={capture}><span>＋</span><input ref={quickRef} value={quick} onChange={e=>setQuick(e.target.value)} maxLength={240} aria-label="Quick capture task" placeholder="Quick capture — type something and press Enter…"/><button disabled={working||!quick.trim()} type="submit">Add task</button></form>

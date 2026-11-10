@@ -5,6 +5,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
 import {TasksPrimaryNav} from "./TasksPrimaryNav";
+import {TasksContextTabs} from "./TasksContextTabs";
 import {getCurrentProfile} from "@/lib/repository";
 import {TeamSpaces} from "@/features/tasks/TaskCollaboration";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
@@ -157,6 +158,7 @@ export function TasksV2Connected(){
    </header>
    <div className="mt2-page mt2-connected-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">WORK TOGETHER · STAY IN CONTEXT</p><h1>Connected work, made simple.</h1><p className="mt2-subtitle">A clear view of shared tasks, delegated work, CRM follow-ups and Learning Portal links.</p></div></div>
+    <TasksContextTabs context="all" active="connected"/>
     {error&&<div role="alert" className="mt2-error">{error}<button onClick={()=>setError("")} aria-label="Dismiss">✕</button></div>}
     {notice&&<div role="status" className="mt2-notice">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss">✕</button></div>}
     {loading?<div className="mt2-loading">Loading workspaces, linked tasks and access…</div>:<>
