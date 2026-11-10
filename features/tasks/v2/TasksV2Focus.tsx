@@ -29,6 +29,7 @@ export function TasksV2Focus(){
  const [projects,setProjects]=useState<V2Project[]>([]);
  const [data,setData]=useState<FocusResponse>({active:null,settings:defaultSettings,ideas:[],history:[]});
  const [now,setNow]=useState(()=>Date.now());
+ useEffect(()=>{const query=new URLSearchParams(window.location.search);const id=query.get("task");if(id&&/^[0-9a-f-]{36}$/i.test(id))setChosenTask(id);},[]);
  const [chosenTask,setChosenTask]=useState("");
  const [mode,setMode]=useState<FocusMode>("timebox");
  const [minutes,setMinutes]=useState(45);
@@ -146,7 +147,10 @@ export function TasksV2Focus(){
   finally{setBusy(false)}
  }
  function chooseMode(value:FocusMode){setMode(value);setMinutes(modeMinutes[value]);}
- const plannedMinutes=tasks.filter(t=>t.status!=="done"&&t.scheduled_date===new Date().toLocaleDateString("en-CA")).reduce((n,t)=>n+(t.estimated_minutes||0),0);
+ const currentDate=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+ const datePart=(key:string)=>currentDate.find(part=>part.type===key)?.value||"";
+ const todayKey=datePart("year")+"-"+datePart("month")+"-"+datePart("day");
+ const plannedMinutes=tasks.filter(t=>t.status!=="done"&&t.scheduled_date===todayKey).reduce((n,t)=>n+(t.estimated_minutes||0),0);
  return <div className="mt2-shell">
   {mobileNav&&<button className="mt2-scrim" aria-label="Close navigation" onClick={()=>setMobileNav(false)}/>}
   <aside className={"mt2-sidebar "+(mobileNav?"mt2-sidebar-open":"")}>
