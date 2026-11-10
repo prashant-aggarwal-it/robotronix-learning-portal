@@ -8,6 +8,7 @@ import {TasksNotifications} from "./TasksNotifications";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project} from "./model";
 
+type View="day"|"inbox"|"all";
 type Priority="low"|"medium"|"high";
 type Task=V2Task;
 type Area=V2Area;
@@ -247,7 +248,6 @@ export function TasksV2Dashboard(){
    </div>
    <div className="mt2-sidebar-bottom">
     <button type="button" onClick={()=>{setNewName("");setCreatePanel("project")}}><Icon name="plus"/> New project</button>
-    <Link href="/tasks">Open classic Tasks <Icon name="arrow"/></Link>
    </div>
   </aside>
   <main className="mt2-main">
