@@ -215,7 +215,7 @@ export function TasksV2Planner(){
    <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
    <div className="mt2-product">My Tasks <span>WEEKLY PLANNING</span></div>
    <ApplicationSwitcher current="tasks"/>
-   <div className="mt2-sidebar-heading">MY WORKSPACE</div>
+   <div className="mt2-sidebar-heading">TASKS</div>
    <TasksPrimaryNav section="planner"/>
    <div className="mt2-sidebar-bottom"><Link href="/tasks">← Return to My Day</Link></div>
   </aside>
