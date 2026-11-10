@@ -31,7 +31,13 @@ export async function PATCH(request:NextRequest,context:Context){
  const {data,error}=await session.db.rpc("task_v2_detail_save",{
   p_actor_id:session.userId,p_task_id:id,p_data:raw
  });
- if(error)return taskDbError(error.code);
+ if(error){
+  if(error.code==="P0001"&&/Linked tasks cannot enter Waiting/.test(error.message||""))
+   return taskError("CRM or Learning-linked tasks cannot enter Waiting. Use To Do or In Progress.",409);
+  if(error.code==="P0001"&&/(Invalid destination|Project does not match area|Invalid area)/.test(error.message||""))
+   return taskError("The selected area or project is no longer available.",400);
+  return taskDbError(error.code);
+ }
  if(!data)return taskError("Task unavailable for editing.",404);
  return NextResponse.json({ok:true,item:data},{headers:noStore});
 }
