@@ -1,0 +1,69 @@
+
+/* My Tasks V2 — Phase 4 Focus & Finish */
+.mt2-focus-page{max-width:1470px}
+.mt2-focus-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,0.85fr);gap:18px;align-items:start}
+.mt2-focus-aside,.mt2-focus-bottom{display:grid;gap:18px}
+.mt2-focus-bottom{grid-template-columns:1fr 1fr;margin-top:18px;align-items:start}
+.mt2-focus-session{min-height:460px}
+.mt2-focus-session h2{margin:7px 0 9px;font-size:24px;letter-spacing:-.7px;color:#273e57}
+.mt2-focus-current>p,.mt2-focus-explain{font-size:12px;line-height:1.7;color:#8a9bad;margin:6px 0 18px}
+.mt2-focus-clock{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;background:linear-gradient(135deg,#e9f6fc,#f1f3ff);border-radius:16px;margin:12px 0 19px}
+.mt2-focus-clock strong{font-size:clamp(48px,6vw,73px);font-weight:850;letter-spacing:-3px;line-height:1.12;color:#257ba9;font-variant-numeric:tabular-nums}
+.mt2-focus-clock span{font-size:12px;color:#7294ab;font-weight:750}
+.mt2-focus-clock.mt2-focus-ended{background:#fff4e5}
+.mt2-focus-clock.mt2-focus-ended strong{color:#b57b31}
+.mt2-focus-session .mt2-progress-track{height:9px}
+.mt2-switch-prompt{margin:15px 0;border:1px solid #f0d5a9;background:#fffaec;border-radius:13px;padding:15px 18px}
+.mt2-switch-prompt strong{font-size:13px;color:#8d681f}
+.mt2-switch-prompt p{font-size:12px;color:#9a804c;line-height:1.6;margin:5px 0 0}
+.mt2-focus-controls,.mt2-finish-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:17px}
+.mt2-focus-controls button,.mt2-finish-actions button,.mt2-focus-setup button{border:0;border-radius:10px;background:#2780b6;padding:11px 15px;font-size:12px;color:#fff;font-weight:790;cursor:pointer}
+.mt2-focus-controls button:disabled,.mt2-finish-actions button:disabled,.mt2-focus-setup button:disabled{opacity:.5;cursor:not-allowed}
+.mt2-focus-controls .mt2-secondary-button,.mt2-finish-actions .mt2-secondary-button{background:#edf3f9;color:#607d96}
+.mt2-finish-actions{padding-top:15px;border-top:1px solid #edf0f5}
+.mt2-finish-actions button:first-child{background:#269b88}
+.mt2-focus-note{display:grid;gap:8px;font-size:12px;font-weight:740;color:#71849a;margin-top:18px}
+.mt2-focus-note textarea{font:inherit;font-weight:450;font-size:13px;line-height:1.55;padding:12px 14px;background:#fbfcff;border:1px solid #dfe7f0;color:#243f58;border-radius:11px;resize:vertical;outline-color:#3996bb}
+.mt2-focus-label{font-size:12px;font-weight:780;color:#61758a;display:grid;gap:7px;margin-top:18px}
+.mt2-focus-label select{border:1px solid #dee7f0;background:#fff;padding:13px;border-radius:10px;max-width:100%;color:#304861}
+.mt2-focus-mode-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:20px 0}
+.mt2-focus-mode-buttons button{background:#f5f8fc;border:1px solid #e4ebf2;padding:12px 6px;border-radius:11px;font-size:11px;font-weight:760;color:#738aa2}
+.mt2-focus-mode-buttons button.active{background:#e8f5fb;border-color:#91c5e0;color:#257ca9}
+.mt2-focus-setup{display:flex;align-items:end;gap:14px}
+.mt2-focus-setup label{display:grid;gap:7px;font-size:12px;font-weight:720;color:#61758a;flex:1}
+.mt2-focus-setup input{width:100%;border:1px solid #dae5f0;border-radius:10px;padding:12px;outline-color:#489ac4}
+.mt2-focus-aside .mt2-panel{padding:22px}
+.mt2-idea-entry{display:flex;gap:8px}
+.mt2-idea-entry input{min-width:0;flex:1;border:1px solid #e1e8f2;border-radius:10px;padding:12px;color:#3f5c74;font-size:12px;outline-color:#408eb7}
+.mt2-idea-entry button{background:#e9f4fa;border:0;border-radius:9px;padding:11px 13px;color:#287fab;font-weight:760;white-space:nowrap;font-size:11px}
+.mt2-idea-entry button:disabled{opacity:.5}
+.mt2-idea-list{max-height:330px;overflow-y:auto;margin-top:13px}
+.mt2-idea-row{display:flex;align-items:center;gap:7px;padding:12px 0;border-bottom:1px solid #edf2f7}
+.mt2-idea-row>span{flex:1;overflow-wrap:anywhere;min-width:0;font-size:12px;font-weight:640;color:#506a82}
+.mt2-idea-row button{border:0;border-radius:8px;padding:7px 9px;color:#3c87ad;background:#eef6fb;white-space:nowrap;font-size:10px;font-weight:760}
+.mt2-idea-row button:last-child{color:#ae7a85;background:#f7f2f4}
+.mt2-focus-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mt2-focus-facts>div{padding:14px;background:#f6f9fc;border:1px solid #edf1f5;border-radius:12px;display:grid;gap:4px}
+.mt2-focus-facts strong{font-size:25px;letter-spacing:-.7px;color:#2878a7}
+.mt2-focus-facts strong span{font-size:14px;color:#9ba9b7}
+.mt2-focus-facts small{font-size:10px;color:#8e9fb1;line-height:1.5}
+.mt2-balance-note{padding:12px 15px;margin:12px 0;background:#fff7e9;border:1px solid #f2dfbd;color:#9e783a;border-radius:10px;font-size:12px;line-height:1.5}
+.mt2-area-balance{display:grid;gap:12px;margin:18px 0}
+.mt2-area-balance>div{display:grid;grid-template-columns:1fr auto;gap:5px;font-size:12px;color:#6b7f95}
+.mt2-area-balance>div>strong{font-weight:770;color:#3b87ab}
+.mt2-area-balance .mt2-progress-track{grid-column:1/-1}
+.mt2-focus-settings{display:grid;gap:12px}
+.mt2-focus-settings label{display:grid;gap:7px;color:#647d94;font-size:12px;font-weight:700}
+.mt2-focus-settings select{border:1px solid #e1e8f0;background:#fff;padding:11px;border-radius:10px;color:#435f79}
+.mt2-focus-settings .mt2-prompt-option{display:flex;align-items:center;gap:8px}
+.mt2-focus-settings .mt2-prompt-option input{accent-color:#2789b2}
+.mt2-focus-settings>button{justify-self:start;background:#2785b5;border:0;color:#fff;border-radius:9px;padding:11px 16px;font-size:12px;font-weight:770}
+.mt2-focus-history{display:grid;gap:0}
+.mt2-focus-history>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #edf1f4;padding:11px 0;align-items:center}
+.mt2-focus-history>div>span{display:grid;gap:4px;min-width:0}
+.mt2-focus-history b{font-size:12px;color:#516b83;font-weight:730;overflow-wrap:anywhere}
+.mt2-focus-history small{font-size:10px;color:#95a3b3;text-transform:capitalize}
+.mt2-focus-history strong{font-size:12px;color:#377da8;white-space:nowrap}
+@media(max-width:1130px){.mt2-focus-grid{grid-template-columns:1fr}.mt2-focus-aside{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.mt2-focus-aside,.mt2-focus-bottom{grid-template-columns:1fr}}
+@media(max-width:530px){.mt2-focus-mode-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}.mt2-focus-clock strong{font-size:47px}.mt2-focus-setup{flex-wrap:wrap}.mt2-focus-setup button{width:100%}.mt2-focus-facts strong{font-size:20px}.mt2-finish-actions button{flex:1 1 45%}.mt2-idea-entry{flex-wrap:wrap}.mt2-idea-entry button{width:100%}}
