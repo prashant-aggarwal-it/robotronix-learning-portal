@@ -166,6 +166,7 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
    </section>
    <div className="mt2-drawer-footer">
     <Link href={"/tasks/all?task="+task.id}>Open Classic Tasks ↗</Link>
+    {canEdit&&task.status!=="done"&&<Link href={"/tasks/v2/focus?task="+task.id}>▶ Focus on this task</Link>}
     <button type="button" onClick={onClose} className="mt2-drawer-cancel">Close</button>
     {canEdit&&<button type="submit" form="mt2-detail-form" disabled={working} className="mt2-drawer-save">{working?"Saving…":"Save changes"}</button>}
    </div>
