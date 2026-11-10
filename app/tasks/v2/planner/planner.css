@@ -1,0 +1,88 @@
+
+/* My Tasks V2 Phase 5 — a visual week without the weight of a calendar suite. */
+.mt2-planner-page{max-width:none}
+.mt2-plan-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px 14px;background:white;border:1px solid #e4edf5;border-radius:14px;margin-bottom:18px}
+.mt2-plan-tabs{display:flex;flex-wrap:wrap;gap:4px}
+.mt2-plan-tabs button{border:0;border-radius:9px;background:transparent;color:#788da2;padding:10px 12px;font-size:12px;font-weight:750}
+.mt2-plan-tabs button.active{background:#e8f3fc;color:#227cac}
+.mt2-plan-filter{display:flex;gap:8px}
+.mt2-plan-filter input,.mt2-plan-filter select,.mt2-board-capture select{min-width:0;border:1px solid #dce7f1;border-radius:9px;background:#fafcff;color:#5e758b;padding:9px;font-size:11px}
+.mt2-plan-filter input{width:165px}
+.mt2-plan-insight{display:flex;align-items:center;gap:13px;flex-wrap:wrap;background:#fff;border:1px solid #e6edf4;border-radius:15px;padding:14px 18px;margin-bottom:18px}
+.mt2-plan-insight>div{display:grid;gap:3px;min-width:108px}
+.mt2-plan-insight b{color:#296f9e;font-size:23px;line-height:1.15}
+.mt2-plan-insight span{font-size:10px;color:#8b9cad}
+.mt2-plan-insight label{display:grid;gap:5px;color:#8395a8;font-size:10px;font-weight:730;margin-left:auto}
+.mt2-plan-insight label select{border:1px solid #e0e8f2;border-radius:8px;background:#fff;color:#61788f;padding:8px;font-size:11px}
+.mt2-plan-insight>button,.mt2-recovery-actions button,.mt2-review-strip button,.mt2-bulk-bar button{border:0;border-radius:9px;color:#fff;background:#287fb0;font-size:11px;font-weight:780;padding:10px 13px}
+.mt2-plan-insight button:disabled,.mt2-recovery-actions button:disabled,.mt2-review-strip button:disabled,.mt2-bulk-bar button:disabled{opacity:.46;cursor:default}
+.mt2-week-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.mt2-week-toolbar>div{display:flex;align-items:center;gap:10px}
+.mt2-week-toolbar button{background:#fff;border:1px solid #e0e8f1;border-radius:9px;color:#6088a7;font-size:12px;font-weight:750;padding:8px 12px}
+.mt2-week-toolbar strong{font-size:14px;color:#3b526b;min-width:126px;text-align:center}
+.mt2-week-toolbar>small{font-size:11px;color:#9ba7b6}
+.mt2-planner-days{display:grid;grid-template-columns:repeat(7,minmax(163px,1fr));gap:10px;align-items:stretch;overflow-x:auto;padding:1px 1px 15px;scrollbar-width:thin}
+.mt2-day-column{background:#fff;border:1px solid #e5edf4;border-radius:14px;min-height:315px;padding:11px;display:flex;flex-direction:column;gap:10px;transition:background .14s,border .14s}
+.mt2-day-column.is-today{border-color:#88bdd7;background:#f9fdff}
+.mt2-day-column.is-drop{background:#eaf7fa;border-color:#5faed1}
+.mt2-day-head{display:flex;flex-direction:column;align-items:center;gap:3px;border-bottom:1px solid #eaf0f6;padding:4px 0 12px}
+.mt2-day-head small{color:#8c9eaf;font-size:11px;font-weight:800;text-transform:uppercase}
+.mt2-day-head strong{color:#38536d;font-size:23px;line-height:1.2}
+.mt2-day-head span{color:#a1afbc;font-size:10px}
+.mt2-day-capacity{display:grid;gap:7px}
+.mt2-day-capacity .mt2-progress-track{height:6px}
+.mt2-day-capacity small{font-size:10px;text-align:right;color:#8d9daf}
+.mt2-day-capacity .mt2-overload{color:#bb7750;font-weight:790}
+.mt2-day-cards{display:grid;gap:8px;align-content:start;flex:1;min-height:105px}
+.mt2-plan-task{display:flex;align-items:flex-start;gap:7px;background:#fff;border:1px solid #e1e8f1;border-radius:10px;padding:10px 8px;min-width:0;box-shadow:0 3px 11px #24456108;cursor:grab}
+.mt2-plan-task.is-selected{background:#edf8fb;border-color:#83bfdc}
+.mt2-plan-check{padding-top:1px;flex:none}
+.mt2-plan-check input{width:14px;height:14px;accent-color:#2b8eaf;cursor:pointer}
+.mt2-plan-task-main{background:transparent;border:0;display:grid;gap:7px;min-width:0;flex:1;text-align:left;padding:0;cursor:pointer}
+.mt2-plan-task-main strong{font-size:11px;line-height:1.4;color:#36516b;font-weight:770;overflow-wrap:anywhere}
+.mt2-plan-task-main:hover strong{color:#2582ae}
+.mt2-plan-task-main>span{display:flex;align-items:center;flex-wrap:wrap;gap:5px 7px;color:#8e9dad;font-size:9px}
+.mt2-plan-task-main i{display:inline-block;width:7px;height:7px;border-radius:2px}
+.mt2-plan-task-main em{font-style:normal;border-radius:5px;background:#edf4fa;color:#778e9f;padding:2px 4px}
+.mt2-plan-task-main em.mt2-hard-late{color:#b5544d;background:#fff1ee}
+.mt2-day-add{background:transparent;border:1px dashed #c9dce8;border-radius:8px;padding:9px 6px;color:#6d9db3;font-size:10px;font-weight:780;cursor:pointer}
+.mt2-day-add:hover{background:#eef7fa}
+.mt2-day-cards>.mt2-empty{font-size:10px;text-align:center;padding:15px 7px;background:#f6f9fb}
+.mt2-planner-lower{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0}
+.mt2-plan-inbox{display:grid;align-content:start;gap:7px;min-height:200px}
+.mt2-plan-inbox .mt2-panel-head{margin-bottom:6px}
+.mt2-plan-inbox .mt2-plan-task{padding:10px 12px}
+.mt2-plan-inbox .mt2-plan-task-main strong{font-size:12px}
+.mt2-plan-list{max-width:880px;margin:0 auto 18px}
+.mt2-plan-list .mt2-plan-task{margin-bottom:8px;padding:12px}
+.mt2-plan-list .mt2-plan-task-main strong{font-size:13px}
+.mt2-bulk-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:17px;padding:12px 15px;background:#eef7fd;border:1px solid #bfdfef;border-radius:12px;box-shadow:0 8px 22px #0e3b5c16}
+.mt2-bulk-bar strong{font-size:12px;color:#3278a0;margin-right:auto}
+.mt2-bulk-bar input{border:1px solid #d0dfec;border-radius:8px;padding:9px;font-size:11px;color:#476d86}
+.mt2-bulk-bar button:last-child{background:#d5e8f2;color:#496f88}
+.mt2-overdue-recovery{margin-top:18px}
+.mt2-overdue-help{color:#72899c;font-size:12px;line-height:1.5;margin:-3px 0 14px}
+.mt2-recovery-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:300px;overflow-y:auto}
+.mt2-recovery-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:16px 0 10px}
+.mt2-recovery-actions input{border:1px solid #dae6ef;border-radius:9px;padding:9px;color:#4d718b;font-size:12px}
+.mt2-recovery-actions button.mt2-recovery-secondary{background:#eef4f9;color:#648095}
+.mt2-overdue-recovery>small{font-size:10px;color:#97a6b7}
+.mt2-review-strip{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px 23px;border-radius:15px;border:1px solid #d9e9f3;background:linear-gradient(110deg,#eaf5fb,#f5f4fb);margin-top:19px}
+.mt2-review-strip strong{font-size:15px;color:#385b77}
+.mt2-review-strip p{margin:5px 0 0;font-size:11px;color:#849bac}
+.mt2-matrix-wrap{max-width:1150px;margin:auto}
+.mt2-matrix-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.mt2-matrix-quadrant{background:white;border:1px solid #e4eaf3;border-radius:15px;padding:17px;min-height:215px}
+.mt2-matrix-quadrant header{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #edf1f5;padding-bottom:12px;margin-bottom:13px}
+.mt2-matrix-quadrant header strong{font-size:13px;color:#475f77}
+.mt2-matrix-quadrant header small{font-size:10px;color:#9da8b5}
+.mt2-matrix-q0{border-top:4px solid #c76e61}
+.mt2-matrix-q1{border-top:4px solid #4b99c9}
+.mt2-matrix-q2{border-top:4px solid #ceac62}
+.mt2-matrix-q3{border-top:4px solid #6fa58b}
+.mt2-matrix-task{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f3f7}
+.mt2-matrix-task button{font-size:12px;font-weight:710;color:#4a657f;text-align:left;border:0;background:transparent;overflow-wrap:anywhere;flex:1;min-width:0}
+.mt2-matrix-task select{max-width:132px;padding:6px;border:1px solid #dce7ef;border-radius:8px;color:#607c93;font-size:10px}
+@media(max-width:1300px){.mt2-planner-days{grid-template-columns:repeat(7,minmax(190px,1fr))}}
+@media(max-width:880px){.mt2-planner-lower,.mt2-matrix-grid{grid-template-columns:1fr}.mt2-review-strip{flex-wrap:wrap}.mt2-plan-insight label{margin-left:0}}
+@media(max-width:580px){.mt2-planner-page{padding:18px 12px 60px}.mt2-plan-tabs{width:100%;justify-content:space-between}.mt2-plan-tabs button{padding:9px 5px;font-size:10px}.mt2-plan-filter{width:100%}.mt2-plan-filter input{flex:1;width:100px}.mt2-recovery-list{grid-template-columns:1fr}.mt2-week-toolbar>small{width:100%}.mt2-board-capture{flex-wrap:wrap}.mt2-board-capture input{flex:1 1 150px}.mt2-review-strip button{width:100%}.mt2-matrix-quadrant header{align-items:flex-start;flex-direction:column}}
