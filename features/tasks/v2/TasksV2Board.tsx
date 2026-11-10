@@ -183,6 +183,7 @@ export function TasksV2Board(){
     <Link className="is-active" href="/tasks/v2/board" aria-current="page"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
     <Link href="/tasks/v2/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
     <Link href="/tasks/v2/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
+    <Link href="/tasks/v2/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
     <Link href="/tasks"><span className="mt2-nav-emoji">▤</span> Classic Tasks</Link>
     <Link href="/tasks/calendar"><span className="mt2-nav-emoji">▦</span> Calendar</Link>
    </nav>
