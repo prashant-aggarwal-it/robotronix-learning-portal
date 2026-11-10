@@ -5,7 +5,7 @@ export type V2Task={
  owner_user_id:string;assignee_user_id:string|null;
  area_id:string|null;project_id:string|null;
  scheduled_date:string|null;due_at:string|null;completed_at:string|null;
- important:boolean;estimated_minutes:number|null;
+ important:boolean;urgent:boolean;someday:boolean;reschedule_count:number;estimated_minutes:number|null;
  done_definition:string;resume_note:string;waiting_for:string;followup_date:string|null;
  board_rank:number;created_at:string;updated_at:string;
  focus_date:string|null;focus_rank:number|null;
