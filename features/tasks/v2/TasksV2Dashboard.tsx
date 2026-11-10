@@ -55,6 +55,7 @@ export function TasksV2Dashboard(){
  const [loading,setLoading]=useState(true);
  const [busy,setBusy]=useState(false);
  const [pendingId,setPendingId]=useState<string|null>(null);
+ const [userId,setUserId]=useState<string|null>(null);
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const [view,setView]=useState<View>("day");
@@ -113,6 +114,7 @@ export function TasksV2Dashboard(){
   }finally{setLoading(false)}
  },[request,router]);
  useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{let active=true;void getSupabaseBrowserClient()?.auth.getUser().then(({data})=>{if(active)setUserId(data.user?.id||null)});return()=>{active=false}},[]);
  useEffect(()=>{const timer=window.setInterval(()=>setToday(dayKey(new Date())),60*1000);return()=>window.clearInterval(timer)},[]);
  useEffect(()=>{
   const key=(e:KeyboardEvent)=>{
@@ -214,6 +216,7 @@ export function TasksV2Dashboard(){
  };
  const saveDetail=async(event:FormEvent)=>{
   event.preventDefault();if(!selected||busy)return;
+  if(selected.owner_user_id!==userId){setError("Shared tasks are edited using Classic Tasks.");return;}
   setBusy(true);setError("");
   try{
    // Metadata is intentionally separate from legacy status transitions.
@@ -233,7 +236,7 @@ export function TasksV2Dashboard(){
   const d=dueKey(task.due_at);
   return <article className={"mt2-task "+(task.status==="done"?"mt2-done":"")} key={task.id}>
    <label className="mt2-check-label" title={task.status==="done"?"Reopen":"Mark completed"}>
-    <input type="checkbox" aria-label={(task.status==="done"?"Reopen ":"Complete ")+task.title} checked={task.status==="done"} disabled={pendingId===task.id} onChange={()=>void toggleDone(task)}/>
+    <input type="checkbox" aria-label={(task.status==="done"?"Reopen ":"Complete ")+task.title} checked={task.status==="done"} disabled={pendingId===task.id||(task.owner_user_id!==userId&&task.assignee_user_id!==userId)} onChange={()=>void toggleDone(task)}/>
     <span className="mt2-checkbox"><Icon name="check"/></span>
    </label>
    <button type="button" className="mt2-task-content" onClick={()=>openDetail(task)}>
@@ -246,7 +249,7 @@ export function TasksV2Dashboard(){
      {task.status==="waiting"?<span className="mt2-waiting">Waiting</span>:null}
     </span>
    </button>
-   {task.status!=="done"&&<button type="button" className={"mt2-star "+(task.focus_date===today?"is-on":"")} title={task.focus_date===today?"Remove from Top 3":"Make a Top 3 priority"} aria-label={"Toggle Top 3 for "+task.title} disabled={pendingId===task.id} onClick={()=>void markFocus(task)}><Icon name="star"/></button>}
+   {task.status!=="done"&&task.owner_user_id===userId&&<button type="button" className={"mt2-star "+(task.focus_date===today?"is-on":"")} title={task.focus_date===today?"Remove from Top 3":"Make a Top 3 priority"} aria-label={"Toggle Top 3 for "+task.title} disabled={pendingId===task.id} onClick={()=>void markFocus(task)}><Icon name="star"/></button>}
   </article>;
  };
  return <div className="mt2-shell">
@@ -351,16 +354,16 @@ export function TasksV2Dashboard(){
   </form></div>}
   {selected&&<div className="mt2-modal-backdrop mt2-detail-wrap" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setSelected(null)}}><form className="mt2-modal mt2-detail" onSubmit={saveDetail} aria-label="Edit task">
    <div className="mt2-modal-head"><h2>Task details</h2><button type="button" aria-label="Close details" onClick={()=>setSelected(null)}><Icon name="close"/></button></div>
-   <h3>{selected.title}</h3><p>Make a task easy to find and plan. The full checklist, comments and collaboration features remain available in Classic Tasks.</p>
-   <div className="mt2-detail-grid">
+   <h3>{selected.title}</h3>{selected.owner_user_id!==userId&&<p>This task is shared with you. Open Classic Tasks to edit permitted details.</p>}<p>Make a task easy to find and plan. The full checklist, comments and collaboration features remain available in Classic Tasks.</p>
+   <fieldset className="mt2-detail-grid" disabled={selected.owner_user_id!==userId}>
     <label>Area<select value={editArea} onChange={e=>{setEditArea(e.target.value);setEditProject("")}}><option value="">Unsorted</option>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
     <label>Project<select value={editProject} onChange={e=>setEditProject(e.target.value)}><option value="">No project</option>{projects.filter(p=>p.status==="active"&&(!editArea||!p.area_id||p.area_id===editArea)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
     <label>Priority<select value={editPriority} onChange={e=>setEditPriority(e.target.value as Priority)}><option value="high">High</option><option value="medium">Normal</option><option value="low">Low</option></select></label>
     <label>Planned date<input type="date" value={editDate} onChange={e=>setEditDate(e.target.value)}/></label>
     <label>Estimated effort (minutes)<input type="number" min={1} max={1440} value={editEstimate} onChange={e=>setEditEstimate(e.target.value)}/></label>
     <label className="mt2-important-label"><input type="checkbox" checked={editImportant} onChange={e=>setEditImportant(e.target.checked)}/> Important work</label>
-   </div>
-   <div className="mt2-modal-actions"><Link href={"/tasks/all?task="+selected.id}>Full task details <Icon name="arrow"/></Link><button type="submit" disabled={busy}>Save changes</button></div>
+   </fieldset>
+   <div className="mt2-modal-actions"><Link href={"/tasks/all?task="+selected.id}>Full task details <Icon name="arrow"/></Link><button type="submit" disabled={busy||selected.owner_user_id!==userId}>Save changes</button></div>
   </form></div>}
  </div>;
 }
