@@ -10,7 +10,8 @@ type FocusState="running"|"paused"|"ended";
 type Session={id:string;task_id:string;mode:FocusMode;state:FocusState;planned_minutes:number;elapsed_seconds:number;resumed_at:string;started_at:string;ended_at:string|null;outcome:"completed"|"parked"|"stopped"|null;extension_count:number};
 type Idea={id:string;source_task_id:string|null;title:string;state:string;created_at:string};
 type Settings={active_project_limit:number;daily_focus_minutes:number;switch_prompt_enabled:boolean};
-type FocusResponse={active:Session|null;settings:Settings;ideas:Idea[];history:Session[]};
+type Commitment={area_id:string;target_sessions:number;completed_sessions:number};
+type FocusResponse={active:Session|null;settings:Settings;ideas:Idea[];history:Session[];commitments:Commitment[]};
 type FocusApi={ok:boolean;focus:FocusResponse};
 type SessionApi={ok:boolean;session:Session};
 type IdeaApi={ok:boolean;item:Idea};
@@ -27,7 +28,7 @@ export function TasksV2Focus(){
  const [tasks,setTasks]=useState<V2Task[]>([]);
  const [areas,setAreas]=useState<V2Area[]>([]);
  const [projects,setProjects]=useState<V2Project[]>([]);
- const [data,setData]=useState<FocusResponse>({active:null,settings:defaultSettings,ideas:[],history:[]});
+ const [data,setData]=useState<FocusResponse>({active:null,settings:defaultSettings,ideas:[],history:[],commitments:[]});
  const [now,setNow]=useState(()=>Date.now());
  useEffect(()=>{const query=new URLSearchParams(window.location.search);const id=query.get("task");if(id&&/^[0-9a-f-]{36}$/i.test(id))setChosenTask(id);},[]);
  const [chosenTask,setChosenTask]=useState("");
@@ -35,6 +36,8 @@ export function TasksV2Focus(){
  const [minutes,setMinutes]=useState(45);
  const [resumeNote,setResumeNote]=useState("");
  const [ideaText,setIdeaText]=useState("");
+ const [newCommitmentArea,setNewCommitmentArea]=useState("");
+ const [newCommitmentTarget,setNewCommitmentTarget]=useState(3);
  const [busy,setBusy]=useState(false);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
@@ -65,7 +68,7 @@ export function TasksV2Focus(){
     const next=await request<V2Response<V2Task>>("/api/tasks/v2/board?limit=250&offset="+offset);
     const page=next.items||[];all.push(...page);if(page.length<250)break;
    }
-   setData(focus.focus);setAreas(areaData.items||[]);setProjects(projectData.items||[]);
+   setData({...focus.focus,commitments:focus.focus.commitments||[]});setAreas(areaData.items||[]);setProjects(projectData.items||[]);
    setTasks([...new Map(all.map(t=>[t.id,t])).values()]);
    setLimit(focus.focus.settings.active_project_limit);setCapacity(focus.focus.settings.daily_focus_minutes);
    setPromptEnabled(focus.focus.settings.switch_prompt_enabled);
@@ -146,6 +149,16 @@ export function TasksV2Focus(){
   }catch(e){setError(e instanceof Error?e.message:"Unable to save preferences.");}
   finally{setBusy(false)}
  }
+ async function saveCommitment(areaId:string,target:number){
+  if(!areaId||busy)return;setBusy(true);setError("");
+  try{
+   await request<{ok:boolean}>("/api/tasks/v2/focus/commitments",{
+    method:"PUT",body:JSON.stringify({area_id:areaId,target_sessions:target})
+   });
+   setNewCommitmentArea("");setNotice(target?"Weekly commitment saved.":"Weekly commitment cleared.");await refresh();
+  }catch(e){setError(e instanceof Error?e.message:"Unable to update weekly commitment.");}
+  finally{setBusy(false)}
+ }
  function chooseMode(value:FocusMode){setMode(value);setMinutes(modeMinutes[value]);}
  const currentDate=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
  const datePart=(key:string)=>currentDate.find(part=>part.type===key)?.value||"";
@@ -224,7 +237,26 @@ export function TasksV2Focus(){
         </div>
         {activeProjects.length>data.settings.active_project_limit&&<p className="mt2-balance-note">You have more active projects than your preferred limit. Finish or pause one before starting another big commitment.</p>}
         {areaUsage.length?<div className="mt2-area-balance">{areaUsage.map(([name,seconds])=><div key={name}><span>{name}</span><strong>{Math.floor(seconds/60)}m</strong><div className="mt2-progress-track"><span style={{width:Math.min(100,100*seconds/Math.max(...areaUsage.map(v=>v[1]),1))+"%"}}/></div></div>)}</div>:<p className="mt2-empty">Your time across Areas will appear as you complete sessions.</p>}
-        <p className="mt2-focus-explain">This reflects focus sessions you record in the app, not automatic device or app usage tracking.</p>
+        <div className="mt2-weekly-commitments">
+         <h3>Protected weekly commitments</h3>
+         <p className="mt2-focus-explain">Choose important Areas such as Sales & Outreach and set a realistic number of sessions over a rolling seven days.</p>
+         {data.commitments.map(c=><div className="mt2-commitment-row" key={c.area_id}>
+          <div><b>{areas.find(a=>a.id===c.area_id)?.name||"Area"}</b><small>{c.completed_sessions} of {c.target_sessions} sessions</small></div>
+          <div className="mt2-progress-track"><span style={{width:Math.min(100,100*c.completed_sessions/c.target_sessions)+"%"}}/></div>
+          <button disabled={busy} onClick={()=>void saveCommitment(c.area_id,0)} aria-label={"Clear commitment for "+(areas.find(a=>a.id===c.area_id)?.name||"Area")}>Remove</button>
+         </div>)}
+         <div className="mt2-commitment-add">
+          <select aria-label="Choose area to protect" value={newCommitmentArea} onChange={e=>setNewCommitmentArea(e.target.value)}>
+           <option value="">Choose an Area…</option>
+           {areas.filter(a=>!data.commitments.some(c=>c.area_id===a.id)).map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+          <select aria-label="Weekly focus session target" value={newCommitmentTarget} onChange={e=>setNewCommitmentTarget(Number(e.target.value))}>
+           {Array.from({length:14},(_,i)=><option key={i} value={i+1}>{i+1} sessions</option>)}
+          </select>
+          <button disabled={!newCommitmentArea||busy} onClick={()=>void saveCommitment(newCommitmentArea,newCommitmentTarget)}>Protect</button>
+         </div>
+        </div>
+        <p className="mt2-focus-explain">This reflects focus sessions you record in the app, not automatic device or app usage tracking. A skipped day simply means you can resume next time.</p>
        </section>
       </div>
      </div>
