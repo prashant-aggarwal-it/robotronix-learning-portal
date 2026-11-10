@@ -3,6 +3,7 @@ import Link from "next/link";
 import {useCallback,useEffect,useMemo,useRef,useState,type DragEvent,type FormEvent} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
+import {TasksNotifications} from "./TasksNotifications";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project,V2Priority,V2Status,V2Response,V2Request,V2ModuleLink} from "./model";
 import {v2Colors,v2Statuses,v2StatusNames} from "./model";
@@ -187,7 +188,7 @@ export function TasksV2Board(){
     <Link href="/tasks/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
     <Link href="/tasks/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
     <Link href="/tasks/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
-    <Link href="/tasks/calendar"><span className="mt2-nav-emoji">▦</span> Calendar</Link>
+    <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
    </nav>
    <div className="mt2-sidebar-heading mt2-areas-heading">ORGANISE YOUR WORK</div>
    <div className="mt2-areas-nav">
@@ -202,7 +203,7 @@ export function TasksV2Board(){
    <header className="mt2-header">
     <button type="button" className="mt2-mobile-menu" aria-label="Open navigation" onClick={()=>setMobileNav(true)}>☰</button>
     <div className="mt2-breadcrumb">MY TASKS <span>/</span> Visual Board</div>
-    <div className="mt2-header-actions"><span className="mt2-sync"><i/> Live task workspace</span><button className="mt2-header-add" onClick={()=>quickRef.current?.focus()}>+ New task</button></div>
+    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Live task workspace</span><button className="mt2-header-add" onClick={()=>quickRef.current?.focus()}>+ New task</button></div>
    </header>
    <div className="mt2-page mt2-board-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">ONE PLACE FOR EVERYTHING</p><h1>Make progress visible.</h1><p className="mt2-subtitle">Drag, organise, and move toward done. Every card is a real task.</p></div><div className="mt2-board-summary"><strong>{totalOpen}</strong><span>Open</span><strong>{totalDone}</strong><span>Done</span></div></div>
