@@ -15,7 +15,7 @@ type Task=V2Task;
 type Area=V2Area;
 type Project=V2Project;
 type ApiResult<T>={ok:boolean;items?:T[];item?:T;error?:string};
-type FocusSummary={active:null|{task_id:string;state:"running"|"paused";planned_minutes:number};commitments:{area_id:string;target_sessions:number;completed_sessions:number}[]};
+type FocusSummary={active:null|{task_id:string;state:"running"|"paused";planned_minutes:number};settings?:{daily_focus_minutes:number};commitments:{area_id:string;target_sessions:number;completed_sessions:number}[]};
 
 const COLORS:Record<string,string>={blue:"#3777bb",green:"#229b83",purple:"#8565cd",amber:"#bb873d",red:"#d26763",slate:"#718399"};
 const timeLabel=(minutes:number|null)=>minutes?minutes>=60?Math.floor(minutes/60)+"h"+(minutes%60?" "+minutes%60+"m":""):minutes+"m":"";
@@ -132,6 +132,22 @@ export function TasksV2Dashboard(){
  const weekStart=new Date(today+"T12:00:00");weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));
  const doneWeek=done.filter(t=>t.completed_at&&new Date(t.completed_at).getTime()>=weekStart.getTime()).length;
  const inbox=active.filter(t=>!t.someday&&!t.scheduled_date&&!t.due_at);
+
+ const completedToday=done.filter(t=>t.completed_at&&dayKey(new Date(t.completed_at))===today);
+ const todayOpen=todayItems.filter(t=>t.status!=="done");
+ const completionPercent=Math.round(100*completedToday.length/Math.max(1,todayOpen.length+completedToday.length));
+ const estimatedToday=todayOpen.reduce((minutes,t)=>minutes+(t.estimated_minutes||0),0);
+ const estimatedCount=todayOpen.filter(t=>!!t.estimated_minutes).length;
+ const dailyCapacity=focusSummary?.settings?.daily_focus_minutes||null;
+ const weekOutlook=Array.from({length:7},(_,i)=>{
+  const date=new Date(today+"T12:00:00");date.setDate(date.getDate()+i);
+  const key=dayKey(date);
+  const items=active.filter(t=>!t.someday&&(t.scheduled_date||dueKey(t.due_at))===key);
+  return {key,label:date.toLocaleDateString(undefined,{weekday:"short"}),date:date.getDate(),count:items.length,minutes:items.reduce((n,t)=>n+(t.estimated_minutes||0),0)};
+ });
+ const peakLoad=Math.max(1,...weekOutlook.map(d=>d.count));
+ const recommended=focus[0]||overdue[0]||todayOpen[0]||active[0]||null;
+
  const visibleTasks=(items:Task[])=>items.filter(t=>{
   if(areaFilter==="unsorted" ? t.area_id!==null : areaFilter!=="all"&&t.area_id!==areaFilter)return false;
   if(!showCompleted&&t.status==="done")return false;
@@ -277,13 +293,13 @@ export function TasksV2Dashboard(){
           :"Choose a focus session, park distractions, and make room for other priorities."}</p>
       </div><Link href="/tasks/focus">{focusSummary?.active?"Resume Focus":"Open Focus & Finish"} →</Link>
      </section>}
-     <section className="mt2-metrics" aria-label="Task overview">
-      <div className="mt2-metric"><span>OPEN TASKS</span><strong>{active.length}</strong><small>Across your areas</small></div>
-      <div className="mt2-metric"><span>PLANNED TODAY</span><strong>{todayItems.filter(t=>t.status!=="done").length}</strong><small>Today's open commitments</small></div>
-      <div className="mt2-metric"><span>OVERDUE</span><strong className={overdue.length?"mt2-warn":""}>{overdue.length}</strong><small>Need attention</small></div>
-      <div className="mt2-metric"><span>DONE THIS WEEK</span><strong className="mt2-good">{doneWeek}</strong><small>Progress worth keeping</small></div>
-     </section>
-     {view==="day"&&<section className="mt2-daily-grid">
+     <section className="mt2-metrics mt2-metrics--actionable" aria-label="Task overview">
+       <button type="button" className="mt2-metric" onClick={()=>setView("all")}><span>OPEN TASKS</span><strong>{active.length}</strong><small>View all work <span aria-hidden="true">→</span></small></button>
+       <button type="button" className="mt2-metric" onClick={()=>setView("day")}><span>PLANNED TODAY</span><strong>{todayOpen.length}</strong><small>Today's commitments <span aria-hidden="true">→</span></small></button>
+       <Link className="mt2-metric mt2-metric--attention" href="/tasks/planner"><span>OVERDUE</span><strong className={overdue.length?"mt2-warn":""}>{overdue.length}</strong><small>Review and reschedule <span aria-hidden="true">→</span></small></Link>
+       <div className="mt2-metric"><span>FINISHED THIS WEEK</span><strong className="mt2-good">{doneWeek}</strong><small>{doneWeek===0?"The week is yours to shape":"Completed outcomes"}</small></div>
+      </section>
+      {view==="day"&&<section className="mt2-daily-grid">
       <div className="mt2-panel mt2-focus">
        <div className="mt2-panel-head"><div><p className="mt2-eyebrow">KEEP IT SIMPLE</p><h2>Today's Top 3 <span className="mt2-focus-spark">✦</span></h2><small>Pick three outcomes worth finishing.</small></div><span className="mt2-count">{focus.length}/3</span></div>
        {focus.length?focus.map(t=><div key={t.id} className="mt2-focus-line">{taskRow(t)}</div>):<p className="mt2-empty">Star any task below to make it one of today's priorities.</p>}
