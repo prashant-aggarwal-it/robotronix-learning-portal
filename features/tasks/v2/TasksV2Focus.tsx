@@ -3,6 +3,7 @@ import Link from "next/link";
 import {useCallback,useEffect,useMemo,useState,type FormEvent} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
+import {TasksNotifications} from "./TasksNotifications";
 import type {V2Task,V2Area,V2Project,V2Response,V2Request} from "./model";
 
 type FocusMode="timebox"|"pomodoro"|"stopwatch"|"five_minutes";
@@ -198,6 +199,7 @@ export function TasksV2Focus(){
     <Link className="is-active" href="/tasks/focus" aria-current="page"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
     <Link href="/tasks/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
     <Link href="/tasks/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
+    <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
    </nav>
    <div className="mt2-sidebar-bottom"><Link href="/tasks">← Return to My Day</Link></div>
   </aside>
@@ -205,7 +207,7 @@ export function TasksV2Focus(){
    <header className="mt2-header">
     <button className="mt2-mobile-menu" type="button" aria-label="Open navigation" onClick={()=>setMobileNav(true)}>☰</button>
     <div className="mt2-breadcrumb">MY TASKS <span>/</span> Focus & Finish</div>
-    <div className="mt2-header-actions"><span className="mt2-sync"><i/> Your personal focus workspace</span></div>
+    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your personal focus workspace</span></div>
    </header>
    <div className="mt2-page mt2-focus-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">DO THE RIGHT WORK · KNOW WHEN TO STOP</p><h1>Focus. Finish. Switch.</h1><p className="mt2-subtitle">One task at a time. Park new ideas. Protect time for other priorities.</p></div></div>
