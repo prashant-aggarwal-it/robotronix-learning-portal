@@ -200,3 +200,5 @@
 .mt2-drawer-footer .mt2-drawer-save{border-color:#267eb5;background:#267eb5;color:#fff}
 .mt2-drawer-footer .mt2-drawer-save:disabled{opacity:.55}
 @media(max-width:520px){.mt2-drawer-top{padding:18px}.mt2-detail-form{padding:16px 18px}.mt2-detail-form .mt2-detail-grid{grid-template-columns:1fr}.mt2-drawer-checklist{padding:14px 18px}.mt2-drawer-footer{padding:12px;flex-wrap:wrap}.mt2-drawer-footer a{width:100%}}
+
+.mt2-sidebar nav a.is-active{background:#e8f4fa;color:#086b98;border-color:#d2eaf4}
