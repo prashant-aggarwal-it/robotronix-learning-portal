@@ -254,7 +254,7 @@ export function TasksV2Dashboard(){
    <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
    <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
-   <div className="mt2-sidebar-heading">MY WORKSPACE</div>
+   <div className="mt2-sidebar-heading">TASKS</div>
    <TasksPrimaryNav section={view} inboxCount={inbox.length} onDashboardView={next=>{setView(next);setMobileNav(false);router.replace(next==="day"?"/tasks":"/tasks?view="+next,{scroll:false})}}/>
    <div className="mt2-sidebar-heading mt2-areas-heading">AREAS <button aria-label="Add area" title="Add area" onClick={()=>{setNewName("");setCreatePanel("area")}}><Icon name="plus"/></button></div>
    <div className="mt2-areas-nav">
