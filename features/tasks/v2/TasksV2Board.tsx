@@ -4,7 +4,7 @@ import {useCallback,useEffect,useMemo,useRef,useState,type DragEvent,type FormEv
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
-import type {V2Task,V2Area,V2Project,V2Priority,V2Status,V2Response,V2Request} from "./model";
+import type {V2Task,V2Area,V2Project,V2Priority,V2Status,V2Response,V2Request,V2ModuleLink} from "./model";
 import {v2Colors,v2Statuses,v2StatusNames} from "./model";
 
 type Grouping="status"|"area"|"project"|"person";
@@ -15,6 +15,7 @@ export function TasksV2Board(){
  const [tasks,setTasks]=useState<V2Task[]>([]);
  const [areas,setAreas]=useState<V2Area[]>([]);
  const [projects,setProjects]=useState<V2Project[]>([]);
+ const [moduleLinks,setModuleLinks]=useState<V2ModuleLink[]>([]);
  const [userId,setUserId]=useState<string|null>(null);
  const [group,setGroup]=useState<Grouping>("status");
  const [search,setSearch]=useState("");
@@ -44,9 +45,10 @@ export function TasksV2Board(){
  },[]);
  const refresh=useCallback(async()=>{
   try{
-   const [a,p]=await Promise.all([
+   const [a,p,connected]=await Promise.all([
     request<V2Response<V2Area>>("/api/tasks/v2/areas"),
-    request<V2Response<V2Project>>("/api/tasks/v2/projects")
+    request<V2Response<V2Project>>("/api/tasks/v2/projects"),
+    request<V2Response<V2ModuleLink>>("/api/tasks/module-links")
    ]);
    const all:V2Task[]=[];
    for(let offset=0;offset<20000;offset+=250){
@@ -56,7 +58,7 @@ export function TasksV2Board(){
     if(part.length<250)break;
    }
    setTasks([...new Map(all.map(t=>[t.id,t])).values()]);
-   setAreas(a.items||[]);setProjects(p.items||[]);
+   setAreas(a.items||[]);setProjects(p.items||[]);setModuleLinks(connected.items||[]);
    setError("");
   }catch(e){setError(e instanceof Error?e.message:"Unable to load task board.");}
   finally{setLoading(false)}
@@ -77,6 +79,7 @@ export function TasksV2Board(){
  },[]);
  const areaById=useMemo(()=>new Map(areas.map(a=>[a.id,a])),[areas]);
  const projectById=useMemo(()=>new Map(projects.map(p=>[p.id,p])),[projects]);
+ const sourceByTask=useMemo(()=>new Map(moduleLinks.map(l=>[l.task_id,l.module])),[moduleLinks]);
  const columns=useMemo<Column[]>(()=>{
   if(group==="status")return v2Statuses.map((s,i)=>({id:s,title:v2StatusNames[s],subtitle:["Ready to begin","Your active work","Pending a response","Finished work"][i],color:["#6884ab","#3c91d3","#d49b47","#38a183"][i]}));
   if(group==="area")return [
@@ -239,6 +242,8 @@ export function TasksV2Board(){
           {task.done_definition&&<p className="mt2-card-outcome">✓ {task.done_definition}</p>}
           {total>0&&<div className="mt2-card-steps"><div className="mt2-progress-track"><span style={{width:(100*completed/total)+"%"}}/></div><small>{completed}/{total} steps</small></div>}
           <div className="mt2-card-tags">
+           {task.workspace_id&&<span className="mt2-shared-chip">◇ Shared{task.assignee_user_id===userId?" · Assigned to you":""}</span>}
+           {sourceByTask.get(task.id)&&<span className="mt2-source-mini">↗ {sourceByTask.get(task.id)==="connect"?"Connect CRM":"Learning Portal"}</span>}
            {task.important&&<span className="mt2-card-important">★ Important</span>}
            {task.scheduled_date&&<span>◷ {asDate(task.scheduled_date)}</span>}
            {task.due_at&&<span className={new Date(task.due_at)<new Date()&&task.status!=="done"?"late":""}>◉ {asDate(task.due_at)}</span>}
