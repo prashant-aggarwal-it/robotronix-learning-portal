@@ -67,6 +67,7 @@ export function TasksV2Dashboard(){
  const [showCompleted,setShowCompleted]=useState(true);
  const [listLimit,setListLimit]=useState(16);
  const [todayLimit,setTodayLimit]=useState(8);
+ const [taskFilter,setTaskFilter]=useState<"all"|"overdue"|"high"|"waiting">("all");
  const [mobileNav,setMobileNav]=useState(false);
  const [createPanel,setCreatePanel]=useState<"area"|"project"|null>(null);
  const [newName,setNewName]=useState("");
@@ -158,7 +159,10 @@ export function TasksV2Dashboard(){
  const todayAndOverdue=visibleTasks([...new Map([...todayItems,...overdue].map(t=>[t.id,t])).values()]).filter(t=>t.status!=="done"&&!focus.some(f=>f.id===t.id));
  const dailyOpen=chosen.filter(t=>t.status!=="done").sort((a,b)=>(a.focus_rank||9)-(b.focus_rank||9)||Number(b.important)-Number(a.important)||({high:0,medium:1,low:2}[a.priority]-{high:0,medium:1,low:2}[b.priority]));
  const dailyDone=chosen.filter(t=>t.status==="done");
- const listOpen=view==="day"?todayAndOverdue:dailyOpen;
+ const listOpen=view==="day"?todayAndOverdue:dailyOpen.filter(t=>view!=="all"||taskFilter==="all"||
+  (taskFilter==="overdue"&&!!dueKey(t.due_at)&&dueKey(t.due_at)<today)||
+  (taskFilter==="high"&&t.priority==="high")||
+  (taskFilter==="waiting"&&t.status==="waiting"));
  const listItems=view==="day"?listOpen.slice(0,todayLimit):listOpen.slice(0,listLimit);
  const areaName=(id:string|null)=>areas.find(a=>a.id===id)?.name||"Unsorted";
  const badgeColor=(id:string|null)=>COLORS[areas.find(a=>a.id===id)?.color||"slate"]||COLORS.slate;
@@ -326,6 +330,9 @@ export function TasksV2Dashboard(){
       <section className="mt2-panel mt2-task-panel">
        <div className="mt2-panel-head mt2-list-head"><div><p className="mt2-eyebrow">{view==="day"?"WHAT NEEDS YOUR ATTENTION":view==="all"?"YOUR COMPLETE TASK LIST":"UNCATEGORISED BY DATE"}</p><h2>{view==="day"?"Next up & overdue":view==="all"?"All tasks":"Inbox tasks"}</h2><small>Click a task to edit its area, project and priority.</small></div><span className="mt2-count">{listOpen.length} open</span></div>
        <div className="mt2-task-controls"><label className="mt2-search"><Icon name="search"/><input aria-label="Search tasks" placeholder="Search tasks..." value={search} onChange={e=>setSearch(e.target.value)}/></label>{view!=="day"&&<label className="mt2-show-done"><input type="checkbox" checked={showCompleted} onChange={e=>setShowCompleted(e.target.checked)}/> Show completed</label>}</div>
+       {view==="all"&&<div className="mt2-smart-filters" role="group" aria-label="Quick task filters">
+         {([["all","All open",dailyOpen.length],["overdue","Overdue",dailyOpen.filter(t=>!!dueKey(t.due_at)&&dueKey(t.due_at)<today).length],["high","High priority",dailyOpen.filter(t=>t.priority==="high").length],["waiting","Waiting",dailyOpen.filter(t=>t.status==="waiting").length]] as const).map(([id,label,count])=><button key={id} type="button" className={taskFilter===id?"is-active":""} aria-pressed={taskFilter===id} onClick={()=>{setTaskFilter(id);setListLimit(16)}}>{label}<span>{count}</span></button>)}
+        </div>}
        <div className={"mt2-task-list "+(view==="day"?"":"mt2-task-list--grid")}>{listItems.map(taskRow)}</div>
         {view==="day"&&listOpen.length>todayLimit&&<button className="mt2-list-more" type="button" onClick={()=>setTodayLimit(n=>n+8)}>Show remaining today <span>({listOpen.length-todayLimit} more) ↓</span></button>}
         {view!=="day"&&listOpen.length>listLimit&&<button className="mt2-list-more" type="button" onClick={()=>setListLimit(n=>n+16)}>Show more tasks <span>({listOpen.length-listLimit} remaining) ↓</span></button>}
