@@ -65,6 +65,7 @@ export function TasksV2Dashboard(){
  const [quickDate,setQuickDate]=useState("inbox");
  const [showCompleted,setShowCompleted]=useState(true);
  const [listLimit,setListLimit]=useState(16);
+ const [todayLimit,setTodayLimit]=useState(8);
  const [mobileNav,setMobileNav]=useState(false);
  const [createPanel,setCreatePanel]=useState<"area"|"project"|null>(null);
  const [newName,setNewName]=useState("");
@@ -141,7 +142,7 @@ export function TasksV2Dashboard(){
  const dailyOpen=chosen.filter(t=>t.status!=="done").sort((a,b)=>(a.focus_rank||9)-(b.focus_rank||9)||Number(b.important)-Number(a.important)||({high:0,medium:1,low:2}[a.priority]-{high:0,medium:1,low:2}[b.priority]));
  const dailyDone=chosen.filter(t=>t.status==="done");
  const listOpen=view==="day"?todayAndOverdue:dailyOpen;
- const listItems=view==="day"?listOpen.slice(0,8):listOpen.slice(0,listLimit);
+ const listItems=view==="day"?listOpen.slice(0,todayLimit):listOpen.slice(0,listLimit);
  const areaName=(id:string|null)=>areas.find(a=>a.id===id)?.name||"Unsorted";
  const badgeColor=(id:string|null)=>COLORS[areas.find(a=>a.id===id)?.color||"slate"]||COLORS.slate;
  
@@ -307,7 +308,7 @@ export function TasksV2Dashboard(){
        <div className="mt2-panel-head mt2-list-head"><div><p className="mt2-eyebrow">{view==="day"?"WHAT NEEDS YOUR ATTENTION":view==="all"?"YOUR COMPLETE TASK LIST":"UNCATEGORISED BY DATE"}</p><h2>{view==="day"?"Next up & overdue":view==="all"?"All tasks":"Inbox tasks"}</h2><small>Click a task to edit its area, project and priority.</small></div><span className="mt2-count">{listOpen.length} open</span></div>
        <div className="mt2-task-controls"><label className="mt2-search"><Icon name="search"/><input aria-label="Search tasks" placeholder="Search tasks..." value={search} onChange={e=>setSearch(e.target.value)}/></label>{view!=="day"&&<label className="mt2-show-done"><input type="checkbox" checked={showCompleted} onChange={e=>setShowCompleted(e.target.checked)}/> Show completed</label>}</div>
        <div className={"mt2-task-list "+(view==="day"?"":"mt2-task-list--grid")}>{listItems.map(taskRow)}</div>
-        {view==="day"&&listOpen.length>8&&<button className="mt2-list-more" type="button" onClick={()=>{setView("all");setListLimit(16)}}>View all tasks <span>→</span></button>}
+        {view==="day"&&listOpen.length>todayLimit&&<button className="mt2-list-more" type="button" onClick={()=>setTodayLimit(n=>n+8)}>Show remaining today <span>({listOpen.length-todayLimit} more) ↓</span></button>}
         {view!=="day"&&listOpen.length>listLimit&&<button className="mt2-list-more" type="button" onClick={()=>setListLimit(n=>n+16)}>Show more tasks <span>({listOpen.length-listLimit} remaining) ↓</span></button>}
        {view==="day"&&todayAndOverdue.length===0?<p className="mt2-empty">Your day is clear. Capture a task above.</p>:null}
        {view!=="day"&&dailyOpen.length===0?<p className="mt2-empty">No matching open tasks.</p>:null}
