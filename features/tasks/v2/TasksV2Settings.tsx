@@ -5,6 +5,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {parseCsv,TASK_CSV_FIELDS,type ImportRow} from "@/lib/server/tasks/csv";
 import {TasksNotifications} from "./TasksNotifications";
+import {TasksPrimaryNav} from "./TasksPrimaryNav";
 
 type Health={service:string;response_ms:number;counts:{personal_tasks:number;open_tasks:number;workspaces:number;linked_records:number}};
 type Mapping=Record<string,string>;
@@ -76,14 +77,7 @@ export function TasksV2Settings(){
    <div className="mt2-product">My Tasks <span>YOUR WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks">
-    <Link href="/tasks">✦ My Day</Link>
-    <Link href="/tasks/board">▥ Visual Board</Link>
-    <Link href="/tasks/planner">▦ Weekly Planner</Link>
-    <Link href="/tasks/focus">◷ Focus & Finish</Link>
-    <Link href="/tasks/connected">◇ Connected Work</Link>
-    <Link href="/tasks/settings" className="is-active" aria-current="page">⚙ Settings & Data</Link>
-   </nav>
+   <TasksPrimaryNav section="settings"/>
   </aside>
   <main className="mt2-main">
    <header className="mt2-header">
