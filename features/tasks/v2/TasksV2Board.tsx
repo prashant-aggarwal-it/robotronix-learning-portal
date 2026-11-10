@@ -268,7 +268,7 @@ export function TasksV2Board(){
       </section>;
      })}
     </div>}
-    <p className="mt2-board-footnote">{group==="person"?"Assignments are shown here but edited in Classic Tasks.":"Drag cards between columns, or use each card’s move selector and ↑/↓ buttons. Status moves preserve linked workflows and completion history."}</p>
+    <p className="mt2-board-footnote">{group==="person"?"Assignments are shown here but managed in Connected Work.":"Drag cards between columns, or use each card’s move selector and ↑/↓ buttons. Status moves preserve linked workflows and completion history."}</p>
    </div>
   </main>
   <TaskV2DetailDrawer task={selected} areas={areas} projects={projects} userId={userId} request={request}
