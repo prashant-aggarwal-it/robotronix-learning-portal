@@ -215,6 +215,7 @@ export function TasksV2Focus(){
     {notice&&<div className="mt2-notice" role="status">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss">✕</button></div>}
     {loading?<div className="mt2-loading">Loading your focus workspace…</div>:<>
      <div className="mt2-focus-grid">
+      <div className="mt2-focus-primary">
       <section className="mt2-panel mt2-focus-session">
        <p className="mt2-eyebrow">{active?"YOUR CURRENT FOCUS":"START WITH ONE CLEAR OUTCOME"}</p>
        {active?<div className="mt2-focus-current">
@@ -251,6 +252,20 @@ export function TasksV2Focus(){
         <p className="mt2-focus-explain">Pomodoro: 25 minutes. Timebox: choose a limit. Stopwatch: count up. Five-minute start: make beginning easier. Sessions never block access to your work.</p>
        </div>}
       </section>
+     <div className="mt2-focus-bottom">
+      <section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">MAKE CONSISTENCY EASIER</p><h2>My focus preferences</h2></div></div>
+       <form className="mt2-focus-settings" onSubmit={saveSettings}>
+        <label>Maximum active projects<select value={limit} onChange={e=>setLimit(Number(e.target.value))}>{Array.from({length:10},(_,i)=><option key={i} value={i+1}>{i+1}</option>)}</select></label>
+        <label>Example daily focus capacity<select value={capacity} onChange={e=>setCapacity(Number(e.target.value))}>{[30,60,90,120,150,180,240,300,360,480,600].map(n=><option value={n} key={n}>{n} minutes</option>)}</select></label>
+        <label className="mt2-prompt-option"><input type="checkbox" checked={promptEnabled} onChange={e=>setPromptEnabled(e.target.checked)}/> Show Stop & Switch prompt</label>
+        <button type="submit" disabled={busy}>Save preferences</button>
+       </form><p className="mt2-focus-explain">Limits are recommendations, not restrictions. Missed days do not create penalties or streak resets.</p>
+      </section>
+      <section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">LOOK BACK WITHOUT JUDGEMENT</p><h2>Recently finished sessions</h2></div></div>
+       {data.history.length?<div className="mt2-focus-history">{data.history.slice(0,8).map(s=><div key={s.id}><span><b>{taskLabel(s.task_id)}</b><small>{s.outcome||"Ended"} · {new Date(s.started_at).toLocaleDateString()}</small></span><strong>{Math.round(s.elapsed_seconds/60)}m</strong></div>)}</div>:<p className="mt2-empty">Your completed focus sessions will appear here.</p>}
+      </section>
+     </div>
+      </div>
       <div className="mt2-focus-aside">
        <section className="mt2-panel mt2-idea-panel">
         <div className="mt2-panel-head"><div><p className="mt2-eyebrow">DISTRACTION PARKING LOT</p><h2>Capture, don’t switch.</h2><small>A new idea is not a new commitment.</small></div><span className="mt2-count">{data.ideas.length}</span></div>
@@ -287,19 +302,6 @@ export function TasksV2Focus(){
         <p className="mt2-focus-explain">This reflects focus sessions you record in the app, not automatic device or app usage tracking. A skipped day simply means you can resume next time.</p>
        </section>
       </div>
-     </div>
-     <div className="mt2-focus-bottom">
-      <section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">MAKE CONSISTENCY EASIER</p><h2>My focus preferences</h2></div></div>
-       <form className="mt2-focus-settings" onSubmit={saveSettings}>
-        <label>Maximum active projects<select value={limit} onChange={e=>setLimit(Number(e.target.value))}>{Array.from({length:10},(_,i)=><option key={i} value={i+1}>{i+1}</option>)}</select></label>
-        <label>Example daily focus capacity<select value={capacity} onChange={e=>setCapacity(Number(e.target.value))}>{[30,60,90,120,150,180,240,300,360,480,600].map(n=><option value={n} key={n}>{n} minutes</option>)}</select></label>
-        <label className="mt2-prompt-option"><input type="checkbox" checked={promptEnabled} onChange={e=>setPromptEnabled(e.target.checked)}/> Show Stop & Switch prompt</label>
-        <button type="submit" disabled={busy}>Save preferences</button>
-       </form><p className="mt2-focus-explain">Limits are recommendations, not restrictions. Missed days do not create penalties or streak resets.</p>
-      </section>
-      <section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">LOOK BACK WITHOUT JUDGEMENT</p><h2>Recently finished sessions</h2></div></div>
-       {data.history.length?<div className="mt2-focus-history">{data.history.slice(0,8).map(s=><div key={s.id}><span><b>{taskLabel(s.task_id)}</b><small>{s.outcome||"Ended"} · {new Date(s.started_at).toLocaleDateString()}</small></span><strong>{Math.round(s.elapsed_seconds/60)}m</strong></div>)}</div>:<p className="mt2-empty">Your completed focus sessions will appear here.</p>}
-      </section>
      </div>
      {plannedMinutes>data.settings.daily_focus_minutes&&<p className="mt2-balance-note">Your planned tasks exceed the focus capacity you selected. Moving some work is an option, not a requirement.</p>}
     </>}
