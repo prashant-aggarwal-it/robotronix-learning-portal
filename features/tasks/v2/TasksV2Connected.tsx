@@ -7,7 +7,7 @@ import {getCurrentProfile} from "@/lib/repository";
 import {TeamSpaces} from "@/features/tasks/TaskCollaboration";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2ModuleLink,V2Area,V2Project,V2Request,V2Response} from "./model";
-import {v2StatusNames,v2Colors} from "./model";
+import {v2StatusNames} from "./model";
 
 type View="overview"|"teams"|"assigned"|"delegated"|"linked";
 type Workspace={id:string;name:string;role:"owner"|"admin"|"member"};
@@ -124,9 +124,9 @@ export function TasksV2Connected(){
    <div className="mt2-connected-card-actions">
     <button onClick={()=>setSelected(t)}>People & details</button>
     {canStatus&&<select aria-label={"Change status of "+t.title} disabled={statusBusy===t.id}
-     value={t.status==="waiting"?"todo":t.status}
+     value={t.status}
      onChange={e=>void updateAssignedStatus(t,e.target.value as "todo"|"in_progress"|"done")}>
-     <option value="todo">To Do</option><option value="in_progress">In Progress</option><option value="done">Done</option>
+     <option value="todo">To Do</option><option value="in_progress">In Progress</option><option value="done">Done</option>{t.status==="waiting"&&<option value="waiting" disabled>Waiting</option>}
     </select>}
    </div>
   </article>;
