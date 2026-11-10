@@ -1,4 +1,2 @@
-import "../v2.css";
-import "./board.css";
-import {TasksV2Board} from "@/features/tasks/v2/TasksV2Board";
-export default function TasksV2BoardPage(){return <TasksV2Board/>;}
+import {redirect} from "next/navigation";
+export default function LegacyTasksV2Board(){redirect("/tasks/board");}
