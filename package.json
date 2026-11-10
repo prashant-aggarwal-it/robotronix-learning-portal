@@ -73,7 +73,7 @@
     "qa:all-roles-visual": "playwright test qa/all-roles-visual-audit.spec.ts --project=desktop-chromium",
     "check:action-buttons": "node scripts/check-action-button-consistency.mjs",
     "audit:portal-routes": "node scripts/audit-portal-route-inventory.mjs",
-    "test:tasks-v2": "node --experimental-strip-types --test lib/server/tasks/v2-validation.test.mjs lib/server/tasks/v2-phase2.test.mjs lib/server/tasks/v2-phase3.test.mjs lib/server/tasks/v2-phase4.test.mjs lib/server/tasks/v2-phase5.test.mjs lib/server/tasks/v2-phase6.test.mjs lib/server/tasks/v2-consolidation.test.mjs"
+    "test:tasks-v2": "node --experimental-strip-types --test lib/server/tasks/v2-validation.test.mjs lib/server/tasks/v2-phase2.test.mjs lib/server/tasks/v2-phase3.test.mjs lib/server/tasks/v2-phase4.test.mjs lib/server/tasks/v2-phase5.test.mjs lib/server/tasks/v2-phase6.test.mjs lib/server/tasks/v2-consolidation.test.mjs lib/server/tasks/v2-ui-polish.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
