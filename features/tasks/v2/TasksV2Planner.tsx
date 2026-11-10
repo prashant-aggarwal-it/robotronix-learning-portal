@@ -137,7 +137,7 @@ export function TasksV2Planner(){
   e.preventDefault();
   const id=e.dataTransfer.getData("text/plain")||dragId;
   const task=tasks.find(t=>t.id===id);
-  if(!task||!allowedToMove(task))return;
+  if(!id||!task||!allowedToMove(task))return;
   void move(selectedIds.includes(id)?selectedIds:[id],action,date);
  }
  async function quickAdd(e:FormEvent){
