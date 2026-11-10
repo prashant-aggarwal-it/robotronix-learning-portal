@@ -127,6 +127,7 @@ export function TasksWorkspace(){
  const selectView=views.find(v=>v.key===view)||views[0];
  return <div className="tw-shell">
   <aside className={`tw-sidebar ${mobileNav?"tw-sidebar-open":""}`}><div className="tw-brand"><div className="tw-brand-icon">✦</div><div><strong>My Tasks</strong><small>YOUR PERSONAL SPACE</small></div></div>
+   <div className="tw-app-switcher" aria-label="Applications"><div className="tw-app-switcher-label">APPLICATIONS</div><Link href="/admin" onClick={()=>setMobileNav(false)}><span aria-hidden="true">▦</span> Learning Portal</Link><Link href="/connect" onClick={()=>setMobileNav(false)}><span aria-hidden="true">◉</span> Connect CRM</Link><Link href="/tasks" className="active" aria-current="page" onClick={()=>setMobileNav(false)}><span aria-hidden="true">✦</span> My Tasks</Link></div>
    <div className="tw-side-label">WORKSPACE</div><nav aria-label="Tasks navigation">{views.map(item=><Link key={item.key} href={"/tasks"+(item.key?"/"+item.key:"")} onClick={()=>setMobileNav(false)} className={view===item.key?"active":""}><span>{item.icon}</span>{item.label}{item.key==="inbox"&&<i>{active.filter(t=>!atDay(t)).length}</i>}</Link>)}</nav>
    <div className="tw-sidebar-bottom"><div className="tw-private"><Icon name="lock"/><div><b>Private by default</b><small>Share selectively with your team</small></div></div><Link href="/" className="tw-back"><Icon name="back"/> Back to Portal</Link></div>
   </aside>
