@@ -65,7 +65,7 @@ begin
 
  select coalesce(array_agg(t.id order by t.board_rank,t.created_at,t.id),'{}'::uuid[]) into ids
  from tasks.items t where t.owner_user_id=p_actor_id and t.archived_at is null
-  and t.status=p_status and t.id<>p_task_id
+  and (p_group_by<>'status' or t.status=p_status) and t.id<>p_task_id
   and (p_group_by='status'
    or (p_group_by='area' and t.area_id is not distinct from p_group_id)
    or (p_group_by='project' and t.project_id is not distinct from p_group_id));
