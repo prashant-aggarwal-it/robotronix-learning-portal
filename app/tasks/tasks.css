@@ -73,3 +73,18 @@
 .tw-sidebar nav a.active>span{color:#fff}
 .tw-sidebar-bottom{padding-top:18px}
 @media(max-width:900px){.tw-sidebar{width:280px;flex-basis:280px}}
+
+/* Final cross-app sidebar parity: use shared switcher metrics and independent nav scrolling. */
+.tw-sidebar{padding:22px 16px 18px;overflow:hidden;background:linear-gradient(180deg,#fafbff,#f4f7fd)}
+.tw-sidebar .tw-logo{margin:0;min-height:56px;padding:10px 12px;border-radius:15px}
+.tw-sidebar .tw-logo img{height:34px}
+.tw-sidebar .tw-product-name{padding:15px 9px 8px;font-size:14px;letter-spacing:-.01em}
+.tw-sidebar .tw-product-name span{margin-top:4px;font-size:11px;letter-spacing:.12em;font-weight:700}
+.tw-sidebar .portalWorkspaceSwitch{margin:10px 12px 12px;padding:11px;border-radius:12px;gap:5px;flex-shrink:0}
+.tw-sidebar .portalWorkspaceSwitchLabel{font-size:10px;letter-spacing:.09em;padding:0 7px 4px;font-weight:750}
+.tw-sidebar .portalWorkspaceCurrent,.tw-sidebar .portalWorkspaceLink{font-size:12px;line-height:1.35;font-weight:650;min-height:0;padding:9px 10px;border-radius:9px;gap:9px}
+.tw-sidebar .tw-side-label{padding:18px 11px 7px;margin:0;font-size:10px;letter-spacing:.14em;font-weight:850;color:#777d96}
+.tw-sidebar nav{display:block;overflow-y:auto;overflow-x:hidden;flex:1;min-height:0;padding-right:2px;scrollbar-width:thin;scrollbar-color:#a7aab0 transparent}
+.tw-sidebar nav a{margin:2px 0;padding:10px 11px;font-size:13.5px;font-weight:720;border-radius:12px}
+.tw-sidebar-bottom{flex-shrink:0;padding-top:10px}
+@media(max-width:900px){.tw-sidebar{width:280px;flex-basis:280px;left:-300px}.tw-sidebar.tw-sidebar-open{left:0}}
