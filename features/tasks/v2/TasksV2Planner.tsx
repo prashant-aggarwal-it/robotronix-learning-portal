@@ -4,6 +4,7 @@ import {useCallback,useEffect,useMemo,useState,type DragEvent,type FormEvent} fr
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
+import {TasksPrimaryNav} from "./TasksPrimaryNav";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project,V2Response,V2Request} from "./model";
 import {v2Colors} from "./model";
@@ -215,14 +216,7 @@ export function TasksV2Planner(){
    <div className="mt2-product">My Tasks <span>WEEKLY PLANNING</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks">
-    <Link href="/tasks"><span className="mt2-nav-emoji">✦</span> My Day</Link>
-    <Link href="/tasks/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
-    <Link href="/tasks/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
-    <Link href="/tasks/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
-    <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
-    <Link href="/tasks/planner" className="is-active" aria-current="page"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
-   </nav>
+   <TasksPrimaryNav section="planner"/>
    <div className="mt2-sidebar-bottom"><Link href="/tasks">← Return to My Day</Link></div>
   </aside>
   <main className="mt2-main">
