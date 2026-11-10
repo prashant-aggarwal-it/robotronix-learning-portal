@@ -26,6 +26,7 @@ const timeSpent=(s:Session,now:number)=>{
 const defaultSettings:Settings={active_project_limit:2,daily_focus_minutes:180,switch_prompt_enabled:true};
 export function TasksV2Focus(){
  const [tasks,setTasks]=useState<V2Task[]>([]);
+ const [userId,setUserId]=useState<string|null>(null);
  const [areas,setAreas]=useState<V2Area[]>([]);
  const [projects,setProjects]=useState<V2Project[]>([]);
  const [data,setData]=useState<FocusResponse>({active:null,settings:defaultSettings,ideas:[],history:[],commitments:[]});
@@ -78,6 +79,7 @@ export function TasksV2Focus(){
   finally{setLoading(false)}
  },[request]);
  useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{let mounted=true;void getSupabaseBrowserClient()?.auth.getUser().then(({data})=>{if(mounted)setUserId(data.user?.id||null)});return()=>{mounted=false}},[]);
  useEffect(()=>{const id=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(id)},[]);
  useEffect(()=>{
   const key=(e:KeyboardEvent)=>{if(e.key==="Escape")setMobileNav(false)};
@@ -93,8 +95,19 @@ export function TasksV2Focus(){
  const isTimeUp=Boolean(active&&active.state==="running"&&active.mode!=="stopwatch"&&elapsed>=target);
  const isPaused=active?.state==="paused";
  const breakRemaining=breakUntil===null?0:Math.max(0,Math.ceil((breakUntil-now)/1000));
- const openTasks=tasks.filter(t=>t.status!=="done");
+ const openTasks=tasks.filter(t=>t.status!=="done"&&t.owner_user_id===userId);
  const activeProjects=projects.filter(p=>p.status==="active");
+ const nextProtected=useMemo(()=>{
+  const candidateAreas=[...data.commitments].filter(c=>c.completed_sessions<c.target_sessions)
+   .sort((a,b)=>a.completed_sessions/a.target_sessions-b.completed_sessions/b.target_sessions);
+  const priorities:Record<string,number>={high:0,medium:1,low:2};
+  for(const c of candidateAreas){
+   const option=tasks.filter(t=>t.owner_user_id===userId&&t.status!=="done"&&t.id!==active?.task_id&&t.area_id===c.area_id)
+    .sort((a,b)=>priorities[a.priority]-priorities[b.priority]||Number(b.important)-Number(a.important))[0];
+   if(option)return option;
+  }
+  return null;
+ },[data.commitments,tasks,userId,active?.task_id]);
  const usedThisWeek=useMemo(()=>{
   const since=new Date();since.setDate(since.getDate()-6);since.setHours(0,0,0,0);
   return data.history.filter(s=>Date.parse(s.started_at)>=since.getTime()).reduce((sum,s)=>sum+s.elapsed_seconds,0);
@@ -208,6 +221,7 @@ export function TasksV2Focus(){
         {isTimeUp&&promptEnabled&&<div className="mt2-switch-prompt" role="status">
          <strong>Time to decide — not to rush.</strong>
          <p>Your timebox has ended. Save your stopping point and switch to another priority, or consciously extend once.</p>
+         {nextProtected&&<p><strong>Next protected priority:</strong> {nextProtected.title} · {areas.find(a=>a.id===nextProtected.area_id)?.name||"Area"}</p>}
         </div>}
         <div className="mt2-focus-controls">
          {isPaused?<button disabled={busy} onClick={()=>void action("resume",{session_id:active.id})}>▶ Resume</button>:<button disabled={busy} onClick={()=>void action("pause",{session_id:active.id})}>Ⅱ Pause</button>}
