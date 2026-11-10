@@ -155,3 +155,6 @@
 @media(max-width:720px){.mt2-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.mt2-daily-grid,.mt2-lower-grid,.mt2-right-stack{grid-template-columns:1fr}.mt2-capture-options{gap:8px}.mt2-capture-options label{flex:1 1 42%}.mt2-capture-options select{width:100%;max-width:none}.mt2-tip{display:none}}
 @media(max-width:520px){.mt2-page{padding:20px 13px 60px}.mt2-header-actions .mt2-sync{display:none}.mt2-header-add{padding:10px}.mt2-heading-art{width:55px;height:55px;border-radius:17px}.mt2-heading-art svg{width:30px;height:30px}.mt2-heading h1{font-size:30px}.mt2-subtitle{font-size:12px}.mt2-panel{padding:17px}.mt2-metric{padding:14px}.mt2-metric strong{font-size:29px}.mt2-capture-top{gap:9px;padding:12px}.mt2-capture-top input{font-size:13px}.mt2-capture-top button{padding:11px}.mt2-capture-top button svg{display:none}.mt2-detail-grid{grid-template-columns:1fr}.mt2-modal{padding:18px}.mt2-task-tags{gap:6px}}
 @media(prefers-reduced-motion:reduce){.mt2-shell *{animation:none!important;transition:none!important}}
+
+.mt2-detail-grid{border:0;margin:0;padding:0;min-width:0}
+.mt2-detail-grid:disabled{opacity:.7}
