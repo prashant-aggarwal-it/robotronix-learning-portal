@@ -10,7 +10,6 @@ import {v2Colors,v2Statuses,v2StatusNames} from "./model";
 type Grouping="status"|"area"|"project"|"person";
 type Column={id:string;title:string;subtitle:string;color:string};
 const asDate=(value:string|null)=>value?new Date(value.includes("T")?value:value+"T12:00:00").toLocaleDateString(undefined,{day:"numeric",month:"short"}):"";
-const priorityValue:Record<V2Priority,number>={high:0,medium:1,low:2};
 const sortCards=(a:V2Task,b:V2Task)=>a.board_rank-b.board_rank||a.created_at.localeCompare(b.created_at)||a.id.localeCompare(b.id);
 export function TasksV2Board(){
  const [tasks,setTasks]=useState<V2Task[]>([]);
@@ -141,7 +140,7 @@ export function TasksV2Board(){
   e.preventDefault();e.stopPropagation();
   const id=e.dataTransfer.getData("text/plain")||dragId;
   const task=tasks.find(t=>t.id===id);
-  if(!task){setOverColumn(null);return;}
+  if(!task||beforeTask===id){setOverColumn(null);return;}
   const lane=allCardsIn(colId,task.id);
   const position=beforeTask?Math.max(0,lane.findIndex(t=>t.id===beforeTask)):lane.length;
   void move(task,colId,position);
