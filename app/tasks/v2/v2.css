@@ -213,3 +213,28 @@
 .mt2-focus-strip a{padding:11px 14px;border-radius:10px;background:#fff;color:#277cab;border:1px solid #d6e8f4;font-size:11px;font-weight:810;white-space:nowrap}
 .mt2-focus-strip a:hover{background:#e0eff8}
 @media(max-width:580px){.mt2-focus-strip{flex-wrap:wrap;padding:13px;gap:10px}.mt2-focus-strip a{width:100%;text-align:center}}
+
+
+/* Phase 6: shared drawer's collaboration tab appears from every V2 route. */
+.mt2-drawer-tabs{display:flex;gap:7px;padding:12px 23px;border-bottom:1px solid #e8edf4}
+.mt2-drawer-tabs>button{border:1px solid transparent;border-radius:9px;background:#f2f6fa;color:#758ba0;padding:10px 13px;font-size:12px;font-weight:750;flex:1}
+.mt2-drawer-tabs>button.active{background:#e7f4fa;border-color:#cae4f2;color:#267eab}
+.mt2-drawer-pane{min-height:0;overflow-y:auto;flex:1;display:flex;flex-direction:column}
+.mt2-drawer-pane.mt2-hidden{display:none}
+.mt2-drawer-pane .mt2-detail-form{overflow:visible;flex:none}
+.mt2-drawer-pane .mt2-drawer-checklist{max-height:none;flex:none}
+.mt2-drawer-people{min-height:0;overflow-y:auto;padding:18px 23px;flex:1}
+.mt2-collaboration .tw-collaboration-detail{border:0;margin:0;padding:0}
+.mt2-collaboration .tw-collab-section{gap:10px}
+.mt2-collaboration .tw-collab-section button{cursor:pointer}
+.mt2-collaboration .tw-comment{font-size:12px}
+.mt2-linked-context{border:1px solid #cee3f2;border-radius:13px;background:#f5fbfe;padding:14px;margin-bottom:17px}
+.mt2-linked-context h3{font-size:14px;margin:0 0 8px;color:#315775}
+.mt2-linked-context>p{font-size:11px;line-height:1.6;margin:0 0 12px;color:#758fa6}
+.mt2-linked-record{display:flex;align-items:center;gap:10px;border-top:1px solid #e0ecf5;padding:12px 0}
+.mt2-linked-record>div{min-width:0;flex:1;display:grid;gap:4px}
+.mt2-linked-record strong{font-size:12px;color:#456b8b}
+.mt2-linked-record small{font-size:11px;color:#879eb0;overflow-wrap:anywhere}
+.mt2-linked-record>a{white-space:nowrap;font-size:11px;font-weight:760;color:#227da9}
+.mt2-collaboration .mt2-loading{padding:22px}
+@media(max-width:530px){.mt2-drawer-people{padding:14px}.mt2-drawer-tabs{padding:9px}.mt2-linked-record{flex-wrap:wrap}.mt2-linked-record>a{width:100%}}
