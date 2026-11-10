@@ -20,7 +20,13 @@ export async function POST(request:NextRequest,context:Context){
   p_actor_id:session.userId,p_task_id:id,p_status:data.status,
   p_group_by:groupBy,p_group_id:data.group_id??null,p_position:data.position
  });
- if(error)return taskDbError(error.code);
+ if(error){
+  if(error.code==="P0001"&&/Linked tasks cannot enter Waiting/.test(error.message||""))
+   return taskError("CRM or Learning-linked tasks cannot enter Waiting. Use To Do or In Progress.",409);
+  if(error.code==="P0001"&&/(Invalid destination|Project does not match area|Invalid area)/.test(error.message||""))
+   return taskError("The selected area or project is no longer available.",400);
+  return taskDbError(error.code);
+ }
  if(!result)return taskError("Task unavailable for editing.",404);
  return NextResponse.json({ok:true,item:result},{headers:noStore});
 }
