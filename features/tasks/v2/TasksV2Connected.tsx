@@ -153,13 +153,6 @@ export function TasksV2Connected(){
     <Link href="/tasks/connected" className="is-active" aria-current="page"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
     <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
    </nav>
-   <div className="mt2-sidebar-heading mt2-areas-heading">PEOPLE & SOURCES</div>
-   <div className="mt2-areas-nav">
-    <button onClick={()=>setView("teams")}><span className="mt2-area-dot" style={{background:"#658fca"}}/>Team spaces <small>{workspaces.length}</small></button>
-    <button onClick={()=>setView("assigned")}><span className="mt2-area-dot" style={{background:"#31a888"}}/>Assigned to me <small>{assigned.length}</small></button>
-    <button onClick={()=>setView("delegated")}><span className="mt2-area-dot" style={{background:"#c69f58"}}/>Delegated work <small>{delegated.length}</small></button>
-    <button onClick={()=>setView("linked")}><span className="mt2-area-dot" style={{background:"#8265bf"}}/>Connected modules <small>{availableLinks.length}</small></button>
-   </div>
    <div className="mt2-sidebar-bottom"><Link href="/tasks">← Return to My Day</Link></div>
   </aside>
   <main className="mt2-main">
