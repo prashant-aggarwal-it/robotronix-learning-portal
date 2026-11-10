@@ -26,6 +26,7 @@ export function TasksV2Connected(){
  const [selected,setSelected]=useState<V2Task|null>(null);
  const openedDeepLink=useRef(false);
  const [view,setView]=useState<View>("overview");
+ useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("view");if(["teams","assigned","delegated","linked"].includes(requested||""))setView(requested as View)},[]);
  const [search,setSearch]=useState("");
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
@@ -139,17 +140,16 @@ export function TasksV2Connected(){
  return <div className="mt2-shell mt2-connected-shell">
   {mobileNav&&<button className="mt2-scrim" onClick={()=>setMobileNav(false)} aria-label="Close navigation"/>}
   <aside className={"mt2-sidebar "+(mobileNav?"mt2-sidebar-open":"")}>
-   <Link href="/tasks/v2" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
-   <div className="mt2-product">My Tasks <span>CONNECTED WORK · V2</span></div>
+   <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
+   <div className="mt2-product">My Tasks <span>CONNECTED WORK</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks V2">
-    <Link href="/tasks/v2"><span className="mt2-nav-emoji">✦</span> My Day</Link>
-    <Link href="/tasks/v2/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
-    <Link href="/tasks/v2/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
-    <Link href="/tasks/v2/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
-    <Link href="/tasks/v2/connected" className="is-active" aria-current="page"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
-    <Link href="/tasks"><span className="mt2-nav-emoji">▤</span> Classic Tasks</Link>
+   <nav aria-label="My Tasks">
+    <Link href="/tasks"><span className="mt2-nav-emoji">✦</span> My Day</Link>
+    <Link href="/tasks/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
+    <Link href="/tasks/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
+    <Link href="/tasks/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
+    <Link href="/tasks/connected" className="is-active" aria-current="page"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
    </nav>
    <div className="mt2-sidebar-heading mt2-areas-heading">PEOPLE & SOURCES</div>
    <div className="mt2-areas-nav">
@@ -158,7 +158,7 @@ export function TasksV2Connected(){
     <button onClick={()=>setView("delegated")}><span className="mt2-area-dot" style={{background:"#c69f58"}}/>Delegated work <small>{delegated.length}</small></button>
     <button onClick={()=>setView("linked")}><span className="mt2-area-dot" style={{background:"#8265bf"}}/>Connected modules <small>{availableLinks.length}</small></button>
    </div>
-   <div className="mt2-sidebar-bottom"><Link href="/tasks/v2">← Return to My Day</Link></div>
+   <div className="mt2-sidebar-bottom"><Link href="/tasks">← Return to My Day</Link></div>
   </aside>
   <main className="mt2-main">
    <header className="mt2-header">
