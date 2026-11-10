@@ -95,7 +95,7 @@ begin
    'resume_note','waiting_for','followup_date')) then raise exception 'Unsupported task field';end if;
  select * into original from tasks.items where id=p_task_id and owner_user_id=p_actor_id and archived_at is null for update;
  if original.id is null then return null;end if;
- legacy:=p_data & '{"title":null,"description":null,"priority":null,"scheduled_date":null,"due_at":null,"status":null}'::jsonb;
+ legacy:=p_data - 'area_id' - 'project_id' - 'important' - 'estimated_minutes' - 'done_definition' - 'resume_note' - 'waiting_for' - 'followup_date';
  extra:=p_data - 'title' - 'description' - 'priority' - 'scheduled_date' - 'due_at' - 'status';
  if p_data ? 'status' and p_data->>'status'='waiting' then
   if original.status='done' then
