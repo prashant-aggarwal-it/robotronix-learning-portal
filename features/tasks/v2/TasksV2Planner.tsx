@@ -218,6 +218,7 @@ export function TasksV2Planner(){
     <Link href="/tasks/v2"><span className="mt2-nav-emoji">✦</span> My Day</Link>
     <Link href="/tasks/v2/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
     <Link href="/tasks/v2/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
+    <Link href="/tasks/v2/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
     <Link href="/tasks/v2/planner" className="is-active" aria-current="page"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
     <Link href="/tasks"><span className="mt2-nav-emoji">▤</span> Classic Tasks</Link>
    </nav>
