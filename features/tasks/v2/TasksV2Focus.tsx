@@ -197,6 +197,7 @@ export function TasksV2Focus(){
     <Link href="/tasks/v2/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
     <Link className="is-active" href="/tasks/v2/focus" aria-current="page"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
     <Link href="/tasks/v2/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
+    <Link href="/tasks/v2/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
     <Link href="/tasks"><span className="mt2-nav-emoji">▤</span> Classic Tasks</Link>
    </nav>
    <div className="mt2-sidebar-bottom"><Link href="/tasks/v2">← Return to My Day</Link></div>
