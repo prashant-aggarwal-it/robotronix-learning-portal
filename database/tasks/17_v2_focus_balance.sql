@@ -1,6 +1,8 @@
 -- My Tasks 2.0 / Phase 4: Focus Balance, timeboxing, finish decisions and idea parking.
 -- Development project fflejkqcspivnhsmkdtn ONLY. No existing Tasks/CRM data modified.
 begin;
+-- Required composite owner FK target for session and idea isolation.
+alter table tasks.items add constraint task_v2_item_owner_id_unique unique(owner_user_id,id);
 create table tasks.focus_sessions(
  id uuid primary key default gen_random_uuid(),
  owner_user_id uuid not null references auth.users(id) on delete cascade,
