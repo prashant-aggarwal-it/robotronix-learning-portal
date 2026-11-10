@@ -1882,3 +1882,14 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .adminSidebarCollapsed .portalWorkspaceSwitch{margin:10px 5px;padding:5px;align-items:center}
 .adminSidebarCollapsed .portalWorkspaceSwitchLabel,.adminSidebarCollapsed .portalWorkspaceSwitch span span,.adminSidebarCollapsed .portalWorkspaceSwitch a span{display:none}
 .adminSidebarCollapsed .portalWorkspaceCurrent,.adminSidebarCollapsed .portalWorkspaceLink{justify-content:center;width:100%;padding:9px 4px}
+
+/* Shared cross-application sidebar header geometry (Connect CRM reference). */
+.workspaceShell:not(.adminSidebarCollapsed){grid-template-columns:248px minmax(0,1fr)}
+.workspaceSidebar{padding:23px 14px 13px}
+.workspaceSidebar>.sidebarBrand{border:1px solid #e8eef7;box-shadow:none;border-radius:15px;min-height:56px;padding:10px 12px}
+.workspaceSidebar>.sidebarBrand img{height:34px}
+.workspaceSidebar>.portalName{padding:15px 9px 8px;font-size:14px;color:#15203b}
+.workspaceSidebar>.portalName span{color:#7e8da4}
+.workspaceSidebar>.portalWorkspaceSwitch{margin:10px 0 12px}
+@media(max-width:1100px) and (min-width:761px){.workspaceShell:not(.adminSidebarCollapsed){grid-template-columns:248px minmax(0,1fr)}}
+@media(max-width:760px){.workspaceShell:not(.adminSidebarCollapsed){display:block}.workspaceSidebar{padding:10px 12px}}
