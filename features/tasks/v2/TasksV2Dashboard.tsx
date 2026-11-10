@@ -53,6 +53,7 @@ export function TasksV2Dashboard(){
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const [view,setView]=useState<View>("day");
+ useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("view");if(requested==="inbox"||requested==="all")setView(requested)},[]);
  const [areaFilter,setAreaFilter]=useState("all");
  const [search,setSearch]=useState("");
  const [quick,setQuick]=useState("");
@@ -223,20 +224,18 @@ export function TasksV2Dashboard(){
  return <div className="mt2-shell">
   {mobileNav&&<button className="mt2-scrim" aria-label="Close navigation" onClick={()=>setMobileNav(false)}/>}
   <aside className={"mt2-sidebar "+(mobileNav?"mt2-sidebar-open":"")}>
-   <Link href="/tasks/v2" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
-   <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE · V2</span></div>
+   <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
+   <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks V2">
+   <nav aria-label="My Tasks">
     <button className={view==="day"?"is-active":""} onClick={()=>{setView("day");setMobileNav(false)}}><Icon name="dashboard"/> My Day</button>
     <button className={view==="inbox"?"is-active":""} onClick={()=>{setView("inbox");setMobileNav(false)}}><Icon name="inbox"/> Inbox <span className="mt2-nav-count">{inbox.length}</span></button>
     <button className={view==="all"?"is-active":""} onClick={()=>{setView("all");setMobileNav(false)}}><Icon name="list"/> All Tasks</button>
-    <Link href="/tasks/v2/board"><Icon name="briefcase"/> Visual Board <small>New</small></Link>
-    <Link href="/tasks/v2/focus"><Icon name="clock"/> Focus & Finish <small>New</small></Link>
-    <Link href="/tasks/v2/planner"><Icon name="calendar"/> Weekly Planner <small>New</small></Link>
-    <Link href="/tasks/v2/connected"><Icon name="briefcase"/> Connected Work <small>New</small></Link>
-    <Link href="/tasks/board"><Icon name="briefcase"/> Classic Board</Link>
-    <Link href="/tasks/calendar"><Icon name="calendar"/> Calendar <small>Classic</small></Link>
+    <Link href="/tasks/board"><Icon name="briefcase"/> Visual Board</Link>
+    <Link href="/tasks/focus"><Icon name="clock"/> Focus & Finish</Link>
+    <Link href="/tasks/planner"><Icon name="calendar"/> Weekly Planner</Link>
+    <Link href="/tasks/connected"><Icon name="briefcase"/> Connected Work</Link>
    </nav>
    <div className="mt2-sidebar-heading mt2-areas-heading">AREAS <button aria-label="Add area" title="Add area" onClick={()=>{setNewName("");setCreatePanel("area")}}><Icon name="plus"/></button></div>
    <div className="mt2-areas-nav">
@@ -278,7 +277,7 @@ export function TasksV2Dashboard(){
         :focusSummary?.commitments?.some(c=>c.completed_sessions<c.target_sessions)
           ?(focusSummary.commitments.filter(c=>c.completed_sessions<c.target_sessions).length+" protected Areas need a little attention this week.")
           :"Choose a focus session, park distractions, and make room for other priorities."}</p>
-      </div><Link href="/tasks/v2/focus">{focusSummary?.active?"Resume Focus":"Open Focus & Finish"} →</Link>
+      </div><Link href="/tasks/focus">{focusSummary?.active?"Resume Focus":"Open Focus & Finish"} →</Link>
      </section>}
      <section className="mt2-metrics" aria-label="Task overview">
       <div className="mt2-metric"><span>OPEN TASKS</span><strong>{active.length}</strong><small>Across your areas</small></div>
