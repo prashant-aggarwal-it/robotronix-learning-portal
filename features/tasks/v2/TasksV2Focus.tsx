@@ -30,6 +30,7 @@ export function TasksV2Focus(){
  const [projects,setProjects]=useState<V2Project[]>([]);
  const [data,setData]=useState<FocusResponse>({active:null,settings:defaultSettings,ideas:[],history:[],commitments:[]});
  const [now,setNow]=useState(()=>Date.now());
+ const [breakUntil,setBreakUntil]=useState<number|null>(null);
  useEffect(()=>{const query=new URLSearchParams(window.location.search);const id=query.get("task");if(id&&/^[0-9a-f-]{36}$/i.test(id))setChosenTask(id);},[]);
  const [chosenTask,setChosenTask]=useState("");
  const [mode,setMode]=useState<FocusMode>("timebox");
@@ -91,6 +92,7 @@ export function TasksV2Focus(){
  const target=active?active.planned_minutes*60:0;
  const isTimeUp=Boolean(active&&active.state==="running"&&active.mode!=="stopwatch"&&elapsed>=target);
  const isPaused=active?.state==="paused";
+ const breakRemaining=breakUntil===null?0:Math.max(0,Math.ceil((breakUntil-now)/1000));
  const openTasks=tasks.filter(t=>t.status!=="done");
  const activeProjects=projects.filter(p=>p.status==="active");
  const usedThisWeek=useMemo(()=>{
@@ -114,7 +116,7 @@ export function TasksV2Focus(){
   if(busy)return;setBusy(true);setError("");setNotice("");
   try{
    await request<SessionApi>("/api/tasks/v2/focus",{method:"POST",body:JSON.stringify({action:name,...payload})});
-   if(name==="finish"){setResumeNote("");setNotice("Session closed. Your next priority is ready when you are.");}
+   if(name==="finish"){setResumeNote("");setBreakUntil(null);setNotice("Session closed. Your next priority is ready when you are.");}
    if(name==="extend")setNotice("Extra time added. The next decision point remains visible.");
    await refresh();
   }catch(e){setError(e instanceof Error?e.message:"Unable to update focus session.");}
@@ -201,6 +203,8 @@ export function TasksV2Focus(){
          <span>{isPaused?"Paused":isTimeUp?"Timebox reached":modeLabels[active.mode]+" · "+active.planned_minutes+" min planned"}</span>
         </div>
         <div className="mt2-progress-track"><span style={{width:Math.min(100,100*elapsed/Math.max(1,target))+"%"}}/></div>
+        {isTimeUp&&active.mode==="pomodoro"&&<button type="button" className="mt2-break-offer" disabled={busy||breakRemaining>0} onClick={()=>setBreakUntil(Date.now()+5*60*1000)}>Take an optional 5-minute break</button>}
+        {breakRemaining>0&&<div className="mt2-break"><span>Short break <strong>{prettySeconds(breakRemaining)}</strong></span><button onClick={()=>setBreakUntil(null)} type="button">End break</button></div>}
         {isTimeUp&&promptEnabled&&<div className="mt2-switch-prompt" role="status">
          <strong>Time to decide — not to rush.</strong>
          <p>Your timebox has ended. Save your stopping point and switch to another priority, or consciously extend once.</p>
