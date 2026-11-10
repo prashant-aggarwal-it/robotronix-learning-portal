@@ -188,19 +188,18 @@ export function TasksV2Focus(){
  return <div className="mt2-shell">
   {mobileNav&&<button className="mt2-scrim" aria-label="Close navigation" onClick={()=>setMobileNav(false)}/>}
   <aside className={"mt2-sidebar "+(mobileNav?"mt2-sidebar-open":"")}>
-   <Link href="/tasks/v2" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
-   <div className="mt2-product">My Tasks <span>FOCUS & FINISH · V2</span></div>
+   <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
+   <div className="mt2-product">My Tasks <span>FOCUS & FINISH</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks V2">
-    <Link href="/tasks/v2"><span className="mt2-nav-emoji">✦</span> My Day</Link>
-    <Link href="/tasks/v2/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
-    <Link className="is-active" href="/tasks/v2/focus" aria-current="page"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
-    <Link href="/tasks/v2/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
-    <Link href="/tasks/v2/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
-    <Link href="/tasks"><span className="mt2-nav-emoji">▤</span> Classic Tasks</Link>
+   <nav aria-label="My Tasks">
+    <Link href="/tasks"><span className="mt2-nav-emoji">✦</span> My Day</Link>
+    <Link href="/tasks/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
+    <Link className="is-active" href="/tasks/focus" aria-current="page"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
+    <Link href="/tasks/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
+    <Link href="/tasks/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
    </nav>
-   <div className="mt2-sidebar-bottom"><Link href="/tasks/v2">← Return to My Day</Link></div>
+   <div className="mt2-sidebar-bottom"><Link href="/tasks">← Return to My Day</Link></div>
   </aside>
   <main className="mt2-main">
    <header className="mt2-header">
