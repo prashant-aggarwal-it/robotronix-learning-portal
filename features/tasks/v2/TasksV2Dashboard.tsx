@@ -4,20 +4,13 @@ import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties,type Fo
 import {useRouter} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
+import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
+import type {V2Task,V2Area,V2Project} from "./model";
 
-type Status="todo"|"in_progress"|"waiting"|"done";
 type Priority="low"|"medium"|"high";
-type Task={
- id:string;title:string;description:string;status:Status;priority:Priority;
- area_id:string|null;project_id:string|null;category_id:string|null;
- scheduled_date:string|null;due_at:string|null;completed_at:string|null;
- focus_date:string|null;focus_rank:number|null;important:boolean;
- estimated_minutes:number|null;done_definition:string;resume_note:string;
- owner_user_id:string;assignee_user_id:string|null;created_at:string;updated_at:string;
-};
-type Area={id:string;name:string;color:string;icon:string};
-type Project={id:string;name:string;area_id:string|null;status:"active"|"paused"|"completed"};
-type View="day"|"all"|"inbox";
+type Task=V2Task;
+type Area=V2Area;
+type Project=V2Project;
 type ApiResult<T>={ok:boolean;items?:T[];item?:T;error?:string};
 
 const COLORS:Record<string,string>={blue:"#3777bb",green:"#229b83",purple:"#8565cd",amber:"#bb873d",red:"#d26763",slate:"#718399"};
@@ -73,12 +66,6 @@ export function TasksV2Dashboard(){
  const [newAreaForProject,setNewAreaForProject]=useState("");
  const [newColor,setNewColor]=useState("blue");
  const [selected,setSelected]=useState<Task|null>(null);
- const [editArea,setEditArea]=useState("");
- const [editProject,setEditProject]=useState("");
- const [editPriority,setEditPriority]=useState<Priority>("medium");
- const [editDate,setEditDate]=useState("");
- const [editEstimate,setEditEstimate]=useState("");
- const [editImportant,setEditImportant]=useState(false);
  const [today,setToday]=useState(()=>dayKey(new Date()));
 
  const request=useCallback(async <T,>(url:string,init:RequestInit={}):Promise<T>=>{
@@ -208,30 +195,7 @@ export function TasksV2Dashboard(){
   }catch(e){setError(e instanceof Error?e.message:"Unable to save.");}
   finally{setBusy(false)}
  };
- const openDetail=(task:Task)=>{
-  setSelected(task);setEditArea(task.area_id||"");setEditProject(task.project_id||"");
-  setEditPriority(task.priority);setEditDate(task.scheduled_date||"");
-  setEditEstimate(task.estimated_minutes===null?"":String(task.estimated_minutes));
-  setEditImportant(task.important);
- };
- const saveDetail=async(event:FormEvent)=>{
-  event.preventDefault();if(!selected||busy)return;
-  if(selected.owner_user_id!==userId){setError("Shared tasks are edited using Classic Tasks.");return;}
-  setBusy(true);setError("");
-  try{
-   // Metadata is intentionally separate from legacy status transitions.
-   const patch=await send("/api/tasks/v2/items/"+selected.id,"PATCH",{
-    area_id:editArea||null,project_id:editProject||null,important:editImportant,
-    estimated_minutes:editEstimate?Number(editEstimate):null
-   });
-   if(!patch.item)throw new Error("Task not found.");
-   if(selected.priority!==editPriority||selected.scheduled_date!==(editDate||null)){
-    await send("/api/tasks/"+selected.id,"PATCH",{priority:editPriority,scheduled_date:editDate||null});
-   }
-   setSelected(null);setNotice("Task details saved.");await refresh();
-  }catch(e){setError(e instanceof Error?e.message:"Unable to save details. Review this task before retrying.");await refresh();}
-  finally{setBusy(false)}
- };
+ const openDetail=(task:Task)=>setSelected(task);
  const taskRow=(task:Task)=>{
   const d=dueKey(task.due_at);
   return <article className={"mt2-task "+(task.status==="done"?"mt2-done":"")} key={task.id}>
@@ -263,7 +227,8 @@ export function TasksV2Dashboard(){
     <button className={view==="day"?"is-active":""} onClick={()=>{setView("day");setMobileNav(false)}}><Icon name="dashboard"/> My Day</button>
     <button className={view==="inbox"?"is-active":""} onClick={()=>{setView("inbox");setMobileNav(false)}}><Icon name="inbox"/> Inbox <span className="mt2-nav-count">{inbox.length}</span></button>
     <button className={view==="all"?"is-active":""} onClick={()=>{setView("all");setMobileNav(false)}}><Icon name="list"/> All Tasks</button>
-    <Link href="/tasks/board"><Icon name="briefcase"/> Kanban <small>Classic</small></Link>
+    <Link href="/tasks/v2/board"><Icon name="briefcase"/> Visual Board <small>New</small></Link>
+    <Link href="/tasks/board"><Icon name="briefcase"/> Classic Board</Link>
     <Link href="/tasks/calendar"><Icon name="calendar"/> Calendar <small>Classic</small></Link>
    </nav>
    <div className="mt2-sidebar-heading mt2-areas-heading">AREAS <button aria-label="Add area" title="Add area" onClick={()=>{setNewName("");setCreatePanel("area")}}><Icon name="plus"/></button></div>
@@ -352,18 +317,7 @@ export function TasksV2Dashboard(){
    {createPanel==="area"?<label>Colour<select value={newColor} onChange={e=>setNewColor(e.target.value)}>{Object.keys(COLORS).map(c=><option value={c} key={c}>{c}</option>)}</select></label>:<label>Area (optional)<select value={newAreaForProject} onChange={e=>setNewAreaForProject(e.target.value)}><option value="">No area</option>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>}
    <div className="mt2-modal-actions"><button type="button" onClick={()=>setCreatePanel(null)}>Cancel</button><button type="submit" disabled={busy||!newName.trim()}>Create {createPanel}</button></div>
   </form></div>}
-  {selected&&<div className="mt2-modal-backdrop mt2-detail-wrap" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setSelected(null)}}><form className="mt2-modal mt2-detail" onSubmit={saveDetail} aria-label="Edit task">
-   <div className="mt2-modal-head"><h2>Task details</h2><button type="button" aria-label="Close details" onClick={()=>setSelected(null)}><Icon name="close"/></button></div>
-   <h3>{selected.title}</h3>{selected.owner_user_id!==userId&&<p>This task is shared with you. Open Classic Tasks to edit permitted details.</p>}<p>Make a task easy to find and plan. The full checklist, comments and collaboration features remain available in Classic Tasks.</p>
-   <fieldset className="mt2-detail-grid" disabled={selected.owner_user_id!==userId}>
-    <label>Area<select value={editArea} onChange={e=>{setEditArea(e.target.value);setEditProject("")}}><option value="">Unsorted</option>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
-    <label>Project<select value={editProject} onChange={e=>setEditProject(e.target.value)}><option value="">No project</option>{projects.filter(p=>p.status==="active"&&(!editArea||!p.area_id||p.area_id===editArea)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
-    <label>Priority<select value={editPriority} onChange={e=>setEditPriority(e.target.value as Priority)}><option value="high">High</option><option value="medium">Normal</option><option value="low">Low</option></select></label>
-    <label>Planned date<input type="date" value={editDate} onChange={e=>setEditDate(e.target.value)}/></label>
-    <label>Estimated effort (minutes)<input type="number" min={1} max={1440} value={editEstimate} onChange={e=>setEditEstimate(e.target.value)}/></label>
-    <label className="mt2-important-label"><input type="checkbox" checked={editImportant} onChange={e=>setEditImportant(e.target.checked)}/> Important work</label>
-   </fieldset>
-   <div className="mt2-modal-actions"><Link href={"/tasks/all?task="+selected.id}>Full task details <Icon name="arrow"/></Link><button type="submit" disabled={busy||selected.owner_user_id!==userId}>Save changes</button></div>
-  </form></div>}
+  <TaskV2DetailDrawer task={selected} areas={areas} projects={projects}
+   userId={userId} request={request} onClose={()=>setSelected(null)} onChanged={refresh}/>
  </div>;
 }
