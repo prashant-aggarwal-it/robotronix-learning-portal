@@ -24,7 +24,7 @@ export function TasksPrimaryNav({section,inboxCount,onDashboardView}:Props){
   return <Link key={item.id} className={className} aria-current={active?"page":undefined} href={item.href}>{children}</Link>;
  };
  return <nav className="mt2-primary-nav" aria-label="My Tasks">
-  <span className="mt2-nav-stage">DO</span>{links.slice(0,3).map(render)}
+  {links.slice(0,3).map(render)}
   <span className="mt2-nav-stage">PLAN & TRACK</span>{links.slice(3,6).map(render)}
   <span className="mt2-nav-stage">COLLABORATE</span>{render(links[6])}
   <span className="mt2-nav-stage">PREFERENCES</span>{render(links[7])}
