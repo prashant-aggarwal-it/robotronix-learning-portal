@@ -54,3 +54,22 @@
 .tw-app-switcher a:hover{background:#e4f0fb;color:#0b6d9b}
 .tw-app-switcher a.active{background:#dceefa;color:#0872a2}
 .tw-app-switcher a:focus-visible{outline:2px solid #397ae8;outline-offset:2px}
+
+/* Align My Tasks sidebar with the shared Learning Portal / Connect CRM shell. */
+.tw-sidebar{width:280px;flex-basis:280px;padding:22px 15px 18px;background:linear-gradient(180deg,#fafbff 0%,#f4f7fd 100%);overflow-y:auto;overscroll-behavior:contain}
+.tw-logo{display:flex;align-items:center;min-height:70px;padding:12px 14px;border:1px solid #e7edf7;background:#fff;border-radius:17px;margin:0 3px}
+.tw-logo img{width:100%;height:43px;object-fit:contain;object-position:left center}
+.tw-product-name{padding:19px 10px 10px;color:#15243e;font-size:18px;font-weight:850;letter-spacing:-.4px}
+.tw-product-name span{display:block;margin-top:5px;color:#8797b0;font-size:11px;letter-spacing:1.2px;font-weight:800}
+.tw-sidebar .portalWorkspaceSwitch{margin:10px 5px 22px;padding:11px;border-radius:15px;gap:5px;border:1px solid #d8e8f2;background:#f6fbfe}
+.tw-sidebar .portalWorkspaceSwitchLabel{font-size:11px;letter-spacing:1.2px;padding:4px 8px 7px}
+.tw-sidebar .portalWorkspaceCurrent,.tw-sidebar .portalWorkspaceLink{font-size:13px;padding:11px 12px;min-height:43px;border-radius:11px;font-weight:700}
+.tw-sidebar .portalWorkspaceCurrent{background:#e0f0fa;color:#13688f}
+.tw-sidebar .portalWorkspaceLink:hover{background:#e9f4fa}
+.tw-sidebar .tw-side-label{font-size:11px;letter-spacing:1.6px;color:#7788a6;margin:0 0 10px;padding:0 13px}
+.tw-sidebar nav{gap:2px}
+.tw-sidebar nav a{padding:12px 13px;font-size:13.5px;border-radius:11px}
+.tw-sidebar nav a.active{background:linear-gradient(100deg,#6736f9,#0cb5e7);color:#fff;box-shadow:none}
+.tw-sidebar nav a.active>span{color:#fff}
+.tw-sidebar-bottom{padding-top:18px}
+@media(max-width:900px){.tw-sidebar{width:280px;flex-basis:280px}}
