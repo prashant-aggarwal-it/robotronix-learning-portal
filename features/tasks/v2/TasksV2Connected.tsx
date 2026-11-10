@@ -182,21 +182,25 @@ export function TasksV2Connected(){
      <div className="mt2-connected-toolbar"><nav aria-label="Connected work views">{tabs.map(([key,label])=><button type="button" key={key} className={view===key?"active":""} aria-pressed={view===key} onClick={()=>setView(key)}>{label}</button>)}</nav>
       {view!=="teams"&&<input aria-label="Search connected tasks" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a connected task…"/>}
      </div>
-     {(view==="overview"||view==="teams")&&<section className="mt2-connected-team">
+     {view==="overview"&&<section className="mt2-panel mt2-workspace-preview">
+       <div><p className="mt2-eyebrow">YOUR PEOPLE</p><h2>Team Spaces</h2><p>{workspaces.length?`${workspaces.length} workspace${workspaces.length===1?"":"s"} · Invite, assign and discuss without leaving Tasks.`:"Create a workspace when you need to collaborate. Personal work stays private."}</p></div>
+       <div className="mt2-workspace-preview-actions">{workspaces.slice(0,3).map(w=><span className="mt2-workspace-pill" key={w.id}>{w.name}</span>)}<button type="button" onClick={()=>setView("teams")}>Manage team spaces →</button></div>
+      </section>}
+      {view==="teams"&&<section className="mt2-connected-team">
       <div className="mt2-connected-section-title"><div><p className="mt2-eyebrow">INVITE · ASSIGN · DISCUSS</p><h2>Team Spaces</h2></div><span>Uses existing workspace permissions and invitations</span></div>
       <TeamSpaces request={request} tasks={tasks} userId={userId} onUpdated={refresh} onOpenTask={t=>{const found=tasks.find(x=>x.id===t.id);if(found)setSelected(found)}}/>
      </section>}
      {view==="overview"&&<>
       <div className="mt2-connected-panes">
        <section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">MY NEXT ACTIONS</p><h2>Assigned to me</h2></div><button className="mt2-connected-see" onClick={()=>setView("assigned")}>View all</button></div>
-        <div className="mt2-connected-task-grid">{visible(assigned).filter(t=>t.status!=="done").slice(0,5).map(taskCard)}{!assigned.length&&<p className="mt2-empty">No delegated tasks are awaiting you.</p>}</div>
+        <div className="mt2-connected-task-grid">{visible(assigned).filter(t=>t.status!=="done").slice(0,5).map(taskCard)}{!assigned.some(t=>t.status!=="done")&&<p className="mt2-empty">No tasks assigned to you right now.</p>}</div>
        </section>
        <section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">FOLLOW UP, DON'T CHASE</p><h2>Delegated by me</h2></div><button className="mt2-connected-see" onClick={()=>setView("delegated")}>View all</button></div>
-        <div className="mt2-connected-task-grid">{visible(delegated).filter(t=>t.status!=="done").slice(0,5).map(taskCard)}{!delegated.length&&<p className="mt2-empty">No active delegated tasks yet.</p>}</div>
+        <div className="mt2-connected-task-grid">{visible(delegated).filter(t=>t.status!=="done").slice(0,5).map(taskCard)}{!delegated.some(t=>t.status!=="done")&&<p className="mt2-empty">Nothing waiting on your team.</p>}</div>
        </section>
       </div>
       <section className="mt2-panel mt2-connected-linked-overview"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">WORK ACROSS APPLICATIONS</p><h2>Connected modules</h2></div><button className="mt2-connected-see" onClick={()=>setView("linked")}>Explore linked tasks</button></div>
-       <p>Source-linked tasks stay attached to their original CRM or Learning Portal record. Updates continue through the existing integration.</p>
+       <p>Keep follow-ups connected to their source. Linking work never changes its original permissions.</p>
        <div className="mt2-connected-source-tiles"><Link href="/connect"><span className="mt2-source-chip connect">Connect CRM</span><strong>Open CRM workspace</strong><small>Contacts, opportunities and follow-ups ↗</small></Link><Link href={learningRoute}><span className="mt2-source-chip learning">Learning Portal</span><strong>Open Learning Portal</strong><small>Classes and scheduling ↗</small></Link></div>
       </section>
      </>}
