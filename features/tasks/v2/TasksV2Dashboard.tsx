@@ -5,6 +5,7 @@ import {useRouter} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
+import {TasksPrimaryNav} from "./TasksPrimaryNav";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project} from "./model";
 
@@ -234,16 +235,7 @@ export function TasksV2Dashboard(){
    <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks">
-    <button className={view==="day"?"is-active":""} onClick={()=>{setView("day");setMobileNav(false)}}><Icon name="dashboard"/> My Day</button>
-    <button className={view==="inbox"?"is-active":""} onClick={()=>{setView("inbox");setMobileNav(false)}}><Icon name="inbox"/> Inbox <span className="mt2-nav-count">{inbox.length}</span></button>
-    <button className={view==="all"?"is-active":""} onClick={()=>{setView("all");setMobileNav(false)}}><Icon name="list"/> All Tasks</button>
-    <Link href="/tasks/board"><Icon name="briefcase"/> Visual Board</Link>
-    <Link href="/tasks/focus"><Icon name="clock"/> Focus & Finish</Link>
-    <Link href="/tasks/planner"><Icon name="calendar"/> Weekly Planner</Link>
-    <Link href="/tasks/connected"><Icon name="briefcase"/> Connected Work</Link>
-    <Link href="/tasks/settings"><Icon name="settings"/> Settings & Data</Link>
-   </nav>
+   <TasksPrimaryNav section={view} inboxCount={inbox.length} onDashboardView={next=>{setView(next);setMobileNav(false)}}/>
    <div className="mt2-sidebar-heading mt2-areas-heading">AREAS <button aria-label="Add area" title="Add area" onClick={()=>{setNewName("");setCreatePanel("area")}}><Icon name="plus"/></button></div>
    <div className="mt2-areas-nav">
     <button className={areaFilter==="all"?"selected":""} onClick={()=>setAreaFilter("all")}><span className="mt2-area-dot" style={{background:"#98a9b6"}}/>All areas <small>{active.length}</small></button>
