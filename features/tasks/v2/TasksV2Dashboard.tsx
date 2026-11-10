@@ -234,6 +234,7 @@ export function TasksV2Dashboard(){
     <Link href="/tasks/v2/board"><Icon name="briefcase"/> Visual Board <small>New</small></Link>
     <Link href="/tasks/v2/focus"><Icon name="clock"/> Focus & Finish <small>New</small></Link>
     <Link href="/tasks/v2/planner"><Icon name="calendar"/> Weekly Planner <small>New</small></Link>
+    <Link href="/tasks/v2/connected"><Icon name="briefcase"/> Connected Work <small>New</small></Link>
     <Link href="/tasks/board"><Icon name="briefcase"/> Classic Board</Link>
     <Link href="/tasks/calendar"><Icon name="calendar"/> Calendar <small>Classic</small></Link>
    </nav>
