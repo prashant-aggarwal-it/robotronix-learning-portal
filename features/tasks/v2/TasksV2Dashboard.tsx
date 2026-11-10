@@ -125,7 +125,7 @@ export function TasksV2Dashboard(){
  const focus=active.filter(t=>t.focus_date===today&&t.focus_rank).sort((a,b)=>(a.focus_rank||9)-(b.focus_rank||9));
  const weekStart=new Date(today+"T12:00:00");weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));
  const doneWeek=done.filter(t=>t.completed_at&&new Date(t.completed_at).getTime()>=weekStart.getTime()).length;
- const inbox=active.filter(t=>!t.scheduled_date&&!t.due_at);
+ const inbox=active.filter(t=>!t.someday&&!t.scheduled_date&&!t.due_at);
  const visibleTasks=(items:Task[])=>items.filter(t=>{
   if(areaFilter==="unsorted" ? t.area_id!==null : areaFilter!=="all"&&t.area_id!==areaFilter)return false;
   if(!showCompleted&&t.status==="done")return false;
