@@ -305,11 +305,22 @@ export function TasksV2Dashboard(){
        {focus.length?focus.map(t=><div key={t.id} className="mt2-focus-line">{taskRow(t)}</div>):<p className="mt2-empty">Star any task below to make it one of today's priorities.</p>}
        {focus.length<3&&<p className="mt2-hint">Tip: Focus is separate from urgency. You decide what matters today.</p>}
       </div>
-      <div className="mt2-panel mt2-progress-panel">
-       <div className="mt2-panel-head"><div><p className="mt2-eyebrow">PROGRESS TODAY</p><h2>Completed today</h2><small>Celebrate finished work without repeating your action list.</small></div><span className="mt2-count">{todayItems.filter(t=>t.status==="done").length} done</span></div>
-       {todayItems.length?<><div className="mt2-progress-track"><span style={{width:(100*todayItems.filter(t=>t.status==="done").length/todayItems.length)+"%"}}/></div>
-       {todayItems.some(t=>t.status==="done")?<div className="mt2-diary-items">{todayItems.filter(t=>t.status==="done").slice(0,3).map(taskRow)}</div>:<p className="mt2-empty mt2-progress-empty">Finished tasks will appear here. Start with one clear outcome.</p>}</>:<p className="mt2-empty">A fresh page. Capture something and choose “Today” to begin.</p>}
-      </div>
+      <div className="mt2-panel mt2-momentum-panel">
+        <div className="mt2-panel-head"><div><p className="mt2-eyebrow">LIVE FROM YOUR TASKS</p><h2>Daily momentum</h2><small>Your progress and the next practical step.</small></div><span className="mt2-count">{completedToday.length} finished today</span></div>
+        <div className="mt2-momentum-layout">
+         <div className="mt2-momentum-ring" style={{"--progress":completionPercent+"%"} as CSSProperties} role="img" aria-label={completionPercent+" percent of today's tracked tasks completed"}>
+          <div><strong>{completionPercent}%</strong><span>completed</span></div>
+         </div>
+         <div className="mt2-momentum-copy">
+          <strong>{todayOpen.length===0?"A clear day ahead":todayOpen.length+" tasks still on your radar"}</strong>
+          <p>{completedToday.length?"You've finished "+completedToday.length+" task"+(completedToday.length===1?"":"s")+" today. Keep the momentum.":"Progress starts with one completed outcome."}</p>
+          {recommended?<button type="button" className="mt2-recommendation" onClick={()=>openDetail(recommended)}><span>Suggested next step</span><b>{recommended.title}</b><small>Open task details →</small></button>:<button type="button" className="mt2-recommendation" onClick={()=>inputRef.current?.focus()}>Capture your first task →</button>}
+         </div>
+        </div>
+        <div className="mt2-capacity-line"><span>Known planned effort</span><strong>{estimatedCount?timeLabel(estimatedToday):"No estimates yet"}{dailyCapacity?" / "+timeLabel(dailyCapacity)+" capacity":""}</strong></div>
+        {estimatedCount>0&&dailyCapacity&&<div className="mt2-capacity-track"><span style={{width:Math.min(100,100*estimatedToday/dailyCapacity)+"%"}}/></div>}
+        <p className="mt2-capacity-help">{estimatedCount===todayOpen.length?"All planned tasks have estimates.":estimatedCount+" of "+todayOpen.length+" open tasks have estimates."} <Link href="/tasks/planner">Review plan →</Link></p>
+       </div>
      </section>}
      <div className={"mt2-lower-grid "+(view==="day"?"":"mt2-lower-grid--wide")}>
       <section className="mt2-panel mt2-task-panel">
@@ -323,17 +334,16 @@ export function TasksV2Dashboard(){
        {showCompleted&&view!=="day"&&dailyDone.length>0&&<><div className="mt2-completed-label">COMPLETED · {dailyDone.length}</div><div className="mt2-task-list mt2-task-list--grid">{dailyDone.slice(0,Math.max(12,listLimit)).map(taskRow)}</div>{dailyDone.length>Math.max(12,listLimit)&&<button className="mt2-list-more" type="button" onClick={()=>setListLimit(n=>n+16)}>Show more completed ↓</button>}</>}
       </section>
       {view==="day"&&<div className="mt2-right-stack">
-       <section className="mt2-panel mt2-areas-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">WORK & LIFE</p><h2>Areas at a glance</h2><small>Progress across your responsibilities.</small></div><button className="mt2-small-add" onClick={()=>{setCreatePanel("area");setNewName("")}}><Icon name="plus"/></button></div>
-        {areas.length?areas.map(a=>{
-         const inArea=tasks.filter(t=>t.area_id===a.id);const completed=inArea.filter(t=>t.status==="done").length;
-         return <button className="mt2-area-progress" key={a.id} onClick={()=>{setAreaFilter(a.id);setView("all")}}>
-          <span className="mt2-area-progress-top"><b>{a.name}</b><small>{completed}/{inArea.length} completed</small></span>
-          <span className="mt2-progress-track"><span style={{background:COLORS[a.color]||COLORS.slate,width:(inArea.length?100*completed/inArea.length:0)+"%"}}/></span>
-         </button>
-        }):<p className="mt2-empty">Create your first Area to separate work, personal and other responsibilities.</p>}
-        <button className="mt2-text-action" onClick={()=>{setNewName("");setCreatePanel("project")}}><Icon name="plus"/> Create a project</button>
-       </section>
-       <section className="mt2-panel mt2-upcoming"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">STAY AHEAD</p><h2>Coming up next</h2></div></div>
+       <section className="mt2-panel mt2-workload-panel">
+         <div className="mt2-panel-head"><div><p className="mt2-eyebrow">LOOK AHEAD</p><h2>7-day workload</h2><small>Scheduled tasks by day. Spot overloaded days early.</small></div><Link className="mt2-widget-link" href="/tasks/planner">Planner →</Link></div>
+         <div className="mt2-weekly-bars" role="img" aria-label={"Open tasks scheduled over the next seven days: "+weekOutlook.map(d=>d.label+" "+d.count).join(", ")}>
+          {weekOutlook.map(d=><div key={d.key} className={"mt2-weekly-bar "+(d.key===today?"is-today":"")} title={d.label+": "+d.count+" tasks"+(d.minutes?", "+d.minutes+" known minutes":"")}>
+           <span className="mt2-weekly-number">{d.count}</span><div className="mt2-weekly-track"><span style={{height:(d.count?Math.max(9,100*d.count/peakLoad):3)+"%"}}/></div><strong>{d.label}</strong><small>{d.date}</small>
+          </div>)}
+         </div>
+         <div className="mt2-weekly-summary"><span>{weekOutlook.reduce((n,d)=>n+d.count,0)} tasks scheduled for the next seven days</span><Link href="/tasks/planner">Balance week →</Link></div>
+        </section>
+        <section className="mt2-panel mt2-upcoming"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">STAY AHEAD</p><h2>Coming up next</h2></div></div>
         {active.filter(t=>(t.scheduled_date&&t.scheduled_date>today)||(dueKey(t.due_at)>today)).sort((a,b)=>(a.scheduled_date||dueKey(a.due_at)).localeCompare(b.scheduled_date||dueKey(b.due_at))).slice(0,5).map(t=><button className="mt2-upcoming-item" key={t.id} onClick={()=>openDetail(t)}><span className="mt2-upcoming-dot"/><span>{t.title}</span><small>{dateShort(t.scheduled_date||dueKey(t.due_at))}</small></button>)}
         {!active.some(t=>(t.scheduled_date&&t.scheduled_date>today)||(dueKey(t.due_at)>today))&&<p className="mt2-empty">No upcoming commitments yet.</p>}
        </section>
