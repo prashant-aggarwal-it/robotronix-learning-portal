@@ -27,7 +27,14 @@ export async function POST(request:NextRequest){
   if(!metadata.value)return taskError(metadata.error||"Invalid task details.",400);
  }
  const {data,error}=await session.db.rpc("task_v2_capture",{p_actor_id:session.userId,p_data:{...task.value,...extra}});
- if(error)return taskDbError(error.code);
+ if(error){
+  console.error("[tasks/v2/capture] database failure",{code:error.code,message:error.message,details:error.details,hint:error.hint});
+  const detail=(error.message||"").toLowerCase();
+  if(detail.includes("project does not match area"))return taskError("This project does not belong to the selected area. Choose a matching area and project.",400);
+  if(detail.includes("invalid area"))return taskError("The selected area is no longer available. Refresh and choose another.",400);
+  if(detail.includes("invalid project"))return taskError("The selected project is no longer available. Refresh and choose another.",400);
+  return taskDbError(error.code);
+ }
  if(!data)return taskError("Unable to capture task.",500);
  return NextResponse.json({ok:true,item:data},{status:201,headers:noStore});
 }
