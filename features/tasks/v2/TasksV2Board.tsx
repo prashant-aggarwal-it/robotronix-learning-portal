@@ -124,7 +124,7 @@ export function TasksV2Board(){
   for(const list of result.values())list.sort(sortCards);
   return result;
  },[filtered,columns,columnKey]);
- const displayColumns=columns.filter((c,i)=>(group!=="status"||showDone||c.id!=="done")&&(showEmpty||(visibleByColumn.get(c.id)?.length||0)>0||i===0));
+ const displayColumns=columns.filter((c,i)=>(group!=="status"||showDone||c.id!=="done")&&(showEmpty||(visibleByColumn.get(c.id)?.length||0)>0||(filtered.length===0&&i===0)));
  const allCardsIn=(colId:string,exclude?:string)=>tasks.filter(t=>columnKey(t)===colId&&t.id!==exclude).sort(sortCards);
  const move=async(task:V2Task,colId:string,targetIndex:number)=>{
   if(working)return;
