@@ -126,14 +126,20 @@ export function TasksV2Focus(){
  },[data.history,active?.id,elapsed,taskById,areas]);
  const taskLabel=(id:string)=>taskById.get(id)?.title||"Previously recorded task";
  async function action(name:"start"|"pause"|"resume"|"extend"|"finish",payload:Record<string,unknown>){
-  if(busy)return;setBusy(true);setError("");setNotice("");
+  if(busy)return false;setBusy(true);setError("");setNotice("");
   try{
    await request<SessionApi>("/api/tasks/v2/focus",{method:"POST",body:JSON.stringify({action:name,...payload})});
    if(name==="finish"){setResumeNote("");setBreakUntil(null);setNotice("Session closed. Your next priority is ready when you are.");}
    if(name==="extend")setNotice("Extra time added. The next decision point remains visible.");
    await refresh();
-  }catch(e){setError(e instanceof Error?e.message:"Unable to update focus session.");}
+   return true;
+  }catch(e){setError(e instanceof Error?e.message:"Unable to update focus session.");return false;}
   finally{setBusy(false)}
+ }
+ async function startBreak(){
+  if(!active||active.state!=="running"||busy)return;
+  const paused=await action("pause",{session_id:active.id});
+  if(paused)setBreakUntil(Date.now()+5*60*1000);
  }
  async function idea(e:FormEvent){
   e.preventDefault();if(!ideaText.trim()||busy)return;
@@ -216,8 +222,9 @@ export function TasksV2Focus(){
          <span>{isPaused?"Paused":isTimeUp?"Timebox reached":modeLabels[active.mode]+" · "+active.planned_minutes+" min planned"}</span>
         </div>
         <div className="mt2-progress-track"><span style={{width:Math.min(100,100*elapsed/Math.max(1,target))+"%"}}/></div>
-        {isTimeUp&&active.mode==="pomodoro"&&<button type="button" className="mt2-break-offer" disabled={busy||breakRemaining>0} onClick={()=>setBreakUntil(Date.now()+5*60*1000)}>Take an optional 5-minute break</button>}
+        {isTimeUp&&active.mode==="pomodoro"&&<button type="button" className="mt2-break-offer" disabled={busy||breakRemaining>0} onClick={()=>void startBreak()}>Take an optional 5-minute break</button>}
         {breakRemaining>0&&<div className="mt2-break"><span>Short break <strong>{prettySeconds(breakRemaining)}</strong></span><button onClick={()=>setBreakUntil(null)} type="button">End break</button></div>}
+        {breakUntil!==null&&breakRemaining===0&&isPaused&&<div className="mt2-break" role="status">Break complete. Resume focus when ready.<button type="button" onClick={()=>setBreakUntil(null)}>Dismiss</button></div>}
         {isTimeUp&&promptEnabled&&<div className="mt2-switch-prompt" role="status">
          <strong>Time to decide — not to rush.</strong>
          <p>Your timebox has ended. Save your stopping point and switch to another priority, or consciously extend once.</p>
