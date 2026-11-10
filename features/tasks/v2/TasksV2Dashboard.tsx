@@ -4,6 +4,7 @@ import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties,type Fo
 import {useRouter} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
+import {TasksNotifications} from "./TasksNotifications";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project} from "./model";
 
@@ -236,6 +237,7 @@ export function TasksV2Dashboard(){
     <Link href="/tasks/focus"><Icon name="clock"/> Focus & Finish</Link>
     <Link href="/tasks/planner"><Icon name="calendar"/> Weekly Planner</Link>
     <Link href="/tasks/connected"><Icon name="briefcase"/> Connected Work</Link>
+    <Link href="/tasks/settings"><Icon name="settings"/> Settings & Data</Link>
    </nav>
    <div className="mt2-sidebar-heading mt2-areas-heading">AREAS <button aria-label="Add area" title="Add area" onClick={()=>{setNewName("");setCreatePanel("area")}}><Icon name="plus"/></button></div>
    <div className="mt2-areas-nav">
@@ -252,7 +254,7 @@ export function TasksV2Dashboard(){
    <header className="mt2-header">
     <button className="mt2-mobile-menu" aria-label="Open navigation" onClick={()=>setMobileNav(true)}><Icon name="menu"/></button>
     <div className="mt2-breadcrumb">MY TASKS <span>/</span> {view==="day"?"My Day":view==="all"?"All Tasks":"Inbox"}</div>
-    <div className="mt2-header-actions"><span className="mt2-sync"><i/> Your personal workspace</span><button onClick={()=>inputRef.current?.focus()} className="mt2-header-add"><Icon name="plus"/> New task</button></div>
+    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your personal workspace</span><button onClick={()=>inputRef.current?.focus()} className="mt2-header-add"><Icon name="plus"/> New task</button></div>
    </header>
    <div className="mt2-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">YOUR DAILY COMMAND CENTRE</p><h1>{view==="day"?"Make today count.":view==="all"?"Your work, in one place.":"Capture now. Plan later."}</h1><p className="mt2-subtitle">{dateTitle(today)} · Small steps, meaningful progress.</p></div><div className="mt2-heading-art"><Icon name="sparkle"/></div></div>
