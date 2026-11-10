@@ -26,6 +26,8 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
  const [projectId,setProjectId]=useState("");
  const [planned,setPlanned]=useState("");
  const [due,setDue]=useState("");
+ const [recurrence,setRecurrence]=useState<"none"|"daily"|"weekly"|"monthly">("none");
+ const [reminder,setReminder]=useState("");
  const [important,setImportant]=useState(false);
  const [estimate,setEstimate]=useState("");
  const [doneDefinition,setDoneDefinition]=useState("");
@@ -45,6 +47,7 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
   setStatus(task.status);setPriority(task.priority);
   setAreaId(task.area_id||"");setProjectId(task.project_id||"");
   setPlanned(task.scheduled_date||"");setDue(dateTimeLocal(task.due_at));
+  setRecurrence(task.recurrence||"none");setReminder(dateTimeLocal(task.reminder_at));
   setImportant(Boolean(task.important));setEstimate(task.estimated_minutes==null?"":String(task.estimated_minutes));
   setDoneDefinition(task.done_definition||"");setResumeNote(task.resume_note||"");
   setWaitingFor(task.waiting_for||"");setFollowup(task.followup_date||"");
@@ -82,6 +85,7 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
     title:title.trim(),description,priority,status,
     area_id:areaId||null,project_id:projectId||null,
     scheduled_date:planned||null,due_at:due?new Date(due).toISOString():null,
+    recurrence,reminder_at:reminder?new Date(reminder).toISOString():null,
     important,estimated_minutes:minutes,done_definition:doneDefinition,
     resume_note:resumeNote,waiting_for:waitingFor,followup_date:followup||null
    };
@@ -143,6 +147,8 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
       <label className="mt2-form-field">Project<select value={projectId} onChange={e=>{const id=e.target.value;setProjectId(id);const p=projects.find(x=>x.id===id);if(p?.area_id)setAreaId(p.area_id)}}><option value="">No project</option>{accessibleProjects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
       <label className="mt2-form-field">Work on<input type="date" value={planned} onChange={e=>setPlanned(e.target.value)}/></label>
       <label className="mt2-form-field">Due date & time<input type="datetime-local" value={due} onChange={e=>setDue(e.target.value)}/></label>
+      <label className="mt2-form-field">Repeat<select value={recurrence} onChange={e=>setRecurrence(e.target.value as "none"|"daily"|"weekly"|"monthly")}><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
+      <label className="mt2-form-field">Reminder<input type="datetime-local" value={reminder} onChange={e=>setReminder(e.target.value)}/></label>
       <label className="mt2-form-field">Estimated minutes<input type="number" min={1} max={1440} placeholder="Optional" value={estimate} onChange={e=>setEstimate(e.target.value)}/></label>
       <label className="mt2-drawer-important"><input type="checkbox" checked={important} onChange={e=>setImportant(e.target.checked)}/> Important work</label>
      </div>
