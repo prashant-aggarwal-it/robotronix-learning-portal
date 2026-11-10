@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useCallback,useEffect,useMemo,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {getCurrentProfile} from "@/lib/repository";
@@ -24,6 +24,7 @@ export function TasksV2Connected(){
  const [userId,setUserId]=useState<string|null>(null);
  const [learningRoute,setLearningRoute]=useState("/");
  const [selected,setSelected]=useState<V2Task|null>(null);
+ const openedDeepLink=useRef(false);
  const [view,setView]=useState<View>("overview");
  const [search,setSearch]=useState("");
  const [loading,setLoading]=useState(true);
@@ -81,10 +82,13 @@ export function TasksV2Connected(){
   return()=>{mounted=false};
  },[]);
  useEffect(()=>{
+  if(openedDeepLink.current)return;
   const query=new URLSearchParams(window.location.search);
   const id=query.get("task");
-  if(id){const match=tasks.find(t=>t.id===id);if(match)setSelected(match);}
- },[tasks.length]);
+  if(!id){openedDeepLink.current=true;return;}
+  const match=tasks.find(t=>t.id===id);
+  if(match){setSelected(match);openedDeepLink.current=true;}
+ },[tasks]);
  useEffect(()=>{
   const key=(e:KeyboardEvent)=>{if(e.key==="Escape"){setSelected(null);setMobileNav(false);}};
   document.addEventListener("keydown",key);return()=>document.removeEventListener("keydown",key);
