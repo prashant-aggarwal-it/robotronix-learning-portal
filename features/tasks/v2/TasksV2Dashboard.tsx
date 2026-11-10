@@ -143,7 +143,7 @@ export function TasksV2Dashboard(){
  const weekOutlook=Array.from({length:7},(_,i)=>{
   const date=new Date(today+"T12:00:00");date.setDate(date.getDate()+i);
   const key=dayKey(date);
-  const items=active.filter(t=>!t.someday&&(t.scheduled_date||dueKey(t.due_at))===key);
+  const items=active.filter(t=>(t.scheduled_date||dueKey(t.due_at))===key);
   return {key,label:date.toLocaleDateString(undefined,{weekday:"short"}),date:date.getDate(),count:items.length,minutes:items.reduce((n,t)=>n+(t.estimated_minutes||0),0)};
  });
  const peakLoad=Math.max(1,...weekOutlook.map(d=>d.count));
