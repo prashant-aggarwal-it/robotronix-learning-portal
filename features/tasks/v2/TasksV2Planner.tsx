@@ -106,8 +106,8 @@ export function TasksV2Planner(){
  const dated=(d:string)=>visible.filter(t=>!t.someday&&t.scheduled_date===d).sort((a,b)=>Number(b.important)-Number(a.important)||a.board_rank-b.board_rank);
  const backlog=visible.filter(t=>!t.someday&&!t.scheduled_date);
  const someday=visible.filter(t=>t.someday);
- const upcoming=visible.filter(t=>!t.someday&&((t.scheduled_date&&t.scheduled_date>today)||(dateAt(t.due_at)>today))).sort((a,b)=>(a.scheduled_date||dateAt(a.due_at)).localeCompare(b.scheduled_date||dateAt(b.due_at)));
- const overdue=visible.filter(t=>!t.someday&&((t.scheduled_date&&t.scheduled_date<today)||(dateAt(t.due_at)&&dateAt(t.due_at)<today)));
+ const upcoming=visible.filter(t=>(!t.someday&&t.scheduled_date&&t.scheduled_date>today)||(dateAt(t.due_at)>today)).sort((a,b)=>(a.scheduled_date||dateAt(a.due_at)).localeCompare(b.scheduled_date||dateAt(b.due_at)));
+ const overdue=visible.filter(t=>(!t.someday&&t.scheduled_date&&t.scheduled_date<today)||(dateAt(t.due_at)&&dateAt(t.due_at)<today));
  const dueOverdue=overdue.filter(t=>dateAt(t.due_at)&&dateAt(t.due_at)<today);
  const planOverdue=overdue.filter(t=>t.scheduled_date&&t.scheduled_date<today);
  const areaName=(t:V2Task)=>areas.find(a=>a.id===t.area_id)?.name||"Unsorted";
@@ -172,7 +172,10 @@ export function TasksV2Planner(){
   finally{setBusy(false)}
  }
  async function createReview(){
-  if(busy)return;setBusy(true);setError("");
+  if(busy)return;
+  if(tasks.some(t=>t.status!=="done"&&t.recurrence==="weekly"&&t.title==="Weekly review — wins, unfinished work, upcoming priorities")){
+   setNotice("Your recurring weekly review already exists. Open it to manage the schedule.");return;
+  }setBusy(true);setError("");
   try{
    await request<V2Response<V2Task>>("/api/tasks",{
     method:"POST",body:JSON.stringify({
@@ -269,7 +272,7 @@ export function TasksV2Planner(){
        <div className="mt2-recovery-actions"><input aria-label="Recovery date" type="date" value={recoveryDate} onChange={e=>setRecoveryDate(e.target.value)}/><button disabled={busy||!recoveryOwned.length} onClick={()=>void move(recoveryOwned.slice(0,50).map(t=>t.id),"plan",recoveryDate)}>Replan old planned tasks ({Math.min(recoveryOwned.length,50)})</button><button className="mt2-recovery-secondary" disabled={busy||!recoveryOwned.length} onClick={()=>void move(recoveryOwned.slice(0,50).map(t=>t.id),"someday")}>Park planned tasks</button></div>
        <small>Batch actions apply only to tasks you own and are capped at 50 at a time.</small></>:<p className="mt2-empty">Nothing needs recovery right now.</p>}
      </section>
-     <section className="mt2-review-strip"><div><strong>Weekly Review</strong><p>Keep your review small: wins, unfinished work, what matters next week.</p></div><button type="button" disabled={busy} onClick={()=>void createReview()}>＋ Create recurring weekly review</button></section>
+     <section className="mt2-review-strip"><div><strong>Weekly Review</strong><p>Keep your review small: wins, unfinished work, what matters next week.</p></div><button type="button" disabled={busy||tasks.some(t=>t.status!=="done"&&t.recurrence==="weekly"&&t.title==="Weekly review — wins, unfinished work, upcoming priorities")} onClick={()=>void createReview()}>{tasks.some(t=>t.status!=="done"&&t.recurrence==="weekly"&&t.title==="Weekly review — wins, unfinished work, upcoming priorities")?"✓ Weekly review scheduled":"＋ Create recurring weekly review"}</button></section>
     </>}
    </div>
   </main>
