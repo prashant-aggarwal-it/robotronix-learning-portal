@@ -181,6 +181,7 @@ export function TasksV2Board(){
    <nav aria-label="My Tasks V2">
     <Link href="/tasks/v2"><span className="mt2-nav-emoji">✦</span> My Day</Link>
     <Link className="is-active" href="/tasks/v2/board" aria-current="page"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
+    <Link href="/tasks/v2/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
     <Link href="/tasks"><span className="mt2-nav-emoji">▤</span> Classic Tasks</Link>
     <Link href="/tasks/calendar"><span className="mt2-nav-emoji">▦</span> Calendar</Link>
    </nav>
@@ -244,6 +245,7 @@ export function TasksV2Board(){
           </div>
           <div className="mt2-card-actions">
            <button type="button" onClick={()=>openDetails(task)}>Details</button>
+           {task.owner_user_id===userId&&task.status!=="done"&&<Link className="mt2-card-focus-link" href={"/tasks/v2/focus?task="+task.id}>▶ Focus</Link>}
            {movable&&<>
             <button type="button" title="Move earlier" aria-label={"Move "+task.title+" earlier"} disabled={rank<=0||working} onClick={()=>arrowMove(task,col.id,-1)}>↑</button>
             <button type="button" title="Move later" aria-label={"Move "+task.title+" later"} disabled={rank>=allCardsIn(col.id).length-1||working} onClick={()=>arrowMove(task,col.id,1)}>↓</button>
