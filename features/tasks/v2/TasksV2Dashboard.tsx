@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useCallback,useEffect,useMemo,useRef,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties} from "react";
 import {useRouter} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
@@ -30,8 +30,8 @@ function dayKey(date:Date){
 function dueKey(value:string|null){return value?dayKey(new Date(value)):"";}
 function dateTitle(value:string){return new Date(value+"T12:00:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});}
 function dateShort(value:string){return new Date(value+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});}
-const validDate=(value:string)=>!!value&&/^\d{4}-\d{2}-\d{2}$/.test(value);
-const yesterday=(today:string)=>{const d=new Date(today+"T12:00:00");d.setDate(d.getDate()-1);return dayKey(d);};
+
+
 function Icon({name}:{name:string}){
  const paths:Record<string,string>={
   plus:"M12 5v14 M5 12h14",dashboard:"M3 3h8v8H3z M13 3h8v5h-8z M13 10h8v11h-8z M3 13h8v8H3z",
@@ -134,17 +134,18 @@ export function TasksV2Dashboard(){
  const doneWeek=done.filter(t=>t.completed_at&&new Date(t.completed_at).getTime()>=weekStart.getTime()).length;
  const inbox=active.filter(t=>!t.scheduled_date&&!t.due_at);
  const visibleTasks=(items:Task[])=>items.filter(t=>{
-  if(areaFilter!=="all"&&t.area_id!==areaFilter)return false;
+  if(areaFilter==="unsorted" ? t.area_id!==null : areaFilter!=="all"&&t.area_id!==areaFilter)return false;
   if(!showCompleted&&t.status==="done")return false;
   const term=search.toLowerCase().trim();
   return !term||[t.title,t.description,areas.find(a=>a.id===t.area_id)?.name||"",projects.find(p=>p.id===t.project_id)?.name||""].some(v=>v.toLowerCase().includes(term));
  });
  const chosen=visibleTasks(view==="day"?todayItems:view==="inbox"?inbox:tasks);
+ const todayAndOverdue=visibleTasks([...new Map([...todayItems,...overdue].map(t=>[t.id,t])).values()]).filter(t=>t.status!=="done");
  const dailyOpen=chosen.filter(t=>t.status!=="done").sort((a,b)=>(a.focus_rank||9)-(b.focus_rank||9)||Number(b.important)-Number(a.important)||({high:0,medium:1,low:2}[a.priority]-{high:0,medium:1,low:2}[b.priority]));
  const dailyDone=chosen.filter(t=>t.status==="done");
  const areaName=(id:string|null)=>areas.find(a=>a.id===id)?.name||"Unsorted";
  const badgeColor=(id:string|null)=>COLORS[areas.find(a=>a.id===id)?.color||"slate"]||COLORS.slate;
- const formatStatus=(status:Status)=>({todo:"To do",in_progress:"In progress",waiting:"Waiting",done:"Done"}[status]);
+ 
  const send=async(url:string,method:string,body:unknown)=>request<ApiResult<Task>>(url,{method,body:JSON.stringify(body)});
  const updateTask=async(task:Task,url:string,body:Record<string,unknown>)=>{
   setPendingId(task.id);
@@ -238,7 +239,7 @@ export function TasksV2Dashboard(){
    <button type="button" className="mt2-task-content" onClick={()=>openDetail(task)}>
     <span className="mt2-task-title">{task.title}</span>
     <span className="mt2-task-tags">
-     <span className="mt2-area-tag" style={{"--area":badgeColor(task.area_id)} as React.CSSProperties}>{areaName(task.area_id)}</span>
+     <span className="mt2-area-tag" style={{"--area":badgeColor(task.area_id)} as CSSProperties}>{areaName(task.area_id)}</span>
      <span className={"mt2-priority mt2-priority-"+task.priority}><Icon name="flag"/>{task.priority}</span>
      {task.estimated_minutes?<span><Icon name="clock"/>{timeLabel(task.estimated_minutes)}</span>:null}
      {d?<span className={d<today&&task.status!=="done"?"mt2-late":""}><Icon name="calendar"/>{dateShort(d)}</span>:null}
@@ -277,7 +278,7 @@ export function TasksV2Dashboard(){
    <header className="mt2-header">
     <button className="mt2-mobile-menu" aria-label="Open navigation" onClick={()=>setMobileNav(true)}><Icon name="menu"/></button>
     <div className="mt2-breadcrumb">MY TASKS <span>/</span> {view==="day"?"My Day":view==="all"?"All Tasks":"Inbox"}</div>
-    <div className="mt2-header-actions"><span className="mt2-sync"><i/> Development workspace</span><button onClick={()=>inputRef.current?.focus()} className="mt2-header-add"><Icon name="plus"/> New task</button></div>
+    <div className="mt2-header-actions"><span className="mt2-sync"><i/> Your personal workspace</span><button onClick={()=>inputRef.current?.focus()} className="mt2-header-add"><Icon name="plus"/> New task</button></div>
    </header>
    <div className="mt2-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">YOUR DAILY COMMAND CENTRE</p><h1>{view==="day"?"Make today count.":view==="all"?"Your work, in one place.":"Capture now. Plan later."}</h1><p className="mt2-subtitle">{dateTitle(today)} · Small steps, meaningful progress.</p></div><div className="mt2-heading-art"><Icon name="sparkle"/></div></div>
@@ -316,8 +317,8 @@ export function TasksV2Dashboard(){
       <section className="mt2-panel mt2-task-panel">
        <div className="mt2-panel-head mt2-list-head"><div><p className="mt2-eyebrow">{view==="day"?"WHAT NEEDS YOUR ATTENTION":view==="all"?"YOUR COMPLETE TASK LIST":"UNCATEGORISED BY DATE"}</p><h2>{view==="day"?"Today & overdue":view==="all"?"All tasks":"Inbox tasks"}</h2><small>Click a task to edit its area, project and priority.</small></div><span className="mt2-count">{dailyOpen.length} open</span></div>
        <div className="mt2-task-controls"><label className="mt2-search"><Icon name="search"/><input aria-label="Search tasks" placeholder="Search tasks..." value={search} onChange={e=>setSearch(e.target.value)}/></label><label className="mt2-show-done"><input type="checkbox" checked={showCompleted} onChange={e=>setShowCompleted(e.target.checked)}/> Show completed</label></div>
-       {view==="day"?(areaFilter==="all"?[...new Map([...dailyOpen,...overdue].map(t=>[t.id,t])).values()]:[...new Map([...dailyOpen,...visibleTasks(overdue)].map(t=>[t.id,t])).values()]).slice(0,18).map(taskRow):dailyOpen.slice(0,35).map(taskRow)}
-       {view==="day"&&dailyOpen.length===0&&overdue.length===0?<p className="mt2-empty">Your day is clear. Capture a task above.</p>:null}
+       {view==="day"?todayAndOverdue.slice(0,18).map(taskRow):dailyOpen.slice(0,35).map(taskRow)}
+       {view==="day"&&todayAndOverdue.length===0?<p className="mt2-empty">Your day is clear. Capture a task above.</p>:null}
        {view!=="day"&&dailyOpen.length===0?<p className="mt2-empty">No matching open tasks.</p>:null}
        {showCompleted&&view!=="day"&&dailyDone.length>0&&<><div className="mt2-completed-label">COMPLETED · {dailyDone.length}</div>{dailyDone.slice(0,12).map(taskRow)}</>}
       </section>
