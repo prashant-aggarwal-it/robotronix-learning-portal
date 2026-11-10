@@ -34,8 +34,8 @@ create table tasks.parked_ideas(
  converted_task_id uuid,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
- constraint parked_source_owner foreign key(owner_user_id,source_task_id) references tasks.items(owner_user_id,id) on delete set null,
- constraint parked_converted_owner foreign key(owner_user_id,converted_task_id) references tasks.items(owner_user_id,id) on delete set null
+ constraint parked_source_owner foreign key(owner_user_id,source_task_id) references tasks.items(owner_user_id,id) on delete set null (source_task_id),
+ constraint parked_converted_owner foreign key(owner_user_id,converted_task_id) references tasks.items(owner_user_id,id) on delete set null (converted_task_id)
 );
 create index parked_owner_inbox on tasks.parked_ideas(owner_user_id,created_at desc) where state='inbox';
 
