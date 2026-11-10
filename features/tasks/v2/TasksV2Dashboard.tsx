@@ -64,6 +64,7 @@ export function TasksV2Dashboard(){
  const [quickPriority,setQuickPriority]=useState<Priority>("medium");
  const [quickDate,setQuickDate]=useState("inbox");
  const [showCompleted,setShowCompleted]=useState(true);
+ const [listLimit,setListLimit]=useState(16);
  const [mobileNav,setMobileNav]=useState(false);
  const [createPanel,setCreatePanel]=useState<"area"|"project"|null>(null);
  const [newName,setNewName]=useState("");
@@ -136,9 +137,11 @@ export function TasksV2Dashboard(){
   return !term||[t.title,t.description,areas.find(a=>a.id===t.area_id)?.name||"",projects.find(p=>p.id===t.project_id)?.name||""].some(v=>v.toLowerCase().includes(term));
  });
  const chosen=visibleTasks(view==="day"?todayItems:view==="inbox"?inbox:tasks);
- const todayAndOverdue=visibleTasks([...new Map([...todayItems,...overdue].map(t=>[t.id,t])).values()]).filter(t=>t.status!=="done");
+ const todayAndOverdue=visibleTasks([...new Map([...todayItems,...overdue].map(t=>[t.id,t])).values()]).filter(t=>t.status!=="done"&&!focus.some(f=>f.id===t.id));
  const dailyOpen=chosen.filter(t=>t.status!=="done").sort((a,b)=>(a.focus_rank||9)-(b.focus_rank||9)||Number(b.important)-Number(a.important)||({high:0,medium:1,low:2}[a.priority]-{high:0,medium:1,low:2}[b.priority]));
  const dailyDone=chosen.filter(t=>t.status==="done");
+ const listOpen=view==="day"?todayAndOverdue:dailyOpen;
+ const listItems=view==="day"?listOpen.slice(0,8):listOpen.slice(0,listLimit);
  const areaName=(id:string|null)=>areas.find(a=>a.id===id)?.name||"Unsorted";
  const badgeColor=(id:string|null)=>COLORS[areas.find(a=>a.id===id)?.color||"slate"]||COLORS.slate;
  
@@ -294,21 +297,23 @@ export function TasksV2Dashboard(){
        {focus.length<3&&<p className="mt2-hint">Tip: Focus is separate from urgency. You decide what matters today.</p>}
       </div>
       <div className="mt2-panel mt2-progress-panel">
-       <div className="mt2-panel-head"><div><p className="mt2-eyebrow">YOUR SMALL WINS</p><h2>Today's diary</h2><small>Checked-off tasks stay visible.</small></div><span className="mt2-count">{todayItems.filter(t=>t.status==="done").length}/{todayItems.length}</span></div>
+       <div className="mt2-panel-head"><div><p className="mt2-eyebrow">PROGRESS TODAY</p><h2>Completed today</h2><small>Celebrate finished work without repeating your action list.</small></div><span className="mt2-count">{todayItems.filter(t=>t.status==="done").length} done</span></div>
        {todayItems.length?<><div className="mt2-progress-track"><span style={{width:(100*todayItems.filter(t=>t.status==="done").length/todayItems.length)+"%"}}/></div>
-       <div className="mt2-diary-items">{todayItems.slice(0,5).map(t=>taskRow(t))}</div></>:<p className="mt2-empty">A fresh page. Capture something and choose “Today” to begin.</p>}
+       {todayItems.some(t=>t.status==="done")?<div className="mt2-diary-items">{todayItems.filter(t=>t.status==="done").slice(0,3).map(taskRow)}</div>:<p className="mt2-empty mt2-progress-empty">Finished tasks will appear here. Start with one clear outcome.</p>}</>:<p className="mt2-empty">A fresh page. Capture something and choose “Today” to begin.</p>}
       </div>
      </section>}
-     <div className="mt2-lower-grid">
+     <div className={"mt2-lower-grid "+(view==="day"?"":"mt2-lower-grid--wide")}>
       <section className="mt2-panel mt2-task-panel">
-       <div className="mt2-panel-head mt2-list-head"><div><p className="mt2-eyebrow">{view==="day"?"WHAT NEEDS YOUR ATTENTION":view==="all"?"YOUR COMPLETE TASK LIST":"UNCATEGORISED BY DATE"}</p><h2>{view==="day"?"Today & overdue":view==="all"?"All tasks":"Inbox tasks"}</h2><small>Click a task to edit its area, project and priority.</small></div><span className="mt2-count">{dailyOpen.length} open</span></div>
+       <div className="mt2-panel-head mt2-list-head"><div><p className="mt2-eyebrow">{view==="day"?"WHAT NEEDS YOUR ATTENTION":view==="all"?"YOUR COMPLETE TASK LIST":"UNCATEGORISED BY DATE"}</p><h2>{view==="day"?"Next up & overdue":view==="all"?"All tasks":"Inbox tasks"}</h2><small>Click a task to edit its area, project and priority.</small></div><span className="mt2-count">{listOpen.length} open</span></div>
        <div className="mt2-task-controls"><label className="mt2-search"><Icon name="search"/><input aria-label="Search tasks" placeholder="Search tasks..." value={search} onChange={e=>setSearch(e.target.value)}/></label><label className="mt2-show-done"><input type="checkbox" checked={showCompleted} onChange={e=>setShowCompleted(e.target.checked)}/> Show completed</label></div>
-       {view==="day"?todayAndOverdue.slice(0,18).map(taskRow):dailyOpen.slice(0,35).map(taskRow)}
+       <div className={"mt2-task-list "+(view==="day"?"":"mt2-task-list--grid")}>{listItems.map(taskRow)}</div>
+        {view==="day"&&listOpen.length>8&&<button className="mt2-list-more" type="button" onClick={()=>{setView("all");setListLimit(16)}}>View all tasks <span>→</span></button>}
+        {view!=="day"&&listOpen.length>listLimit&&<button className="mt2-list-more" type="button" onClick={()=>setListLimit(n=>n+16)}>Show more tasks <span>({listOpen.length-listLimit} remaining) ↓</span></button>}
        {view==="day"&&todayAndOverdue.length===0?<p className="mt2-empty">Your day is clear. Capture a task above.</p>:null}
        {view!=="day"&&dailyOpen.length===0?<p className="mt2-empty">No matching open tasks.</p>:null}
-       {showCompleted&&view!=="day"&&dailyDone.length>0&&<><div className="mt2-completed-label">COMPLETED · {dailyDone.length}</div>{dailyDone.slice(0,12).map(taskRow)}</>}
+       {showCompleted&&view!=="day"&&dailyDone.length>0&&<><div className="mt2-completed-label">COMPLETED · {dailyDone.length}</div><div className="mt2-task-list mt2-task-list--grid">{dailyDone.slice(0,Math.max(12,listLimit)).map(taskRow)}</div>{dailyDone.length>Math.max(12,listLimit)&&<button className="mt2-list-more" type="button" onClick={()=>setListLimit(n=>n+16)}>Show more completed ↓</button>}</>}
       </section>
-      <div className="mt2-right-stack">
+      {view==="day"&&<div className="mt2-right-stack">
        <section className="mt2-panel mt2-areas-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">WORK & LIFE</p><h2>Areas at a glance</h2><small>Progress across your responsibilities.</small></div><button className="mt2-small-add" onClick={()=>{setCreatePanel("area");setNewName("")}}><Icon name="plus"/></button></div>
         {areas.length?areas.map(a=>{
          const inArea=tasks.filter(t=>t.area_id===a.id);const completed=inArea.filter(t=>t.status==="done").length;
@@ -323,7 +328,7 @@ export function TasksV2Dashboard(){
         {active.filter(t=>(t.scheduled_date&&t.scheduled_date>today)||(dueKey(t.due_at)>today)).sort((a,b)=>(a.scheduled_date||dueKey(a.due_at)).localeCompare(b.scheduled_date||dueKey(b.due_at))).slice(0,5).map(t=><button className="mt2-upcoming-item" key={t.id} onClick={()=>openDetail(t)}><span className="mt2-upcoming-dot"/><span>{t.title}</span><small>{dateShort(t.scheduled_date||dueKey(t.due_at))}</small></button>)}
         {!active.some(t=>(t.scheduled_date&&t.scheduled_date>today)||(dueKey(t.due_at)>today))&&<p className="mt2-empty">No upcoming commitments yet.</p>}
        </section>
-      </div>
+      </div>}
      </div>
     </>}
    </div>
