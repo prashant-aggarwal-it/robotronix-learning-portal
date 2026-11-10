@@ -158,3 +158,45 @@
 
 .mt2-detail-grid{border:0;margin:0;padding:0;min-width:0}
 .mt2-detail-grid:disabled{opacity:.7}
+
+
+/* Phase 3 shared task-detail drawer. Used in My Day and Visual Board. */
+.mt2-drawer-backdrop{position:fixed;inset:0;z-index:500;background:rgba(12,28,46,.48);display:flex;justify-content:flex-end}
+.mt2-drawer{width:min(590px,100%);height:100%;background:#fff;box-shadow:-20px 0 70px #18345435;display:flex;flex-direction:column;overflow:hidden;color:#22354d}
+.mt2-drawer-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:26px 26px 18px;border-bottom:1px solid #e9edf4}
+.mt2-drawer-top .mt2-eyebrow{display:block;margin-bottom:9px}
+.mt2-drawer-top h2{font-size:20px;line-height:1.3;letter-spacing:-.5px;margin:0}
+.mt2-drawer-top>button{border:0;background:#f0f5f9;padding:9px 12px;border-radius:11px;color:#67839b;font-size:15px}
+.mt2-drawer-info{margin:14px 24px 0;padding:12px 15px;border:1px solid #e1e8f2;border-radius:10px;background:#f6f9fd;color:#718296;font-size:12px}
+.mt2-drawer>.mt2-error{margin:14px 24px 0}
+.mt2-detail-form{overflow-y:auto;min-height:0;padding:22px 26px;flex:1;scrollbar-width:thin}
+.mt2-detail-form fieldset{border:0;margin:0;padding:0;min-width:0;display:grid;gap:16px}
+.mt2-detail-form fieldset:disabled{opacity:.68}
+.mt2-form-field{display:flex;flex-direction:column;gap:7px;font-size:11px;letter-spacing:.01em;color:#637993;font-weight:780}
+.mt2-form-field input,.mt2-form-field select,.mt2-form-field textarea{background:#fff;border:1px solid #dde5ef;border-radius:10px;width:100%;min-width:0;max-width:100%;padding:10px 12px;outline-color:#4797c5;font-size:13px;font-weight:520;color:#243b57}
+.mt2-form-field textarea{font:inherit;font-size:13px;font-weight:450;resize:vertical;line-height:1.6}
+.mt2-title-field input{font-weight:770;font-size:17px;letter-spacing:-.2px;padding:13px 12px}
+.mt2-detail-form .mt2-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.mt2-drawer-important{display:flex;align-items:center;gap:9px;align-self:end;padding:11px 0;font-size:13px;font-weight:740;color:#607890;cursor:pointer}
+.mt2-drawer-important input{width:17px;height:17px;accent-color:#2786ad}
+.mt2-drawer-checklist{padding:18px 26px 20px;border-top:1px solid #ebeff5;max-height:33%;overflow-y:auto;scrollbar-width:thin}
+.mt2-drawer-section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:11px}
+.mt2-drawer-section-head h3{font-size:15px;margin:0;font-weight:830}
+.mt2-drawer-section-head span{font-size:11px;color:#8ba0b1}
+.mt2-drawer-checklist>.mt2-progress-track{margin-bottom:15px}
+.mt2-step{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f3f7;font-size:13px;color:#425b72}
+.mt2-step label{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer}
+.mt2-step label input{width:17px;height:17px;accent-color:#249f81;flex-shrink:0}
+.mt2-step label span{overflow-wrap:anywhere}
+.mt2-step-done{text-decoration:line-through;color:#9ba8b4}
+.mt2-step button{border:0;background:#f5f7fa;color:#9b7c83;border-radius:7px;padding:5px 8px}
+.mt2-new-step{display:flex;gap:8px;margin-top:15px}
+.mt2-new-step input{flex:1;min-width:0;padding:10px 12px;font-size:12px;border:1px solid #dfe7f0;border-radius:9px;outline-color:#4d9abd}
+.mt2-new-step button{background:#e9f5fc;color:#257dab;border:0;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:800}
+.mt2-new-step button:disabled{opacity:.5}
+.mt2-drawer-footer{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:15px 24px;border-top:1px solid #e8edf3;background:#fff}
+.mt2-drawer-footer a{margin-right:auto;color:#397caa;text-decoration:none;font-size:11px;font-weight:750}
+.mt2-drawer-footer button{padding:11px 13px;border-radius:9px;border:1px solid #dfe7ef;background:#fff;color:#536d81;font-weight:720;font-size:12px}
+.mt2-drawer-footer .mt2-drawer-save{border-color:#267eb5;background:#267eb5;color:#fff}
+.mt2-drawer-footer .mt2-drawer-save:disabled{opacity:.55}
+@media(max-width:520px){.mt2-drawer-top{padding:18px}.mt2-detail-form{padding:16px 18px}.mt2-detail-form .mt2-detail-grid{grid-template-columns:1fr}.mt2-drawer-checklist{padding:14px 18px}.mt2-drawer-footer{padding:12px;flex-wrap:wrap}.mt2-drawer-footer a{width:100%}}
