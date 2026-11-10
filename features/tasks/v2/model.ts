@@ -2,7 +2,7 @@ export type V2Status="todo"|"in_progress"|"waiting"|"done";
 export type V2Priority="low"|"medium"|"high";
 export type V2Task={
  id:string;title:string;description:string;status:V2Status;priority:V2Priority;
- owner_user_id:string;assignee_user_id:string|null;
+ owner_user_id:string;assignee_user_id:string|null;workspace_id:string|null;share_with_workspace:boolean;
  area_id:string|null;project_id:string|null;
  scheduled_date:string|null;due_at:string|null;completed_at:string|null;
  important:boolean;urgent:boolean;someday:boolean;reschedule_count:number;estimated_minutes:number|null;
@@ -18,3 +18,5 @@ export type V2Request=<T>(url:string,init?:RequestInit)=>Promise<T>;
 export const v2Statuses:V2Status[]=["todo","in_progress","waiting","done"];
 export const v2StatusNames:Record<V2Status,string>={todo:"To Do",in_progress:"In Progress",waiting:"Waiting",done:"Done"};
 export const v2Colors:Record<string,string>={blue:"#3777bb",green:"#229b83",purple:"#8565cd",amber:"#bb873d",red:"#d26763",slate:"#718399"};
+
+export type V2ModuleLink={task_id:string;module:"connect"|"learning";resource:"crm_task"|"crm_person"|"crm_opportunity"|"schedule_event";resource_id:string;tenant_id:string|null;title:string;status:string;due_at?:string|null};
