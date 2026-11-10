@@ -76,7 +76,7 @@ export function TasksV2Settings(){
    <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
    <div className="mt2-product">My Tasks <span>YOUR WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
-   <div className="mt2-sidebar-heading">MY WORKSPACE</div>
+   <div className="mt2-sidebar-heading">TASKS</div>
    <TasksPrimaryNav section="settings"/>
   </aside>
   <main className="mt2-main">
