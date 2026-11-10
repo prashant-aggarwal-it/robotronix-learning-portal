@@ -1,4 +1,5 @@
 import "../tasks.css";
-export default function MyTasksV2Layout({children}:{children:React.ReactNode}){
+import type {ReactNode} from "react";
+export default function MyTasksV2Layout({children}:{children:ReactNode}){
  return children;
 }
