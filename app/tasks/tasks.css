@@ -45,3 +45,12 @@
 @media(max-width:580px){.tw-mapping>div{grid-template-columns:1fr}}
 /* Standalone notification inbox (roleless My Tasks users). */
 .tw-task-inbox{position:relative}.tw-inbox-trigger{position:relative;width:40px;height:40px;border:1px solid #e1e3f3;border-radius:12px;background:#fff;font-size:24px;color:#6f5bd1;cursor:pointer}.tw-inbox-trigger>b{position:absolute;right:-5px;top:-6px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border-radius:20px;background:#e25682;color:#fff;font-size:10px}.tw-inbox-popover{position:absolute;right:0;top:49px;width:min(350px,calc(100vw - 32px));max-height:400px;overflow:auto;z-index:300;border-radius:18px;border:1px solid #e5e5f4;background:#fff;box-shadow:0 18px 45px #29305e22;padding:15px;color:#283554}.tw-inbox-popover>div:first-child{display:flex;justify-content:space-between;align-items:center;padding:4px 3px 12px}.tw-inbox-popover>div:first-child button{border:0;background:#f2efff;border-radius:8px;padding:5px 9px;color:#6653ca;cursor:pointer}.tw-inbox-popover article{display:flex;gap:8px;align-items:start;padding:10px 2px;border-top:1px solid #f0f0f8}.tw-inbox-popover article.read{opacity:.58}.tw-inbox-popover article>a{display:grid;gap:4px;flex:1;text-decoration:none;color:#354363;font-size:12px}.tw-inbox-popover article>a:hover{color:#6855ca}.tw-inbox-popover article small{color:#93a0b3;font-size:11px}.tw-inbox-popover article>button{border:0;background:#f1efff;border-radius:8px;color:#6653c5;cursor:pointer}.tw-inbox-popover>p{font-size:12px;color:#8592a8}
+
+/* Consistent application switcher shared conceptually with Portal and Connect. */
+.tw-app-switcher{border:1px solid #d8e7f4;background:#f3f9fd;border-radius:15px;padding:11px;margin:0 0 25px;display:grid;gap:4px}
+.tw-app-switcher-label{font-size:10px;letter-spacing:1.1px;font-weight:800;color:#7890a9;padding:5px 10px 7px}
+.tw-app-switcher a{display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:11px;color:#375a77;font-size:12px;font-weight:750;transition:background .16s,color .16s}
+.tw-app-switcher a span{width:21px;text-align:center;font-size:17px;color:#6486a5}
+.tw-app-switcher a:hover{background:#e4f0fb;color:#0b6d9b}
+.tw-app-switcher a.active{background:#dceefa;color:#0872a2}
+.tw-app-switcher a:focus-visible{outline:2px solid #397ae8;outline-offset:2px}
