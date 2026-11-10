@@ -23,6 +23,7 @@ export function TasksV2Board(){
  const [search,setSearch]=useState("");
  const [priority,setPriority]=useState<"all"|V2Priority>("all");
  const [showDone,setShowDone]=useState(false);
+ const [showEmpty,setShowEmpty]=useState(false);
  const [loading,setLoading]=useState(true);
  const [working,setWorking]=useState(false);
  const [dragId,setDragId]=useState<string|null>(null);
@@ -123,6 +124,7 @@ export function TasksV2Board(){
   for(const list of result.values())list.sort(sortCards);
   return result;
  },[filtered,columns,columnKey]);
+ const displayColumns=columns.filter((c,i)=>(group!=="status"||showDone||c.id!=="done")&&(showEmpty||(visibleByColumn.get(c.id)?.length||0)>0||i===0));
  const allCardsIn=(colId:string,exclude?:string)=>tasks.filter(t=>columnKey(t)===colId&&t.id!==exclude).sort(sortCards);
  const move=async(task:V2Task,colId:string,targetIndex:number)=>{
   if(working)return;
@@ -201,10 +203,10 @@ export function TasksV2Board(){
     <form className="mt2-board-capture" onSubmit={capture}><span>＋</span><input ref={quickRef} value={quick} onChange={e=>setQuick(e.target.value)} maxLength={240} aria-label="Quick capture task" placeholder="Quick capture — type something and press Enter…"/><button disabled={working||!quick.trim()} type="submit">Add task</button></form>
     <div className="mt2-board-tools">
      <div className="mt2-board-group"><span>Group by</span>{groupOptions.map(([id,label])=><button key={id} aria-pressed={group===id} className={group===id?"active":""} onClick={()=>{setGroup(id);setOverColumn(null)}}>{label}</button>)}</div>
-     <div className="mt2-board-filters"><input aria-label="Search board" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search cards..."/><select aria-label="Filter priority" value={priority} onChange={e=>setPriority(e.target.value as "all"|V2Priority)}><option value="all">All priorities</option><option value="high">High priority</option><option value="medium">Normal</option><option value="low">Low</option></select><label><input type="checkbox" checked={showDone} onChange={e=>setShowDone(e.target.checked)}/> Show done</label></div>
+     <div className="mt2-board-filters"><input aria-label="Search board" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search cards..."/><select aria-label="Filter priority" value={priority} onChange={e=>setPriority(e.target.value as "all"|V2Priority)}><option value="all">All priorities</option><option value="high">High priority</option><option value="medium">Normal</option><option value="low">Low</option></select><label><input type="checkbox" checked={showDone} onChange={e=>setShowDone(e.target.checked)}/> Show done</label><label><input type="checkbox" checked={showEmpty} onChange={e=>setShowEmpty(e.target.checked)}/> Empty groups</label></div>
     </div>
     {loading?<div className="mt2-loading">Loading your board and checklist progress…</div>:<div className="mt2-board-columns" aria-label={"Board grouped by "+group}>
-     {columns.filter(c=>group!=="status"||showDone||c.id!=="done").map(col=>{
+     {displayColumns.map(col=>{
       const cards=visibleByColumn.get(col.id)||[];
       return <section className={"mt2-board-column "+(overColumn===col.id?"mt2-column-over":"")} key={col.id}
        aria-label={col.title} onDragOver={e=>{if(group!=="person"&&dragId){e.preventDefault();setOverColumn(col.id)}}}
@@ -224,7 +226,7 @@ export function TasksV2Board(){
           onDrop={e=>onDrop(e,col.id,task.id)}
          >
           <div className="mt2-card-top">
-           <span className="mt2-card-area" style={{color:v2Colors[areaById.get(task.area_id||"")?.color||"slate"]||v2Colors.slate}}>{areaName(task)}</span>
+           {group==="area"?<span className="mt2-card-area">IN {col.title}</span>:<span className="mt2-card-area" style={{color:v2Colors[areaById.get(task.area_id||"")?.color||"slate"]||v2Colors.slate}}>{areaName(task)}</span>}
            <span className={"mt2-card-flag "+task.priority}>⚑ {task.priority}</span>
           </div>
           <button className="mt2-card-title" onClick={()=>openDetails(task)}>{task.title}</button>
