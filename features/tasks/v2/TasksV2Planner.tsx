@@ -3,6 +3,7 @@ import Link from "next/link";
 import {useCallback,useEffect,useMemo,useState,type DragEvent,type FormEvent} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
+import {TasksNotifications} from "./TasksNotifications";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project,V2Response,V2Request} from "./model";
 import {v2Colors} from "./model";
@@ -219,6 +220,7 @@ export function TasksV2Planner(){
     <Link href="/tasks/board"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
     <Link href="/tasks/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
     <Link href="/tasks/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
+    <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
     <Link href="/tasks/planner" className="is-active" aria-current="page"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
    </nav>
    <div className="mt2-sidebar-bottom"><Link href="/tasks">← Return to My Day</Link></div>
@@ -227,7 +229,7 @@ export function TasksV2Planner(){
    <header className="mt2-header">
     <button className="mt2-mobile-menu" type="button" aria-label="Open navigation" onClick={()=>setMobileNav(true)}>☰</button>
     <div className="mt2-breadcrumb">MY TASKS <span>/</span> Weekly Planner</div>
-    <div className="mt2-header-actions"><span className="mt2-sync"><i/> Personal planning</span></div>
+    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Personal planning</span></div>
    </header>
    <div className="mt2-page mt2-planner-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">PLAN LESS · FINISH MORE</p><h1>Give your week some shape.</h1><p className="mt2-subtitle">Drag tasks to a day, keep future ideas in Someday, and protect realistic focus time.</p></div></div>
