@@ -13,7 +13,7 @@ export async function PATCH(request:NextRequest,context:Context){
  const raw=body as Record<string,unknown>;
  const standard:Record<string,unknown>={},meta:Record<string,unknown>={};
  for(const [k,v] of Object.entries(raw)){
-  if(["title","description","priority","scheduled_date","due_at"].includes(k))standard[k]=v;
+  if(["title","description","priority","scheduled_date","due_at","reminder_at","recurrence"].includes(k))standard[k]=v;
   else if(["area_id","project_id","important","estimated_minutes","done_definition","resume_note","waiting_for","followup_date"].includes(k))meta[k]=v;
   else if(k==="status"){
    if(!["todo","in_progress","waiting","done"].includes(v as string))return taskError("Invalid status.",400);
