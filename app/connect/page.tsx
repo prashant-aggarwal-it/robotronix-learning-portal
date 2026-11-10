@@ -597,7 +597,7 @@ export default function ConnectPage(){
     </div>}
 
     {section==="followups"&&<div className="cx-followups-workspace">
-     <ConnectFollowupsBoard tasks={tasks} people={people} opportunities={opportunities} focusPersonId={workflowContactId} canWrite={canWrite} busy={busy}
+     <ConnectFollowupsBoard tenantId={tenantId} tasks={tasks} people={people} opportunities={opportunities} focusPersonId={workflowContactId} canWrite={canWrite} busy={busy}
       onComplete={taskId=>void run(()=>crmCommand(tenantId,"tasks","complete_task",{taskId}),"Follow-up completed.")}
       onOpenContact={personId=>{setSelectedOpportunity(null);setSelectedPerson(personId);}}
       onOpenOpportunity={(personId,opportunityId)=>{setSelectedPerson(personId);setSelectedOpportunity(opportunityId);}}/>

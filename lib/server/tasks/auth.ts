@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {createClient, type SupabaseClient} from "@supabase/supabase-js";
 
 export const noStore={"Cache-Control":"no-store"};
-export type TaskSession={db:SupabaseClient;userId:string};
+export type TaskSession={db:SupabaseClient;userId:string;verifiedEmail:string|null};
 export function taskError(message:string,status:number){
  return NextResponse.json({ok:false,error:message},{status,headers:noStore});
 }
@@ -22,8 +22,13 @@ export async function taskSession(request:NextRequest):Promise<TaskSession|NextR
  const {data:{user},error}=await db.auth.getUser(token);
  if(error||!user||user.is_anonymous)return taskError("Session expired or invalid.",401);
  const {data:profile,error:profileError}=await db.from("profiles").select("active").eq("id",user.id).maybeSingle();
- if(profileError||!profile?.active)return taskError("Active account required.",403);
- return {db,userId:user.id};
+ if(profileError)return taskError("Account verification is unavailable.",503);
+ if(profile&&!profile.active)return taskError("Your Portal account is disabled.",403);
+ const {data:taskAccount,error:accountError}=await db.rpc("task_account_get",{p_actor_id:user.id});
+ if(accountError)return taskError("Task account verification is unavailable.",503);
+ if(taskAccount?.status==="suspended")return taskError("Task account is suspended.",403);
+ if(!profile&&!taskAccount)return taskError("Complete My Tasks onboarding to continue.",403);
+ return {db,userId:user.id,verifiedEmail:user.email_confirmed_at&&user.email?user.email.trim().toLowerCase():null};
 }
 
 export function taskDbError(code?:string){

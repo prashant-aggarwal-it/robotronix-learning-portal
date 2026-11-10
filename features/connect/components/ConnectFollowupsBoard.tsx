@@ -3,10 +3,11 @@ import {useMemo,useState} from "react";
 import type {ConnectTask,ConnectPerson,ConnectOpportunity} from "@/features/connect/api/client";
 import styles from "./ConnectFollowupsBoard.module.css";
 import {FollowupWeekWidget} from "./ConnectDataWidgets";
+import {ModuleTaskLinkButton,ModuleTasksWidget} from "@/features/tasks/ModuleTaskWidgets";
 
 type Filter="open"|"overdue"|"today"|"upcoming"|"undated"|"completed"|"all";
 type Props={
- tasks:ConnectTask[];people:ConnectPerson[];opportunities:ConnectOpportunity[];focusPersonId?:string|null;
+ tenantId:string;tasks:ConnectTask[];people:ConnectPerson[];opportunities:ConnectOpportunity[];focusPersonId?:string|null;
  canWrite:boolean;busy:boolean;onComplete:(taskId:string)=>void;
  onOpenContact:(personId:string)=>void;onOpenOpportunity:(personId:string,opportunityId:string)=>void;
 };
@@ -27,7 +28,7 @@ function state(t:ConnectTask,today:string):Filter{
  return due<today?"overdue":due===today?"today":"upcoming";
 }
 const labels:Record<Filter,string>={all:"All",open:"Open",overdue:"Overdue",today:"Due today",upcoming:"Upcoming",undated:"No due date",completed:"Completed"};
-export function ConnectFollowupsBoard({tasks,people,opportunities,focusPersonId,canWrite,busy,onComplete,onOpenContact,onOpenOpportunity}:Props){
+export function ConnectFollowupsBoard({tenantId,tasks,people,opportunities,focusPersonId,canWrite,busy,onComplete,onOpenContact,onOpenOpportunity}:Props){
  const [filter,setFilter]=useState<Filter>("open");
  const [search,setSearch]=useState("");
  const [sort,setSort]=useState<"due"|"newest">("due");
@@ -60,6 +61,7 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,focusPersonId,
  return <section className={styles.board} aria-label="Team follow-ups">
   <div className={styles.heading}><div><h2>Team follow-ups</h2><p>Follow up with customers, track due dates and close completed work</p></div>
    <span className={styles.total}>{counts.open} open tasks</span></div>
+  <ModuleTasksWidget module="connect" tenantId={tenantId}/>
   <div className={styles.summary}>
    {(["overdue","today","upcoming","completed"] as Filter[]).map(f=><button key={f} type="button" className={filter===f?styles.summaryActive:styles.summaryItem} data-tone={f} onClick={()=>setFilter(filter===f?"open":f)} aria-pressed={filter===f}>
     <strong>{counts[f]}</strong><span>{labels[f]}</span>
@@ -88,6 +90,7 @@ export function ConnectFollowupsBoard({tasks,people,opportunities,focusPersonId,
       <div className={styles.due}><span className={status==="overdue"?styles.overdue:status==="today"?styles.today:status==="completed"?styles.complete:styles.status}>{labels[status]}</span>
        <time dateTime={t.due_at||undefined}>{dateLabel(t.due_at)}</time></div>
       <div className={styles.actions}>
+       <ModuleTaskLinkButton module="connect" resource="crm_task" tenantId={tenantId} resourceId={t.id} label="Track in My Tasks"/>
        {contact&&<button className={styles.secondary} type="button" onClick={()=>onOpenContact(contact.id)}>Contact</button>}
        {contact&&opportunity&&<button className={styles.secondary} type="button" onClick={()=>onOpenOpportunity(contact.id,opportunity.id)}>Admission</button>}
        {canWrite&&!completed(t)&&<button className={styles.primary} type="button" disabled={busy} onClick={()=>onComplete(t.id)}>Mark done</button>}

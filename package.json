@@ -7,6 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "check:tasks": "node scripts/check-universal-tasks-phase5.mjs",
+    "test:tasks": "node --experimental-strip-types --test lib/server/tasks/csv.test.mjs lib/server/tasks/validation.test.mjs",
     "check:structure": "node scripts/check-structure.mjs",
     "check:communication": "node scripts/check-communication-security.mjs",
     "check:finance": "node --experimental-strip-types scripts/check-student-finance.mjs",

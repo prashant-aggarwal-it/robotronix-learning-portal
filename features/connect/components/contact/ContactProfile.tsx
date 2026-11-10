@@ -4,6 +4,7 @@ import type {ConnectPerson,ConnectOpportunity,ConnectInquiry,ConnectTask,Connect
 import {dateLabel,initials,shortLabel} from "@/features/connect/model";
 import {ContactIntelligence} from "@/features/connect/components/contact/ContactIntelligence";
 import {ContactImportProvenance} from "@/features/connect/components/contact/ContactImportProvenance";
+import {ModuleTaskLinkButton} from "@/features/tasks/ModuleTaskWidgets";
 
 type ProfileTab="overview"|"insights"|"timeline"|"followups"|"relations"|"details";
 type Props={
@@ -44,6 +45,8 @@ export function ContactProfile({person,opportunity,tenantId,refreshKey,allowAdmi
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("followups")}>{canWrite?"＋ Follow-up":"Follow-ups"}</button>
     <button type="button" className="cx-contact360-action" onClick={()=>setTab("timeline")}>▤ Activity</button>
     {person&&canWrite&&allowAdmissions&&<button type="button" className="cx-contact360-action" onClick={()=>setTab("details")}>＋ Admission</button>}
+    {person&&<ModuleTaskLinkButton module="connect" resource="crm_person" tenantId={tenantId} resourceId={person.id} label="Personal follow-up"/>}
+    {opportunity&&<ModuleTaskLinkButton module="connect" resource="crm_opportunity" tenantId={tenantId} resourceId={opportunity.id} label="Track admission"/>}
    </div>
   </header>
   {onNavigateWorkflow&&(person?.id||opportunity?.contact_id)&&<nav className="cx-contact360-workflow" aria-label="Customer journey">

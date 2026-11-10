@@ -1,0 +1,26 @@
+import {readFileSync} from "node:fs";
+import {resolve} from "node:path";
+import assert from "node:assert/strict";
+
+const source=path=>readFileSync(resolve(process.cwd(),path),"utf8");
+const auth=source("lib/server/tasks/auth.ts");
+const onboarding=source("app/api/tasks/onboarding/route.ts");
+const exportRoute=source("app/api/tasks/data/route.ts");
+const db=source("database/tasks/08_saas_readiness.sql");
+const integrations=source("database/tasks/07_module_integrations.sql");
+const collaboration=source("database/tasks/04_collaboration_foundation.sql");
+assert.match(auth,/profile&&!profile\.active/,"Disabled Portal accounts must remain blocked");
+assert.match(auth,/taskAccount\?\.status==="suspended"/,"Suspended task accounts must remain blocked");
+assert.match(auth,/!profile&&!taskAccount/,"Unlinked users must onboard");
+assert.match(onboarding,/email_confirmed_at/,"Standalone activation requires verified email");
+assert.match(onboarding,/p_actor_id:ctx\.user\.id/,"Account owner comes from verified token");
+assert.match(exportRoute,/owner_user_id===session\.userId&&t\.workspace_id===null/,"Export excludes other users' and shared tasks");
+assert.match(exportRoute,/p_actor_id:session\.userId/,"Import uses the authenticated caller");
+assert.match(db,/jsonb_array_length\(p_rows\)>200/,"Atomic import has batch limit");
+assert.match(db,/enable row level security/,"Task accounts have RLS");
+assert.match(db,/revoke all.*authenticated/,"Task accounts remain private");
+assert.match(db,/task_bulk_import/,"Atomic batch import RPC is present");
+assert.match(collaboration,/tasks\.workspace_members/,"Workspace access checks exist");
+assert.match(integrations,/m\.status='active'/,"CRM sync checks current memberships");
+assert.match(integrations,/Linked module tasks must remain personal/,"Linked module tasks cannot leak into shared workspaces");
+console.log("My Tasks Phase 5 structure and isolation checks passed.");
