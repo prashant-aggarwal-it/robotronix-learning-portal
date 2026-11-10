@@ -3,6 +3,7 @@ import Link from "next/link";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
+import {TasksNotifications} from "./TasksNotifications";
 import {getCurrentProfile} from "@/lib/repository";
 import {TeamSpaces} from "@/features/tasks/TaskCollaboration";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
@@ -150,6 +151,7 @@ export function TasksV2Connected(){
     <Link href="/tasks/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
     <Link href="/tasks/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
     <Link href="/tasks/connected" className="is-active" aria-current="page"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
+    <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
    </nav>
    <div className="mt2-sidebar-heading mt2-areas-heading">PEOPLE & SOURCES</div>
    <div className="mt2-areas-nav">
@@ -164,7 +166,7 @@ export function TasksV2Connected(){
    <header className="mt2-header">
     <button type="button" className="mt2-mobile-menu" onClick={()=>setMobileNav(true)} aria-label="Open navigation">☰</button>
     <div className="mt2-breadcrumb">MY TASKS <span>/</span> Connected Work</div>
-    <div className="mt2-header-actions"><span className="mt2-sync"><i/> Your accessible tasks only</span></div>
+    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your accessible tasks only</span></div>
    </header>
    <div className="mt2-page mt2-connected-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">WORK TOGETHER · STAY IN CONTEXT</p><h1>All your connected work.</h1><p className="mt2-subtitle">A clear view of shared tasks, delegated work, CRM follow-ups and Learning Portal links.</p></div></div>
