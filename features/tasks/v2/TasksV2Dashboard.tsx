@@ -228,6 +228,7 @@ export function TasksV2Dashboard(){
     <button className={view==="inbox"?"is-active":""} onClick={()=>{setView("inbox");setMobileNav(false)}}><Icon name="inbox"/> Inbox <span className="mt2-nav-count">{inbox.length}</span></button>
     <button className={view==="all"?"is-active":""} onClick={()=>{setView("all");setMobileNav(false)}}><Icon name="list"/> All Tasks</button>
     <Link href="/tasks/v2/board"><Icon name="briefcase"/> Visual Board <small>New</small></Link>
+    <Link href="/tasks/v2/focus"><Icon name="clock"/> Focus & Finish <small>New</small></Link>
     <Link href="/tasks/board"><Icon name="briefcase"/> Classic Board</Link>
     <Link href="/tasks/calendar"><Icon name="calendar"/> Calendar <small>Classic</small></Link>
    </nav>
