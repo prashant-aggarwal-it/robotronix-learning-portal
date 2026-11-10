@@ -251,7 +251,7 @@ export function TasksV2Dashboard(){
    <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <TasksPrimaryNav section={view} inboxCount={inbox.length} onDashboardView={next=>{setView(next);setMobileNav(false)}}/>
+   <TasksPrimaryNav section={view} inboxCount={inbox.length} onDashboardView={next=>{setView(next);setMobileNav(false);router.replace(next==="day"?"/tasks":"/tasks?view="+next,{scroll:false})}}/>
    <div className="mt2-sidebar-heading mt2-areas-heading">AREAS <button aria-label="Add area" title="Add area" onClick={()=>{setNewName("");setCreatePanel("area")}}><Icon name="plus"/></button></div>
    <div className="mt2-areas-nav">
     <button className={areaFilter==="all"?"selected":""} onClick={()=>setAreaFilter("all")}><span className="mt2-area-dot" style={{background:"#98a9b6"}}/>All areas <small>{active.length}</small></button>
