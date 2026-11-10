@@ -260,7 +260,7 @@ export function TasksV2Dashboard(){
     <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your personal workspace</span><button onClick={()=>inputRef.current?.focus()} className="mt2-header-add"><Icon name="plus"/> New task</button></div>
    </header>
    <div className="mt2-page">
-    <div className="mt2-heading"><div><p className="mt2-eyebrow">YOUR DAILY COMMAND CENTRE</p><h1>{view==="day"?"Make today count.":view==="all"?"Your work, in one place.":"Capture now. Plan later."}</h1><p className="mt2-subtitle">{dateTitle(today)} · Small steps, meaningful progress.</p></div><div className="mt2-heading-art"><Icon name="sparkle"/></div></div>
+    <div className="mt2-heading"><div><p className="mt2-eyebrow">{view==="day"?"YOUR DAILY COMMAND CENTRE":view==="all"?"EVERYTHING IN VIEW":"CAPTURE FIRST, ORGANISE LATER"}</p><h1>{view==="day"?"Make today count.":view==="all"?"All your tasks. Clearly organised.":"Capture now. Plan later."}</h1><p className="mt2-subtitle">{dateTitle(today)} · Small steps, meaningful progress.</p></div><div className="mt2-heading-art"><Icon name="sparkle"/></div></div>
     {error&&<div role="alert" className="mt2-error">{error}<button aria-label="Dismiss error" onClick={()=>setError("")}><Icon name="close"/></button></div>}
     {notice&&<div role="status" className="mt2-notice">{notice}<button aria-label="Dismiss notification" onClick={()=>setNotice("")}><Icon name="close"/></button></div>}
     <form className="mt2-capture" onSubmit={capture}>
