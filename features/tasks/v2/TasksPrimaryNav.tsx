@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {TasksQuickAdd} from "./TasksQuickAdd";
 type Section="day"|"inbox"|"all"|"planner"|"board"|"focus"|"connected"|"settings";
 type Props={section:Section;inboxCount?:number;onDashboardView?:(view:"day"|"inbox"|"all")=>void};
 const links:{id:Section;label:string;href:string;icon:string}[]=[
@@ -19,7 +20,7 @@ export function TasksPrimaryNav({section,inboxCount,onDashboardView}:Props){
   return <Link key={item.id} className={className} aria-current={active?"page":undefined} href={item.href}>{children}</Link>;
  };
  return <nav className="mt2-primary-nav" aria-label="My Tasks">
-  <Link href="/tasks?capture=1" className="mt2-nav-capture"><span className="mt2-nav-emoji" aria-hidden="true">＋</span> Add Task</Link>
+  <TasksQuickAdd/>
   {links.map(render)}
   <div className="mt2-nav-secondary"><Link className={section==="settings"?"is-active":""} href="/tasks/settings"><span className="mt2-nav-emoji" aria-hidden="true">⚙</span>Settings</Link></div>
  </nav>;

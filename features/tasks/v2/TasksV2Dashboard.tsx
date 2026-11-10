@@ -47,7 +47,6 @@ function Icon({name}:{name:string}){
 export function TasksV2Dashboard(){
  const router=useRouter();
  const inputRef=useRef<HTMLInputElement|null>(null);
- useEffect(()=>{if(new URLSearchParams(window.location.search).has("capture"))requestAnimationFrame(()=>inputRef.current?.focus())},[]);
  const [tasks,setTasks]=useState<Task[]>([]);
  const [areas,setAreas]=useState<Area[]>([]);
  const [projects,setProjects]=useState<Project[]>([]);
@@ -114,13 +113,11 @@ export function TasksV2Dashboard(){
   }finally{setLoading(false)}
  },[request,router]);
  useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{window.addEventListener("tasks:changed",refresh);return()=>window.removeEventListener("tasks:changed",refresh)},[refresh]);
  useEffect(()=>{let active=true;void getSupabaseBrowserClient()?.auth.getUser().then(({data})=>{if(active)setUserId(data.user?.id||null)});return()=>{active=false}},[]);
  useEffect(()=>{const timer=window.setInterval(()=>setToday(dayKey(new Date())),60*1000);return()=>window.clearInterval(timer)},[]);
  useEffect(()=>{
   const key=(e:KeyboardEvent)=>{
-   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
-    e.preventDefault();inputRef.current?.focus();
-   }
    if(e.key==="Escape"){setSelected(null);setCreatePanel(null);setMobileNav(false)}
   };
   document.addEventListener("keydown",key);
@@ -272,7 +269,7 @@ export function TasksV2Dashboard(){
    <header className="mt2-header">
     <button className="mt2-mobile-menu" aria-label="Open navigation" onClick={()=>setMobileNav(true)}><Icon name="menu"/></button>
     <div className="mt2-breadcrumb">MY TASKS <span>/</span> {view==="day"?"My Day":view==="all"?"All Tasks":"Inbox"}</div>
-    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your personal workspace</span><button onClick={()=>inputRef.current?.focus()} className="mt2-header-add"><Icon name="plus"/> New task</button></div>
+    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your personal workspace</span></div>
    </header>
    <div className="mt2-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">{view==="day"?"YOUR DAILY COMMAND CENTRE":view==="all"?"EVERYTHING IN VIEW":"CAPTURE FIRST, ORGANISE LATER"}</p><h1>{view==="day"?"Make today count.":view==="all"?"All your tasks. Clearly organised.":"Capture now. Plan later."}</h1><p className="mt2-subtitle">{dateTitle(today)} · Small steps, meaningful progress.</p></div><div className="mt2-heading-art"><Icon name="sparkle"/></div></div>

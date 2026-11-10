@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useCallback,useEffect,useMemo,useState,type DragEvent,type FormEvent} from "react";
+import {useCallback,useEffect,useMemo,useState,type DragEvent} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
@@ -36,8 +36,6 @@ export function TasksV2Planner(){
  const [selectedIds,setSelectedIds]=useState<string[]>([]);
  const [search,setSearch]=useState("");
  const [filterArea,setFilterArea]=useState("all");
- const [quick,setQuick]=useState("");
- const [captureDate,setCaptureDate]=useState("");
  const [dragId,setDragId]=useState<string|null>(null);
  const [hoverDate,setHoverDate]=useState<string|null>(null);
  const [recoveryDate,setRecoveryDate]=useState(()=>keyOf(new Date()));
@@ -82,6 +80,7 @@ export function TasksV2Planner(){
   finally{setLoading(false)}
  },[request]);
  useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{window.addEventListener("tasks:changed",refresh);return()=>window.removeEventListener("tasks:changed",refresh)},[refresh]);
  useEffect(()=>{
   let mounted=true;
   void getSupabaseBrowserClient()?.auth.getUser().then(({data})=>{if(mounted)setUserId(data.user?.id||null)});
@@ -140,17 +139,6 @@ export function TasksV2Planner(){
   const task=tasks.find(t=>t.id===id);
   if(!id||!task||!allowedToMove(task))return;
   void move(selectedIds.includes(id)?selectedIds:[id],action,date);
- }
- async function quickAdd(e:FormEvent){
-  e.preventDefault();if(!quick.trim()||busy)return;
-  setBusy(true);setError("");
-  try{
-   await request<V2Response<V2Task>>("/api/tasks/v2/capture",{
-    method:"POST",body:JSON.stringify({title:quick.trim(),...(captureDate?{scheduled_date:captureDate}:{})})
-   });
-   setQuick("");setNotice("Task captured.");await refresh();
-  }catch(e){setError(e instanceof Error?e.message:"Unable to add task.");}
-  finally{setBusy(false)}
  }
  async function setMatrix(t:V2Task,index:number){
   if(!allowedToMove(t)||busy)return;
@@ -229,7 +217,6 @@ export function TasksV2Planner(){
     <div className="mt2-heading"><div><p className="mt2-eyebrow">PLAN LESS · FINISH MORE</p><h1>Give your week some shape.</h1><p className="mt2-subtitle">Drag tasks to a day, keep future ideas in Someday, and protect realistic focus time.</p></div></div>
     {error&&<div role="alert" className="mt2-error">{error}<button onClick={()=>setError("")} aria-label="Dismiss">✕</button></div>}
     {notice&&<div role="status" className="mt2-notice">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss">✕</button></div>}
-    <form className="mt2-board-capture" onSubmit={quickAdd}><span>＋</span><input aria-label="Quick capture task" value={quick} onChange={e=>setQuick(e.target.value)} maxLength={240} placeholder="Add an idea or action in one line…"/><select aria-label="Quick capture planned date" value={captureDate} onChange={e=>setCaptureDate(e.target.value)}><option value="">No date</option><option value={today}>Today</option><option value={plusDays(today,1)}>Tomorrow</option></select><button disabled={busy||!quick.trim()} type="submit">Add</button></form>
     <div className="mt2-plan-toolbar"><div className="mt2-plan-tabs">{routeViews.map(([id,label])=><button type="button" key={id} className={view===id?"active":""} aria-pressed={view===id} onClick={()=>setView(id)}>{label}</button>)}</div>
      <div className="mt2-plan-filter"><input aria-label="Search planned tasks" placeholder="Search tasks…" value={search} onChange={e=>setSearch(e.target.value)}/><select aria-label="Filter area" value={filterArea} onChange={e=>setFilterArea(e.target.value)}><option value="all">All areas</option><option value="none">Unsorted</option>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
     </div>
@@ -249,7 +236,7 @@ export function TasksV2Planner(){
         <div className="mt2-day-head"><small>{weekday(date)}</small><strong>{date.slice(-2)}</strong><span>{dated(date).length} tasks</span></div>
         <div className="mt2-day-capacity"><div className="mt2-progress-track"><span style={{width:Math.min(100,100*minutes/Math.max(1,capacity))+"%",background:minutes>capacity?"#c98554":"#3e9fb6"}}/></div><small className={minutes>capacity?"mt2-overload":""}>{minutes} / {capacity}m</small></div>
         <div className="mt2-day-cards">{dated(date).map(renderTask)}{!dated(date).length&&<p className="mt2-empty">Drop a task here</p>}</div>
-        <button className="mt2-day-add" onClick={()=>{setCaptureDate(date);document.querySelector<HTMLInputElement>(".mt2-board-capture input")?.focus()}}>＋ Add for {weekday(date)}</button>
+        <button className="mt2-day-add" onClick={()=>window.dispatchEvent(new CustomEvent("tasks:quick-add",{detail:{date}}))}>＋ Add for {weekday(date)}</button>
        </section>)}
       </div>
       <div className="mt2-planner-lower">

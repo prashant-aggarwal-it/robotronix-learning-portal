@@ -82,6 +82,7 @@ export function TasksV2Focus(){
   finally{setLoading(false)}
  },[request]);
  useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{window.addEventListener("tasks:changed",refresh);return()=>window.removeEventListener("tasks:changed",refresh)},[refresh]);
  useEffect(()=>{let mounted=true;void getSupabaseBrowserClient()?.auth.getUser().then(({data})=>{if(mounted)setUserId(data.user?.id||null)});return()=>{mounted=false}},[]);
  useEffect(()=>{const id=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(id)},[]);
  useEffect(()=>{

@@ -70,6 +70,7 @@ export function TasksV2Connected(){
   finally{setLoading(false)}
  },[request]);
  useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{window.addEventListener("tasks:changed",refresh);return()=>window.removeEventListener("tasks:changed",refresh)},[refresh]);
  useEffect(()=>{
   let mounted=true;
   void Promise.allSettled([

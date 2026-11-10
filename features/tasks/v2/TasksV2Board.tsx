@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useCallback,useEffect,useMemo,useRef,useState,type DragEvent,type FormEvent} from "react";
+import {useCallback,useEffect,useMemo,useState,type DragEvent} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
@@ -30,11 +30,9 @@ export function TasksV2Board(){
  const [dragId,setDragId]=useState<string|null>(null);
  const [overColumn,setOverColumn]=useState<string|null>(null);
  const [selected,setSelected]=useState<V2Task|null>(null);
- const [quick,setQuick]=useState("");
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const [mobileNav,setMobileNav]=useState(false);
- const quickRef=useRef<HTMLInputElement>(null);
  const request:V2Request=useCallback(async <T,>(url:string,init:RequestInit={}):Promise<T>=>{
   const client=getSupabaseBrowserClient();
   if(!client)throw new Error("Supabase is not configured.");
@@ -68,6 +66,7 @@ export function TasksV2Board(){
   finally{setLoading(false)}
  },[request]);
  useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{window.addEventListener("tasks:changed",refresh);return()=>window.removeEventListener("tasks:changed",refresh)},[refresh]);
  useEffect(()=>{
   let active=true;void getSupabaseBrowserClient()?.auth.getUser().then(({data})=>{
    if(active)setUserId(data.user?.id||null);
@@ -76,7 +75,7 @@ export function TasksV2Board(){
  },[]);
  useEffect(()=>{
   const onKey=(e:KeyboardEvent)=>{
-   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();quickRef.current?.focus();}
+   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k")return;
    if(e.key==="Escape"){setSelected(null);setMobileNav(false);}
   };
   document.addEventListener("keydown",onKey);return()=>document.removeEventListener("keydown",onKey);
@@ -161,19 +160,6 @@ export function TasksV2Board(){
   if(current<0)return;
   void move(task,colId,Math.max(0,Math.min(lane.length,current+by)));
  };
- const capture=async(e:FormEvent)=>{
-  e.preventDefault();if(!quick.trim()||working)return;
-  setWorking(true);setError("");
-  try{
-   const added=await request<V2Response<V2Task>>("/api/tasks/v2/capture",{
-    method:"POST",body:JSON.stringify({title:quick.trim()})
-   });
-   if(!added.item)throw new Error("Unable to create task.");
-   setQuick("");await refresh();setNotice("Task captured in your Inbox.");
-   quickRef.current?.focus();
-  }catch(e){setError(e instanceof Error?e.message:"Unable to capture task.");}
-  finally{setWorking(false)}
- };
  const areaName=(t:V2Task)=>areaById.get(t.area_id||"")?.name||"Unsorted";
  const openDetails=(task:V2Task)=>setSelected(task);
  const totalOpen=tasks.filter(t=>t.status!=="done").length;
@@ -195,14 +181,13 @@ export function TasksV2Board(){
    <header className="mt2-header">
     <button type="button" className="mt2-mobile-menu" aria-label="Open navigation" onClick={()=>setMobileNav(true)}>☰</button>
     <div className="mt2-breadcrumb">MY TASKS <span>/</span> Visual Board</div>
-    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Live task workspace</span><button className="mt2-header-add" onClick={()=>quickRef.current?.focus()}>+ New task</button></div>
+    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Live task workspace</span></div>
    </header>
    <div className="mt2-page mt2-board-page">
     <div className="mt2-heading"><div><p className="mt2-eyebrow">VISUAL WORKFLOW</p><h1>Task board</h1><p className="mt2-subtitle">See what is next, underway and waiting for a response.</p></div><div className="mt2-board-summary"><strong>{totalOpen}</strong><span>Open</span><strong>{totalDone}</strong><span>Done</span></div></div>
     <TasksContextTabs context="all" active="board"/>
     {error&&<div className="mt2-error" role="alert">{error}<button aria-label="Dismiss" onClick={()=>setError("")}>✕</button></div>}
     {notice&&<div className="mt2-notice" role="status">{notice}<button aria-label="Dismiss" onClick={()=>setNotice("")}>✕</button></div>}
-    <form className="mt2-board-capture" onSubmit={capture}><span>＋</span><input ref={quickRef} value={quick} onChange={e=>setQuick(e.target.value)} maxLength={240} aria-label="Quick capture task" placeholder="Quick capture — type something and press Enter…"/><button disabled={working||!quick.trim()} type="submit">Add task</button></form>
     <div className="mt2-board-tools">
      <div className="mt2-board-group"><span>Group by</span>{groupOptions.map(([id,label])=><button key={id} aria-pressed={group===id} className={group===id?"active":""} onClick={()=>{setGroup(id);setOverColumn(null)}}>{label}</button>)}</div>
      <div className="mt2-board-filters"><input aria-label="Search board" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search cards..."/><select aria-label="Filter priority" value={priority} onChange={e=>setPriority(e.target.value as "all"|V2Priority)}><option value="all">All priorities</option><option value="high">High priority</option><option value="medium">Normal</option><option value="low">Low</option></select><label><input type="checkbox" checked={showDone} onChange={e=>setShowDone(e.target.checked)}/> Show done</label><label><input type="checkbox" checked={showEmpty} onChange={e=>setShowEmpty(e.target.checked)}/> Empty groups</label></div>
@@ -257,7 +242,7 @@ export function TasksV2Board(){
          </article>;
         })}
         {!cards.length&&<div className="mt2-column-empty">No cards here. {group==="person"?"": "Drop a card to get started."}</div>}
-        {group!=="person"&&<button className="mt2-column-drop-target" disabled={working} onClick={()=>quickRef.current?.focus()} type="button">＋ Capture a task</button>}
+        {group!=="person"&&<button className="mt2-column-drop-target" disabled={working} onClick={()=>window.dispatchEvent(new CustomEvent("tasks:quick-add"))} type="button">＋ Capture a task</button>}
        </div>
       </section>;
      })}

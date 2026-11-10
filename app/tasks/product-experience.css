@@ -10,6 +10,22 @@
 .mt2-primary-nav .mt2-nav-secondary{margin-top:15px;padding-top:12px;border-top:1px solid #e5edf3}
 .mt2-primary-nav .mt2-nav-capture{background:linear-gradient(110deg,#147cad,#1b9ca8);color:#fff;border-radius:9px;margin:3px 0 12px;font-weight:800}
 .mt2-primary-nav .mt2-nav-capture:hover{background:#126c99;color:#fff}
+.mt2-quick-backdrop{position:fixed;inset:0;background:#102e48a6;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+.mt2-quick-modal{width:min(100%,510px);max-height:calc(100vh - 36px);overflow-y:auto;background:#fff;color:#244158;border:1px solid #dbe8f0;border-radius:18px;box-shadow:0 25px 85px #0d2f4c55;padding:23px;display:grid;gap:16px}
+.mt2-quick-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.mt2-quick-head span{font-size:10px;font-weight:850;letter-spacing:.13em;color:#1683a4}
+.mt2-quick-head h2{font-size:24px;letter-spacing:-.035em;margin:3px 0 0}
+.mt2-quick-head button{background:#edf5fa;border:0;border-radius:8px;color:#486c84;padding:8px 11px;cursor:pointer}
+.mt2-quick-modal label{display:grid;gap:7px;font-size:12px;font-weight:750;color:#526c80}
+.mt2-quick-modal input,.mt2-quick-modal select{width:100%;min-width:0;min-height:41px;background:#fff;border:1px solid #cedee9;border-radius:9px;padding:9px 11px;color:#244158;font:inherit;font-size:14px}
+.mt2-quick-modal input:focus,.mt2-quick-modal select:focus{outline:2px solid #45a8d1;outline-offset:1px}
+.mt2-quick-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mt2-quick-actions{display:flex;justify-content:flex-end;gap:9px;border-top:1px solid #e7eef4;padding-top:16px}
+.mt2-quick-actions button{border:1px solid #cfdee8;border-radius:9px;background:#fff;color:#42667d;padding:10px 17px;cursor:pointer;font-weight:750}
+.mt2-quick-actions button[type=submit]{background:linear-gradient(110deg,#147cad,#1b9ca8);color:white;border-color:transparent}
+.mt2-quick-actions button:disabled{opacity:.5;cursor:not-allowed}
+.mt2-quick-error{margin:0;background:#fff1ef;color:#9e3a36;border-radius:8px;padding:10px 12px;font-size:12px}
+@media(max-width:520px){.mt2-quick-modal{padding:18px}.mt2-quick-fields{grid-template-columns:1fr}}
 .mt2-context-tabs{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0 0 16px;padding:5px;background:#f2f7fb;border:1px solid #e1eaf2;border-radius:12px;width:fit-content;max-width:100%}
 .mt2-context-tabs a,.mt2-context-tabs button{display:inline-flex;align-items:center;justify-content:center;min-height:35px;padding:7px 13px;border:1px solid transparent;border-radius:9px;background:transparent;color:#56738b;font-size:12px;font-weight:750;text-decoration:none;cursor:pointer;white-space:nowrap}
 .mt2-context-tabs .active{background:#fff;border-color:#d3e7f2;color:#156e9e;box-shadow:0 2px 8px #173b6410}
