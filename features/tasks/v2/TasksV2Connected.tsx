@@ -178,14 +178,18 @@ export function TasksV2Connected(){
       <TeamSpaces request={request} tasks={tasks} userId={userId} onUpdated={refresh} onOpenTask={t=>{const found=tasks.find(x=>x.id===t.id);if(found)setSelected(found)}}/>
      </section>}
      {view==="overview"&&<>
-      <div className="mt2-connected-panes">
+      {(assigned.some(t=>t.status!=="done")||delegated.some(t=>t.status!=="done"))?<div className="mt2-connected-panes">
        <section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">MY NEXT ACTIONS</p><h2>Assigned to me</h2></div><button className="mt2-connected-see" onClick={()=>setView("assigned")}>View all</button></div>
         <div className="mt2-connected-task-grid">{visible(assigned).filter(t=>t.status!=="done").slice(0,5).map(taskCard)}{!assigned.some(t=>t.status!=="done")&&<p className="mt2-empty">No tasks assigned to you right now.</p>}</div>
        </section>
        <section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">FOLLOW UP, DON'T CHASE</p><h2>Delegated by me</h2></div><button className="mt2-connected-see" onClick={()=>setView("delegated")}>View all</button></div>
         <div className="mt2-connected-task-grid">{visible(delegated).filter(t=>t.status!=="done").slice(0,5).map(taskCard)}{!delegated.some(t=>t.status!=="done")&&<p className="mt2-empty">Nothing waiting on your team.</p>}</div>
        </section>
-      </div>
+      </div>:<section className="mt2-panel mt2-handoff-empty">
+       <div className="mt2-handoff-icon" aria-hidden="true">⇄</div>
+       <div><p className="mt2-eyebrow">COLLABORATE WHEN YOU NEED TO</p><h2>No active handoffs</h2><p>Tasks you assign or receive will appear here. Your personal tasks stay separate.</p></div>
+       <button type="button" onClick={()=>setView("teams")}>Manage team spaces →</button>
+      </section>}
       <section className="mt2-panel mt2-connected-linked-overview"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">WORK ACROSS APPLICATIONS</p><h2>Connected modules</h2></div><button className="mt2-connected-see" onClick={()=>setView("linked")}>Explore linked tasks</button></div>
        <p>Keep follow-ups connected to their source. Linking work never changes its original permissions.</p>
        <div className="mt2-connected-source-tiles"><Link href="/connect"><span className="mt2-source-chip connect">Connect CRM</span><strong>Open CRM workspace</strong><small>Contacts, opportunities and follow-ups ↗</small></Link><Link href={learningRoute}><span className="mt2-source-chip learning">Learning Portal</span><strong>Open Learning Portal</strong><small>Classes and scheduling ↗</small></Link></div>
