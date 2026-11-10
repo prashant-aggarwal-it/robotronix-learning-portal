@@ -4,6 +4,7 @@ import {useCallback,useEffect,useMemo,useRef,useState,type DragEvent,type FormEv
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
+import {TasksPrimaryNav} from "./TasksPrimaryNav";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2Area,V2Project,V2Priority,V2Status,V2Response,V2Request,V2ModuleLink} from "./model";
 import {v2Colors,v2Statuses,v2StatusNames} from "./model";
@@ -182,14 +183,7 @@ export function TasksV2Board(){
    <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks">
-    <Link href="/tasks"><span className="mt2-nav-emoji">✦</span> My Day</Link>
-    <Link className="is-active" href="/tasks/board" aria-current="page"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
-    <Link href="/tasks/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
-    <Link href="/tasks/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
-    <Link href="/tasks/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
-    <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
-   </nav>
+   <TasksPrimaryNav section="board"/>
    <div className="mt2-sidebar-heading mt2-areas-heading">WORKFLOW</div>
    <p className="mt2-sidebar-help">Group and filter the board above the columns. Drag a card or use its move selector to change status.</p>
    <div className="mt2-sidebar-bottom"><Link href="/tasks">← Back to My Day</Link></div>
