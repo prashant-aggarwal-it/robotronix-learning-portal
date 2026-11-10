@@ -124,7 +124,7 @@ export function TasksV2Board(){
  const allCardsIn=(colId:string,exclude?:string)=>tasks.filter(t=>columnKey(t)===colId&&t.id!==exclude).sort(sortCards);
  const move=async(task:V2Task,colId:string,targetIndex:number)=>{
   if(working)return;
-  if(group==="person"){setError("Assignment changes are managed in Classic Tasks.");return;}
+  if(group==="person"){setError("Assignment changes are managed in Connected Work.");return;}
   if(task.owner_user_id!==userId){setError("Only the task owner can reorder or move this card here.");return;}
   const dest=columns.find(c=>c.id===colId);
   if(!dest)return;
@@ -177,17 +177,16 @@ export function TasksV2Board(){
  return <div className="mt2-shell mt2-board-shell">
   {mobileNav&&<button className="mt2-scrim" aria-label="Close navigation" onClick={()=>setMobileNav(false)}/>}
   <aside className={"mt2-sidebar "+(mobileNav?"mt2-sidebar-open":"")}>
-   <Link href="/tasks/v2" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
-   <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE · V2</span></div>
+   <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
+   <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">MY WORKSPACE</div>
-   <nav aria-label="My Tasks V2">
-    <Link href="/tasks/v2"><span className="mt2-nav-emoji">✦</span> My Day</Link>
-    <Link className="is-active" href="/tasks/v2/board" aria-current="page"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
-    <Link href="/tasks/v2/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
-    <Link href="/tasks/v2/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
-    <Link href="/tasks/v2/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
-    <Link href="/tasks"><span className="mt2-nav-emoji">▤</span> Classic Tasks</Link>
+   <nav aria-label="My Tasks">
+    <Link href="/tasks"><span className="mt2-nav-emoji">✦</span> My Day</Link>
+    <Link className="is-active" href="/tasks/board" aria-current="page"><span className="mt2-nav-emoji">▥</span> Visual Board</Link>
+    <Link href="/tasks/focus"><span className="mt2-nav-emoji">◷</span> Focus & Finish</Link>
+    <Link href="/tasks/planner"><span className="mt2-nav-emoji">▦</span> Weekly Planner</Link>
+    <Link href="/tasks/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
     <Link href="/tasks/calendar"><span className="mt2-nav-emoji">▦</span> Calendar</Link>
    </nav>
    <div className="mt2-sidebar-heading mt2-areas-heading">ORGANISE YOUR WORK</div>
@@ -197,7 +196,7 @@ export function TasksV2Board(){
     <button onClick={()=>setGroup("project")} className={group==="project"?"selected":""}><span className="mt2-area-dot" style={{background:"#a18ad5"}}/>By project</button>
     <button onClick={()=>setGroup("person")} className={group==="person"?"selected":""}><span className="mt2-area-dot" style={{background:"#d1a264"}}/>By person</button>
    </div>
-   <div className="mt2-sidebar-bottom"><Link href="/tasks/v2">← Back to My Day</Link></div>
+   <div className="mt2-sidebar-bottom"><Link href="/tasks">← Back to My Day</Link></div>
   </aside>
   <main className="mt2-main">
    <header className="mt2-header">
@@ -252,7 +251,7 @@ export function TasksV2Board(){
           </div>
           <div className="mt2-card-actions">
            <button type="button" onClick={()=>openDetails(task)}>Details</button>
-           {task.owner_user_id===userId&&task.status!=="done"&&<Link className="mt2-card-focus-link" href={"/tasks/v2/focus?task="+task.id}>▶ Focus</Link>}
+           {task.owner_user_id===userId&&task.status!=="done"&&<Link className="mt2-card-focus-link" href={"/tasks/focus?task="+task.id}>▶ Focus</Link>}
            {movable&&<>
             <button type="button" title="Move earlier" aria-label={"Move "+task.title+" earlier"} disabled={rank<=0||working} onClick={()=>arrowMove(task,col.id,-1)}>↑</button>
             <button type="button" title="Move later" aria-label={"Move "+task.title+" later"} disabled={rank>=allCardsIn(col.id).length-1||working} onClick={()=>arrowMove(task,col.id,1)}>↓</button>
