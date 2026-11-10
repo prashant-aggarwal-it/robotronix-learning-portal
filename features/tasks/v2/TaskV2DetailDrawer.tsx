@@ -137,7 +137,7 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
     <div><span className="mt2-eyebrow">TASK DETAILS</span><h2 id="mt2-task-detail-heading">Make progress, one step at a time.</h2></div>
     <button type="button" aria-label="Close task details" onClick={onClose}>✕</button>
    </div>
-   {!canEdit&&<div className="mt2-drawer-info">This task is shared with you. Open Classic Tasks to manage actions permitted by your workspace.</div>}
+   {!canEdit&&<div className="mt2-drawer-info">This task is shared with you. Use People & Connections for permitted collaboration actions.</div>}
    <div className="mt2-drawer-tabs" role="tablist" aria-label="Task views">
     <button type="button" role="tab" aria-selected={tab==="details"} className={tab==="details"?"active":""} onClick={()=>setTab("details")}>Task & checklist</button>
     <button type="button" role="tab" aria-selected={tab==="people"} className={tab==="people"?"active":""} onClick={()=>setTab("people")}>People & connections</button>
@@ -182,8 +182,8 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
     <TaskV2CollaborationPanel task={task} userId={userId} request={request} onChanged={onChanged}/>
    </div>}
    <div className="mt2-drawer-footer">
-    <Link href={"/tasks/all?task="+task.id}>Open Classic Tasks ↗</Link>
-    {canEdit&&task.status!=="done"&&<Link href={"/tasks/v2/focus?task="+task.id}>▶ Focus on this task</Link>}
+    <Link href={"/tasks/connected?task="+task.id}>Open in Connected Work ↗</Link>
+    {canEdit&&task.status!=="done"&&<Link href={"/tasks/focus?task="+task.id}>▶ Focus on this task</Link>}
     <button type="button" onClick={onClose} className="mt2-drawer-cancel">Close</button>
     {canEdit&&tab==="details"&&<button type="submit" form="mt2-detail-form" disabled={working} className="mt2-drawer-save">{working?"Saving…":"Save changes"}</button>}
    </div>
