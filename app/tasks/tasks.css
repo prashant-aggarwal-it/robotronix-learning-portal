@@ -88,3 +88,24 @@
 .tw-sidebar nav a{margin:2px 0;padding:10px 11px;font-size:13.5px;font-weight:720;border-radius:12px}
 .tw-sidebar-bottom{flex-shrink:0;padding-top:10px}
 @media(max-width:900px){.tw-sidebar{width:280px;flex-basis:280px;left:-300px}.tw-sidebar.tw-sidebar-open{left:0}}
+
+/* CRM is the reference sidebar: final parity rules. */
+.tw-sidebar{width:248px;flex:0 0 248px;padding:23px 14px 13px;background:#fff;border-right:1px solid #e6edf3}
+.tw-sidebar .tw-logo{margin:0;min-height:56px;padding:10px 12px;border:1px solid #e8eef7;border-radius:15px}
+.tw-sidebar .tw-logo img{height:34px}
+.tw-sidebar .tw-product-name{padding:15px 9px 8px;font-size:14px;font-weight:850;color:#15203b}
+.tw-sidebar .tw-product-name span{color:#7e8da4}
+.tw-sidebar .portalWorkspaceSwitch{margin:10px 0 12px;padding:11px;border-radius:12px;background:#f6fbfe}
+.tw-sidebar .tw-side-label{padding:0 11px 10px;margin:0;color:#8a9aaa;font-size:10px;font-weight:750;letter-spacing:.08em}
+.tw-sidebar nav{display:flex;flex-direction:column;gap:4px;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+.tw-sidebar nav a{border:1px solid transparent;border-radius:10px;background:transparent;display:flex;align-items:center;gap:12px;padding:11px 12px;margin:0;width:100%;font-size:13px;font-weight:600;color:#53687d;box-shadow:none}
+.tw-sidebar nav a>span{width:21px;font-size:18px;color:#7c91a3}
+.tw-sidebar nav a:hover{background:#f2f8fc;color:#183e61}
+.tw-sidebar nav a.active{background:#e8f4fa;color:#086b98;border:1px solid #d2eaf4;box-shadow:none}
+.tw-sidebar nav a.active>span{color:#087fa7}
+.tw-sidebar-bottom{border-top:1px solid #edf1f5;padding:10px 5px 0;margin-top:0}
+.tw-sidebar .tw-private{padding:8px;background:transparent;border-radius:0}
+.tw-sidebar .tw-private small{font-size:10px}
+.tw-sidebar .tw-back{padding:8px 9px 0}
+@media(max-width:1150px) and (min-width:901px){.tw-sidebar{width:248px;flex-basis:248px}}
+@media(max-width:900px){.tw-sidebar{width:248px;flex-basis:248px;left:-280px}.tw-sidebar.tw-sidebar-open{left:0}}
