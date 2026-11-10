@@ -109,3 +109,9 @@
 .tw-sidebar .tw-back{padding:8px 9px 0}
 @media(max-width:1150px) and (min-width:901px){.tw-sidebar{width:248px;flex-basis:248px}}
 @media(max-width:900px){.tw-sidebar{width:248px;flex-basis:248px;left:-280px}.tw-sidebar.tw-sidebar-open{left:0}}
+
+/* Exact CRM brand and application-switcher spacing. */
+.tw-sidebar .tw-logo{min-height:56px;padding:10px 12px;margin:0}
+.tw-sidebar .tw-product-name{padding:15px 9px 8px;font-size:14px;line-height:normal}
+.tw-sidebar .tw-product-name span{margin-top:4px}
+.tw-sidebar .portalWorkspaceSwitch{margin:10px 0 12px}
