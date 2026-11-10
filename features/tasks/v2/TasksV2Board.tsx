@@ -88,16 +88,18 @@ export function TasksV2Board(){
    ...projects.map(p=>({id:p.id,title:p.name,subtitle:p.status==="active"?"Project":p.status,color:v2Colors[areaById.get(p.area_id||"")?.color||"slate"]||v2Colors.slate}))
   ];
   return [
-   {id:"me",title:"Assigned to me",subtitle:"My responsibilities",color:"#3382bd"},
-   {id:"other",title:"Assigned to others",subtitle:"Delegated work",color:"#b98351"},
-   {id:"none",title:"Unassigned",subtitle:"No assignee",color:"#9caec0"}
+   {id:"me",title:"My tasks",subtitle:"Owned or assigned to me",color:"#3382bd"},
+   {id:"other",title:"Delegated",subtitle:"Assigned to other people",color:"#b98351"},
+   {id:"shared",title:"Shared with me",subtitle:"Other workspace tasks",color:"#9caec0"}
   ];
  },[group,areas,projects,areaById]);
  const columnKey=useCallback((task:V2Task):string=>{
   if(group==="status")return task.status;
   if(group==="area")return task.area_id&&areaById.has(task.area_id)?task.area_id:"none";
   if(group==="project")return task.project_id&&projectById.has(task.project_id)?task.project_id:"none";
-  return task.assignee_user_id===null?"none":task.assignee_user_id===userId?"me":"other";
+  if(task.assignee_user_id===userId||(task.owner_user_id===userId&&!task.assignee_user_id))return "me";
+  if(task.owner_user_id===userId&&task.assignee_user_id&&task.assignee_user_id!==userId)return "other";
+  return "shared";
  },[group,areaById,projectById,userId]);
  const filtered=useMemo(()=>{
   const q=search.trim().toLowerCase();
@@ -253,7 +255,7 @@ export function TasksV2Board(){
          </article>;
         })}
         {!cards.length&&<div className="mt2-column-empty">No cards here. {group==="person"?"": "Drop a card to get started."}</div>}
-        {group!=="person"&&<button className="mt2-column-drop-target" disabled={working} onClick={()=>quickRef.current?.focus()} type="button">＋ Capture another task</button>}
+        {group!=="person"&&<button className="mt2-column-drop-target" disabled={working} onClick={()=>quickRef.current?.focus()} type="button">＋ Add to Inbox</button>}
        </div>
       </section>;
      })}
