@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties,type FormEvent} from "react";
 import {useRouter} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
@@ -167,7 +167,7 @@ export function TasksV2Dashboard(){
   if(!next){setError("Your Top 3 is full. Remove one focus star first.");return;}
   await updateTask(task,"/api/tasks/"+task.id,{focus_date:today,focus_rank:next});
  };
- const capture=async(event:React.FormEvent)=>{
+ const capture=async(event:FormEvent)=>{
   event.preventDefault();
   const title=quick.trim();
   if(!title||busy)return;
@@ -187,7 +187,7 @@ export function TasksV2Dashboard(){
   }catch(e){setError(e instanceof Error?e.message:"Couldn't save task.");}
   finally{setBusy(false)}
  };
- const saveCollection=async(event:React.FormEvent)=>{
+ const saveCollection=async(event:FormEvent)=>{
   event.preventDefault();
   if(!createPanel||!newName.trim()||busy)return;
   setBusy(true);setError("");
@@ -212,7 +212,7 @@ export function TasksV2Dashboard(){
   setEditEstimate(task.estimated_minutes===null?"":String(task.estimated_minutes));
   setEditImportant(task.important);
  };
- const saveDetail=async(event:React.FormEvent)=>{
+ const saveDetail=async(event:FormEvent)=>{
   event.preventDefault();if(!selected||busy)return;
   setBusy(true);setError("");
   try{
