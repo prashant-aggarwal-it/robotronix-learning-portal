@@ -24,5 +24,5 @@ begin
    where i.owner_user_id=p_actor_id and i.status=t.status and i.archived_at is null and i.id<>t.id
  ) where t.id=(created->>'id')::uuid returning to_jsonb(t) into created;
  return created;
-end $;
+end $$;
 commit;
