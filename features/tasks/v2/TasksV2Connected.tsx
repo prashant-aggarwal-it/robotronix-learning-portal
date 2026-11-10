@@ -162,7 +162,7 @@ export function TasksV2Connected(){
     <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your accessible tasks only</span></div>
    </header>
    <div className="mt2-page mt2-connected-page">
-    <div className="mt2-heading"><div><p className="mt2-eyebrow">WORK TOGETHER · STAY IN CONTEXT</p><h1>All your connected work.</h1><p className="mt2-subtitle">A clear view of shared tasks, delegated work, CRM follow-ups and Learning Portal links.</p></div></div>
+    <div className="mt2-heading"><div><p className="mt2-eyebrow">WORK TOGETHER · STAY IN CONTEXT</p><h1>Connected work, made simple.</h1><p className="mt2-subtitle">A clear view of shared tasks, delegated work, CRM follow-ups and Learning Portal links.</p></div></div>
     {error&&<div role="alert" className="mt2-error">{error}<button onClick={()=>setError("")} aria-label="Dismiss">✕</button></div>}
     {notice&&<div role="status" className="mt2-notice">{notice}<button onClick={()=>setNotice("")} aria-label="Dismiss">✕</button></div>}
     {loading?<div className="mt2-loading">Loading workspaces, linked tasks and access…</div>:<>
@@ -180,7 +180,7 @@ export function TasksV2Connected(){
        <div className="mt2-workspace-preview-actions">{workspaces.slice(0,3).map(w=><span className="mt2-workspace-pill" key={w.id}>{w.name}</span>)}<button type="button" onClick={()=>setView("teams")}>Manage team spaces →</button></div>
       </section>}
       {view==="teams"&&<section className="mt2-connected-team">
-      <div className="mt2-connected-section-title"><div><p className="mt2-eyebrow">INVITE · ASSIGN · DISCUSS</p><h2>Team Spaces</h2></div><span>Uses existing workspace permissions and invitations</span></div>
+      <div className="mt2-connected-section-title"><div><p className="mt2-eyebrow">INVITE · ASSIGN · DISCUSS</p><h2>Team Spaces</h2></div><span>Invite teammates, manage access and keep work moving</span></div>
       <TeamSpaces request={request} tasks={tasks} userId={userId} onUpdated={refresh} onOpenTask={t=>{const found=tasks.find(x=>x.id===t.id);if(found)setSelected(found)}}/>
      </section>}
      {view==="overview"&&<>
@@ -199,7 +199,7 @@ export function TasksV2Connected(){
      </>}
      {(view==="assigned"||view==="delegated")&&<section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">{view==="assigned"?"RESPONSIBILITIES GIVEN TO YOU":"FOLLOW-UP & HANDOFFS"}</p><h2>{view==="assigned"?"Assigned to me":"Delegated by me"}</h2></div><span className="mt2-count">{(view==="assigned"?assigned:delegated).length}</span></div>
       <div className="mt2-connected-task-grid two">{visible(view==="assigned"?assigned:delegated).map(taskCard)}</div>{!(view==="assigned"?assigned:delegated).length&&<p className="mt2-empty">Nothing in this view right now.</p>}</section>}
-     {view==="linked"&&<section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">ONE TASK, ONE SOURCE OF TRUTH</p><h2>Connected source records</h2><small>Only records still accessible through your CRM/Learning membership are shown.</small></div><span className="mt2-count">{availableLinks.length}</span></div>
+     {view==="linked"&&<section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">ONE TASK, ONE SOURCE OF TRUTH</p><h2>Connected source records</h2><small>Your connected records, with their original access permissions.</small></div><span className="mt2-count">{availableLinks.length}</span></div>
       <div className="mt2-module-list">
        {availableLinks.filter(l=>!search||[l.title,l.module,l.resource].some(x=>x.toLowerCase().includes(search.toLowerCase()))).map(l=><article key={l.module+"-"+l.resource_id} className="mt2-module-item">
         <span className={"mt2-source-chip "+l.module}>{moduleLabels[l.module]}</span>
