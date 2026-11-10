@@ -8,7 +8,7 @@ export type V2Task={
  important:boolean;urgent:boolean;someday:boolean;reschedule_count:number;estimated_minutes:number|null;
  done_definition:string;resume_note:string;waiting_for:string;followup_date:string|null;
  board_rank:number;created_at:string;updated_at:string;
- focus_date:string|null;focus_rank:number|null;
+ focus_date:string|null;focus_rank:number|null;reminder_at:string|null;recurrence:"none"|"daily"|"weekly"|"monthly";
  subtask_total?:number;subtask_done?:number;
 };
 export type V2Area={id:string;name:string;color:string;icon:string};
