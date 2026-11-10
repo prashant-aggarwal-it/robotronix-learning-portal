@@ -34,7 +34,7 @@
 .mt2-daily-grid,.mt2-lower-grid{gap:14px;margin-bottom:15px}
 .mt2-daily-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .mt2-lower-grid{grid-template-columns:minmax(0,1.35fr) minmax(320px,.85fr)}
-.mt2-lower-grid--wide{grid-template-columns:minmax(0,1fr)}
+.mt2-shell .mt2-lower-grid--wide{grid-template-columns:minmax(0,1fr)}
 .mt2-right-stack{gap:14px}
 .mt2-focus-line .mt2-task{padding:9px 2px}
 .mt2-progress-empty{margin-top:13px!important;border-radius:11px;background:#f7fafe}
@@ -66,13 +66,13 @@
 /* Board: fewer distractions, clearer cards, no doubled grouping controls. */
 .mt2-board-page{padding-bottom:40px}
 .mt2-board-tools{gap:12px;padding:11px 15px;margin-bottom:13px}
-.mt2-board-columns{gap:13px;grid-auto-columns:minmax(270px,1fr)}
-.mt2-board-column{min-height:270px;max-height:min(76vh,860px);border-radius:13px;background:#f0f4f8}
-.mt2-board-column-head{padding:14px 14px 11px}
+.mt2-shell .mt2-board-columns{gap:13px;grid-auto-columns:minmax(270px,1fr)}
+.mt2-shell .mt2-board-column{min-height:270px;max-height:min(76vh,860px);border-radius:13px;background:#f0f4f8}
+.mt2-shell .mt2-board-column-head{padding:14px 14px 11px}
 .mt2-board-column-head h2{font-size:14px}
 .mt2-board-column-head small{font-size:11px}
 .mt2-board-card-list{min-height:120px}
-.mt2-board-card{padding:12px 13px 10px;margin-bottom:9px;border-radius:10px;box-shadow:0 2px 10px #1a41670a}
+.mt2-shell .mt2-board-card{padding:12px 13px 10px;margin-bottom:9px;border-radius:10px;box-shadow:0 2px 10px #1a41670a}
 .mt2-card-title{font-size:14px;line-height:1.45;margin-bottom:9px}
 .mt2-card-actions{gap:6px;padding-top:9px;margin-top:9px}
 .mt2-card-actions button,.mt2-card-actions .mt2-card-focus-link{font-size:11px;min-height:30px}
@@ -80,18 +80,18 @@
 .mt2-board-group button,.mt2-board-filters input,.mt2-board-filters select,.mt2-board-filters label{font-size:12px}
 
 /* Focus: no artificial 460px tall card or detached row of preferences. */
-.mt2-focus-grid{grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);align-items:start;gap:14px}
+.mt2-shell .mt2-focus-grid{grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);align-items:start;gap:14px}
 .mt2-focus-primary{display:grid;gap:14px;align-content:start;min-width:0}
-.mt2-focus-session{min-height:0}
-.mt2-focus-bottom{display:grid;grid-template-columns:1fr;gap:14px;margin:0;align-items:start}
-.mt2-focus-aside{gap:14px}
+.mt2-shell .mt2-focus-session{min-height:0}
+.mt2-shell .mt2-focus-bottom{display:grid;grid-template-columns:1fr;gap:14px;margin:0;align-items:start}
+.mt2-shell .mt2-focus-aside{gap:14px}
 .mt2-focus-label{margin-top:9px}
 .mt2-focus-mode-buttons{margin:15px 0}
 .mt2-focus-current>p,.mt2-focus-explain{font-size:12px;line-height:1.6}
 .mt2-focus-settings label,.mt2-focus-setup label{font-size:13px}
 
 /* Connected Work: action-first overview; detailed administration is in Team Spaces. */
-.mt2-connected-metrics{gap:12px;margin-bottom:14px}
+.mt2-shell .mt2-connected-metrics{gap:12px;margin-bottom:14px}
 .mt2-connected-metrics>button{padding:15px 17px;gap:5px;border-radius:12px}
 .mt2-connected-metrics strong{font-size:27px}
 .mt2-connected-metrics span{font-size:12px}
@@ -104,9 +104,9 @@
 .mt2-workspace-pill{font-size:11px;color:#5e7085;border-radius:8px;background:#f2f6fa;padding:8px 10px}
 .mt2-workspace-preview-actions button{padding:10px 13px;border:1px solid #c7e4f3;background:#eaf6fd;color:#2079a9;border-radius:9px;white-space:nowrap;font-size:12px;font-weight:750}
 .mt2-connected-panes{gap:14px;margin-bottom:14px}
-.mt2-connected-panes>.mt2-panel{min-height:0}
+.mt2-shell .mt2-connected-panes>.mt2-panel{min-height:0}
 .mt2-connected-source-tiles a{padding:12px}
-.mt2-connected-team .tw-team-grid{align-items:start}
+.mt2-shell .mt2-connected-team .tw-team-grid{align-items:start}
 .mt2-connected-team .tw-panel{border-radius:13px}
 .mt2-connected-team .tw-team-grid button,.mt2-connected-team .tw-team-grid input,.mt2-connected-team .tw-team-grid select{font-size:13px}
 
@@ -125,20 +125,20 @@
 @media(max-width:1000px){
  .mt2-daily-grid,.mt2-lower-grid{grid-template-columns:1fr}
  .mt2-right-stack{grid-template-columns:repeat(2,minmax(0,1fr))}
- .mt2-focus-grid{grid-template-columns:1fr}
- .mt2-focus-aside{grid-template-columns:repeat(2,minmax(0,1fr))}
- .mt2-board-columns{grid-auto-columns:300px}
+ .mt2-shell .mt2-focus-grid{grid-template-columns:1fr}
+ .mt2-shell .mt2-focus-aside{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt2-shell .mt2-board-columns{grid-auto-columns:300px}
  .mt2-workspace-preview{flex-wrap:wrap}
 }
 @media(max-width:700px){
  .mt2-page{padding:20px 14px 50px}
  .mt2-header{padding:0 16px}
  .mt2-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
- .mt2-daily-grid,.mt2-lower-grid,.mt2-right-stack,.mt2-focus-aside{grid-template-columns:1fr}
+ .mt2-daily-grid,.mt2-lower-grid,.mt2-right-stack,.mt2-shell .mt2-focus-aside{grid-template-columns:1fr}
  .mt2-task-list--grid{grid-template-columns:1fr}
  .mt2-heading h1{font-size:30px}
  .mt2-panel{padding:17px}
- .mt2-board-columns{grid-auto-columns:minmax(270px,80vw)}
+ .mt2-shell .mt2-board-columns{grid-auto-columns:minmax(270px,80vw)}
  .mt2-workspace-preview-actions{justify-content:flex-start}
  .mt2-connected-panes{grid-template-columns:1fr}
 }
@@ -147,8 +147,8 @@
  .mt2-metric{padding:13px}
  .mt2-metric strong{font-size:26px}
  .mt2-task-title{font-size:13px}
- .mt2-focus-grid{grid-template-columns:1fr}
- .mt2-board-columns{grid-auto-columns:84vw}
+ .mt2-shell .mt2-focus-grid{grid-template-columns:1fr}
+ .mt2-shell .mt2-board-columns{grid-auto-columns:84vw}
  .mt2-workspace-pill{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 @media(prefers-reduced-motion:reduce){.mt2-shell *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
