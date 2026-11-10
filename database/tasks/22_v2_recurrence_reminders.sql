@@ -15,7 +15,7 @@ begin
  select * into original from tasks.items where id=p_task_id and owner_user_id=p_actor_id and archived_at is null for update;
  if original.id is null then return null;end if;
  legacy:=p_data - 'area_id' - 'project_id' - 'important' - 'estimated_minutes' - 'done_definition' - 'resume_note' - 'waiting_for' - 'followup_date';
- extra:=p_data - 'title' - 'description' - 'priority' - 'scheduled_date' - 'due_at' - 'status';
+ extra:=p_data - 'title' - 'description' - 'priority' - 'scheduled_date' - 'due_at' - 'status' - 'reminder_at' - 'recurrence';
  if p_data ? 'status' and p_data->>'status'='waiting' then
   if original.status='done' then
    perform public.task_update(p_actor_id,p_task_id,'{"status":"todo"}'::jsonb);
