@@ -72,7 +72,8 @@
     "check:zoom-jit": "node scripts/check-zoom-jit.mjs",
     "qa:all-roles-visual": "playwright test qa/all-roles-visual-audit.spec.ts --project=desktop-chromium",
     "check:action-buttons": "node scripts/check-action-button-consistency.mjs",
-    "audit:portal-routes": "node scripts/audit-portal-route-inventory.mjs"
+    "audit:portal-routes": "node scripts/audit-portal-route-inventory.mjs",
+    "test:tasks-v2": "node --experimental-strip-types --test lib/server/tasks/v2-validation.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
