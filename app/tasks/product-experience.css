@@ -118,3 +118,18 @@
 @media(prefers-reduced-motion:reduce){
  .mt2-recommendation,.mt2-weekly-track span,.mt2-shell .mt2-metrics--actionable button.mt2-metric,.mt2-shell .mt2-metrics--actionable a.mt2-metric{transition:none}
 }
+
+
+/* Fast, meaningful filters: no separate filter screen required. */
+.mt2-smart-filters{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:-1px 0 14px}
+.mt2-smart-filters button{display:flex;align-items:center;gap:7px;background:#f2f7fb;color:#58778e;border:1px solid #e1eaf3;border-radius:20px;padding:8px 11px;font-size:12px;font-weight:740}
+.mt2-smart-filters button.is-active{background:#e2f3fc;color:#166e9d;border-color:#9ed2eb}
+.mt2-smart-filters button span{border-radius:12px;padding:1px 5px;background:#fff;color:#718a9b;font-size:10px}
+.mt2-smart-filters button:hover{border-color:#92c9e3}
+.mt2-handoff-empty{display:flex;align-items:center;gap:17px;padding:18px 22px;margin-bottom:14px;background:linear-gradient(105deg,#fff,#f5faff)}
+.mt2-handoff-icon{display:grid;place-items:center;width:46px;height:46px;flex:none;border-radius:14px;background:#e5f4fd;color:#2687b3;font-size:23px}
+.mt2-handoff-empty>div:nth-child(2){flex:1;min-width:0}
+.mt2-handoff-empty h2{font-size:16px;margin:3px 0;color:#29455d}
+.mt2-handoff-empty p:not(.mt2-eyebrow){font-size:12px;color:#74899d;margin:0;line-height:1.6}
+.mt2-handoff-empty button{border:1px solid #c8e7f5;background:#ebf7fd;color:#217eaa;border-radius:9px;padding:11px 14px;font-size:12px;font-weight:780;white-space:nowrap}
+@media(max-width:750px){.mt2-handoff-empty{flex-wrap:wrap}.mt2-handoff-empty button{margin-left:0}.mt2-smart-filters{gap:6px}}
