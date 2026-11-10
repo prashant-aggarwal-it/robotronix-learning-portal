@@ -12,6 +12,7 @@ type Task=V2Task;
 type Area=V2Area;
 type Project=V2Project;
 type ApiResult<T>={ok:boolean;items?:T[];item?:T;error?:string};
+type FocusSummary={active:null|{task_id:string;state:"running"|"paused";planned_minutes:number};commitments:{area_id:string;target_sessions:number;completed_sessions:number}[]};
 
 const COLORS:Record<string,string>={blue:"#3777bb",green:"#229b83",purple:"#8565cd",amber:"#bb873d",red:"#d26763",slate:"#718399"};
 const timeLabel=(minutes:number|null)=>minutes?minutes>=60?Math.floor(minutes/60)+"h"+(minutes%60?" "+minutes%60+"m":""):minutes+"m":"";
@@ -66,6 +67,7 @@ export function TasksV2Dashboard(){
  const [newAreaForProject,setNewAreaForProject]=useState("");
  const [newColor,setNewColor]=useState("blue");
  const [selected,setSelected]=useState<Task|null>(null);
+ const [focusSummary,setFocusSummary]=useState<FocusSummary|null>(null);
  const [today,setToday]=useState(()=>dayKey(new Date()));
 
  const request=useCallback(async <T,>(url:string,init:RequestInit={}):Promise<T>=>{
@@ -90,6 +92,8 @@ export function TasksV2Dashboard(){
     const batch=page.items||[];all.push(...batch);
     if(batch.length<100)break;
    }
+   const focus=await request<{ok:boolean;focus:FocusSummary}>("/api/tasks/v2/focus").catch(()=>null);
+   if(focus?.focus)setFocusSummary(focus.focus);
    setAreas(areasData.items||[]);
    setProjects(projectsData.items||[]);
    setTasks([...new Map(all.map(item=>[item.id,item])).values()]);
@@ -264,6 +268,16 @@ export function TasksV2Dashboard(){
      </div>
     </form>
     {loading?<div className="mt2-loading">Loading your real tasks and areas…</div>:<>
+     {view==="day"&&<section className="mt2-focus-strip" aria-label="Focus Balance">
+      <div className="mt2-focus-strip-icon">◷</div>
+      <div className="mt2-focus-strip-copy"><strong>{focusSummary?.active?"Focus session in progress":"One task. One finish line."}</strong>
+       <p>{focusSummary?.active
+        ?"Your current session is "+focusSummary.active.state+". Return to it and decide when to switch."
+        :focusSummary?.commitments?.some(c=>c.completed_sessions<c.target_sessions)
+          ?(focusSummary.commitments.filter(c=>c.completed_sessions<c.target_sessions).length+" protected Areas need a little attention this week.")
+          :"Choose a focus session, park distractions, and make room for other priorities."}</p>
+      </div><Link href="/tasks/v2/focus">{focusSummary?.active?"Resume Focus":"Open Focus & Finish"} →</Link>
+     </section>}
      <section className="mt2-metrics" aria-label="Task overview">
       <div className="mt2-metric"><span>OPEN TASKS</span><strong>{active.length}</strong><small>Across your areas</small></div>
       <div className="mt2-metric"><span>PLANNED TODAY</span><strong>{todayItems.filter(t=>t.status!=="done").length}</strong><small>Today's open commitments</small></div>
