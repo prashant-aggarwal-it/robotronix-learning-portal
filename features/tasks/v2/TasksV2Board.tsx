@@ -21,7 +21,7 @@ export function TasksV2Board(){
  const [group,setGroup]=useState<Grouping>("status");
  const [search,setSearch]=useState("");
  const [priority,setPriority]=useState<"all"|V2Priority>("all");
- const [showDone,setShowDone]=useState(true);
+ const [showDone,setShowDone]=useState(false);
  const [loading,setLoading]=useState(true);
  const [working,setWorking]=useState(false);
  const [dragId,setDragId]=useState<string|null>(null);
@@ -190,13 +190,8 @@ export function TasksV2Board(){
     <Link href="/tasks/connected"><span className="mt2-nav-emoji">◇</span> Connected Work</Link>
     <Link href="/tasks/settings"><span className="mt2-nav-emoji">⚙</span> Settings & Data</Link>
    </nav>
-   <div className="mt2-sidebar-heading mt2-areas-heading">ORGANISE YOUR WORK</div>
-   <div className="mt2-areas-nav">
-    <button onClick={()=>setGroup("status")} className={group==="status"?"selected":""}><span className="mt2-area-dot" style={{background:"#5c96be"}}/>By status</button>
-    <button onClick={()=>setGroup("area")} className={group==="area"?"selected":""}><span className="mt2-area-dot" style={{background:"#41a78a"}}/>By area</button>
-    <button onClick={()=>setGroup("project")} className={group==="project"?"selected":""}><span className="mt2-area-dot" style={{background:"#a18ad5"}}/>By project</button>
-    <button onClick={()=>setGroup("person")} className={group==="person"?"selected":""}><span className="mt2-area-dot" style={{background:"#d1a264"}}/>By person</button>
-   </div>
+   <div className="mt2-sidebar-heading mt2-areas-heading">WORKFLOW</div>
+   <p className="mt2-sidebar-help">Group and filter the board above the columns. Drag a card or use its move selector to change status.</p>
    <div className="mt2-sidebar-bottom"><Link href="/tasks">← Back to My Day</Link></div>
   </aside>
   <main className="mt2-main">
@@ -206,7 +201,7 @@ export function TasksV2Board(){
     <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Live task workspace</span><button className="mt2-header-add" onClick={()=>quickRef.current?.focus()}>+ New task</button></div>
    </header>
    <div className="mt2-page mt2-board-page">
-    <div className="mt2-heading"><div><p className="mt2-eyebrow">ONE PLACE FOR EVERYTHING</p><h1>Make progress visible.</h1><p className="mt2-subtitle">Drag, organise, and move toward done. Every card is a real task.</p></div><div className="mt2-board-summary"><strong>{totalOpen}</strong><span>Open</span><strong>{totalDone}</strong><span>Done</span></div></div>
+    <div className="mt2-heading"><div><p className="mt2-eyebrow">VISUAL WORKFLOW</p><h1>Task board</h1><p className="mt2-subtitle">See what is next, underway and waiting for a response.</p></div><div className="mt2-board-summary"><strong>{totalOpen}</strong><span>Open</span><strong>{totalDone}</strong><span>Done</span></div></div>
     {error&&<div className="mt2-error" role="alert">{error}<button aria-label="Dismiss" onClick={()=>setError("")}>✕</button></div>}
     {notice&&<div className="mt2-notice" role="status">{notice}<button aria-label="Dismiss" onClick={()=>setNotice("")}>✕</button></div>}
     <form className="mt2-board-capture" onSubmit={capture}><span>＋</span><input ref={quickRef} value={quick} onChange={e=>setQuick(e.target.value)} maxLength={240} aria-label="Quick capture task" placeholder="Quick capture — type something and press Enter…"/><button disabled={working||!quick.trim()} type="submit">Add task</button></form>
@@ -215,7 +210,7 @@ export function TasksV2Board(){
      <div className="mt2-board-filters"><input aria-label="Search board" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search cards..."/><select aria-label="Filter priority" value={priority} onChange={e=>setPriority(e.target.value as "all"|V2Priority)}><option value="all">All priorities</option><option value="high">High priority</option><option value="medium">Normal</option><option value="low">Low</option></select><label><input type="checkbox" checked={showDone} onChange={e=>setShowDone(e.target.checked)}/> Show done</label></div>
     </div>
     {loading?<div className="mt2-loading">Loading your board and checklist progress…</div>:<div className="mt2-board-columns" aria-label={"Board grouped by "+group}>
-     {columns.map(col=>{
+     {columns.filter(c=>group!=="status"||showDone||c.id!=="done").map(col=>{
       const cards=visibleByColumn.get(col.id)||[];
       return <section className={"mt2-board-column "+(overColumn===col.id?"mt2-column-over":"")} key={col.id}
        aria-label={col.title} onDragOver={e=>{if(group!=="person"&&dragId){e.preventDefault();setOverColumn(col.id)}}}
@@ -264,7 +259,7 @@ export function TasksV2Board(){
          </article>;
         })}
         {!cards.length&&<div className="mt2-column-empty">No cards here. {group==="person"?"": "Drop a card to get started."}</div>}
-        {group!=="person"&&<button className="mt2-column-drop-target" disabled={working} onClick={()=>quickRef.current?.focus()} type="button">＋ Add to Inbox</button>}
+        {group!=="person"&&<button className="mt2-column-drop-target" disabled={working} onClick={()=>quickRef.current?.focus()} type="button">＋ Capture a task</button>}
        </div>
       </section>;
      })}
