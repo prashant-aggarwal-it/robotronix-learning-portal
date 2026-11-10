@@ -184,7 +184,7 @@ export function TasksV2Board(){
    <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
    <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE</span></div>
    <ApplicationSwitcher current="tasks"/>
-   <div className="mt2-sidebar-heading">MY WORKSPACE</div>
+   <div className="mt2-sidebar-heading">TASKS</div>
    <TasksPrimaryNav section="board"/>
    <div className="mt2-sidebar-heading mt2-areas-heading">WORKFLOW</div>
    <p className="mt2-sidebar-help">Group and filter the board above the columns. Drag a card or use its move selector to change status.</p>
