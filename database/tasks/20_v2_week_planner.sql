@@ -25,6 +25,8 @@ begin
  update tasks.items i set
   scheduled_date=case when p_action='plan' then p_date else null end,
   someday=p_action='someday',
+  focus_date=case when p_action='someday' then null else i.focus_date end,
+  focus_rank=case when p_action='someday' then null else i.focus_rank end,
   reschedule_count=case when p_action='plan' and i.scheduled_date is distinct from p_date
        and i.scheduled_date is not null then least(1000000,i.reschedule_count+1) else i.reschedule_count end,
   updated_at=now()
