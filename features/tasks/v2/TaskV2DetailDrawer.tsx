@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {TaskV2CollaborationPanel} from "./TaskV2CollaborationPanel";
 import {useCallback,useEffect,useMemo,useState,type FormEvent} from "react";
 import type {V2Task,V2Area,V2Project,V2Status,V2Priority,V2Response,V2Request} from "./model";
 import {v2StatusNames} from "./model";
@@ -39,6 +40,7 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
  const [working,setWorking]=useState(false);
  const [loadingSteps,setLoadingSteps]=useState(false);
  const [error,setError]=useState("");
+ const [tab,setTab]=useState<"details"|"people">("details");
  const canEdit=Boolean(task&&userId===task.owner_user_id);
  const accessibleProjects=useMemo(()=>projects.filter(p=>!areaId||!p.area_id||p.area_id===areaId),[projects,areaId]);
  useEffect(()=>{
@@ -51,7 +53,7 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
   setImportant(Boolean(task.important));setEstimate(task.estimated_minutes==null?"":String(task.estimated_minutes));
   setDoneDefinition(task.done_definition||"");setResumeNote(task.resume_note||"");
   setWaitingFor(task.waiting_for||"");setFollowup(task.followup_date||"");
-  setSubtasks([]);setNewStep("");setError("");
+  setSubtasks([]);setNewStep("");setError("");setTab("details");
  },[task?.id]);
  const loadSteps=useCallback(async()=>{
   if(!task)return;
@@ -136,7 +138,12 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
     <button type="button" aria-label="Close task details" onClick={onClose}>✕</button>
    </div>
    {!canEdit&&<div className="mt2-drawer-info">This task is shared with you. Open Classic Tasks to manage actions permitted by your workspace.</div>}
+   <div className="mt2-drawer-tabs" role="tablist" aria-label="Task views">
+    <button type="button" role="tab" aria-selected={tab==="details"} className={tab==="details"?"active":""} onClick={()=>setTab("details")}>Task & checklist</button>
+    <button type="button" role="tab" aria-selected={tab==="people"} className={tab==="people"?"active":""} onClick={()=>setTab("people")}>People & connections</button>
+   </div>
    {error&&<div className="mt2-error" role="alert">{error}</div>}
+   <div className={"mt2-drawer-pane "+(tab==="details"?"":"mt2-hidden")}>
    <form id="mt2-detail-form" className="mt2-detail-form" onSubmit={save}>
     <fieldset disabled={!canEdit||working}>
      <label className="mt2-form-field mt2-title-field">Task title<input aria-label="Task title" maxLength={240} required value={title} onChange={e=>setTitle(e.target.value)}/></label>
@@ -170,11 +177,15 @@ export function TaskV2DetailDrawer({task,areas,projects,userId,request,onClose,o
     </div>):<p className="mt2-empty">No subtasks yet. Add your first small step.</p>}
     {canEdit&&<form className="mt2-new-step" onSubmit={addStep}><input maxLength={240} aria-label="New subtask" value={newStep} onChange={e=>setNewStep(e.target.value)} placeholder="Add a step..."/><button disabled={working||!newStep.trim()} type="submit">Add</button></form>}
    </section>
+   </div>
+   {tab==="people"&&<div className="mt2-drawer-people">
+    <TaskV2CollaborationPanel task={task} userId={userId} request={request} onChanged={onChanged}/>
+   </div>}
    <div className="mt2-drawer-footer">
     <Link href={"/tasks/all?task="+task.id}>Open Classic Tasks ↗</Link>
     {canEdit&&task.status!=="done"&&<Link href={"/tasks/v2/focus?task="+task.id}>▶ Focus on this task</Link>}
     <button type="button" onClick={onClose} className="mt2-drawer-cancel">Close</button>
-    {canEdit&&<button type="submit" form="mt2-detail-form" disabled={working} className="mt2-drawer-save">{working?"Saving…":"Save changes"}</button>}
+    {canEdit&&tab==="details"&&<button type="submit" form="mt2-detail-form" disabled={working} className="mt2-drawer-save">{working?"Saving…":"Save changes"}</button>}
    </div>
   </aside>
  </div>;
