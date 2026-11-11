@@ -9,7 +9,9 @@ export function GET(){
     const deployment=resolveDeploymentConfig(process.env);
     return NextResponse.json({
       ok:true,
+      mode:deployment.mode,
       products:deployment.products,
+      legacyDefault:deployment.legacyDefault,
       integrations:deployment.integrations,
       defaultPath:deployment.products.includes("portal")?"/":
         deployment.products.includes("crm")?"/connect":"/tasks"
