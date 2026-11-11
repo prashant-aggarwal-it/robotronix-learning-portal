@@ -7,7 +7,11 @@ DO $gate$ BEGIN
  OR to_regclass('public.trainers') IS NULL THEN
   RAISE EXCEPTION 'Full Portal + CRM + Tasks installation required';
  END IF;
-END $gate$;
+IF to_regprocedure('public.task_module_link(uuid,text,text,uuid,uuid)') IS NOT NULL
+   OR to_regprocedure('public.task_module_links_list(uuid,text,uuid)') IS NOT NULL THEN
+  RAISE EXCEPTION 'A task link implementation already exists; install exactly one customer package';
+ END IF;
+ END $gate$;
 -- public.task_module_link(p_actor_id uuid, p_module text, p_resource text, p_resource_id uuid, p_tenant_id uuid)
 CREATE OR REPLACE FUNCTION public.task_module_link(p_actor_id uuid, p_module text, p_resource text, p_resource_id uuid, p_tenant_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
