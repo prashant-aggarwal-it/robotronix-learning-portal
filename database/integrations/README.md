@@ -1,30 +1,31 @@
-# Optional integrations — install only when both required products exist
+# Optional integration packages — final product-specific SQL
 
-The `database/canonical` core modules are installable independently at the **database** level. This directory restores cross-product behavior without making it a prerequisite for the core modules.
+Each customer's core is installed from `database/canonical`. Cross-product functions, business synchronization and Portal notifications install **only when those products coexist**.
 
-| Integration script | Requires | Functionality |
+| File | Required modules | Installs |
 | --- | --- | --- |
-| [01_crm_portal.sql](01_crm_portal.sql) | Connect CRM + Learning Portal | Demo booking, admission handoffs, Portal lifecycle, CRM follow-ups, guarded Won-stage trigger |
-| [02_tasks_crm.sql](02_tasks_crm.sql) | Tasks + Connect CRM | CRM task/contact/opportunity links and bidirectional task-status synchronization |
-| [03_tasks_portal_notifications.sql](03_tasks_portal_notifications.sql) | Tasks + Learning Portal | Forward Tasks reminders and assignment notifications into Portal notifications |
-| [04_full_suite_task_links.sql](04_full_suite_task_links.sql) | Tasks + CRM + Portal | Extend the Tasks module-link RPCs to support Portal class events alongside CRM records |
+| [01_crm_portal.sql](01_crm_portal.sql) | CRM + Portal | Demo booking, admissions, lifecycle and guarded Won-stage logic |
+| [02_tasks_crm.sql](02_tasks_crm.sql) | Tasks + CRM | Bidirectional task-status sync functions and triggers |
+| [03_tasks_crm_links.sql](03_tasks_crm_links.sql) | Tasks + CRM, **without Portal** | Final CRM-only task-link RPCs |
+| [04_tasks_portal_notifications.sql](04_tasks_portal_notifications.sql) | Tasks + Portal | Optional Portal notification fan-out |
+| [05_full_suite_task_links.sql](05_full_suite_task_links.sql) | Portal + CRM + Tasks | Final full-suite task-link RPCs supporting CRM records and Portal classes |
 
-## Installation sequence
+## Install the right combination
 
-Run the independent base installers first, including each module's security file. Then install the applicable integrations above in numbered order. Full suite: **01 → 02 → 03 → 04**.
+**CRM + Tasks only:** install independent CRM and Tasks core files, then **02 → 03**.
 
-The full-suite task-links file deliberately replaces only the two `task_module_link` and `task_module_links_list` RPC bodies from the CRM+Tasks integration. This is a product-specific optional implementation, *not* a chain of historical schema patches.
+**CRM + Portal:** install Portal and independent CRM core, then **01**.
 
-All SQL files are transactional, reject missing prerequisite schemas, enforce service-role-only RPC grants and do not create users, sample tenants, scheduled jobs or external credentials.
+**Tasks + Portal:** install Portal and independent Tasks core, then **04**.
 
-## Product isolation boundary
+**Complete suite:** install Portal and both independent cores, then **01 → 02 → 04 → 05**.
 
-Core `tasks` and `connect` SQL **does not require Portal tables** or direct references to each other's tables. Both products still require a Supabase project's built-in `auth.users` for identity; that is not the Learning Portal itself.
+**Important:** 03 and 05 are **mutually exclusive**. Each gives the final initial definition of the same `task_module_link` and `task_module_links_list` functions for a particular product combination. Never install one and then the other as a patch. This preserves the no-incremental-patches principle for a fresh customer deployment.
 
-Application decoupling is the **next separate phase**: some Next.js routes still assume Portal navigation, shared sessions and integrated RPCs. A standalone SQL install does not by itself make the current deployed UI standalone.
+All scripts are transactional, reject missing dependencies and grant RPC usage only to `service_role`. They create no sample data, provider credentials or scheduled jobs.
 
-## Important validation limits
+## Limitations
 
-These scripts are grounded in development schema definitions, but **a clean isolated database installation has not yet been completed**. Do not apply to a real production project until schema execution, auth/RLS and API smoke tests have passed in a disposable environment.
+SQL separation does not yet certify the standalone Next.js application, Auth experience, routing, navigation or billing entitlements. Those require the subsequent application modularisation phase.
 
-Existing production Portal data must not be reset or replaced. Historical incremental SQL files are not included in any new customer installation.
+**Do not execute on production yet.** An isolated clean-environment run of each installation combination and authenticated API tests is still required. Existing production Portal records are not to be reset or replaced.
