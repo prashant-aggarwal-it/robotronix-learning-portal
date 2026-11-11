@@ -5,37 +5,39 @@ import type {ProductId} from "@/lib/platform/deployment";
 
 export type AuthorizedProduct={id:ProductId;label:string;href:string};
 
-/** Fail closed. Module installation and account membership are checked by the
- * server; UI state is not a security or subscription authority. */
+/** Fail closed. Product installation and account membership are checked by the
+ * server. This navigation never becomes the business authorization authority. */
 export function useAuthorizedProducts():readonly AuthorizedProduct[]{
  const [products,setProducts]=useState<AuthorizedProduct[]>([]);
  useEffect(()=>{
-  let mounted=true;
+  let mounted=true,sequence=0;
   const client=getSupabaseBrowserClient();
   if(!client)return;
-  const load=async()=>{
-   const {data:{session}}=await client.auth.getSession();
-   if(!session){if(mounted)setProducts([]);return;}
+  const load=async(token:string|null|undefined)=>{
+   const generation=++sequence;
+   if(!token){if(mounted)setProducts([]);return;}
    try{
     const response=await fetch("/api/platform/my-products",{
-     headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"
+     headers:{Authorization:"Bearer "+token},cache:"no-store"
     });
     if(!response.ok)throw Error("Access unavailable");
     const payload=await response.json();
-    const products:unknown=payload?.products;
-    if(!Array.isArray(products))throw Error("Invalid product navigation");
-    if(mounted)setProducts(products.filter(x=>
+    const entries:unknown=payload?.products;
+    if(!Array.isArray(entries))throw Error("Invalid product navigation");
+    const verified=entries.filter(x=>
       x&&typeof x==="object"&&["portal","crm","tasks"].includes(x.id)&&
       typeof x.label==="string"&&typeof x.href==="string"&&
       /^\/(?:admin|trainer|parent|student|connect|tasks)$/.test(x.href)
-    ));
-   }catch{if(mounted)setProducts([]);}
+    ) as AuthorizedProduct[];
+    if(mounted&&generation===sequence)setProducts(verified);
+   }catch{if(mounted&&generation===sequence)setProducts([]);}
   };
-  void load();
-  const {data:{subscription}}=client.auth.onAuthStateChange(()=>{
-   void Promise.resolve().then(load);
+  void client.auth.getSession().then(({data})=>load(data.session?.access_token));
+  const {data:{subscription}}=client.auth.onAuthStateChange((_event,session)=>{
+   // Do not call getSession inside Supabase's auth state callback.
+   void load(session?.access_token);
   });
-  return()=>{mounted=false;subscription.unsubscribe();};
+  return()=>{mounted=false;sequence++;subscription.unsubscribe();};
  },[]);
  return products;
 }
