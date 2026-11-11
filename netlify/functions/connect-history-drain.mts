@@ -13,4 +13,3 @@ export default async()=>{
   return Response.json(value&&typeof value==="object"?value:{ok:false},{status:r.ok?200:503});
  }catch{return Response.json({ok:false,error:"History worker request failed"},{status:503});}
 };
-export const config={schedule:"*/1 * * * *"};
