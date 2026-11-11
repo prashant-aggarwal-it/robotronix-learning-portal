@@ -1,3 +1,4 @@
+import {checkServerCapability,checkServerModule} from "@/lib/platform/server-access";
 import crypto from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
 import {connectSession,isConnectSession} from "@/lib/server/connect-auth";
@@ -9,6 +10,8 @@ const headers={"Cache-Control":"no-store, private"};
 function tokenHash(raw:string){return crypto.createHash("sha256").update(raw).digest("hex");}
 
 export async function GET(_request:NextRequest,{params}:Context){
+ const gate=checkServerCapability("crmPortal");
+ if(!gate.ok)return NextResponse.json({ok:false,error:gate.message},{status:gate.status,headers});
  const {token}=await params;
  if(!/^[A-Za-z0-9_-]{40,64}$/.test(token))return NextResponse.json({ok:false,error:"Invalid invitation."},{status:404,headers});
  const {data,error}=await zoomServiceClient().rpc("portal_admission_handoff_token",{p_token_hash:tokenHash(token),p_action:"preview"});
@@ -17,6 +20,8 @@ export async function GET(_request:NextRequest,{params}:Context){
 }
 
 export async function POST(request:NextRequest,{params}:Context){
+ const gate=checkServerCapability("crmPortal");
+ if(!gate.ok)return NextResponse.json({ok:false,error:gate.message},{status:gate.status,headers});
  const {token}=await params;
  if(!/^[A-Za-z0-9_-]{40,64}$/.test(token))return NextResponse.json({ok:false,error:"Invalid invitation."},{status:404,headers});
  const session=await connectSession(request);if(!isConnectSession(session))return session;
