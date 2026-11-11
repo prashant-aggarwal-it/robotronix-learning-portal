@@ -18,7 +18,7 @@ export default function AuthCallbackPage(){
     let session=(await supabase.auth.getSession()).data.session;
     for(let i=0;!session&&i<12;i++){await sleep(250);session=(await supabase.auth.getSession()).data.session;}
     if(cancelled)return;
-    if(!session?.user){setMessage("Google sign-in completed, but your session could not be restored. Please try again.");await sleep(1400);router.replace("/");return;}
+    if(!session?.user){setMessage("Google sign-in completed, but your session could not be restored. Please try again.");await sleep(1400);router.replace("/login");return;}
     const deployment=await loadAuthDeployment();
     const access=await loadSignedInAccess(deployment);
     if(cancelled)return;
