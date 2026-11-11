@@ -21,8 +21,8 @@ Your production project is `njyktzenybimykpqaegn`. It already has the Portal pub
 | --- | --- | --- |
 | 00 | [00_preflight.sql](00_preflight.sql) | Existing Portal required, Tasks/Connect absent |
 | 02 | [02_tasks_schema.sql](02_tasks_schema.sql) | Final Tasks table/constraint/index definitions |
-| 03 | [03_tasks_functions.sql](03_tasks_functions.sql) | Final Tasks service RPCs, one definition per signature |
-| 04 | [04_crm_schema.sql](04_crm_schema.sql) | Final Connect CRM table/constraint/index definitions |
+| 03 | [03_crm_schema.sql](03_crm_schema.sql) | Final Connect CRM table/constraint/index definitions |
+| 04 | [04_tasks_functions.sql](04_tasks_functions.sql) | Final Tasks service RPCs, one definition per signature |
 | 05 | [05_crm_functions.sql](05_crm_functions.sql) | Final CRM, messaging, Portal integration RPCs |
 | 06 | [06_triggers_security.sql](06_triggers_security.sql) | All final triggers, RLS policies, private ACL |
 | 07 | [07_verify.sql](07_verify.sql) | Read-only module schema and security checks |
