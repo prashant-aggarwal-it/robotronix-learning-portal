@@ -12,8 +12,11 @@ export async function portalBridgeAccess(request:NextRequest,tenantId:string,wri
  const {data:context,error}=await session.admin.rpc("connect_portal_demo_bridge",{
   p_actor_id:session.actorId,p_tenant_id:tenantId,p_action:"context",p_data:{}
  });
- if(error||!context)
-  return {error:connectFailure("CRM workspace access denied.",403)};
+ if(error){
+  const missing=["42883","42P01","3F000"].includes(error.code||"");
+  return {error:connectFailure(missing?"Learning Portal integration is not installed.":"CRM workspace access denied.",missing?503:403)};
+ }
+ if(!context)return {error:connectFailure("CRM workspace access denied.",403)};
  if(write&&context.role==="viewer")return {error:connectFailure("CRM booking access denied.",403)};
  return {session,role:context.role as string,installed:Boolean(context.installed),portalActorId:context.portalActorId as string|null};
 }
