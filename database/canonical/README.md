@@ -1,50 +1,46 @@
-# Robotronix canonical database installation
+# Robotronix canonical database — final-state, modular SQL
 
-> **Product isolation status:** These are the current final-state development definitions, but the modules are **not yet standalone customer installers**. CRM has optional Portal demo/admissions and Tasks insight dependencies; Tasks has CRM integrations and Portal profile/auth dependencies. Do not run only a subset and assume every feature will work. [Read the dependency matrix](DEPENDENCIES.md).
+The canonical source contains complete initial definitions of each table, foreign key, index, function, trigger and permission. **It does not contain historical patch chains.** Core CRM and My Tasks installations are independent from each other and from the Learning Portal *at the database-definition level*.
 
+## Manual Supabase installation packages
 
-**Source of truth (in consolidation): FINAL database definitions, not historical migrations.**
+Run [00_preflight.sql](00_preflight.sql) once before selecting a package. It checks the shared Supabase Auth prerequisite; neither CRM nor Tasks requires Portal tables.
 
-This directory defines each module's tables, constraints, indexes, functions, triggers, and security **exactly as they should exist from the beginning**. Each object is defined once. No historical ALTER-by-ALTER patch chain, destructive cleanup, or sample account data is required.
+| Package | Required SQL files in order |
+| --- | --- |
+| **My Tasks only** | [02_tasks_schema.sql](02_tasks_schema.sql) → [04_tasks_functions.sql](04_tasks_functions.sql) → [06_tasks_security.sql](06_tasks_security.sql) → [08_verify_tasks.sql](08_verify_tasks.sql) |
+| **Connect CRM only** | [03_crm_schema.sql](03_crm_schema.sql) → [05_crm_functions.sql](05_crm_functions.sql) → [07_crm_security.sql](07_crm_security.sql) → [09_verify_crm.sql](09_verify_crm.sql) |
+| **CRM + Tasks** | Both core packages, then [optional Tasks–CRM integration](../integrations/02_tasks_crm.sql) |
+| **Learning Portal only** | Use the separate `database/01_install/` Portal fresh-install generator and master reference data |
+| **Complete suite** | Portal foundation, both core packages, then integrations [01](../integrations/01_crm_portal.sql), [02](../integrations/02_tasks_crm.sql), [03](../integrations/03_tasks_portal_notifications.sql), [04](../integrations/04_full_suite_task_links.sql) |
 
-## Install order
+For **Portal + CRM**, install Portal + CRM plus integration 01. For **Portal + Tasks**, install Portal + Tasks plus integration 03. See [integrations/README.md](../integrations/README.md).
 
-### Scenario A — completely fresh Robotronix environment
+### Execution conditions
 
-1. Provision Supabase Auth and a new empty database.
-2. Install the Portal using the existing source modules in `database/01_install/modules/` via `npm run db:build-fresh-install`. Run the generated `database/generated/ROBOTRONIX_FRESH_INSTALL.sql` **once**. It creates the Portal schema and master reference data.
-3. Run the **Tasks + Connect steps** below, in their listed order.
-4. Run the Portal release verification (`database/03_verify/01_VERIFY_RELEASE.sql`) and the final canonical verification below.
+- These are **fresh-module installers**, not upgrades. Never rerun a schema file after its module is installed.
+- They assume a normal Supabase project with `auth.users` and `service_role` available. Each module can use its own Supabase project; a full suite may use one shared project, but the application must reconcile authentication.
+- The private `connect` and `tasks` schemas are not exposed to anonymous or client-authenticated Data API roles. Server-only RPCs perform tenant/user permission checks.
+- **Do not execute anything on current production yet.** The installers have passed static structural checks, but have **not passed a complete isolated clean-database installation**.
+- No destructive resets, background cron scheduling, Meta/Zoom secrets, sample customers or demo data are included.
 
-### Scenario B — existing Robotronix production Portal
+## What's canonical
 
-Your production project is `njyktzenybimykpqaegn`. It already has the Portal public schema and real users; **do not run the Portal fresh-installer again**. After a restorable backup and clean-install validation, run only these scripts:
+| Product | Tables | Core functions | Core triggers | RLS policies |
+| --- | ---: | ---: | ---: | ---: |
+| Tasks | 21 | 60 | 3 | 15 |
+| Connect CRM | 66 | 76 | 5 | 0 |
 
-| Order | File | Purpose |
-| --- | --- | --- |
-| 00 | [00_preflight.sql](00_preflight.sql) | Existing Portal required, Tasks/Connect absent |
-| 02 | [02_tasks_schema.sql](02_tasks_schema.sql) | Final Tasks table/constraint/index definitions |
-| 03 | [03_crm_schema.sql](03_crm_schema.sql) | Final Connect CRM table/constraint/index definitions |
-| 04 | [04_tasks_functions.sql](04_tasks_functions.sql) | Final Tasks service RPCs, one definition per signature |
-| 05 | [05_crm_functions.sql](05_crm_functions.sql) | Final CRM, messaging, Portal integration RPCs |
-| 06 | [06_triggers_security.sql](06_triggers_security.sql) | All final triggers, RLS policies, private ACL |
-| 07 | [07_verify.sql](07_verify.sql) | Read-only module schema and security checks |
+CRM's tables have RLS enabled but are accessed through trusted, authorization-enforcing server RPCs. Zero CRM policies means direct client table access is intentionally not granted.
 
-The deliberately unused number 01 denotes the Portal foundation, maintained by the existing fresh-install generator; a completely fresh environment installs that foundation once, while existing production does not. SQL Editor users: open each **entire raw** script, execute one file per query in order, and **stop if any script fails**. Do not continue after an error. Every DDL file is transactional.
+Integrations introduce the remaining Portal admission and demo functions, cross-product task-link RPCs, CRM task synchronization and Portal notification fan-out. All historical capabilities are retained as optional modules or in Git history; nothing is silently deleted from the product.
 
-## Status and provenance
+## Application boundary
 
-- Draft canonical snapshot captured from Development project `fflejkqcspivnhsmkdtn`, 2026-11-11.
-- **87 module tables:** 21 Tasks and 66 CRM.
-- **150 functions:** 64 Tasks-related and 86 Connect/Portal-integration related; 11 module triggers and 15 existing RLS policies.
-- The canonical schema scripts use complete `CREATE TABLE` definitions with all final columns/constraints. Foreign keys are declared *after* creating tables **within the same first-time installation**, solely to resolve inter-table references and cycles; this is not a historical patch migration.
-- Final service functions are captured directly from the latest Development database. Two CRM list functions are adjusted to read `public.profiles.full_name` instead of attempting restricted `auth.users` reads. The verified guardian admission handoff RPC uses an email status checked by the server.
-- The old `database/release_install/`, `database/tasks/`, and `database/connect/saas/` files are superseded historical source and **not** the canonical entrypoint. Retain until clean-install testing and CI reference migration are complete; later remove obsolete checked-in copies and rely on Git history.
-- No `pg_cron` schedules, deployment credentials, Meta phone number registration, or sample production users are included.
-- Database function/table access uses the private `tasks` and `connect` schemas. Do not expose them directly in Supabase Data API.
-- **Not yet clean-install certified.** Object-count and SQL-source structural checks do not prove that all statements can execute in sequence on a truly empty database. Test in an isolated expendable database before applying to production. This directory is not approved for live execution yet.
-- The Portal fresh-install generator currently remains the independent canonical source for the original Portal module; its own consolidation can be handled separately without changing production data.
+The *SQL packages* are independently scoped. **The Next.js frontend, routing, authentication setup and feature flags still require a separate application-modularization phase** before they can be sold as independently deployed applications. Do not claim end-to-end standalone functionality until that work and its tests pass.
 
-## No incremental patch files in the canonical installer
+The old `database/connect/saas`, `database/tasks` and `database/04_existing_db_migrations` scripts were development-stage sources. They remain only for legacy QA references; do **not** run them during a new installation. `database/generated/` is local Git-ignored Portal build output.
 
-Past migrations remain in Git history and may still be necessary to **upgrade an already-installed, older database**. They are not part of this clean-first-install directory. Don't rerun these fresh installers on an existing `tasks` or `connect` schema.
+## Quality gate
+
+Run `npm run db:check-canonical` for static counts, forbidden dependencies and patch detection. Then run every customer package on a disposable Supabase/Postgres environment, verify RLS and SQL objects, and test authenticated CRM/Tasks API flows. Only then use the manual production SQL Editor process.
