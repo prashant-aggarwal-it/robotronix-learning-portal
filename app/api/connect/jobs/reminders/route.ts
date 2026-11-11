@@ -1,3 +1,4 @@
+import {requireServerCapability} from "@/lib/platform/server-access";
 import {NextRequest,NextResponse} from "next/server";
 import crypto from "node:crypto";
 import {ingestionClient} from "@/lib/server/connect-ingestion";
@@ -11,6 +12,7 @@ function authorized(value:string|null,secret:string|undefined){
 // Trigger from an authenticated scheduler, e.g. external cron or Netlify scheduled
 // function. No cron is provisioned by this route alone.
 export async function POST(req:NextRequest){
+ const blocked=requireServerCapability("crmPortal");if(blocked)return blocked;
  // Legacy combined external scheduler entry point. Do not duplicate modular Netlify workers.
  if(process.env.CONNECT_SCHEDULER_ENABLED==="true"||process.env.CONNECT_PORTAL_JOBS_ENABLED==="true")
   return NextResponse.json({ok:false,error:"Use the configured modular scheduler"},{status:409,headers:{"Cache-Control":"no-store"}});
