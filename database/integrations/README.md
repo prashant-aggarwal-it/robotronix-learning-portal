@@ -22,7 +22,7 @@ Each customer's core is installed from `database/canonical`. Cross-product funct
 
 **Important:** 03 and 05 are **mutually exclusive**. Each gives the final initial definition of the same `task_module_link` and `task_module_links_list` functions for a particular product combination. Never install one and then the other as a patch. This preserves the no-incremental-patches principle for a fresh customer deployment.
 
-All scripts are transactional, reject missing dependencies and grant RPC usage only to `service_role`. They create no sample data, provider credentials or scheduled jobs.
+All scripts are transactional, reject missing dependencies and grant RPC usage only to `service_role`. After applying any integration SQL, enable its corresponding background job **only as instructed in** [Scheduled jobs](../../docs/operations/SCHEDULED_JOBS.md); never enable Netlify and Supabase pg_cron for the same RPCs simultaneously. They create no sample data, provider credentials or scheduled jobs.
 
 ## Limitations
 
