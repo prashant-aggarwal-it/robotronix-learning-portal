@@ -1,5 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {createClient, type SupabaseClient} from "@supabase/supabase-js";
+import {resolveDeploymentConfig} from "@/lib/platform/deployment";
 
 export type ConnectRole="owner"|"admin"|"manager"|"counsellor"|"viewer";
 export type ConnectSession={admin:SupabaseClient;actorId:string;actorEmail:string|null;actorEmailVerified:boolean};
@@ -17,7 +18,12 @@ export async function connectSession(request:NextRequest):Promise<ConnectSession
  const admin=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
  const {data:{user},error}=await admin.auth.getUser(token);
  if(error||!user||user.is_anonymous)return connectFailure("Session expired or invalid.",401);
- return {admin,actorId:user.id,actorEmail:user.email?.trim().toLowerCase()??null,actorEmailVerified:Boolean(user.email_confirmed_at||user.confirmed_at)};
+ const actorEmailVerified=Boolean(user.email&&(user.email_confirmed_at||user.confirmed_at));
+ // New standalone/composable product accounts must verify their email first.
+ // Keep original behavior for existing legacy Portal deployments.
+ if(!resolveDeploymentConfig(process.env).legacyDefault&&!actorEmailVerified)
+  return connectFailure("Verify your account email before using Connect.",403);
+ return {admin,actorId:user.id,actorEmail:user.email?.trim().toLowerCase()??null,actorEmailVerified};
 }
 export function isConnectSession(value:ConnectSession|NextResponse):value is ConnectSession{
  return !(value instanceof NextResponse);
