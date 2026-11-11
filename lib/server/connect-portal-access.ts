@@ -1,8 +1,11 @@
 import "server-only";
 import {NextRequest} from "next/server";
+import {checkServerCapability} from "@/lib/platform/server-access";
 import {connectSession,isConnectSession,connectFailure,uuid} from "@/lib/server/connect-auth";
 
 export async function portalBridgeAccess(request:NextRequest,tenantId:string,write=false){
+ const available=checkServerCapability("crmPortal");
+ if(!available.ok)return {error:connectFailure(available.message,available.status)};
  if(!uuid(tenantId))return {error:connectFailure("Invalid CRM workspace.",400)};
  const session=await connectSession(request);
  if(!isConnectSession(session))return {error:session};
