@@ -35,6 +35,7 @@ import {ConnectSignInGate,ConnectNoWorkspaceGate} from "@/features/connect/Conne
 export default function ConnectPage(){
  const [signedIn,setSignedIn]=useState<boolean|null>(null);
  const [canOpenPortal,setCanOpenPortal]=useState(false);
+ const [allowSelfCreate,setAllowSelfCreate]=useState(false);
  const [accountEmail,setAccountEmail]=useState("");
  const [workspaces,setWorkspaces]=useState<ConnectWorkspace[]>([]);
  const [workspacesReady,setWorkspacesReady]=useState(false);
@@ -104,10 +105,11 @@ export default function ConnectPage(){
  },[]);
 
  useEffect(()=>{
-  if(!signedIn){setCanOpenPortal(false);return;}
+  if(!signedIn){setCanOpenPortal(false);setAllowSelfCreate(false);return;}
   let active=true;
   // A standalone Connect deployment must not fetch Learning Portal profiles.
   void loadAuthDeployment().then(async deployment=>{
+   if(active)setAllowSelfCreate(!deployment.legacyDefault&&deployment.products.includes("crm"));
    if(!deployment.products.includes("portal")||!deployment.integrations.includes("crmPortal"))return false;
    const {getCurrentProfile}=await import("@/lib/repository");
    const profile=await getCurrentProfile();
@@ -417,7 +419,15 @@ export default function ConnectPage(){
  if(signedIn===null)return <main className="cx-gate">Checking your Connect session…</main>;
  if(!signedIn)return <ConnectSignInGate error={error} busy={busy} email={loginEmail} password={loginPassword} onEmailChange={setLoginEmail} onPasswordChange={setLoginPassword} onSubmit={signIn}/>;
  if(!workspacesReady)return <main className="cx-gate">Loading your Connect workspace…</main>;
- if(!workspaces.length)return <ConnectNoWorkspaceGate error={error} onRetry={()=>{setWorkspacesReady(false);void loadWorkspaces().catch(e=>{setError(e instanceof Error?e.message:"Unable to check workspace access.");setWorkspacesReady(true);});}} onSignOut={()=>{setSignedIn(false);void getSupabaseBrowserClient()?.auth.signOut();}}/>;
+ if(!workspaces.length)return <ConnectNoWorkspaceGate error={error}
+  onCreateWorkspace={allowSelfCreate?async(name,slug)=>{
+    await connectFetch("/api/connect/workspaces",{method:"POST",body:JSON.stringify({name,slug})});
+    setWorkspacesReady(false);
+    await loadWorkspaces();
+    setError("");
+  }:undefined}
+  onRetry={()=>{setWorkspacesReady(false);void loadWorkspaces().catch(e=>{setError(e instanceof Error?e.message:"Unable to check workspace access.");setWorkspacesReady(true);});}}
+  onSignOut={()=>{setSignedIn(false);void getSupabaseBrowserClient()?.auth.signOut();}}/>;
  
   return <main className="cx-app">
   <ConnectSidebar showMobileNav={showMobileNav} onToggleMobile={()=>setShowMobileNav(v=>!v)} canOpenPortal={canOpenPortal} tenantId={tenantId} tenantRole={tenant?.membership_role||"member"} workspaces={workspaces} accountEmail={accountEmail} section={section} visibleNavigation={visibleNavigation} onWorkspaceChange={value=>{setTenantId(value);setSelectedPerson(null);setSelectedOpportunity(null);setWorkflowContactId(null);}} onSectionChange={value=>{setSection(value);setSearch("");setSelectedPerson(null);setSelectedOpportunity(null);setWorkflowContactId(null);setShowMobileNav(false);}}/>
