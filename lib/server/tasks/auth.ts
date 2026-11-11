@@ -1,3 +1,4 @@
+import {checkServerModule} from "@/lib/platform/server-access";
 import {NextRequest,NextResponse} from "next/server";
 import {createClient, type SupabaseClient} from "@supabase/supabase-js";
 import {resolveDeploymentConfig} from "@/lib/platform/deployment";
@@ -14,6 +15,8 @@ export const isUuid=(value:unknown):value is string=>
  typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 export async function taskSession(request:NextRequest):Promise<TaskSession|NextResponse>{
+ const capability=checkServerModule(request.nextUrl.pathname);
+ if(!capability.ok)return taskError(capability.message,capability.status);
  const token=request.headers.get("authorization")?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
  if(!token)return taskError("Sign in to use My Tasks.",401);
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
