@@ -350,9 +350,9 @@ grant execute on function public.connect_portal_admissions(uuid,uuid,text,jsonb)
 -- Token possession permits only limited prefill. Binding requires an authenticated parent,
 -- consented onboarding and independently verified parent email or manual admin review.
 create or replace function public.portal_admission_handoff_token(
- p_token_hash text,p_action text,p_user_id uuid default null,p_submission_id uuid default null
+ p_token_hash text,p_action text,p_user_id uuid default null,p_submission_id uuid default null,p_confirmed_email text default null
 ) returns jsonb language plpgsql security invoker set search_path='' as $fn$
-declare v_h record;v_guardian record;v_learner record;v_onb record;v_user record;
+declare v_h record;v_guardian record;v_learner record;v_onb record;
  v_email text;v_verified boolean:=false;
 begin
  select * into v_h from connect.portal_admission_handoffs
@@ -377,17 +377,18 @@ begin
  select * into v_onb from public.onboarding_submissions where id=p_submission_id and user_id=p_user_id and data_consent=true;
  if not found or lower(btrim(v_onb.child_name))<>lower(btrim(v_learner.full_name)) then
   raise exception 'Consent or learner identity mismatch' using errcode='42501';end if;
- select email,email_confirmed_at into v_user from auth.users where id=p_user_id;
- v_verified:=v_user.email_confirmed_at is not null and v_email is not null and
-  lower(btrim(v_user.email))=lower(btrim(v_email));
+ -- Caller is the authenticated server; only service_role can execute this RPC.
+ -- The server uses Supabase Auth getUser(token) to supply an email only if confirmed.
+ v_verified:=p_confirmed_email is not null and v_email is not null and
+  lower(btrim(p_confirmed_email))=lower(btrim(v_email));
  update connect.portal_admission_handoffs set onboarding_submission_id=p_submission_id,
   verified_at=case when v_verified then now() else null end,
   verified_by=null,status=case when v_verified then 'onboarding_pending' else 'review_required' end,
   updated_at=now() where id=v_h.id;
  return jsonb_build_object('ok',true,'status',case when v_verified then 'onboarding_pending' else 'review_required' end);
 end $fn$;
-revoke all on function public.portal_admission_handoff_token(text,text,uuid,uuid) from public,anon,authenticated;
-grant execute on function public.portal_admission_handoff_token(text,text,uuid,uuid) to service_role;
+revoke all on function public.portal_admission_handoff_token(text,text,uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.portal_admission_handoff_token(text,text,uuid,uuid,text) to service_role;
 
 
 -- ===== SOURCE: database/connect/saas/55_portal_demo_followup_sync.sql =====
