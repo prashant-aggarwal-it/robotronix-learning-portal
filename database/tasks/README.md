@@ -1,3 +1,5 @@
+**Updated 2026-11-11:** For approved fresh Tasks-module installation into an existing production Learning Portal DB, use **[../release_install/README.md](../release_install/README.md)**. The phase files below are historical development sources; do not run them all or use their old development-only approval text as the release procedure.
+
 # Universal My Tasks — Phase 1 foundation
 
 Applies to the independent My Tasks module. It does not alter Connect CRM, Learning Portal data or user roles.
