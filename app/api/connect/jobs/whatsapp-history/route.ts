@@ -1,9 +1,11 @@
+import {requireServerCapability} from "@/lib/platform/server-access";
 import {NextRequest,NextResponse} from "next/server";
 import {equalSecret} from "@/lib/server/connect-ingestion";
 import {drainWhatsAppHistory} from "@/lib/server/connect-history-worker";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 export async function POST(req:NextRequest){
+ const blocked=requireServerCapability("crm");if(blocked)return blocked;
  const token=req.headers.get("authorization");
  if(!process.env.CONNECT_HISTORY_DRAIN_ENABLED||process.env.CONNECT_HISTORY_DRAIN_ENABLED!=="true"||
   !process.env.CONNECT_HISTORY_JOB_SECRET||process.env.CONNECT_HISTORY_JOB_SECRET.length<24||
