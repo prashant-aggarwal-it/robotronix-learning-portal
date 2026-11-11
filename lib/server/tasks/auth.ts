@@ -1,5 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {createClient, type SupabaseClient} from "@supabase/supabase-js";
+import {resolveDeploymentConfig} from "@/lib/platform/deployment";
 
 export const noStore={"Cache-Control":"no-store"};
 export type TaskSession={db:SupabaseClient;userId:string;verifiedEmail:string|null};
@@ -21,13 +22,21 @@ export async function taskSession(request:NextRequest):Promise<TaskSession|NextR
  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
  const {data:{user},error}=await db.auth.getUser(token);
  if(error||!user||user.is_anonymous)return taskError("Session expired or invalid.",401);
- const {data:profile,error:profileError}=await db.from("profiles").select("active").eq("id",user.id).maybeSingle();
- if(profileError)return taskError("Account verification is unavailable.",503);
- if(profile&&!profile.active)return taskError("Your Portal account is disabled.",403);
+ // Explicit modular deployments must never require the Learning Portal tables.
+ // Preserve the existing Portal-disabled restriction for the legacy combined deployment.
+ const deployment=resolveDeploymentConfig(process.env);
+ let legacyPortalActive=false;
+ if(deployment.legacyDefault){
+  const {data:profile,error:profileError}=await db.from("profiles").select("active").eq("id",user.id).maybeSingle();
+  if(profileError)return taskError("Account verification is unavailable.",503);
+  if(profile&&!profile.active)return taskError("Your Portal account is disabled.",403);
+  legacyPortalActive=Boolean(profile?.active);
+ }
  const {data:taskAccount,error:accountError}=await db.rpc("task_account_get",{p_actor_id:user.id});
  if(accountError)return taskError("Task account verification is unavailable.",503);
  if(taskAccount?.status==="suspended")return taskError("Task account is suspended.",403);
- if(!profile&&!taskAccount)return taskError("Complete My Tasks onboarding to continue.",403);
+ if(taskAccount?.status!=="active"&&!legacyPortalActive)
+  return taskError("Complete My Tasks onboarding to continue.",403);
  return {db,userId:user.id,verifiedEmail:user.email_confirmed_at&&user.email?user.email.trim().toLowerCase():null};
 }
 
