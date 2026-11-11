@@ -25,6 +25,8 @@ export async function taskSession(request:NextRequest):Promise<TaskSession|NextR
  // Explicit modular deployments must never require the Learning Portal tables.
  // Preserve the existing Portal-disabled restriction for the legacy combined deployment.
  const deployment=resolveDeploymentConfig(process.env);
+ if(!deployment.legacyDefault&&!user.email_confirmed_at)
+  return taskError("Verify your account email before using My Tasks.",403);
  let legacyPortalActive=false;
  if(deployment.legacyDefault){
   const {data:profile,error:profileError}=await db.from("profiles").select("active").eq("id",user.id).maybeSingle();
