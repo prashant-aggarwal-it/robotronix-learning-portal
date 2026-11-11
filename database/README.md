@@ -1,3 +1,7 @@
+## Production CRM + Tasks install (manual)
+
+For the existing Portal production DB, use **[release_install/README.md](./release_install/README.md)** — a guarded, categorized SQL Editor installation sequence (00–09). This is the active entrypoint for new CRM and Tasks module installation. Older per-phase SQL remains historical reference, not a bulk installer. Never run DEV-only cleanup/cron/sample-data SQL on production.
+
 # Robotronix database — CURRENT SQL ONLY
 
 **Authoritative guide for the QA branch.** All SQL in this directory has a defined purpose. **No archived migrations, superseded seeds or post-install patches are retained.** Production database data must never be reset using DEV scripts.
