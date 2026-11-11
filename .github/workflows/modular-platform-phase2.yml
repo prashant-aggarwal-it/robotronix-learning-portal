@@ -1,0 +1,30 @@
+name: Modular platform Phase 2 checks
+on:
+  push:
+    branches:
+      - feature/modular-platform-architecture
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Product mode and route matrix
+        run: npm run check:modules
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Portal-compatibility demo build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_ENV: demo
+          PRODUCT_MODE: portal
