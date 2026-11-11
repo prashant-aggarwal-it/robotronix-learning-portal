@@ -3,7 +3,7 @@
 import {spawnSync} from "node:child_process";
 const checks=[
  "typecheck","check:structure","check:communication","check:finance",
- "check:migration","check:fresh-db","db:check-canonical","db:check-packages","check:modules","check:auth","check:backend-modules","check:schedules","check:docs","check:zoom-poc","check:zoom-classroom","check:zoom-jit",
+ "check:migration","check:fresh-db","db:check-canonical","db:check-packages","check:modules","check:auth","check:backend-modules","check:product-ui","check:schedules","check:docs","check:zoom-poc","check:zoom-classroom","check:zoom-jit",
  "check:razorpay-ops","check:exports","check:customer-delight",
  "check:calendar","check:demo-experience","check:live-data",
  "check:p2p3-live","check:stabilization","check:trainer-courses-ui",
