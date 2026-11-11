@@ -3,7 +3,7 @@ import Link from "next/link";
 import {FormEvent,useEffect,useState} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {Suspense} from "react";
-import {loadAuthDeployment,loadSignedInAccess,passwordSignIn,googleSignIn,emailSignInCode,verifySignInCode} from "@/lib/platform/auth-client";
+import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSignIn,googleSignIn,emailSignInCode,verifySignInCode} from "@/lib/platform/auth-client";
 import {resolveAuthDestination,safeAuthNext} from "@/lib/platform/auth-routing";
 import type {DeploymentConfig} from "@/lib/platform/deployment";
 
@@ -32,7 +32,7 @@ function LoginContent(){
  }
  async function passwordSignIn(e:FormEvent){
   e.preventDefault();setLoading(true);setError("");
-  try{const r=await passwordSignIn(email,password);if(!r.ok)setError(r.error??"Unable to sign in");else await finish();}
+  try{const r=await passwordAuthSignIn(email,password);if(!r.ok)setError(r.error??"Unable to sign in");else await finish();}
   finally{setLoading(false);}
  }
  async function google(){
