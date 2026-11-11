@@ -1,3 +1,5 @@
+**Updated 2026-11-11:** For approved manual production installation of Connect CRM into an existing Portal DB, use **[../release_install/README.md](../release_install/README.md)**. The `saas/` scripts below are historical source/provenance, *not* a runnable all-in-one production installer. The release package excludes DEV-only cleanup and cron and includes recovered unified-channel functions.
+
 # Connect database: source, history and verification
 
 Connect owns the private PostgreSQL `connect` schema and service-only `public.connect_*` RPCs. The Learning Portal owns its separate `public` tables and installer. **Do not run Connect SQL through the Portal fresh-install generator.**
