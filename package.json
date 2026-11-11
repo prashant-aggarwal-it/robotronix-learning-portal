@@ -77,7 +77,8 @@
     "db:check-canonical": "node scripts/check-db-canonical.mjs",
     "db:check-packages": "node scripts/check-db-packages.mjs",
     "check:schedules": "node scripts/check-scheduled-jobs.mjs",
-    "check:modules": "node --experimental-strip-types --test lib/platform/deployment.test.mjs"
+    "check:modules": "node --experimental-strip-types --test lib/platform/deployment.test.mjs",
+    "check:auth": "node --test lib/platform/auth-routing.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
