@@ -21,6 +21,17 @@ export async function passwordSignIn(email:string,password:string){
  const {error}=await client().auth.signInWithPassword({email,password});
  return error?{ok:false,error:error.message}:{ok:true};
 }
+/** New standalone CRM/Tasks accounts only. Portal onboarding remains invite/role controlled. */
+export async function createProductAccount(email:string,password:string){
+ if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.trim()))
+  return {ok:false,error:"Enter a valid email address.",signedIn:false};
+ if(password.length<8)return {ok:false,error:"Use a password of at least 8 characters.",signedIn:false};
+ const redirectTo=typeof window!=="undefined"?window.location.origin+"/auth/callback":undefined;
+ const {data,error}=await client().auth.signUp({email:email.trim(),password,options:{emailRedirectTo:redirectTo}});
+ if(error)return {ok:false,error:"Could not complete registration. Please try again.",signedIn:false};
+ // Do not assume that a Supabase signUp response proves email verification.
+ return {ok:true,signedIn:Boolean(data.session?.user?.email_confirmed_at)};
+}
 export async function googleSignIn(){
  const redirectTo=typeof window!=="undefined"?window.location.origin+"/auth/callback":undefined;
  const {error}=await client().auth.signInWithOAuth({provider:"google",options:{redirectTo,queryParams:{prompt:"select_account"}}});
