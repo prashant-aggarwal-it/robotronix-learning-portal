@@ -35,5 +35,7 @@ BEGIN
    OR has_function_privilege('anon',p.oid,'EXECUTE') OR has_function_privilege('authenticated',p.oid,'EXECUTE'));
  IF bad_rpcs<>0 THEN RAISE EXCEPTION '% task/connect RPCs have invalid grants',bad_rpcs; END IF;
  IF to_regprocedure('public.task_v2_capture(uuid,jsonb)') IS NULL THEN RAISE EXCEPTION 'Task V2 capture function missing'; END IF;
+ IF to_regprocedure('public.portal_admission_handoff_token(text,text,uuid,uuid,text)') IS NULL THEN RAISE EXCEPTION 'Verified guardian handoff RPC missing'; END IF;
+ IF to_regprocedure('public.portal_admission_handoff_token(text,text,uuid,uuid)') IS NOT NULL THEN RAISE EXCEPTION 'Old insecure guardian handoff RPC overload still installed'; END IF;
  RAISE NOTICE 'Robotronix Tasks + CRM structural/permission checks passed. App-level testing is still required.';
 END $verify$;
