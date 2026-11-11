@@ -1,3 +1,4 @@
+import {requireServerCapability} from "@/lib/platform/server-access";
 import crypto from "node:crypto";
 import {NextRequest} from "next/server";
 import {acceptedEvent,intakeError,invokeIngest,safeString} from "@/lib/server/connect-ingestion";
@@ -15,6 +16,7 @@ function withCors<T extends Response>(response:T,origin:string|null|false):T{
  return response;
 }
 export async function OPTIONS(req:NextRequest){
+ const blocked=requireServerCapability("crm");if(blocked)return blocked;
  const origin=allowedOrigin(req);
  if(origin===false)return new Response(null,{status:403});
  return withCors(new Response(null,{status:204,headers:{
@@ -24,6 +26,7 @@ export async function OPTIONS(req:NextRequest){
  }}),origin);
 }
 export async function POST(req:NextRequest,{params}:Ctx){
+ const blocked=requireServerCapability("crm");if(blocked)return blocked;
  const origin=allowedOrigin(req);
  if(origin===false)return withCors(intakeError("Website origin not permitted",403),origin);
  const {formKey}=await params;
