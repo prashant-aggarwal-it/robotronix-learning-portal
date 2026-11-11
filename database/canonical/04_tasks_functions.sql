@@ -407,12 +407,8 @@ begin
  update tasks.items set workspace_id=p_workspace_id,assignee_user_id=p_assignee_id,share_with_workspace=coalesce(p_workspace_visible,false),updated_at=now()
  where id=p_task_id returning * into task;
  insert into tasks.activity(task_id,actor_user_id,action,details) values(p_task_id,p_actor_id,'sharing_changed',jsonb_build_object('workspace_id',p_workspace_id,'assignee_id',p_assignee_id,'workspace_visible',p_workspace_visible));
- if p_assignee_id is not null and p_assignee_id<>p_actor_id then
-  insert into tasks.notifications(recipient_user_id,task_id,kind,title,href,dedupe_key)
-  values(p_assignee_id,p_task_id,'assignment','New task assigned','/tasks/assigned',
-   'task-assigned:'||p_task_id::text||':'||extract(epoch from now())::bigint::text)
-  on conflict(recipient_user_id,dedupe_key) do nothing;
- end if;
+ -- tasks.notify_task_assignee() already creates the assignment notification
+ -- through the tasks_assignee_notifications trigger. Avoid duplicate alerts.
  return to_jsonb(task);
 end $function$;
 
