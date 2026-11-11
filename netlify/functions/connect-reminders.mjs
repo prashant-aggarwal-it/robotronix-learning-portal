@@ -1,8 +1,10 @@
+import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
 import {createClient} from "@supabase/supabase-js";
 
 // This schedule is provisioned by Netlify, not pg_cron. The module must be installed first.
 // Opt in only once equivalent Supabase cron jobs for this database are disabled.
 export default async () => {
+ if(!schedulerCapabilityEnabled("crm"))return Response.json({ok:true,enabled:false,job:"module-disabled"});
  if(process.env.CONNECT_SCHEDULER_ENABLED!=="true")
   return Response.json({ok:true,enabled:false,job:"connect-reminders"});
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
