@@ -1,36 +1,33 @@
-# Module independence and customer-installation design
+# Robotronix modular database dependency boundaries
 
-## Intended offerings
+## Implemented SQL separation
 
-| Customer purchases | Deploy | Final target database ownership |
+All new-customer **core** database definitions are split by product:
+
+| Customer chooses | Database installer | Optional integration |
 | --- | --- | --- |
-| Portal | Learning Portal only | Portal `public` tables and its own Auth |
-| CRM | Connect only | `connect` tables and Connect-owned Auth |
-| Tasks | My Tasks only | `tasks` tables and Tasks-owned Auth |
-| CRM + Tasks | Both applications/modules | `connect` + `tasks` schemas with shared tenant/user identity or a versioned API link |
-| Full Robotronix suite | Portal, Connect, Tasks | All three with explicit integrations and isolated authorization |
+| Learning Portal only | `database/01_install/` | None |
+| Connect CRM only | `canonical/03_crm_schema.sql` + `05_crm_functions.sql` + `07_crm_security.sql` | None |
+| My Tasks only | `canonical/02_tasks_schema.sql` + `04_tasks_functions.sql` + `06_tasks_security.sql` | None |
+| CRM + Tasks | Both independent cores | `integrations/02_tasks_crm.sql` |
+| Portal + CRM | Portal + CRM | `integrations/01_crm_portal.sql` |
+| Portal + Tasks | Portal + Tasks | `integrations/03_tasks_portal_notifications.sql` |
+| Full suite | Portal + CRM + Tasks | `integrations/01`, `02`, `03`, `04_full_suite_task_links.sql` |
 
-These are **target product packages**, not a claim that the current SQL can already be run independently.
+See [README](README.md) and [integration instructions](../integrations/README.md) for exact run order.
 
-## Actual current dependencies (inspected 2026-11-11)
+- Core schema FK relationships reference their own product tables and Supabase Auth, not another product's physical tables.
+- Tasks core functions now use `tasks.accounts`, `tasks.user_preferences`, `tasks.notifications` rather than Portal profile and notification tables.
+- CRM core functions now use CRM membership IDs/role labels instead of Portal profiles. Without a separate CRM user-display directory, team members appear with a generic/member-ID label, rather than their old Portal display name. The UI integration phase can provide richer names.
+- Portal demo scheduling, admissions handoffs, lifecycle synchronization and enrollment-Won enforcement are optional CRM–Portal functionality.
+- Tasks-to-CRM module linking and status synchronization are in the optional CRM + Tasks package. Full-suite linking to Portal schedule events is in its own optional package.
+- Portal task notification fan-out is a separate optional bridge. It does not run for Tasks-only customers.
+- The independent SQL modules share *Supabase's* built-in Auth model, not a required Learning Portal profile. They can reside in separate Supabase projects, but the application still must reconcile identity and tenancy for combined customers.
 
-- Portal has an existing independent fresh-install generator (`database/01_install/modules/`) and master-data set.
-- Connect's `connect` schema is separate, but some installed routines call Portal demo, enrollment and onboarding tables; `connect_contact_insights` also references Tasks.
-- Two Connect staff display-name functions use the Portal `public.profiles` table, so Connect-only installations currently need a product-neutral identity directory or server-supplied staff labels.
-- Tasks has its own 21 tables but some functions use `public.profiles`; `task_module_link`, `task_module_links_list`, `sync_crm_task_status`, and `sync_imported_from_crm` also reference Connect.
-- The current Next.js auth and app-router implementations also need isolation review; splitting SQL alone cannot guarantee product independence.
-- CRM tenant `connect.tenants`, CRM operational `connect.tasks` and personal `tasks.items` have different responsibilities. Do not merge these tables just because both products have a Tasks concept.
+## Remaining limits
 
-## Proposed clean boundaries
+**Core SQL separation is implemented and statically checked, not fully deployment-certified.** We still need an isolated fresh-install execution test for each customer combination and checks against actual application APIs before declaring products standalone.
 
-1. Keep core CRM/Tasks functions free of Portal and each other's physical tables. Move optional cross-product functionality into `integrations/` modules that install **only when both corresponding products are deployed**.
-2. Use provider-neutral Auth identity in a core schema or a module-local account directory. Never require a Portal profile to run CRM-only or Tasks-only features.
-3. Use versioned API/integration contracts for Portal ↔ CRM scheduling, admissions, lifecycle and contacts. Do not use cross-product foreign keys or direct SQL reads between independently deployed services.
-4. Preserve security: membership checks, RLS, and service-only RPC access; never make the private schemas publicly available to simplify installation.
-5. Produce separately executable, tested manifests for Portal, Connect, Tasks, Connect+Tasks and the complete suite. Each customer bundle must have its own full clean-install test and app-level smoke test.
+Some existing Next.js routes, onboarding flows, navigation and environment configuration still assume Portal-linked identities or installed integration RPCs. Those issues belong to the separate **application modularisation** stage. We have not modified existing production database records.
 
-## Current execution safety
-
-Use `database/canonical/README.md` for the current final-state definitions. The source was assembled from the latest **development** database (87 tables, 150 functions) but **has not been run as a clean installation against an isolated empty database**. Do not promote this package to production or advertise module-level independence before resolving the dependencies above.
-
-Development-only QA, old migration sources, and generated build outputs are not deliverables in a customer install package.
+The new canonical files are not historical patch chains. They define final objects from day one. Older migration source remains in Git history and some legacy QA-dependent files; do not combine those with the canonical installers.
