@@ -18,7 +18,7 @@ export async function connectSession(request:NextRequest):Promise<ConnectSession
  const admin=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
  const {data:{user},error}=await admin.auth.getUser(token);
  if(error||!user||user.is_anonymous)return connectFailure("Session expired or invalid.",401);
- const actorEmailVerified=Boolean(user.email&&(user.email_confirmed_at||user.confirmed_at));
+ const actorEmailVerified=Boolean(user.email&&user.email_confirmed_at);
  // New standalone/composable product accounts must verify their email first.
  // Keep original behavior for existing legacy Portal deployments.
  if(!resolveDeploymentConfig(process.env).legacyDefault&&!actorEmailVerified)
