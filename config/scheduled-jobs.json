@@ -1,0 +1,87 @@
+{
+  "description": "Canonical scheduler inventory; exactly one code owner per responsibility. Times are UTC cron expressions.",
+  "runtime": "Netlify scheduled functions",
+  "jobs": [
+    {
+      "name": "process-reminders",
+      "module": "portal",
+      "file": "netlify/functions/process-reminders.mjs",
+      "schedule": "*/5 * * * *",
+      "source": "code",
+      "enable": "always",
+      "responsibility": "Class reminder notifications"
+    },
+    {
+      "name": "zoom-auto-reconcile",
+      "module": "portal",
+      "file": "netlify/functions/zoom-auto-reconcile.mts",
+      "schedule": "*/5 * * * *",
+      "source": "netlify.toml",
+      "enable": "requires INTERNAL_CRON_SECRET",
+      "responsibility": "Zoom meeting auto provisioning, reconciliation"
+    },
+    {
+      "name": "zoom-retention",
+      "module": "portal",
+      "file": "netlify/functions/zoom-retention.mts",
+      "schedule": "15 2 * * *",
+      "source": "netlify.toml",
+      "enable": "requires INTERNAL_CRON_SECRET",
+      "responsibility": "Zoom cloud recording retention"
+    },
+    {
+      "name": "system-log-retention",
+      "module": "portal",
+      "file": "netlify/functions/system-log-retention.mjs",
+      "schedule": "30 3 * * *",
+      "source": "netlify.toml",
+      "enable": "always",
+      "responsibility": "Portal job and system-log cleanup"
+    },
+    {
+      "name": "operational-email-alerts",
+      "module": "portal",
+      "file": "netlify/functions/operational-email-alerts.mjs",
+      "schedule": "*/15 * * * *",
+      "source": "code",
+      "enable": "requires RESEND_API_KEY and alert recipient/sender",
+      "responsibility": "Operational error and missing Portal job alerts"
+    },
+    {
+      "name": "process-task-reminders",
+      "module": "tasks",
+      "file": "netlify/functions/process-task-reminders.mjs",
+      "schedule": "*/5 * * * *",
+      "source": "code",
+      "enable": "TASKS_SCHEDULER_ENABLED=true",
+      "responsibility": "Tasks reminder processing"
+    },
+    {
+      "name": "connect-reminders",
+      "module": "crm",
+      "file": "netlify/functions/connect-reminders.mjs",
+      "schedule": "*/5 * * * *",
+      "source": "code",
+      "enable": "CONNECT_SCHEDULER_ENABLED=true",
+      "responsibility": "CRM in-app reminders"
+    },
+    {
+      "name": "connect-history-drain",
+      "module": "crm",
+      "file": "netlify/functions/connect-history-drain.mts",
+      "schedule": "*/1 * * * *",
+      "source": "netlify.toml",
+      "enable": "CONNECT_HISTORY_DRAIN_ENABLED=true and CONNECT_HISTORY_JOB_SECRET",
+      "responsibility": "WhatsApp Business history retry/drain"
+    },
+    {
+      "name": "connect-portal-ops",
+      "module": "crm-portal",
+      "file": "netlify/functions/connect-portal-ops.mjs",
+      "schedule": "*/5 * * * *",
+      "source": "code",
+      "enable": "CONNECT_PORTAL_JOBS_ENABLED=true",
+      "responsibility": "Portal demo followups, enrollment reconciliation, lifecycle synchronization"
+    }
+  ]
+}
