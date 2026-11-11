@@ -23,6 +23,8 @@ jobs:
         run: npm run check:modules
       - name: Product authentication and OAuth route tests
         run: npm run check:auth
+      - name: Backend module boundaries and scheduler parity
+        run: npm run check:backend-modules
       - name: TypeScript
         run: npm run typecheck
       - name: Portal-compatibility demo build
