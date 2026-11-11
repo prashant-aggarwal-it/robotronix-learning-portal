@@ -49,8 +49,10 @@ export function resolveAuthDestination(
  if(next==="/zoom/connect" && activePortal && portal?.role==="admin")return {path:next};
  if(next==="/onboarding" && portalEnabled && portal?.state!=="disabled" && (portal?.role==="parent"||!activePortal))
    return {path:next};
- if(next==="/connect" && crmEnabled && access.crmWorkspace)return {path:next};
+ if(next==="/connect" && crmEnabled && (!config.legacyDefault||access.crmWorkspace))return {path:next};
  if(next==="/tasks" && tasksEnabled && taskActive)return {path:next};
+ if(next==="/tasks" && tasksEnabled && !taskSuspended && !config.legacyDefault)
+   return {path:"/tasks/welcome"};
  if(next==="/tasks/welcome" && tasksEnabled && !taskSuspended)return {path:taskActive?"/tasks":next};
 
  // Preserve original Portal-first navigation for existing combined deployments.
