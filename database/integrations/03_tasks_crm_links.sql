@@ -1,7 +1,11 @@
 -- Select this final task-link implementation for a CRM + Tasks customer (without Portal).
 -- Do NOT also run 05_full_suite_task_links.sql: it is the alternative implementation.
 BEGIN;
-DO $gate$ BEGIN IF to_regnamespace('tasks') IS NULL OR to_regnamespace('connect') IS NULL THEN RAISE EXCEPTION 'Tasks and CRM core required'; END IF; END $gate$;
+DO $gate$ BEGIN IF to_regnamespace('tasks') IS NULL OR to_regnamespace('connect') IS NULL THEN RAISE EXCEPTION 'Tasks and CRM core required'; END IF; IF to_regprocedure('public.task_module_link(uuid,text,text,uuid,uuid)') IS NOT NULL
+   OR to_regprocedure('public.task_module_links_list(uuid,text,uuid)') IS NOT NULL THEN
+  RAISE EXCEPTION 'A task link implementation already exists; install exactly one customer package';
+ END IF;
+ END $gate$;
 -- public.task_module_link(p_actor_id uuid, p_module text, p_resource text, p_resource_id uuid, p_tenant_id uuid)
 CREATE OR REPLACE FUNCTION public.task_module_link(p_actor_id uuid, p_module text, p_resource text, p_resource_id uuid, p_tenant_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
