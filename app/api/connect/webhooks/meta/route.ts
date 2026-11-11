@@ -1,3 +1,4 @@
+import {requireServerCapability} from "@/lib/platform/server-access";
 import {NextRequest,NextResponse} from "next/server";
 import {createHash} from "node:crypto";
 import {acceptedEvent,intakeError,checkHmacSha256,equalSecret,
@@ -7,6 +8,7 @@ export const runtime="nodejs";
 export const dynamic="force-dynamic";
 
 export async function GET(req:NextRequest){
+ const blocked=requireServerCapability("crm");if(blocked)return blocked;
  const p=req.nextUrl.searchParams;
  const valid=p.get("hub.mode")==="subscribe"&&equalSecret(
   p.get("hub.verify_token"),process.env.CONNECT_META_VERIFY_TOKEN
@@ -73,6 +75,7 @@ async function fetchLead(leadId:string):Promise<GraphLead>{
  return await response.json() as GraphLead;
 }
 export async function POST(req:NextRequest){
+ const blocked=requireServerCapability("crm");if(blocked)return blocked;
  const secret=process.env.CONNECT_META_APP_SECRET;
  if(!secret)return intakeError("Meta integration unavailable",503);
  // Keep an explicit bound; accepted history chunks are persisted before replying.
