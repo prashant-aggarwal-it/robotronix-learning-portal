@@ -1,7 +1,7 @@
 "use client";
 import {FormEvent,useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
-import {getCurrentProfile} from "@/lib/repository";
+import {loadAuthDeployment} from "@/lib/platform/auth-client";
 import {connectFetch,crmCommand,crmList,
  type ConnectWorkspace,type ConnectPerson,type ConnectInquiry,type ConnectOpportunity,
  type ConnectPipeline,type ConnectTask,type ConnectAppointment,type ConnectOverview,
@@ -106,7 +106,13 @@ export default function ConnectPage(){
  useEffect(()=>{
   if(!signedIn){setCanOpenPortal(false);return;}
   let active=true;
-  void getCurrentProfile().then(profile=>{if(active)setCanOpenPortal(profile?.role==="admin");}).catch(()=>{if(active)setCanOpenPortal(false);});
+  // A standalone Connect deployment must not fetch Learning Portal profiles.
+  void loadAuthDeployment().then(async deployment=>{
+   if(!deployment.products.includes("portal")||!deployment.integrations.includes("crmPortal"))return false;
+   const {getCurrentProfile}=await import("@/lib/repository");
+   const profile=await getCurrentProfile();
+   return profile?.role==="admin"&&profile.active===true;
+  }).then(canOpen=>{if(active)setCanOpenPortal(canOpen);}).catch(()=>{if(active)setCanOpenPortal(false);});
   return()=>{active=false;};
  },[signedIn]);
 
