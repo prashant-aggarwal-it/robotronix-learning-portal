@@ -1,3 +1,4 @@
+import {requireServerCapability} from "@/lib/platform/server-access";
 import {NextRequest} from "next/server";
 import {acceptedEvent,intakeError,invokeIngest,readRawLimited,verifySvix,safeString} from "@/lib/server/connect-ingestion";
 export const runtime="nodejs";
@@ -12,6 +13,7 @@ function senderName(value:string){
  return name||mailbox(value).split("@")[0]||"Email contact";
 }
 export async function POST(req:NextRequest){
+ const blocked=requireServerCapability("crm");if(blocked)return blocked;
  const secret=process.env.CONNECT_RESEND_WEBHOOK_SECRET;
  if(!secret)return intakeError("Inbound email is not configured",503);
  const raw=await readRawLimited(req,64000);
