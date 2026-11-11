@@ -1,5 +1,7 @@
+import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
 // Scheduled safely: disabled unless the dedicated feature flag and secret exist.
 export default async()=>{
+ if(!schedulerCapabilityEnabled("crm"))return Response.json({ok:true,enabled:false,job:"crm-module-disabled"});
  if(process.env.CONNECT_HISTORY_DRAIN_ENABLED!=="true")return Response.json({ok:true,disabled:true});
  const base=(process.env.URL||process.env.DEPLOY_PRIME_URL||"").replace(/\/$/,"");
  const secret=process.env.CONNECT_HISTORY_JOB_SECRET||"";
