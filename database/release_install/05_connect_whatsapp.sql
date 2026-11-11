@@ -401,8 +401,8 @@ begin
   'draft',coalesce(s.draft_text,''),'lastReadAt',s.last_read_at,
   'canWrite',m.role<>'viewer',
   'canAssign',m.role in ('owner','admin','manager'),
-  'team',coalesce((select jsonb_agg(jsonb_build_object('id',tm.id,'label',coalesce(u.email,'Team member'),'role',tm.role)
-    order by u.email) from connect.memberships tm join auth.users u on u.id=tm.user_id
+  'team',coalesce((select jsonb_agg(jsonb_build_object('id',tm.id,'label',coalesce(u.full_name,'Team member'),'role',tm.role)
+    order by u.full_name) from connect.memberships tm join public.profiles u on u.id=tm.user_id
    where tm.tenant_id=p_tenant_id and tm.status='active' and tm.role<>'viewer'),'[]'::jsonb)
  ) into v_result from connect.conversations c
  join connect.channel_accounts a on a.tenant_id=c.tenant_id and a.id=c.channel_account_id and a.provider='whatsapp'
