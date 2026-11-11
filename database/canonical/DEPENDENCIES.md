@@ -9,10 +9,10 @@ All new-customer **core** database definitions are split by product:
 | Learning Portal only | `database/01_install/` | None |
 | Connect CRM only | `canonical/03_crm_schema.sql` + `05_crm_functions.sql` + `07_crm_security.sql` | None |
 | My Tasks only | `canonical/02_tasks_schema.sql` + `04_tasks_functions.sql` + `06_tasks_security.sql` | None |
-| CRM + Tasks | Both independent cores | `integrations/02_tasks_crm.sql` |
+| CRM + Tasks | Both independent cores | `integrations/02_tasks_crm.sql` + `03_tasks_crm_links.sql` |
 | Portal + CRM | Portal + CRM | `integrations/01_crm_portal.sql` |
-| Portal + Tasks | Portal + Tasks | `integrations/03_tasks_portal_notifications.sql` |
-| Full suite | Portal + CRM + Tasks | `integrations/01`, `02`, `03`, `04_full_suite_task_links.sql` |
+| Portal + Tasks | Portal + Tasks | `integrations/04_tasks_portal_notifications.sql` |
+| Full suite | Portal + CRM + Tasks | `integrations/01`, `02`, `04`, `05_full_suite_task_links.sql` |
 
 See [README](README.md) and [integration instructions](../integrations/README.md) for exact run order.
 
@@ -20,7 +20,7 @@ See [README](README.md) and [integration instructions](../integrations/README.md
 - Tasks core functions now use `tasks.accounts`, `tasks.user_preferences`, `tasks.notifications` rather than Portal profile and notification tables.
 - CRM core functions now use CRM membership IDs/role labels instead of Portal profiles. Without a separate CRM user-display directory, team members appear with a generic/member-ID label, rather than their old Portal display name. The UI integration phase can provide richer names.
 - Portal demo scheduling, admissions handoffs, lifecycle synchronization and enrollment-Won enforcement are optional CRM–Portal functionality.
-- Tasks-to-CRM module linking and status synchronization are in the optional CRM + Tasks package. Full-suite linking to Portal schedule events is in its own optional package.
+- CRM–Tasks synchronization is optional integration 02. Product-specific linking is either 03 (CRM+Tasks without Portal) or 05 (full suite); install only one, never both.
 - Portal task notification fan-out is a separate optional bridge. It does not run for Tasks-only customers.
 - The independent SQL modules share *Supabase's* built-in Auth model, not a required Learning Portal profile. They can reside in separate Supabase projects, but the application still must reconcile identity and tenancy for combined customers.
 
