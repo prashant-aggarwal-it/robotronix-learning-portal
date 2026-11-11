@@ -18,7 +18,7 @@ for(const job of manifest.jobs){
  const filePath=path.join(root,job.file);
  if(!fs.existsSync(filePath)){fail("Worker missing: "+job.file);continue;}
  const code=fs.readFileSync(filePath,"utf8");
- const definitions=[...files].filter(f=>f.replace(/\\.(mjs|mts|js|ts)$/,"")===job.name);
+ const definitions=[...files].filter(f=>f.slice(0,f.lastIndexOf("."))===job.name);
  if(definitions.length!==1)fail("Ambiguous worker basename: "+job.name+" ("+definitions.join(", ")+")");
  const tomlSection=toml.match(new RegExp('\\[functions\\."'+escape(job.name)+'"\\]([\\s\\S]*?)(?=\\n\\[|$)'));
  const codeSchedule=code.match(/export const config\s*=\s*\{\s*schedule\s*:\s*["']([^"']+)["']/);
@@ -41,9 +41,9 @@ for(const job of manifest.jobs){
  console.log("Checked "+job.module+" scheduler "+job.name+" ["+job.schedule+"]");
 }
 for(const name of files){
- if(!/\\.(mjs|mts|js|ts)$/.test(name))continue;
+ if(![".mjs",".mts",".js",".ts"].some(ext=>name.endsWith(ext)))continue;
  const text=fs.readFileSync(path.join(root,"netlify/functions",name),"utf8");
- const basename=name.replace(/\\.(mjs|mts|js|ts)$/,"");
+ const basename=name.slice(0,name.lastIndexOf("."));
  if(/export const config\s*=\s*\{\s*schedule\s*:/.test(text)||toml.includes('[functions."'+basename+'"]')){
   if(!declared.has(basename))fail("Uninventoried scheduled worker: "+name);
  }
