@@ -496,7 +496,7 @@ begin
  return v_tenant;
 end $fn$;
 
-create function public.connect_accept_invitation(
+create or replace function public.connect_accept_invitation(
  p_actor_id uuid,p_actor_email text,p_token_sha256 text
 ) returns uuid language plpgsql security invoker set search_path = ''
 as $fn$
