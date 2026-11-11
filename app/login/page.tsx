@@ -3,7 +3,7 @@ import Link from "next/link";
 import {FormEvent,useEffect,useState} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {Suspense} from "react";
-import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSignIn,googleSignIn,emailSignInCode,verifySignInCode} from "@/lib/platform/auth-client";
+import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSignIn,googleSignIn,emailSignInCode,verifySignInCode,createProductAccount} from "@/lib/platform/auth-client";
 import {resolveAuthDestination,safeAuthNext} from "@/lib/platform/auth-routing";
 import type {DeploymentConfig} from "@/lib/platform/deployment";
 
@@ -17,6 +17,7 @@ function LoginContent(){
  const next=deployment?safeAuthNext(requested,deployment):null;
  const productName=deployment?.mode==="crm"?"Connect CRM":deployment?.mode==="tasks"?"My Tasks":"Learning Portal";
  const hasPortal=deployment?.products.includes("portal")??true;
+ const canRegister=Boolean(deployment&&!deployment.legacyDefault&&(deployment.products.includes("tasks")||deployment.products.includes("crm")));
  const[email,setEmail]=useState(""),[password,setPassword]=useState(""),[code,setCode]=useState("");
  const[codeSent,setCodeSent]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(false);
  async function finish(){
@@ -33,6 +34,17 @@ function LoginContent(){
  async function passwordSignIn(e:FormEvent){
   e.preventDefault();setLoading(true);setError("");
   try{const r=await passwordAuthSignIn(email,password);if(!r.ok)setError(r.error??"Unable to sign in");else await finish();}
+  finally{setLoading(false);}
+ }
+ async function register(){
+  if(!canRegister||loading)return;
+  setLoading(true);setError("");setNotice("");
+  try{
+   const result=await createProductAccount(email,password);
+   if(!result.ok){setError(result.error??"Unable to register.");return;}
+   if(result.signedIn){await finish();return;}
+   setNotice("Registration received. Check your email for confirmation, then sign in.");
+  }catch{setError("Registration is unavailable. Please try again.");}
   finally{setLoading(false);}
  }
  async function google(){
@@ -62,6 +74,8 @@ function LoginContent(){
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
    <label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/></label>
    <button className="button fullButton" disabled={loading}>{loading?"Signing in…":"Sign in with password"}</button>
+   {canRegister&&<button type="button" className="button secondary fullButton" disabled={loading||!email||password.length<8} onClick={register}>Create a new account</button>}
+   {notice&&<p role="status" className="infoBanner">{notice}</p>}
   </form>
   <div className="authDivider"><span>or</span></div>
   <button className="button secondary fullButton" disabled={loading} onClick={google}>Continue with Google</button>
