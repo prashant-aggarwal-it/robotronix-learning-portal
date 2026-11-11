@@ -1,3 +1,4 @@
+import {checkServerModule} from "@/lib/platform/server-access";
 import {NextRequest,NextResponse} from "next/server";
 import {createClient, type SupabaseClient} from "@supabase/supabase-js";
 import {resolveDeploymentConfig} from "@/lib/platform/deployment";
@@ -10,6 +11,8 @@ export function connectFailure(message:string,status:number){
  return NextResponse.json({ok:false,error:message},{status,headers:noStore});
 }
 export async function connectSession(request:NextRequest):Promise<ConnectSession|NextResponse>{
+ const capability=checkServerModule(request.nextUrl.pathname);
+ if(!capability.ok)return connectFailure(capability.message,capability.status);
  const token=request.headers.get("authorization")?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
  if(!token)return connectFailure("Sign in to Connect.",401);
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
