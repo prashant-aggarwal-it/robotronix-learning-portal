@@ -1,3 +1,4 @@
+import {checkServerCapability,checkServerModule} from "@/lib/platform/server-access";
 import {NextRequest,NextResponse} from "next/server";
 import {connectSession,isConnectSession,connectFailure,noStore,uuid} from "@/lib/server/connect-auth";
 
@@ -5,6 +6,7 @@ export const dynamic="force-dynamic";
 type Context={params:Promise<{tenantId:string}>};
 
 export async function POST(request:NextRequest,{params}:Context){
+ const gate=checkServerCapability("crmPortal");if(!gate.ok)return connectFailure(gate.message,gate.status);
  const {tenantId}=await params;
  if(!uuid(tenantId))return connectFailure("Invalid workspace.",400);
  const session=await connectSession(request);if(!isConnectSession(session))return session;
