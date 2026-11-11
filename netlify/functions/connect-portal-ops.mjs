@@ -1,3 +1,4 @@
+import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
 import {createClient} from "@supabase/supabase-js";
 
 // Optional CRM + Portal installation only. Do not run in standalone CRM.
@@ -8,6 +9,7 @@ const operations=[
  ["connect_sync_portal_lifecycle",500]
 ];
 export default async () => {
+ if(!schedulerCapabilityEnabled("crmPortal"))return Response.json({ok:true,enabled:false,job:"module-disabled"});
  if(process.env.CONNECT_PORTAL_JOBS_ENABLED!=="true")
   return Response.json({ok:true,enabled:false,job:"connect-portal-ops"});
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
