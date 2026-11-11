@@ -1,5 +1,5 @@
 -- Optional Tasks + CRM integration: install ONLY when both schemas exist.
--- Preserves the existing CRM task linking and bidirectional status sync contracts.
+-- CRM + Tasks-only task links and bidirectional status sync; Portal link support is a separate full-suite add-on.
 BEGIN;
 DO $gate$ BEGIN IF to_regnamespace('tasks') IS NULL OR to_regnamespace('connect') IS NULL THEN RAISE EXCEPTION 'Tasks and Connect CRM must both be installed'; END IF; END $gate$;
 -- public.task_module_link(p_actor_id uuid, p_module text, p_resource text, p_resource_id uuid, p_tenant_id uuid)
@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION public.task_module_link(p_actor_id uuid, p_module tex
 AS $function$
 declare v_title text;v_due timestamptz;v_status text:='todo';v_task uuid;v_existing uuid;v_membership connect.memberships%rowtype;
 begin
- if not exists(select 1 from public.profiles where id=p_actor_id and active=true) then raise exception 'Inactive profile' using errcode='42501';end if;
+ if not exists(select 1 from tasks.accounts where user_id=p_actor_id and status='active') then raise exception 'Inactive Tasks account' using errcode='42501';end if;
  if p_module='connect' and p_resource in ('crm_task','crm_person','crm_opportunity') and p_tenant_id is not null then
   select * into v_membership from connect.memberships where tenant_id=p_tenant_id and user_id=p_actor_id and status='active';
   if v_membership.id is null then raise exception 'Connect membership required' using errcode='42501';end if;
@@ -25,12 +25,6 @@ begin
    select 'Follow up: '||o.title into v_title from connect.opportunities o
     where o.tenant_id=p_tenant_id and o.id=p_resource_id;
   end if;
- elsif p_module='learning' and p_resource='schedule_event' and p_tenant_id is null then
-  select 'Review class: '||e.title into v_title from public.schedule_events e
-   where e.id=p_resource_id and (exists(select 1 from public.profiles p where p.id=p_actor_id and p.active=true and p.role='admin')
-    or exists(select 1 from public.trainers tr where tr.id=e.trainer_id and tr.profile_id=p_actor_id and tr.record_status='active'));
-  select (e.date::timestamp + e.end_time) at time zone e.timezone into v_due
-   from public.schedule_events e where e.id=p_resource_id and v_title is not null;
  else raise exception 'Invalid module link' using errcode='22023';end if;
  if v_title is null then raise exception 'Record unavailable' using errcode='42501';end if;
  select l.task_id into v_existing from tasks.module_links l where l.owner_user_id=p_actor_id and l.module=p_module
@@ -59,8 +53,7 @@ AS $function$
  where l.owner_user_id=p_actor_id and t.archived_at is null and t.workspace_id is null
   and (p_module is null or l.module=p_module) and (p_tenant_id is null or l.tenant_id=p_tenant_id)
   and (l.module<>'connect' or exists(select 1 from connect.memberships m where m.tenant_id=l.tenant_id and m.user_id=p_actor_id and m.status='active'))
-  and (l.module<>'learning' or exists(select 1 from public.profiles p where p.id=p_actor_id and p.active=true and p.role='admin')
-    or exists(select 1 from public.schedule_events e join public.trainers tr on tr.id=e.trainer_id where e.id=l.resource_id and tr.profile_id=p_actor_id and tr.record_status='active'));
+  and l.module='connect';
 $function$;
 
 -- tasks.sync_crm_task_status()
