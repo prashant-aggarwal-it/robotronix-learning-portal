@@ -1,0 +1,57 @@
+name: Connect branch validation
+on:
+  push:
+    branches:
+      - feature/robotronix-connect-crm
+  pull_request:
+    branches: [main, feature/robotronix-connect-crm]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: connect-branch-validation
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build with demo environment
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_ENV: demo
+      - name: Structure and communication checks
+        run: npm run check:structure && npm run check:communication && node scripts/check-connect-db-layout.mjs && node scripts/check-connect-code-layout.mjs
+      - name: Connected demo, admission, lifecycle and hardening contracts
+        run: npm run check:connect-hardening
+      - name: CRM and Portal business-rule unit tests
+        run: npm run test:connect-business
+      - name: Existing application security contracts
+        run: npm run check:security
+      - name: Security regression assertions
+        run: npx playwright test qa/security-static.spec.ts --project=desktop-chromium --no-deps
+      - name: Dependency security gate
+        run: npm audit --omit=dev --audit-level=high
+      - name: API unauthenticated boundary and no-store smoke
+        run: npx playwright test qa/connect-api-boundaries.spec.ts --project=desktop-chromium --no-deps
+        env:
+          NEXT_PUBLIC_APP_ENV: demo
+      - name: Capture failure reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: connect-quality-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore

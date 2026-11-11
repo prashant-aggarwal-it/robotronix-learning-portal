@@ -4,19 +4,21 @@ import {FormEvent,useState} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {Suspense} from "react";
 import {getCurrentAccountAccess,requestEmailSignInCode,verifyEmailSignInCode,signIn,signInWithGoogle} from "@/lib/repository";
+import {taskAccountIsActive} from "@/lib/tasks/account-client";
 
 export default function Login(){return <Suspense fallback={<main className="authPage"><section className="authCard">Loading sign in…</section></main>}><LoginContent/></Suspense>}
 function LoginContent(){
  const router=useRouter();
  const query=useSearchParams();
- const next=query.get("next")==="/zoom/connect"?"/zoom/connect":null;
+ const requested=query.get("next");
+ const next=requested==="/zoom/connect"||requested==="/tasks/welcome"||requested==="/tasks"?requested:null;
  const[email,setEmail]=useState(""),[password,setPassword]=useState(""),[code,setCode]=useState("");
  const[codeSent,setCodeSent]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(false);
  async function finish(){
   const access=await getCurrentAccountAccess();
   if(access.state==="disabled"){setError("Your Robotronix portal access is disabled. Please contact Robotronix Admin.");return;}
-  if(access.state==="unlinked"){setError("Your email is not linked to an active portal profile yet. Contact Admin, or start family onboarding.");return;}
-  router.replace(next&&access.role==="admin"?next:`/${access.role}`);
+  if(access.state==="unlinked"){if(await taskAccountIsActive()){router.replace("/tasks");return;}if(next?.startsWith("/tasks")){router.replace("/tasks/welcome");return;}setError("Your email is not linked to an active portal profile yet. Contact Admin, or start family onboarding.");return;}
+  router.replace(next?.startsWith("/tasks")?next:next&&access.role==="admin"?next:`/${access.role}`);
  }
  async function passwordSignIn(e:FormEvent){
   e.preventDefault();setLoading(true);setError("");

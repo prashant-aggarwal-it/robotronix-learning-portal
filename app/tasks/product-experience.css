@@ -1,0 +1,158 @@
+/* My Tasks product experience — workflow-driven, data-backed widgets. */
+.mt2-shell{--mt2-brand:#147cad;--mt2-dark:#173450;--mt2-accent:#20a3ab}
+.mt2-sidebar .mt2-primary-nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:thin;padding-bottom:10px;flex-shrink:1}
+.mt2-primary-nav .mt2-nav-stage{display:block;font-size:10px;letter-spacing:.13em;font-weight:830;color:#8198aa;margin:15px 10px 5px}
+.mt2-primary-nav>a:first-child,.mt2-primary-nav>button:first-child{margin-top:3px}
+.mt2-primary-nav a,.mt2-primary-nav button{width:100%;min-height:38px;display:flex;align-items:center;gap:10px}
+.mt2-primary-nav .mt2-nav-emoji{font-size:17px;width:20px;min-width:20px;display:inline-flex;align-items:center;justify-content:center;opacity:.85}
+.mt2-primary-nav .mt2-nav-count{margin-left:auto;border-radius:9px;background:#eaf0f6;color:#608098;padding:2px 8px;font-size:11px}
+.mt2-primary-nav .is-active{background:linear-gradient(95deg,#e6f5fc,#eff6fc)!important;border-color:#d4eaf3!important;color:#136e9c!important}
+.mt2-primary-nav .mt2-nav-secondary{margin-top:15px;padding-top:12px;border-top:1px solid #e5edf3}
+.mt2-primary-nav .mt2-nav-capture{background:linear-gradient(110deg,#147cad,#1b9ca8);color:#fff;border-radius:9px;margin:3px 0 12px;font-weight:800}
+.mt2-primary-nav .mt2-nav-capture:hover{background:#126c99;color:#fff}
+.mt2-quick-backdrop{position:fixed;inset:0;background:#102e48a6;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+.mt2-quick-modal{width:min(100%,510px);max-height:calc(100vh - 36px);overflow-y:auto;background:#fff;color:#244158;border:1px solid #dbe8f0;border-radius:18px;box-shadow:0 25px 85px #0d2f4c55;padding:23px;display:grid;gap:16px}
+.mt2-quick-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.mt2-quick-head span{font-size:10px;font-weight:850;letter-spacing:.13em;color:#1683a4}
+.mt2-quick-head h2{font-size:24px;letter-spacing:-.035em;margin:3px 0 0}
+.mt2-quick-head button{background:#edf5fa;border:0;border-radius:8px;color:#486c84;padding:8px 11px;cursor:pointer}
+.mt2-quick-modal label{display:grid;gap:7px;font-size:12px;font-weight:750;color:#526c80}
+.mt2-quick-modal input,.mt2-quick-modal select{width:100%;min-width:0;min-height:41px;background:#fff;border:1px solid #cedee9;border-radius:9px;padding:9px 11px;color:#244158;font:inherit;font-size:14px}
+.mt2-quick-modal input:focus,.mt2-quick-modal select:focus{outline:2px solid #45a8d1;outline-offset:1px}
+.mt2-quick-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mt2-quick-actions{display:flex;justify-content:flex-end;gap:9px;border-top:1px solid #e7eef4;padding-top:16px}
+.mt2-quick-actions button{border:1px solid #cfdee8;border-radius:9px;background:#fff;color:#42667d;padding:10px 17px;cursor:pointer;font-weight:750}
+.mt2-quick-actions button[type=submit]{background:linear-gradient(110deg,#147cad,#1b9ca8);color:white;border-color:transparent}
+.mt2-quick-actions button:disabled{opacity:.5;cursor:not-allowed}
+.mt2-quick-error{margin:0;background:#fff1ef;color:#9e3a36;border-radius:8px;padding:10px 12px;font-size:12px}
+@media(max-width:520px){.mt2-quick-modal{padding:18px}.mt2-quick-fields{grid-template-columns:1fr}}
+.mt2-context-tabs{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0 0 16px;padding:5px;background:#f2f7fb;border:1px solid #e1eaf2;border-radius:12px;width:fit-content;max-width:100%}
+.mt2-context-tabs a,.mt2-context-tabs button{display:inline-flex;align-items:center;justify-content:center;min-height:35px;padding:7px 13px;border:1px solid transparent;border-radius:9px;background:transparent;color:#56738b;font-size:12px;font-weight:750;text-decoration:none;cursor:pointer;white-space:nowrap}
+.mt2-context-tabs .active{background:#fff;border-color:#d3e7f2;color:#156e9e;box-shadow:0 2px 8px #173b6410}
+.mt2-context-tabs a:hover,.mt2-context-tabs button:hover{color:#116e9d;background:#e5f2fa}
+.mt2-shell .mt2-sidebar .mt2-sidebar-bottom{padding-top:9px}
+.mt2-shell .mt2-heading h1{letter-spacing:-.045em}
+.mt2-shell .mt2-heading-art{background:linear-gradient(135deg,#dff2fa,#edf1ff);box-shadow:inset 0 0 0 1px #d4e8f4}
+.mt2-shell .mt2-eyebrow{font-size:10px}
+.mt2-shell .mt2-metrics--actionable{margin-top:0}
+.mt2-shell .mt2-metrics--actionable button.mt2-metric,.mt2-shell .mt2-metrics--actionable a.mt2-metric{text-align:left;cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.mt2-shell .mt2-metrics--actionable button.mt2-metric:hover,.mt2-shell .mt2-metrics--actionable a.mt2-metric:hover{transform:translateY(-2px);border-color:#a9d5e9;box-shadow:0 9px 23px #173b6414}
+.mt2-shell .mt2-metrics--actionable .mt2-metric--attention{background:linear-gradient(135deg,#fff,#fff9f6);border-color:#f4e3d8}
+.mt2-shell .mt2-metrics--actionable .mt2-metric small{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mt2-shell .mt2-metrics--actionable .mt2-metric small span{margin-left:auto;color:#2d8dbd;font-weight:850}
+.mt2-shell .mt2-daily-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);align-items:stretch}
+.mt2-shell .mt2-daily-grid>.mt2-panel{min-height:270px}
+.mt2-shell .mt2-focus-line .mt2-task{min-height:54px}
+.mt2-shell .mt2-momentum-panel{background:linear-gradient(125deg,#fff 65%,#f2faff)}
+.mt2-momentum-layout{display:flex;align-items:center;gap:22px;min-width:0;margin:8px 0 16px}
+.mt2-momentum-ring{--progress:0%;width:126px;height:126px;border-radius:50%;background:conic-gradient(#19a38d var(--progress),#e7edf6 var(--progress));padding:12px;flex-shrink:0;display:grid;place-items:center}
+.mt2-momentum-ring>div{width:100%;height:100%;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:0 2px 6px #143b5c12}
+.mt2-momentum-ring strong{font-size:30px;line-height:1;font-weight:850;color:#1c6f9b;letter-spacing:-1px}
+.mt2-momentum-ring span{font-size:10px;font-weight:680;color:#7b91a4}
+.mt2-momentum-copy{display:grid;gap:8px;min-width:0;flex:1}
+.mt2-momentum-copy>strong{font-size:15px;color:#263e57;line-height:1.4}
+.mt2-momentum-copy>p{font-size:12px;color:#74889d;line-height:1.55;margin:0}
+.mt2-recommendation{width:100%;display:grid;gap:4px;text-align:left;background:#eaf6fc;border:1px solid #cde9f4;color:#206b96;padding:12px;border-radius:11px;transition:background .15s ease}
+.mt2-recommendation:hover{background:#dbf1fc}
+.mt2-recommendation span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:850}
+.mt2-recommendation b{font-size:12px;line-height:1.4;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.mt2-recommendation small{font-size:11px;font-weight:740}
+.mt2-capacity-line{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 0 5px;border-top:1px solid #eaf0f5;font-size:12px;color:#72889a}
+.mt2-capacity-line strong{font-size:12px;color:#3a5e78}
+.mt2-capacity-track{width:100%;height:7px;border-radius:7px;background:#e3ecf5;overflow:hidden;margin-top:6px}
+.mt2-capacity-track>span{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,#39aabc,#2078b9)}
+.mt2-capacity-help{font-size:11px;color:#8598a8;line-height:1.5;margin:7px 0 0}
+.mt2-capacity-help a{color:#217dac;font-weight:750}
+.mt2-widget-link{font-size:12px;color:#247da8!important;background:#ecf7fc;padding:8px 11px;border-radius:9px;white-space:nowrap}
+.mt2-weekly-bars{min-height:158px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:end;gap:7px;margin-top:10px}
+.mt2-weekly-bar{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.mt2-weekly-number{font-size:11px;color:#627d96;font-weight:800;font-variant-numeric:tabular-nums}
+.mt2-weekly-track{width:100%;height:104px;display:flex;align-items:end;justify-content:center;background:linear-gradient(#fafcff,#f4f8fc);border-radius:8px;overflow:hidden}
+.mt2-weekly-track span{width:65%;background:linear-gradient(180deg,#4eaddc,#2286ba);border-radius:6px 6px 3px 3px;transition:height .2s ease}
+.mt2-weekly-bar.is-today .mt2-weekly-track{background:#e6f6ff}
+.mt2-weekly-bar.is-today .mt2-weekly-track span{background:linear-gradient(180deg,#2cc4b3,#14898b)}
+.mt2-weekly-bar strong{font-size:11px;color:#46637e}
+.mt2-weekly-bar small{font-size:10px;color:#8d9faf}
+.mt2-weekly-summary{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid #e9eff6;margin-top:15px;padding-top:13px;font-size:12px;color:#61788f}
+.mt2-weekly-summary a{color:#207ca9;font-weight:770}
+.mt2-shell .mt2-lower-grid{grid-template-columns:minmax(0,1.35fr) minmax(335px,.85fr)}
+.mt2-shell .mt2-lower-grid--wide{grid-template-columns:minmax(0,1fr)}
+.mt2-shell .mt2-task-list--grid .mt2-task{background:#fff}
+.mt2-shell .mt2-task-list--grid .mt2-task:hover{background:#f0f9fe}
+.mt2-shell .mt2-task-content{gap:5px}
+.mt2-shell .mt2-task-tags{font-size:11px}
+.mt2-shell .mt2-task-panel .mt2-panel-head{margin-bottom:11px}
+.mt2-shell .mt2-upcoming-item{padding:12px 0}
+.mt2-shell .mt2-workload-panel .mt2-panel-head{margin-bottom:7px}
+.mt2-shell .mt2-board-columns{gap:13px;grid-auto-columns:minmax(275px,1fr)}
+.mt2-shell .mt2-board-column{max-height:min(78vh,800px);min-height:210px}
+.mt2-shell .mt2-board-column-head{padding:13px 15px}
+.mt2-shell .mt2-board-tools{align-items:center}
+.mt2-shell .mt2-board-filters{flex-wrap:wrap}
+.mt2-shell .mt2-board-filters label{white-space:nowrap}
+.mt2-shell .mt2-board-card{border-radius:12px}
+.mt2-shell .mt2-board-card .mt2-card-area{font-size:11px}
+.mt2-shell .mt2-board-card .mt2-card-title{font-size:14px;font-weight:700}
+.mt2-shell .mt2-board-card .mt2-card-actions{gap:6px}
+.mt2-shell .mt2-board-card .mt2-card-actions button{min-height:30px}
+.mt2-shell .mt2-plan-task-main strong{font-size:12px;line-height:1.5}
+.mt2-shell .mt2-day-column{border-radius:13px}
+.mt2-shell .mt2-planner-days{scroll-snap-type:x proximity}
+.mt2-shell .mt2-day-column{scroll-snap-align:start}
+.mt2-shell .mt2-plan-list{max-width:none}
+.mt2-shell .mt2-connected-metrics>button{border-radius:13px}
+.mt2-shell .mt2-connected-metrics>button:hover{border-color:#a5d2e8;background:#f8fcff}
+.mt2-shell .mt2-connected-panes>.mt2-panel{min-height:0}
+.mt2-shell .mt2-connected-toolbar{flex-wrap:wrap}
+.mt2-shell .mt2-connected-toolbar>nav{max-width:100%}
+.mt2-shell .mt2-connected-source-tiles a{transition:transform .15s ease}
+.mt2-shell .mt2-connected-source-tiles a:hover{transform:translateY(-2px)}
+.mt2-shell .mt2-settings-grid{gap:15px}
+@media(max-width:1250px){
+ .mt2-shell .mt2-daily-grid{grid-template-columns:1fr 1fr}
+ .mt2-momentum-ring{width:106px;height:106px}
+ .mt2-momentum-ring strong{font-size:25px}
+ .mt2-momentum-layout{gap:12px}
+ .mt2-shell .mt2-lower-grid{grid-template-columns:minmax(0,1.25fr) minmax(300px,.85fr)}
+ .mt2-shell .mt2-lower-grid--wide{grid-template-columns:1fr}
+}
+@media(max-width:1050px){
+ .mt2-shell .mt2-daily-grid,.mt2-shell .mt2-lower-grid{grid-template-columns:minmax(0,1fr)}
+ .mt2-shell .mt2-right-stack{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt2-shell .mt2-board-columns{grid-auto-columns:285px}
+ .mt2-shell .mt2-lower-grid--wide{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+ .mt2-shell .mt2-daily-grid,.mt2-shell .mt2-lower-grid,.mt2-shell .mt2-right-stack{grid-template-columns:1fr}
+ .mt2-shell .mt2-heading{margin-bottom:14px}
+ .mt2-shell .mt2-heading h1{font-size:29px}
+ .mt2-shell .mt2-metrics--actionable{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt2-momentum-layout{align-items:flex-start}
+ .mt2-shell .mt2-board-columns{grid-auto-columns:minmax(270px,82vw)}
+ .mt2-shell .mt2-primary-nav{max-height:calc(100vh - 240px)}
+}
+@media(max-width:420px){
+ .mt2-momentum-layout{flex-direction:column}
+ .mt2-momentum-ring{width:110px;height:110px;align-self:center}
+ .mt2-momentum-copy{width:100%}
+ .mt2-shell .mt2-metrics--actionable .mt2-metric{padding:12px}
+ .mt2-weekly-bars{gap:3px}
+}
+@media(prefers-reduced-motion:reduce){
+ .mt2-recommendation,.mt2-weekly-track span,.mt2-shell .mt2-metrics--actionable button.mt2-metric,.mt2-shell .mt2-metrics--actionable a.mt2-metric{transition:none}
+}
+
+
+/* Fast, meaningful filters: no separate filter screen required. */
+.mt2-smart-filters{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:-1px 0 14px}
+.mt2-smart-filters button{display:flex;align-items:center;gap:7px;background:#f2f7fb;color:#58778e;border:1px solid #e1eaf3;border-radius:20px;padding:8px 11px;font-size:12px;font-weight:740}
+.mt2-smart-filters button.is-active{background:#e2f3fc;color:#166e9d;border-color:#9ed2eb}
+.mt2-smart-filters button span{border-radius:12px;padding:1px 5px;background:#fff;color:#718a9b;font-size:10px}
+.mt2-smart-filters button:hover{border-color:#92c9e3}
+.mt2-handoff-empty{display:flex;align-items:center;gap:17px;padding:18px 22px;margin-bottom:14px;background:linear-gradient(105deg,#fff,#f5faff)}
+.mt2-handoff-icon{display:grid;place-items:center;width:46px;height:46px;flex:none;border-radius:14px;background:#e5f4fd;color:#2687b3;font-size:23px}
+.mt2-handoff-empty>div:nth-child(2){flex:1;min-width:0}
+.mt2-handoff-empty h2{font-size:16px;margin:3px 0;color:#29455d}
+.mt2-handoff-empty p:not(.mt2-eyebrow){font-size:12px;color:#74899d;margin:0;line-height:1.6}
+.mt2-handoff-empty button{border:1px solid #c8e7f5;background:#ebf7fd;color:#217eaa;border-radius:9px;padding:11px 14px;font-size:12px;font-weight:780;white-space:nowrap}
+@media(max-width:750px){.mt2-handoff-empty{flex-wrap:wrap}.mt2-handoff-empty button{margin-left:0}.mt2-smart-filters{gap:6px}}

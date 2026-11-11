@@ -1872,3 +1872,24 @@ button.sidebarSignout:disabled{cursor:wait;opacity:.65}
 .systemLogIssueDialog .formGrid .input{font-size:14px;font-weight:500}
 .systemLogIssueDialog .fieldHint{line-height:1.6}
 @media(max-width:600px){.systemLogIssueBackdrop{padding:8px;align-items:flex-end}.systemLogIssueDialog{width:100%;max-height:94dvh;border-radius:16px 16px 8px 8px}.systemLogIssueDialog .summaryDefinitionGrid>div{grid-template-columns:1fr;gap:5px}}
+
+/* Portal ↔ Connect application switcher. Only rendered for authorized administrators. */
+.portalWorkspaceSwitch{display:flex;flex-direction:column;gap:5px;margin:10px 12px 12px;padding:11px;border:1px solid #d8e8f2;background:#f6fbfe;border-radius:12px}
+.portalWorkspaceSwitchLabel{font-size:10px;font-weight:750;letter-spacing:.09em;color:#71879a;padding:0 7px 4px}
+.portalWorkspaceCurrent,.portalWorkspaceLink{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;text-decoration:none;font-size:12px;font-weight:650;line-height:1.35;color:#32546c}
+.portalWorkspaceCurrent{background:#e0f0fa;color:#13688f}
+.portalWorkspaceLink:hover{background:#e9f4fa;color:#075d85}
+.adminSidebarCollapsed .portalWorkspaceSwitch{margin:10px 5px;padding:5px;align-items:center}
+.adminSidebarCollapsed .portalWorkspaceSwitchLabel,.adminSidebarCollapsed .portalWorkspaceSwitch span span,.adminSidebarCollapsed .portalWorkspaceSwitch a span{display:none}
+.adminSidebarCollapsed .portalWorkspaceCurrent,.adminSidebarCollapsed .portalWorkspaceLink{justify-content:center;width:100%;padding:9px 4px}
+
+/* Shared cross-application sidebar header geometry (Connect CRM reference). */
+.workspaceShell:not(.adminSidebarCollapsed){grid-template-columns:248px minmax(0,1fr)}
+.workspaceSidebar{padding:23px 14px 13px}
+.workspaceSidebar>.sidebarBrand{border:1px solid #e8eef7;box-shadow:none;border-radius:15px;min-height:56px;padding:10px 12px}
+.workspaceSidebar>.sidebarBrand img{height:34px}
+.workspaceSidebar>.portalName{padding:15px 9px 8px;font-size:14px;color:#15203b}
+.workspaceSidebar>.portalName span{color:#7e8da4}
+.workspaceSidebar>.portalWorkspaceSwitch{margin:10px 0 12px}
+@media(max-width:1100px) and (min-width:761px){.workspaceShell:not(.adminSidebarCollapsed){grid-template-columns:248px minmax(0,1fr)}}
+@media(max-width:760px){.workspaceShell:not(.adminSidebarCollapsed){display:block}.workspaceSidebar{padding:10px 12px}}

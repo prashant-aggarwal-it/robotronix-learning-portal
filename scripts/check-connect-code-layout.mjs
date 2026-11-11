@@ -1,0 +1,299 @@
+import fs from "node:fs";
+import path from "node:path";
+
+const root=process.cwd();
+const required=[
+ "app/connect/page.tsx","app/connect/layout.tsx","app/connect/connect.css",
+ "features/connect/api/client.ts","features/connect/model.ts","features/connect/types/enquiries.ts","features/connect/EmptyStates.tsx",
+ "features/connect/ConnectSidebar.tsx","features/connect/ConnectTopbar.tsx","features/connect/ConnectBrand.tsx",
+ "features/connect/ConnectAuthGates.tsx",
+ "features/connect/components/contact/ContactProfile.tsx",
+ "features/connect/components/contact/ContactTimeline.tsx",
+ "features/connect/components/contact/ContactRelationships.tsx",
+ "features/connect/components/contact/ContactIntelligence.tsx",
+ "app/api/connect/workspaces/[tenantId]/intelligence/route.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/threads/route.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/messages/route.ts",
+ "app/api/connect/workspaces/[tenantId]/contacts/[personId]/relations/route.ts",
+ "app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts",
+ "features/connect/components/ChannelSettings.tsx",
+ "features/connect/components/ConnectWhatsAppInbox.tsx",
+ "lib/server/connect-meta-test.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/send/route.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/route.ts",
+ "app/api/connect/workspaces/[tenantId]/whatsapp/contacts/route.ts",
+ "features/connect/components/ConnectAutomationSettings.tsx",
+ "features/connect/components/ConnectCommunications.tsx",
+ "features/connect/components/ConnectReports.tsx",
+ "features/connect/components/EnquirySettings.tsx",
+ "components/ApplicationSwitcher.tsx"
+];
+for(const file of required){if(!fs.existsSync(path.join(root,file)))throw Error("Missing Connect module: "+file);}
+if(fs.existsSync(path.join(root,"components/connect")))throw Error("Old Connect components folder must not coexist with consolidated feature module.");
+
+const inspect=[
+ "app/connect/page.tsx","features/connect/model.ts","features/connect/types/enquiries.ts","components/AppShell.tsx","components/ApplicationSwitcher.tsx",
+ ...required.filter(f=>f.startsWith("features/connect/")&&f.endsWith(".tsx"))
+];
+for(const file of inspect){
+ const source=fs.readFileSync(path.join(root,file),"utf8");
+ if(source.includes("@/components/connect/"))throw Error("Stale Connect component import in "+file);
+ for(const match of source.matchAll(/from\s+["'](@\/[^"']+)["']/g)){
+  const name=match[1].slice(2);
+  const candidates=[name+".ts",name+".tsx",name+".js",name+".jsx",name+"/index.ts",name+"/index.tsx"];
+  if(!candidates.some(candidate=>fs.existsSync(path.join(root,candidate))))throw Error("Missing local import "+match[1]+" from "+file);
+ }
+}
+const page=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+if(!page.includes("<ConnectSidebar")||!page.includes("<ConnectTopbar")||!page.includes("<ConnectSignInGate")||!page.includes("<ConnectNoWorkspaceGate"))throw Error("Connect page is missing an extracted shell component.");
+if(fs.existsSync(path.join(root,"lib/connect-client.ts")))throw Error("Redundant legacy Connect API shim has been reintroduced.");
+console.log("Connect code organization and local import paths OK.");
+
+const portal=fs.readFileSync(path.join(root,"components/AppShell.tsx"),"utf8");
+const sidebar=fs.readFileSync(path.join(root,"features/connect/ConnectSidebar.tsx"),"utf8");
+if(!portal.includes('<ApplicationSwitcher current="portal"')||!sidebar.includes('<ApplicationSwitcher current="connect"'))throw Error("Both products must use the shared app switcher.");
+
+const brand=fs.readFileSync(path.join(root,"features/connect/ConnectBrand.tsx"),"utf8");
+if(!brand.includes('/brand/robotronix-horizontal.png'))throw Error("Connect brand must reuse the existing Portal logo.");
+if(!sidebar.includes("/brand/robotronix-horizontal.png")||!fs.readFileSync(path.join(root,"features/connect/ConnectAuthGates.tsx"),"utf8").includes("<ConnectBrand"))throw Error("Connect entry and sidebar must use the Portal logo.");
+
+if(page.includes("ConnectWorkspaceSetupGate")||page.includes("createWorkspace("))throw Error("Self-service workspace creation must not be shown in Connect UI.");
+if(!sidebar.includes("workspaces.length>1"))throw Error("Workspace selector must be hidden for single-organization users.");
+
+const contact=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+if(!page.includes("<ContactProfile")||!contact.includes('role="tablist"')||!contact.includes("Contact follow-ups")||!contact.includes("Related appointments"))throw Error("Contact 360 profile must contain its navigation and linked records.");
+if(!page.includes("onSubmit={saveTask}")||!page.includes("onSubmit={saveAppointment}")||!page.includes("onSubmit={saveNote}")||!page.includes("onSubmit={startAdmission}"))throw Error("Contact 360 must retain its existing action forms.");
+
+const timeline=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactTimeline.tsx"),"utf8");
+const timelineApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts"),"utf8");
+const migration=fs.readFileSync(path.join(root,"database/connect/saas/24_contact_360_timeline_PENDING.sql"),"utf8");
+if(!page.includes("<ContactTimeline")||!timeline.includes("Load older activity")||!timeline.includes("generation.current"))throw Error("Unified Contact 360 timeline or stale response handling missing.");
+if(!timelineApi.includes("connect_contact_timeline")||!timelineApi.includes("isConnectSession")||!migration.includes("m.tenant_id=p_tenant_id")||!migration.includes("c.person_id=p_person_id"))throw Error("Tenant-authorized contact timeline query missing.");
+if(!migration.includes("revoke all on function public.connect_contact_timeline"))throw Error("Contact timeline RPC must not be callable by public roles.");
+
+const relationships=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactRelationships.tsx"),"utf8");
+const relationApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/[personId]/relations/route.ts"),"utf8");
+const relationMigration=fs.readFileSync(path.join(root,"database/connect/saas/25_contact_relationships.sql"),"utf8");
+const contactProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+if(!page.includes("<ContactRelationships")||!contactProfile.includes('tab==="relations"')||!relationships.includes('assign_owner'))
+ throw Error("Contact 360 relationship tab and owner assignment are required.");
+if(!relationApi.includes("connect_contact_relations")||!relationApi.includes("connect_contact_relation_command")||
+ !relationMigration.includes("m.user_id=p_actor_id")||!relationMigration.includes("tenant_id=p_tenant_id")||
+ !relationMigration.includes("revoke all on function public.connect_contact_relation_command"))
+ throw Error("Contact relationship RPC and tenant permission checks are required.");
+
+const intelligence=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactIntelligence.tsx"),"utf8");
+const intelligenceApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/intelligence/route.ts"),"utf8");
+const intelligenceMigration=fs.readFileSync(path.join(root,"database/connect/saas/27_contact_intelligence.sql"),"utf8");
+if(!page.includes("<WorkspaceIntelligence")||!contactProfile.includes('tab==="insights"')||!intelligence.includes("ContactIntelligence"))throw Error("Contact intelligence UI and dashboard attention board must be present.");
+if(!intelligenceApi.includes("connect_contact_insights")||!intelligenceApi.includes("isConnectSession")||!intelligenceMigration.includes("m.user_id=p_actor_id")||!intelligenceMigration.includes("revoke all on function public.connect_contact_insights"))throw Error("Contact intelligence authorization and private RPC missing.");
+if(intelligence.includes("AI-powered")||intelligence.includes("predictive score"))throw Error("Do not claim unimplemented AI predictions.");
+
+const waWebhook=fs.readFileSync(path.join(root,"app/api/connect/webhooks/meta/route.ts"),"utf8");
+const waIngestion=fs.readFileSync(path.join(root,"lib/server/connect-ingestion.ts"),"utf8");
+const waMigration=fs.readFileSync(path.join(root,"database/connect/saas/28_whatsapp_messaging_foundation.sql"),"utf8");
+const waReadMigration=fs.readFileSync(path.join(root,"database/connect/saas/29_whatsapp_inbox_read_apis.sql"),"utf8");
+const waThreads=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/threads/route.ts"),"utf8");
+const waMessages=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/messages/route.ts"),"utf8");
+if(!waWebhook.includes('connect_ingest_whatsapp_message')||!waWebhook.includes('connect_ingest_whatsapp_status')
+ ||!waWebhook.includes('smb_message_echoes')||!waWebhook.includes('checkHmacSha256'))
+ throw Error("Verified WhatsApp inbound, status and coexistence echo adapters are required.");
+if(!waIngestion.includes('connect_ingest_whatsapp_message')||!waMigration.includes('v_created and p_direction=\'inbound\'')
+ ||!waMigration.includes('create unique index if not exists idx_connect_msg_external_id')
+ ||!waMigration.includes('enable row level security'))
+ throw Error("WhatsApp-only message capture, deduplication and private status storage missing.");
+if(!waReadMigration.includes('connect_whatsapp_threads')||
+ !waReadMigration.includes('connect_whatsapp_conversation_messages')||
+ !waThreads.includes('connectSession')||!waMessages.includes('connectSession'))
+ throw Error("Protected paginated WhatsApp inbox read APIs are required.");
+
+const inbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectWhatsAppInbox.tsx"),"utf8");
+const unifiedInbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectUnifiedInbox.tsx"),"utf8");
+const inboxWorkflow=fs.readFileSync(path.join(root,"database/connect/saas/30_whatsapp_inbox_workflow.sql"),"utf8");
+const identityFix=fs.readFileSync(path.join(root,"database/connect/saas/31_whatsapp_preserve_contact_links.sql"),"utf8");
+const inboxApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/route.ts"),"utf8");
+const contactSearchApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/contacts/route.ts"),"utf8");
+if(!page.includes("<ConnectUnifiedInbox")||!unifiedInbox.includes("<ConnectWhatsAppInbox")||!inbox.includes("Load older messages")||
+ !inbox.includes("Link CRM contact")||!inbox.includes("Save draft")||!inbox.includes("sendReady?.canSend"))
+ throw Error("WhatsApp conversation UI, pagination or Meta-gated send composer missing.");
+if(!inboxApi.includes("connectSession")||!inboxApi.includes("connect_whatsapp_manage_thread")||
+ !contactSearchApi.includes("connect_whatsapp_contact_search")||
+ !inboxWorkflow.includes("whatsapp_thread_state")||!inboxWorkflow.includes("enable row level security")||
+ !identityFix.includes("Preserve explicitly linked CRM contact"))
+ throw Error("Phase 2 WhatsApp agent state or access control missing.");
+
+const metaTestAdapter=fs.readFileSync(path.join(root,"lib/server/connect-meta-test.ts"),"utf8");
+const metaTestApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/send/route.ts"),"utf8");
+const metaTestSql=fs.readFileSync(path.join(root,"database/connect/saas/32_whatsapp_meta_test_sending.sql"),"utf8");
+const metaEligibilitySql=fs.readFileSync(path.join(root,"database/connect/saas/33_whatsapp_meta_reply_eligibility.sql"),"utf8");
+const metaLimitSql=fs.readFileSync(path.join(root,"database/connect/saas/34_whatsapp_meta_test_send_limits.sql"),"utf8");
+if(!metaTestAdapter.includes("CONNECT_META_TEST_SEND_ENABLED")||
+ !metaTestAdapter.includes("CONNECT_META_TEST_RECIPIENTS")||
+ !metaTestAdapter.includes("CONNECT_META_TEST_ACCESS_TOKEN")||
+ !metaTestAdapter.includes("https://graph.facebook.com/"))
+ throw Error("Secure Meta test-only adapter or allowlist missing.");
+if(!metaTestApi.includes("connect_whatsapp_reserve_test_send")||
+ !metaTestApi.includes("connect_whatsapp_complete_test_send")||
+ !metaTestApi.includes("metaTestReady")||!metaTestApi.includes("connectSession"))
+ throw Error("Authorized Meta test sending and idempotency missing.");
+if(!metaTestSql.includes("customer-service reply window expired")&&
+ !metaTestSql.includes("Customer-service reply window expired"))
+ throw Error("Customer-service reply window check missing.");
+if(!metaEligibilitySql.includes("connect_whatsapp_test_reply_context")||
+ !metaLimitSql.includes("whatsapp_test_send_rate_guard"))
+ throw Error("Meta reply eligibility and test rate limits missing.");
+if(!inbox.includes('sendTestReply')||!inbox.includes('Send test reply')||!inbox.includes('sendReady?.canSend'))
+ throw Error("WhatsApp Phase 3 composer must only send to verified Meta test recipients.");
+if(waWebhook.includes('){\\n'))throw Error("Meta webhook contains literal escaped newlines that break TypeScript.");
+
+// Guard against calendar styling being loaded only from a client component.
+const calendarComponent=fs.readFileSync(path.join(root,"features/connect/components/ConnectCalendar.tsx"),"utf8");
+const crmStyles=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8");
+if(!calendarComponent.includes('className="ccal"')||!crmStyles.includes(".cx-app .ccal-grid{display:grid")||!crmStyles.includes(".cx-app .ccal-view button")||!crmStyles.includes(".cx-app .ccal-day-item")){
+ console.error("CRM calendar layout or critical stylesheet rules are missing.");process.exitCode=1;
+}
+
+/* Design-system regression guard: colours must stay stable by meaning, not index. */
+const paletteSource=fs.readFileSync(path.join(root,"features/connect/connect-palette.ts"),"utf8");
+const visualizationSource=fs.readFileSync(path.join(root,"features/connect/components/ConnectEnquiryVisualizations.tsx"),"utf8");
+const overviewSource=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
+const widgetSource=fs.readFileSync(path.join(root,"features/connect/components/ConnectDataWidgets.tsx"),"utf8");
+if(!paletteSource.includes("export function stageTone")||!paletteSource.includes("export function channelColor")||
+ !visualizationSource.includes("channelColor(source)")||!overviewSource.includes("stageTone(i.stage_name,i.outcome)")||
+ !widgetSource.includes("toneColor(stageTone("))
+ throw Error("Connect visual semantics must use the shared status/channel palette.");
+if(!crmStyles.includes('.cx-app .cx-status.won')||!crmStyles.includes('data-tone="contacted"')||
+ !crmStyles.includes('data-tone="trial"')||!crmStyles.includes('data-tone="lost"')||
+ !crmStyles.includes('@media(max-width:480px)'))
+ throw Error("Connect semantic states or mobile layout rules are missing.");
+
+const overviewPhase2=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
+const intelligencePhase2=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactIntelligence.tsx"),"utf8");
+if(!overviewPhase2.includes("onOpenEnquiry(i)")||!overviewPhase2.includes(".slice(0,3)")||
+ overviewPhase2.includes("cx-stages-panel")||!intelligencePhase2.includes("flagged.slice(0,3)")||
+ !page.includes("onOpenEnquiry={inquiry=>"))
+ throw Error("Overview Phase 2 must retain direct enquiry access and three-item summaries without duplicated stage analytics.");
+
+const connectReports=fs.readFileSync(path.join(root,"features/connect/components/ConnectReports.tsx"),"utf8");
+const connectReportVisuals=fs.readFileSync(path.join(root,"features/connect/components/ConnectDataWidgets.tsx"),"utf8");
+for(const name of ["Performance","Admissions Analytics","Marketing & ROI"]){
+ if(!connectReports.includes('label:"'+name+'"'))throw Error("Missing CRM report tab "+name);
+}
+if(!connectReports.includes('role="tablist"')||!connectReports.includes('role="tabpanel"')||
+ !connectReports.includes('stageHistoryUnavailable')||
+ !connectReports.includes('view="channels"')||!connectReports.includes('view="stages"')||
+ !connectReportVisuals.includes('view?:"channels"|"stages"|"both"'))
+ throw Error("CRM report tab and historical-data safeguards are required.");
+
+if(!connectReports.includes('e.key==="ArrowRight"')||!connectReports.includes("cx-report-empty-cell"))throw Error("Report accessibility and empty-state controls are required.");
+
+/* Phase 4: the customer-journey handoffs must remain connected. */
+const journeyPage=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+const journeyInbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectUnifiedInbox.tsx"),"utf8");
+const journeyProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+const journeyTasks=fs.readFileSync(path.join(root,"features/connect/components/ConnectFollowupsBoard.tsx"),"utf8");
+if(!journeyPage.includes("openCustomerWorkflow=(personId:string")||!journeyPage.includes("setWorkflowContactId(null)")||!journeyInbox.includes("onOpenWorkflow(conversation.personId!")||!journeyInbox.includes("if(focusPersonId&&t.personId!==focusPersonId)")||!journeyProfile.includes("Customer journey")||!journeyTasks.includes("const scopedTasks=useMemo"))throw Error("CRM cross-screen workflow handoffs were lost.");
+
+/* Phase 5 keyboard and dialog safety checks. */
+const globalDialog=fs.readFileSync(path.join(root,"components/GlobalEscapeDismiss.tsx"),"utf8");
+const contactTabs=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+const appointmentForm=fs.readFileSync(path.join(root,"features/connect/components/ConnectAppointmentEditor.tsx"),"utf8");
+const opsPage=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+if(!globalDialog.includes('event.key==="Tab"')||!globalDialog.includes('event.key!=="Escape"')||
+ !globalDialog.includes("MutationObserver")||!globalDialog.includes("restore.focus")||
+ !contactTabs.includes('e.key==="ArrowRight"')||!contactTabs.includes('e.key==="Home"')||
+ !appointmentForm.includes("Discard unsaved appointment changes?")||
+ !opsPage.includes("Discard unsaved contact details?")||!opsPage.includes("Discard unsaved enquiry details?")||
+ !opsPage.includes('aria-busy={busy} aria-labelledby="cx-new-lead-title"'))
+ throw Error("Connect Phase 5 modal safety, focus management, or tab keyboard navigation is missing.");
+
+if(!opsPage.includes('destination.outcome==="won"||destination.outcome==="lost"')||
+ !opsPage.includes('This will update the admission outcome.')||
+ !contactTabs.includes('aria-orientation="horizontal"'))
+ throw Error("Admission outcome safeguards or contact tab accessibility missing.");
+
+/* Overview right rail: compact scheduling and pipeline insight cards. */
+const overviewRail=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
+const overviewPage=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+const overviewStyles=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8");
+if(!overviewRail.includes("cx-overview-right-rail")||
+ !overviewRail.includes("Next appointments")||!overviewRail.includes("Pipeline snapshot")||
+ !overviewRail.includes('a.status==="scheduled"')||!overviewRail.includes('onNavigate("calendar")')||
+ !overviewPage.includes("appointments={appointments} people={people} pipelines={pipelines}")||
+ !overviewStyles.includes(".cx-overview-stage-list"))
+ throw Error("CRM Overview operational right-rail widgets or responsive styles are missing.");
+
+/* Compact report navigation and channel widgets should not regress to wide bars. */
+const compactReports=fs.readFileSync(path.join(root,"features/connect/components/ConnectReports.tsx"),"utf8");
+const compactWidgets=fs.readFileSync(path.join(root,"features/connect/components/ConnectDataWidgets.tsx"),"utf8");
+const compactCss=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8");
+if(!compactReports.includes('cx-report-tab-description')||
+ !compactWidgets.includes("cx-report-channel-grid")||
+ !compactWidgets.includes("cx-report-channel-card")||
+ !compactCss.includes(".cx-app .cx-report-tabs{display:flex")||
+ !compactCss.includes("grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-width:900px"))
+ throw Error("Compact Reports tabs and channel-comparison cards are required.");
+
+/* Overview should use two independent content columns, never a forced-height grid row. */
+const masonryView=fs.readFileSync(path.join(root,"features/connect/components/ConnectOverviewWidgets.tsx"),"utf8");
+const masonryPage=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+const masonryStyles=fs.readFileSync(path.join(root,"app/connect/connect.css"),"utf8");
+if(!masonryView.includes("cx-overview-left-column")||
+ !masonryView.includes("cx-overview-masonry")||
+ !masonryView.includes("{attentionWidget}")||
+ !masonryPage.includes("attentionWidget={<>")||
+ !masonryStyles.includes(".cx-app .cx-insight-panels.cx-overview-masonry"))
+ throw Error("Overview independent-column layout and customer attention slot are required.");
+
+/* Bulk contact imports must be explicitly mapped, audited, and never grant marketing permission. */
+const importer=fs.readFileSync(path.join(root,"features/connect/components/ContactImportWizard.tsx"),"utf8");
+const importApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/import/route.ts"),"utf8");
+const importMigration=fs.readFileSync(path.join(root,"database/connect/saas/40_bulk_contacts_import.sql"),"utf8");
+if(!importer.includes("parseCSV")||!importer.includes("Review import")||
+ !importer.includes("sourceType")||!importer.includes("contact-import-template.csv")||
+ !importApi.includes("connect_contacts_import")||
+ !importMigration.includes("contact_marketing_permissions")||
+ !importMigration.includes("'unknown'")||
+ !page.includes("ContactImportWizard"))
+ throw Error("Contact import mapping, tenant RPC, provenance or consent safeguard missing.");
+
+const provenanceView=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactImportProvenance.tsx"),"utf8");
+const importedContactProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
+const profileRpc=fs.readFileSync(path.join(root,"database/connect/saas/41_contact_import_provenance.sql"),"utf8");
+if(!page.includes("loadMoreContacts()")||!page.includes("peopleHasMore")||
+ !importedContactProfile.includes("ContactImportProvenance")||!provenanceView.includes("WhatsApp marketing:")||
+ !profileRpc.includes("connect_contact_import_profile"))
+ throw Error("Bulk contact pagination and import provenance views are required.");
+
+/* Imported phone-only records must be searchable across the entire tenant. */
+const directoryUi=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
+const directoryApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/directory/route.ts"),"utf8");
+const directorySql=fs.readFileSync(path.join(root,"database/connect/saas/42_contact_directory_search.sql"),"utf8");
+if(!directoryUi.includes("searchingDirectory")||!directoryUi.includes("directoryResults")||!directoryApi.includes("connect_contact_directory")||!directorySql.includes("cm.display_value ilike"))
+ throw Error("Tenant-wide name/phone/email contact search is required after bulk import.");
+
+const importIssueSql=fs.readFileSync(path.join(root,"database/connect/saas/43_contact_import_issue_review.sql"),"utf8");
+const importIssueUi=fs.readFileSync(path.join(root,"features/connect/components/ContactImportWizard.tsx"),"utf8");
+if(!importIssueSql.includes("connect_contact_import_issues")||!importIssueUi.includes("Review skipped rows")||!importIssueUi.includes("downloadIssueReport"))
+ throw Error("Bulk contact import skipped-row review must remain available.");
+
+/* Phase 6: end-to-end contact administration regression checks. */
+const managerUI=fs.readFileSync(path.join(root,"features/connect/components/ContactManagementWorkspace.tsx"),"utf8");
+const managerAPI=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/manage/route.ts"),"utf8");
+const managerSQL=fs.readFileSync(path.join(root,"database/connect/saas/44_contact_management.sql"),"utf8");
+const mergeSQL=fs.readFileSync(path.join(root,"database/connect/saas/45_contact_safe_merge.sql"),"utf8");
+if(!managerUI.includes("saveConsent")||!managerUI.includes("saveSegment")||!managerUI.includes("exportCsv")||
+ !managerUI.includes("bulkApply")||!managerUI.includes("Duplicate review")||
+ !managerAPI.includes("connect_manage_contacts")||!managerAPI.includes("connect_merge_contacts")||
+ !managerSQL.includes("contact_saved_segments")||!managerSQL.includes("contacts_bulk_updated")||
+ !mergeSQL.includes("Cannot merge: source contact has connected CRM history")||
+ !page.includes("<ContactManagementWorkspace"))
+ throw Error("Contact administration, consent, segments, export, safe merge or routing missing.");
+
+const contactEnrichmentTrigger=fs.readFileSync(path.join(root,"database/connect/saas/47_contact_import_profile_sync.sql"),"utf8");
+const phase6Checklist=fs.readFileSync(path.join(root,"qa/connect-phase6-contact-management.md"),"utf8");
+if(!contactEnrichmentTrigger.includes("after insert on connect.contact_import_details")||
+ !phase6Checklist.includes("Merge contact with linked enquiry")||
+ !managerAPI.includes("connect_contact_management_detail")||
+ !managerUI.includes("Discard unsaved contact changes?"))
+ throw Error("Phase 6 import enrichment, off-page editing or UAT safeguards missing.");

@@ -1,0 +1,22 @@
+export type V2Status="todo"|"in_progress"|"waiting"|"done";
+export type V2Priority="low"|"medium"|"high";
+export type V2Task={
+ id:string;title:string;description:string;status:V2Status;priority:V2Priority;
+ owner_user_id:string;assignee_user_id:string|null;workspace_id:string|null;share_with_workspace:boolean;
+ area_id:string|null;project_id:string|null;
+ scheduled_date:string|null;due_at:string|null;completed_at:string|null;
+ important:boolean;urgent:boolean;someday:boolean;reschedule_count:number;estimated_minutes:number|null;
+ done_definition:string;resume_note:string;waiting_for:string;followup_date:string|null;
+ board_rank:number;created_at:string;updated_at:string;
+ focus_date:string|null;focus_rank:number|null;reminder_at:string|null;recurrence:"none"|"daily"|"weekly"|"monthly";
+ subtask_total?:number;subtask_done?:number;
+};
+export type V2Area={id:string;name:string;color:string;icon:string};
+export type V2Project={id:string;name:string;area_id:string|null;status:"active"|"paused"|"completed"};
+export type V2Response<T>={ok:boolean;item?:T;items?:T[];error?:string};
+export type V2Request=<T>(url:string,init?:RequestInit)=>Promise<T>;
+export const v2Statuses:V2Status[]=["todo","in_progress","waiting","done"];
+export const v2StatusNames:Record<V2Status,string>={todo:"To Do",in_progress:"In Progress",waiting:"Waiting",done:"Done"};
+export const v2Colors:Record<string,string>={blue:"#3777bb",green:"#229b83",purple:"#8565cd",amber:"#bb873d",red:"#d26763",slate:"#718399"};
+
+export type V2ModuleLink={task_id:string;module:"connect"|"learning";resource:"crm_task"|"crm_person"|"crm_opportunity"|"schedule_event";resource_id:string;tenant_id:string|null;title:string;status:string;due_at?:string|null};

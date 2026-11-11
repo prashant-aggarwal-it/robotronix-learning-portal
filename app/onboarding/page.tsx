@@ -14,6 +14,7 @@ import {IST_TIMEZONE,formatClock,isValidTimeZone,shortTimeZoneLabel,timeZoneLabe
 import {validInternationalPhone} from "@/lib/phones";
 import {timeRangeError} from "@/lib/time-range-validation";
 import {guardianRelationshipOptions,legacyFieldsFromGuardians} from "@/lib/guardians";
+import {connectFetch} from "@/features/connect/api/client";
 import type {GuardianRelationship} from "@/lib/types";
 
 const interests=["Coding for Beginners","Scratch & Game Creation","Python Programming","Robotics & Smart Automations","AI & Future Skills","Website Designing","Mobile App Development","3D Design & Modelling","Data Science","Not sure — need guidance"];
@@ -52,7 +53,9 @@ function indiaReference(slot:TimingSlot,timeZone:string){
 }
 
 function OnboardingPageContent(){
- const params=useSearchParams();const demoToken=params.get("demo")||"";
+ const params=useSearchParams();const demoToken=params.get("demo")||"";const handoffToken=params.get("handoff")||"";
+ const[handoffWarning,setHandoffWarning]=useState("");
+ const[handoffSubmissionId,setHandoffSubmissionId]=useState("");
  const[slots,setSlots]=useState<TimingSlot[]>([]);
  const[timingNote,setTimingNote]=useState("");
  const[dayPickerOpen,setDayPickerOpen]=useState(false);
@@ -84,6 +87,14 @@ function OnboardingPageContent(){
    codingExperience:String(p.interest||"").match(/coding|python|scratch|ai/i)?(p.experienceLevel==="new"?"None":"Some experience"):f.codingExperience,
    source:"Demo / Discovery Session"
   }));}catch{}})();return()=>{cancelled=true}},[demoToken]);
+
+ useEffect(()=>{if(!handoffToken)return;let cancelled=false;void (async()=>{try{
+  const r=await fetch("/api/admission/handoff/"+encodeURIComponent(handoffToken),{cache:"no-store"});const j=await r.json();
+  if(!r.ok||!j.ok){if(!cancelled)setHandoffWarning("This admission invitation is unavailable. You may continue with normal family onboarding.");return;}
+  if(cancelled)return;const p=j.prefill||{};
+  setForm(f=>({...f,primaryGuardianName:f.primaryGuardianName||p.parentName||"",loginEmail:f.loginEmail||p.parentEmail||"",
+   childName:f.childName||p.childName||"",source:"Demo / Discovery Session"}));
+ }catch{if(!cancelled)setHandoffWarning("Could not load admission invitation. You may continue onboarding.");}})();return()=>{cancelled=true};},[handoffToken]);
 
  const age=useMemo(()=>{
   if(!form.childDob)return null;
@@ -173,11 +184,19 @@ function OnboardingPageContent(){
   const r=await submitOnboarding({...form,referringParentName:(form.source==="Existing parent"||form.source==="Referred by an existing Robotronix parent")?form.referringParentName.trim():"",billingName:form.billingName.trim()||form.primaryGuardianName,billingEmail:form.billingEmail.trim()||form.loginEmail,billingPhone:form.billingPhone.trim()||form.primaryGuardianMobile,...legacy,secondaryGuardianMobile:form.secondaryGuardianMobile,preferredClassDays:[...new Set(slots.map(s=>s.day))],preferredTimeWindows:[...[...slots].sort((a,b)=>(dayIndex.get(a.day)??0)-(dayIndex.get(b.day)??0)||a.start.localeCompare(b.start)).map(s=>`${s.day}: ${s.start}–${s.end}${s.endsNextDay?" (+1 day)":""}`),...(timingNote.trim()?[`Note: ${timingNote.trim()}`]:[])].join("\n"),primaryWhatsApp:form.primaryGuardianMobile,alternateWhatsApp:form.secondaryGuardianMobile});
   setSaving(false);
   if(!r.ok){setErrors({submit:r.error??"Could not submit onboarding."});return;}
+  if(handoffToken&&r.id&&r.mode==="live"){
+   setHandoffSubmissionId(r.id);
+   try{const linked=await connectFetch<{ok:true;status:string}>("/api/admission/handoff/"+encodeURIComponent(handoffToken),{
+    method:"POST",body:JSON.stringify({onboardingSubmissionId:r.id})
+   });
+    if(linked.status==="review_required")setHandoffWarning("Your onboarding is submitted. Our team will verify the guardian link before confirming admission.");
+   }catch{setHandoffWarning("Your onboarding was submitted, but linking it to the admission needs assistance. Please contact Robotronix; do not submit the form again.");}
+  }
   setDone(true);
  }
  const err=(k:string)=>errors[k]?<div className="fieldError">{errors[k]}</div>:null;
 
- if(done)return <main className="onboardingShell"><div className="onboardingSuccess"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><span className="statusBadge status-active">Setup submitted</span><h1>Thank you. Your child’s learning profile has been received.</h1><p>Robotronix™ will review the details and confirm the course, trainer and recurring class schedule. You can add another child now without entering your family details again.</p><div className="row onboardingSuccessActions"><button className="button ghost" onClick={startAnotherChild}>+ Add another child</button><Link className="button" href={appMode==="demo"?"/admin/onboarding":"/parent"}>Go to Family Dashboard</Link></div></div></main>;
+ if(done)return <main className="onboardingShell"><div className="onboardingSuccess"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><span className="statusBadge status-active">Setup submitted</span><h1>Thank you. Your child’s learning profile has been received.</h1><p>Robotronix™ will review the details and confirm the course, trainer and recurring class schedule. You can add another child now without entering your family details again.</p>{handoffWarning&&<p role="status">{handoffWarning}</p>}{handoffWarning&&handoffSubmissionId&&handoffToken&&<button className="button ghost" onClick={async()=>{try{const linked=await connectFetch<{ok:true;status:string}>("/api/admission/handoff/"+encodeURIComponent(handoffToken),{method:"POST",body:JSON.stringify({onboardingSubmissionId:handoffSubmissionId})});setHandoffWarning(linked.status==="review_required"?"Submitted. Guardian verification is pending.":"");}catch{setHandoffWarning("Admission linking still needs support.");}}}>Retry admission linking</button>}<div className="row onboardingSuccessActions"><button className="button ghost" onClick={startAnotherChild}>+ Add another child</button><Link className="button" href={appMode==="demo"?"/admin/onboarding":"/parent"}>Go to Family Dashboard</Link></div></div></main>;
  if(!signedIn)return <main className="onboardingShell onboardingEntryShell"><div className="onboardingSignIn onboardingEntryCard"><img className="onboardingEntryLogo" src="/brand/robotronix-stacked.png" alt="Robotronix"/><div className="eyebrow">PARENT ONBOARDING</div><h1>Create your family portal</h1><p className="onboardingEntryLead">Continue with Google to securely create your family account and access the Robotronix Learning Portal.</p><button className="button googleButton onboardingGoogleButton" onClick={()=>signInWithGoogle(typeof window!=="undefined"?window.location.pathname+window.location.search:"/onboarding")}><span className="googleG">G</span> Continue with Google</button><div className="onboardingSecurityLine">Secure sign-in • No access to Gmail, Drive or Contacts</div><Link href="/" className="textLink onboardingBackLink">Back to Learning Portal</Link></div></main>;
 
  return <main className="onboardingPage">

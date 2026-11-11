@@ -1,0 +1,80 @@
+
+/* Phase 6: collaborative work in the existing V2 visual language. */
+.mt2-connected-page{max-width:1540px}
+.mt2-connected-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.mt2-connected-metrics>button{background:#fff;border:1px solid #e5edf5;border-radius:14px;box-shadow:0 8px 24px #223f6609;padding:18px 20px;display:grid;gap:8px;text-align:left;cursor:pointer}
+.mt2-connected-metrics>button:hover{border-color:#a7cde2;background:#fcfeff}
+.mt2-connected-metrics strong{font-size:30px;font-weight:860;color:#287cae}
+.mt2-connected-metrics span{font-size:11px;font-weight:750;color:#7e91a4}
+.mt2-connected-toolbar{display:flex;justify-content:space-between;gap:15px;align-items:center;background:#fff;border:1px solid #e5edf5;border-radius:13px;padding:12px 14px;margin-bottom:21px}
+.mt2-connected-toolbar>nav{display:flex;flex-wrap:wrap;gap:4px}
+.mt2-connected-toolbar nav button{border:0;background:transparent;color:#74899d;border-radius:9px;padding:10px 13px;font-size:11px;font-weight:770}
+.mt2-connected-toolbar nav button.active{background:#e8f4fb;color:#2780ae}
+.mt2-connected-toolbar>input{border:1px solid #e0e8f1;background:#f9fbfd;color:#47667d;border-radius:9px;padding:11px;width:min(240px,100%);font-size:12px;min-width:0}
+.mt2-connected-section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:15px}
+.mt2-connected-section-title h2{font-size:22px;letter-spacing:-.5px;color:#203850;margin:0}
+.mt2-connected-section-title>span{font-size:11px;color:#93a3b5;text-align:right}
+.mt2-connected-team{margin-bottom:20px}
+.mt2-connected-team .tw-team-grid{gap:16px}
+.mt2-connected-team .tw-panel{background:#fff;border:1px solid #e7edf4;box-shadow:0 8px 24px #214a6807;border-radius:17px;padding:22px}
+.mt2-connected-team .tw-team-grid h2{font-size:20px;margin:7px 0}
+.mt2-connected-team .tw-team-grid p{font-size:12px}
+.mt2-connected-team .tw-team-grid .tw-team-section{margin-top:15px}
+.mt2-connected-team .tw-team-grid button,.mt2-connected-team .tw-team-grid input,.mt2-connected-team .tw-team-grid select{font-size:12px}
+.mt2-connected-panes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:17px;margin-bottom:17px}
+.mt2-connected-panes>.mt2-panel{min-height:245px}
+.mt2-connected-see{border:0;background:#eef6fb;color:#277fac;border-radius:8px;padding:8px 11px;font-size:11px;font-weight:760;white-space:nowrap}
+.mt2-connected-task-grid{display:grid;gap:10px}
+.mt2-connected-task-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mt2-connected-task{background:#fcfdff;border:1px solid #e5ecf5;border-radius:12px;padding:13px 15px;min-width:0}
+.mt2-connected-task-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.mt2-source-chip{background:#edf3f9;border-radius:7px;font-weight:800;font-size:10px;padding:5px 8px;color:#5c7389;white-space:nowrap}
+.mt2-source-chip.connect{background:#e8f3ff;color:#2675bb}
+.mt2-source-chip.learning{background:#edf8ed;color:#2c8469}
+.mt2-source-chip.neutral{background:#f0f3f7;color:#6d839b}
+.mt2-cstatus{font-size:10px;font-weight:720;color:#7e90a2}
+.mt2-cstatus.done{color:#2c9779}
+.mt2-cstatus.waiting{color:#b9853c}
+.mt2-connected-title{background:transparent;border:0;text-align:left;padding:0;color:#2b4763;font-weight:800;font-size:13px;line-height:1.5}
+.mt2-connected-title:hover{color:#217cac}
+.mt2-connected-task>p{margin:7px 0 11px;color:#8293a6;font-size:11px}
+.mt2-connected-card-actions{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.mt2-connected-card-actions button{border:0;background:transparent;color:#277dad;font-size:11px;font-weight:790;padding:5px 0}
+.mt2-connected-card-actions select{font-size:11px;border:1px solid #dce6ef;border-radius:8px;padding:7px;color:#59758c;background:#fff;max-width:180px}
+.mt2-connected-linked-overview>p{font-size:12px;color:#8092a6;margin:-3px 0 17px;line-height:1.7}
+.mt2-connected-source-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mt2-connected-source-tiles>a{border:1px solid #e6edf5;border-radius:12px;background:#fafcff;padding:14px;display:grid;gap:9px}
+.mt2-connected-source-tiles>a:hover{border-color:#a5d0e8}
+.mt2-connected-source-tiles strong{font-size:13px;color:#2b4b67}
+.mt2-connected-source-tiles small{color:#8b9dad;font-size:11px}
+.mt2-module-list{display:grid;gap:9px}
+.mt2-module-item{display:flex;align-items:center;gap:14px;background:#fafcff;border:1px solid #e7eef5;border-radius:12px;padding:14px;min-width:0}
+.mt2-module-item>div{flex:1;min-width:0;display:grid;gap:6px}
+.mt2-module-item>div button{border:0;background:none;text-align:left;font-size:13px;color:#2d5372;font-weight:800;padding:0}
+.mt2-module-item>div small{font-size:11px;color:#8b9bad}
+.mt2-module-item>a{border:1px solid #d8e6f1;border-radius:9px;padding:9px 11px;white-space:nowrap;color:#267fae;font-size:11px;font-weight:750}
+.mt2-connected-note{font-size:12px;color:#7890a5}
+.mt2-drawer-tabs{display:flex;gap:7px;padding:12px 23px;border-bottom:1px solid #e8edf4}
+.mt2-drawer-tabs>button{border:1px solid transparent;border-radius:9px;background:#f2f6fa;color:#758ba0;padding:10px 13px;font-size:12px;font-weight:750;flex:1}
+.mt2-drawer-tabs>button.active{background:#e7f4fa;border-color:#cae4f2;color:#267eab}
+.mt2-drawer-pane{min-height:0;overflow-y:auto;flex:1;display:flex;flex-direction:column}
+.mt2-drawer-pane.mt2-hidden{display:none}
+.mt2-drawer-pane .mt2-detail-form{overflow:visible;flex:none}
+.mt2-drawer-pane .mt2-drawer-checklist{max-height:none;flex:none}
+.mt2-drawer-people{min-height:0;overflow-y:auto;padding:18px 23px;flex:1}
+.mt2-collaboration .tw-collaboration-detail{border:0;margin:0;padding:0}
+.mt2-collaboration .tw-collab-section{gap:10px}
+.mt2-collaboration .tw-collab-section button{cursor:pointer}
+.mt2-collaboration .tw-comment{font-size:12px}
+.mt2-linked-context{border:1px solid #cee3f2;border-radius:13px;background:#f5fbfe;padding:14px;margin-bottom:17px}
+.mt2-linked-context h3{font-size:14px;margin:0 0 8px;color:#315775}
+.mt2-linked-context>p{font-size:11px;line-height:1.6;margin:0 0 12px;color:#758fa6}
+.mt2-linked-record{display:flex;align-items:center;gap:10px;border-top:1px solid #e0ecf5;padding:12px 0}
+.mt2-linked-record>div{min-width:0;flex:1;display:grid;gap:4px}
+.mt2-linked-record strong{font-size:12px;color:#456b8b}
+.mt2-linked-record small{font-size:11px;color:#879eb0;overflow-wrap:anywhere}
+.mt2-linked-record>a{white-space:nowrap;font-size:11px;font-weight:760;color:#227da9}
+.mt2-collaboration .mt2-loading{padding:22px}
+@media(max-width:1220px){.mt2-connected-panes{grid-template-columns:1fr}.mt2-connected-team .tw-team-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.mt2-connected-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.mt2-connected-task-grid.two{grid-template-columns:1fr}.mt2-connected-toolbar{align-items:stretch;flex-direction:column}.mt2-connected-toolbar>input{width:100%}}
+@media(max-width:530px){.mt2-connected-page{padding:18px 12px 65px}.mt2-connected-source-tiles{grid-template-columns:1fr}.mt2-connected-toolbar nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.mt2-connected-toolbar nav button{text-align:center}.mt2-connected-metrics>button{padding:14px}.mt2-module-item{flex-wrap:wrap}.mt2-module-item>div{flex:1 1 150px}.mt2-module-item>a{width:100%;text-align:center}.mt2-drawer-people{padding:14px}.mt2-drawer-tabs{padding:9px}.mt2-linked-record{flex-wrap:wrap}.mt2-linked-record>a{width:100%}}

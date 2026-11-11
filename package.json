@@ -7,6 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "check:tasks": "node scripts/check-universal-tasks-phase5.mjs",
+    "test:tasks": "node --experimental-strip-types --test lib/server/tasks/csv.test.mjs lib/server/tasks/validation.test.mjs",
     "check:structure": "node scripts/check-structure.mjs",
     "check:communication": "node scripts/check-communication-security.mjs",
     "check:finance": "node --experimental-strip-types scripts/check-student-finance.mjs",
@@ -62,13 +64,16 @@
     "qa:prod-permanent:generate-sql": "node scripts/generate-permanent-qa-seed.mjs",
     "check:trainer-courses-ui": "node scripts/check-trainer-courses-ui.mjs",
     "check:security": "node scripts/check-security-hardening.mjs",
+    "check:connect-hardening": "node scripts/check-connect-phase-b.mjs && node scripts/check-connect-phase-c.mjs && node scripts/check-connect-phase-d.mjs && node scripts/check-connect-engineering-gates.mjs",
+    "test:connect-business": "node --test scripts/test-connect-business-rules.test.mjs",
     "qa:security-dev": "playwright test qa/security-dev-authorization.spec.ts --project=desktop-chromium --no-deps",
     "qa:security-dev-http": "playwright test qa/security-dev-http.spec.ts --project=desktop-chromium --no-deps",
     "qa:security-dev-all": "npm run qa:security-dev && npm run qa:security-dev-http",
     "check:zoom-jit": "node scripts/check-zoom-jit.mjs",
     "qa:all-roles-visual": "playwright test qa/all-roles-visual-audit.spec.ts --project=desktop-chromium",
     "check:action-buttons": "node scripts/check-action-button-consistency.mjs",
-    "audit:portal-routes": "node scripts/audit-portal-route-inventory.mjs"
+    "audit:portal-routes": "node scripts/audit-portal-route-inventory.mjs",
+    "test:tasks-v2": "node --experimental-strip-types --test lib/server/tasks/v2-validation.test.mjs lib/server/tasks/v2-phase2.test.mjs lib/server/tasks/v2-phase3.test.mjs lib/server/tasks/v2-phase4.test.mjs lib/server/tasks/v2-phase5.test.mjs lib/server/tasks/v2-phase6.test.mjs lib/server/tasks/v2-consolidation.test.mjs lib/server/tasks/v2-ui-polish.test.mjs lib/server/tasks/v2-final-experience.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

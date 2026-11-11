@@ -1,0 +1,154 @@
+/* My Tasks — unified SaaS visual pass. Only affects the Tasks product shell. */
+.mt2-shell{--mt2-ink:#21364b;--mt2-muted:#61768b;--mt2-border:#e1e9f1;--mt2-blue:#1978b4;background:#f5f8fc;color:var(--mt2-ink);font-size:14px}
+.mt2-sidebar{width:236px;flex:0 0 236px;padding:17px 12px 12px}
+.mt2-brand{min-height:52px;padding:8px 12px}
+.mt2-product{padding:12px 10px 6px;font-size:15px}
+.mt2-product span{font-size:10px;color:#788da2}
+.mt2-sidebar .portalWorkspaceSwitch{margin:10px 0}
+.mt2-sidebar-heading{font-size:10px;padding:12px 10px 8px}
+.mt2-sidebar nav{gap:3px}
+.mt2-sidebar nav button,.mt2-sidebar nav a{font-size:13px;min-height:40px;padding:9px 11px;border-radius:9px}
+.mt2-sidebar .mt2-areas-nav{gap:3px}
+.mt2-sidebar-help{padding:5px 11px;color:#71869a;font-size:12px;line-height:1.7}
+.mt2-header{height:64px;padding:0 28px}
+.mt2-header-add{padding:10px 15px;border-radius:9px;background:#207cad}
+.mt2-page{max-width:1600px;padding:25px 28px 56px}
+.mt2-heading{margin-bottom:18px}
+.mt2-heading h1{font-size:clamp(29px,3vw,40px);letter-spacing:-1.15px;line-height:1.14;margin-bottom:8px}
+.mt2-heading .mt2-subtitle{font-size:13px;color:#657d92;line-height:1.55}
+.mt2-heading-art{width:55px;height:55px;border-radius:18px}
+.mt2-heading-art svg{width:28px;height:28px}
+.mt2-eyebrow{letter-spacing:1.3px}
+.mt2-panel{border-radius:14px;padding:20px;border-color:#e1e9f1;box-shadow:0 5px 16px rgba(27,55,86,.035)}
+.mt2-panel-head{margin-bottom:15px}
+.mt2-panel-head h2{font-size:19px;letter-spacing:-.35px}
+.mt2-panel-head small{font-size:12px;color:#72869a}
+.mt2-metrics{gap:12px;margin-bottom:15px}
+.mt2-metric{padding:15px 18px;gap:4px;border-radius:13px}
+.mt2-metric strong{font-size:29px}
+.mt2-metric>span{letter-spacing:.8px}
+.mt2-metric small{font-size:11px;color:#74899b}
+.mt2-focus-strip{margin-bottom:14px;padding:12px 16px;border-radius:12px}
+.mt2-focus-strip-copy p{font-size:12px}
+.mt2-focus-strip a{font-size:12px}
+.mt2-daily-grid,.mt2-lower-grid{gap:14px;margin-bottom:15px}
+.mt2-daily-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.mt2-lower-grid{grid-template-columns:minmax(0,1.35fr) minmax(320px,.85fr)}
+.mt2-shell .mt2-lower-grid--wide{grid-template-columns:minmax(0,1fr)}
+.mt2-right-stack{gap:14px}
+.mt2-focus-line .mt2-task{padding:9px 2px}
+.mt2-progress-empty{margin-top:13px!important;border-radius:11px;background:#f7fafe}
+.mt2-progress-panel .mt2-diary-items{max-height:230px;overflow-y:auto}
+.mt2-task-panel{min-width:0}
+.mt2-task-controls{margin-bottom:12px}
+.mt2-search{max-width:440px;padding:10px 12px}
+.mt2-search input{font-size:13px}
+.mt2-show-done{font-size:12px}
+.mt2-task-list{min-width:0}
+.mt2-task-list--grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+.mt2-task-list--grid .mt2-task{border:1px solid #e5edf4;border-radius:10px;background:#fbfdff;padding:13px;align-items:flex-start}
+.mt2-task-list--grid .mt2-task:hover{border-color:#bfd9eb;background:#f8fcff}
+.mt2-task{padding:12px 4px;transition:background .15s ease,border-color .15s ease}
+.mt2-task:hover{background:#f8fbff}
+.mt2-task-title{font-size:14px;font-weight:720;line-height:1.45}
+.mt2-task-tags{font-size:11px;gap:7px}
+.mt2-task-tags svg{width:13px;height:13px}
+.mt2-list-more{margin-top:15px;width:100%;border:1px solid #d5e7f4;border-radius:10px;background:#f1f8fe;color:#277eaa;font-size:13px;font-weight:750;padding:13px;display:flex;align-items:center;justify-content:center;gap:9px}
+.mt2-list-more:hover{background:#e6f4fd}
+.mt2-list-more span{font-weight:650}
+.mt2-areas-panel .mt2-panel-head{margin-bottom:12px}
+.mt2-area-progress{padding:9px 0}
+.mt2-area-progress-top{font-size:12px}
+.mt2-upcoming-item span:nth-child(2){font-size:13px}
+.mt2-upcoming-item small{font-size:11px}
+.mt2-empty{font-size:12px;line-height:1.7;color:#8296a9}
+
+/* Board: fewer distractions, clearer cards, no doubled grouping controls. */
+.mt2-board-page{padding-bottom:40px}
+.mt2-board-tools{gap:12px;padding:11px 15px;margin-bottom:13px}
+.mt2-shell .mt2-board-columns{gap:13px;grid-auto-columns:minmax(270px,1fr)}
+.mt2-shell .mt2-board-column{min-height:270px;max-height:min(76vh,860px);border-radius:13px;background:#f0f4f8}
+.mt2-shell .mt2-board-column-head{padding:14px 14px 11px}
+.mt2-board-column-head h2{font-size:14px}
+.mt2-board-column-head small{font-size:11px}
+.mt2-board-card-list{min-height:120px}
+.mt2-shell .mt2-board-card{padding:12px 13px 10px;margin-bottom:9px;border-radius:10px;box-shadow:0 2px 10px #1a41670a}
+.mt2-card-title{font-size:14px;line-height:1.45;margin-bottom:9px}
+.mt2-card-actions{gap:6px;padding-top:9px;margin-top:9px}
+.mt2-card-actions button,.mt2-card-actions .mt2-card-focus-link{font-size:11px;min-height:30px}
+.mt2-card-actions select{font-size:11px;max-width:118px}
+.mt2-board-group button,.mt2-board-filters input,.mt2-board-filters select,.mt2-board-filters label{font-size:12px}
+
+/* Focus: no artificial 460px tall card or detached row of preferences. */
+.mt2-shell .mt2-focus-grid{grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);align-items:start;gap:14px}
+.mt2-focus-primary{display:grid;gap:14px;align-content:start;min-width:0}
+.mt2-shell .mt2-focus-session{min-height:0}
+.mt2-shell .mt2-focus-bottom{display:grid;grid-template-columns:1fr;gap:14px;margin:0;align-items:start}
+.mt2-shell .mt2-focus-aside{gap:14px}
+.mt2-focus-label{margin-top:9px}
+.mt2-focus-mode-buttons{margin:15px 0}
+.mt2-focus-current>p,.mt2-focus-explain{font-size:12px;line-height:1.6}
+.mt2-focus-settings label,.mt2-focus-setup label{font-size:13px}
+
+/* Connected Work: action-first overview; detailed administration is in Team Spaces. */
+.mt2-shell .mt2-connected-metrics{gap:12px;margin-bottom:14px}
+.mt2-connected-metrics>button{padding:15px 17px;gap:5px;border-radius:12px}
+.mt2-connected-metrics strong{font-size:27px}
+.mt2-connected-metrics span{font-size:12px}
+.mt2-connected-toolbar{padding:10px 12px;margin-bottom:15px}
+.mt2-connected-toolbar nav button{font-size:12px}
+.mt2-workspace-preview{display:flex;gap:22px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mt2-workspace-preview h2{font-size:18px;margin:4px 0 5px}
+.mt2-workspace-preview p:not(.mt2-eyebrow){font-size:12px;color:#758a9c;margin:0}
+.mt2-workspace-preview-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap}
+.mt2-workspace-pill{font-size:11px;color:#5e7085;border-radius:8px;background:#f2f6fa;padding:8px 10px}
+.mt2-workspace-preview-actions button{padding:10px 13px;border:1px solid #c7e4f3;background:#eaf6fd;color:#2079a9;border-radius:9px;white-space:nowrap;font-size:12px;font-weight:750}
+.mt2-connected-panes{gap:14px;margin-bottom:14px}
+.mt2-shell .mt2-connected-panes>.mt2-panel{min-height:0}
+.mt2-connected-source-tiles a{padding:12px}
+.mt2-shell .mt2-connected-team .tw-team-grid{align-items:start}
+.mt2-connected-team .tw-panel{border-radius:13px}
+.mt2-connected-team .tw-team-grid button,.mt2-connected-team .tw-team-grid input,.mt2-connected-team .tw-team-grid select{font-size:13px}
+
+/* Consistent interaction, accessible focus rings, more readable controls. */
+.mt2-shell button:focus-visible,.mt2-shell a:focus-visible,.mt2-shell input:focus-visible,.mt2-shell select:focus-visible,.mt2-shell textarea:focus-visible{outline:3px solid #65b8df;outline-offset:2px}
+.mt2-shell button:disabled{cursor:not-allowed}
+.mt2-shell input:not([type="checkbox"]),.mt2-shell select,.mt2-shell textarea{min-height:35px}
+.mt2-settings-actions button,.mt2-settings-import-button{font-size:13px}
+.mt2-settings-grid{gap:14px;margin-bottom:14px}
+.mt2-settings-upload{width:100%;justify-content:flex-start}
+@media(max-width:1200px){
+ .mt2-daily-grid{grid-template-columns:1fr 1fr}
+ .mt2-lower-grid{grid-template-columns:minmax(0,1.3fr) minmax(290px,.8fr)}
+ .mt2-task-list--grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:1000px){
+ .mt2-daily-grid,.mt2-lower-grid{grid-template-columns:1fr}
+ .mt2-right-stack{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt2-shell .mt2-focus-grid{grid-template-columns:1fr}
+ .mt2-shell .mt2-focus-aside{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt2-shell .mt2-board-columns{grid-auto-columns:300px}
+ .mt2-workspace-preview{flex-wrap:wrap}
+}
+@media(max-width:700px){
+ .mt2-page{padding:20px 14px 50px}
+ .mt2-header{padding:0 16px}
+ .mt2-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt2-daily-grid,.mt2-lower-grid,.mt2-right-stack,.mt2-shell .mt2-focus-aside{grid-template-columns:1fr}
+ .mt2-task-list--grid{grid-template-columns:1fr}
+ .mt2-heading h1{font-size:30px}
+ .mt2-panel{padding:17px}
+ .mt2-shell .mt2-board-columns{grid-auto-columns:minmax(270px,80vw)}
+ .mt2-workspace-preview-actions{justify-content:flex-start}
+ .mt2-connected-panes{grid-template-columns:1fr}
+}
+@media(max-width:450px){
+ .mt2-page{padding:16px 11px 45px}
+ .mt2-metric{padding:13px}
+ .mt2-metric strong{font-size:26px}
+ .mt2-task-title{font-size:13px}
+ .mt2-shell .mt2-focus-grid{grid-template-columns:1fr}
+ .mt2-shell .mt2-board-columns{grid-auto-columns:84vw}
+ .mt2-workspace-pill{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){.mt2-shell *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}

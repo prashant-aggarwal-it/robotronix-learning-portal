@@ -3,6 +3,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin} from "@/lib/server/admin-api";
 import {createGeneralZoomMeeting} from "@/lib/server/zoom-classroom";
 import {zonedLocalToUtc} from "@/lib/timezones";
+import {createPortalDemoBooking} from "@/lib/server/portal-demo-booking";
 export const dynamic="force-dynamic";
 
 function token(){return crypto.randomBytes(32).toString("base64url")}
@@ -141,48 +142,14 @@ export async function POST(request:NextRequest){
    if(pErr){await auth.admin.from("demo_leads").delete().eq("id",lead.id);throw new Error(pErr.message)}
    return NextResponse.json({ok:true,participantId:participant.id,guestUrl:publicUrl(request,raw)},{headers:{"Cache-Control":"no-store"}});
   }
-
-  const parentName=String(body.parentName||"").trim(),whatsapp=String(body.parentWhatsApp||"").trim(),childName=String(body.childName||"").trim(),grade=String(body.grade||"").trim(),interest=String(body.interest||"").trim();
-  const trainerId=String(body.trainerId||""),date=String(body.date||""),startTime=String(body.startTime||""),timezone=String(body.timezone||"Asia/Kolkata");
-  const duration=Math.max(30,Math.min(90,Number(body.durationMinutes||45))),sessionType=body.sessionType==="group"?"group":"one_to_one";
-  if(!parentName||!whatsapp||!childName||!grade||!interest)throw new Error("Parent name, WhatsApp, child name, grade and interest are required.");
-  if(!trainerId||!date||!/^\d{2}:\d{2}$/.test(startTime))throw new Error("Trainer, date and start time are required.");
-  const endTime=addMinutes(startTime,duration);if(endTime<=startTime)throw new Error("Demo must finish on the same day.");
-  await assertNoTrainerConflict(auth.admin,trainerId,date,startTime,endTime,timezone);
-
-  let leadId="",eventId="",sessionId="",participantId="",meetingId="";
-  try{
-   const {data:lead,error:lErr}=await auth.admin.from("demo_leads").insert({parent_name:parentName,parent_whatsapp:whatsapp,parent_email:String(body.parentEmail||"").trim()||null,child_name:childName,grade,interest,experience_level:["new","some","experienced"].includes(body.experienceLevel)?body.experienceLevel:"new",source:String(body.source||"manual"),status:"demo_scheduled"}).select("id").single();
-   if(lErr)throw new Error(lErr.message);leadId=lead.id;
-   const title=(sessionType==="group"?"Group Demo":"Demo")+" · "+String(body.focus||interest||"Discovery");
-   const {data:event,error:eErr}=await auth.admin.from("schedule_events").insert({trainer_id:trainerId,title,date,start_time:startTime,end_time:endTime,timezone,event_type:"demo",delivery_mode:sessionType==="group"?"small_group":"one_to_one",status:"scheduled",notes:"Demo Experience V1"}).select("id").single();
-   if(eErr)throw new Error(eErr.message);eventId=event.id;
-   const {data:session,error:sErr}=await auth.admin.from("demo_sessions").insert({schedule_event_id:eventId,trainer_id:trainerId,session_type:sessionType,focus:String(body.focus||interest||"Discovery Session").trim(),status:"scheduled",created_by:auth.actorId}).select("id").single();
-   if(sErr)throw new Error(sErr.message);sessionId=session.id;
-   const raw=token(),expires=new Date(Date.now()+30*24*60*60_000).toISOString();
-   const {data:participant,error:pErr}=await auth.admin.from("demo_session_participants").insert({demo_session_id:sessionId,lead_id:leadId,guest_token_hash:hash(raw),guest_token_expires_at:expires}).select("id").single();
-   if(pErr)throw new Error(pErr.message);participantId=participant.id;
-   const startAt=zonedLocalToUtc(date,startTime,timezone).toISOString();
-   const meeting=await createGeneralZoomMeeting(auth.admin,{title:"Robotronix Demo · "+String(body.focus||interest),startAt,durationMinutes:duration,recording:false,notes:"Demo Experience V1",createdBy:auth.actorId});
-   meetingId=meeting.id;
-   const {error:mErr}=await auth.admin.from("zoom_meetings").update({purpose:"demo",schedule_event_id:eventId,external_invite_enabled:true}).eq("id",meeting.id);
-   if(mErr)throw new Error(mErr.message);
-   const {error:linkErr}=await auth.admin.from("demo_sessions").update({zoom_meeting_id:meeting.id}).eq("id",sessionId);
-   if(linkErr)throw new Error(linkErr.message);
-   await auth.admin.from("portal_notifications").insert({recipient_role:"trainer",trainer_id:trainerId,type:"demo_assigned",priority:"important",title:"New discovery session assigned",message:`${String(body.focus||interest||"Discovery Session")} · ${date} at ${startTime}`,href:"/trainer/demos"});
-   return NextResponse.json({ok:true,sessionId,participantId,guestUrl:publicUrl(request,raw)},{headers:{"Cache-Control":"no-store"}});
-  }catch(error){
-   if(meetingId){
-    const {data:m}=await auth.admin.from("zoom_meetings").select("host_account_id,zoom_meeting_id").eq("id",meetingId).maybeSingle();
-    if(m){try{const {zoomApi}=await import("@/lib/server/zoom");await zoomApi(m.host_account_id,"/meetings/"+encodeURIComponent(m.zoom_meeting_id),{method:"DELETE"})}catch{}}
-    await auth.admin.from("zoom_meetings").delete().eq("id",meetingId);
-   }
-   if(participantId)await auth.admin.from("demo_session_participants").delete().eq("id",participantId);
-   if(sessionId)await auth.admin.from("demo_sessions").delete().eq("id",sessionId);
-   if(eventId)await auth.admin.from("schedule_events").delete().eq("id",eventId);
-   if(leadId)await auth.admin.from("demo_leads").delete().eq("id",leadId);
-   throw error;
-  }
+  const booked=await createPortalDemoBooking(auth.admin,auth.actorId,{
+   parentName:String(body.parentName||""),parentWhatsApp:String(body.parentWhatsApp||""),parentEmail:String(body.parentEmail||""),
+   childName:String(body.childName||""),grade:String(body.grade||""),interest:String(body.interest||""),
+   experienceLevel:body.experienceLevel,source:String(body.source||"manual"),focus:String(body.focus||body.interest||"Discovery"),
+   trainerId:String(body.trainerId||""),date:String(body.date||""),startTime:String(body.startTime||""),
+   timezone:String(body.timezone||"Asia/Kolkata"),durationMinutes:Number(body.durationMinutes||45),sessionType:body.sessionType==="group"?"group":"one_to_one"
+  });
+  return NextResponse.json({ok:true,sessionId:booked.sessionId,participantId:booked.participantId,guestUrl:publicUrl(request,booked.guestToken)},{headers:{"Cache-Control":"no-store"}});
  }catch(error){
   return NextResponse.json({ok:false,error:error instanceof Error?error.message:String(error)},{status:400,headers:{"Cache-Control":"no-store"}});
  }

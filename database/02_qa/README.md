@@ -22,6 +22,7 @@
 1. **`01_PREPARE_DEV_QA_PROFILES.sql`** — verifies all eight Auth identities exist, creates/updates exactly eight linked `public.profiles` (2 of each role). Temporarily suspends the profile privilege guard **only inside its trusted DEV transaction**, restores before commit, and verifies mappings. **Skip if all eight profiles are already correct.**
 2. **`02_RUN_DEV_QA_DATA.sql`** — requires the eight active role profiles and creates related business fixtures atomically. This **does not** create Auth users, update profiles or change RLS/triggers. Includes India/US families, siblings, trainers, 1:1 and cohort enrollments, past/upcoming/cancelled classes, attendance, feedback, projects, onboarding lifecycle, and USD fee-package setup.
 3. **`03_VERIFY_DEV_QA.sql`** — read-only verification. Inspect all result sets and confirm the final assertions say **PASS**.
+4. **`04_PREPARE_DEV_CONNECT_ROLES.sql`** — for the connected CRM QA journey, reuse QA Admin Two as an active CRM counsellor and QA Trainer Two as an active CRM viewer in the existing DEV Connect workspace. This is idempotent and does not create Auth users or forge a completed admission handoff.
 
 **Stop at the first SQL error.** The dataset transaction rolls back on error; don't run partial fragments or old seed scripts.
 

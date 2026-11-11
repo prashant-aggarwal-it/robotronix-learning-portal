@@ -1,0 +1,36 @@
+
+.mt2-settings-page{max-width:1280px}
+.mt2-settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.mt2-settings-actions{display:flex;flex-wrap:wrap;gap:10px}
+.mt2-settings-actions button,.mt2-settings-import-button{background:#267eae;color:#fff;border:0;border-radius:10px;padding:12px 17px;font-size:12px;font-weight:800}
+.mt2-settings-actions button:disabled,.mt2-settings-import-button:disabled{opacity:.5}
+.mt2-settings-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.mt2-settings-stats>div{display:grid;gap:5px;background:#f4f8fc;border-radius:10px;padding:13px 9px}
+.mt2-settings-stats strong{font-size:23px;color:#257eb0}
+.mt2-settings-stats span,.mt2-settings-caption{color:#8c9dad;font-size:11px;line-height:1.6}
+.mt2-settings-caption a{color:#277fac;font-weight:800}
+.mt2-settings-upload{display:inline-flex;align-items:center;gap:13px;background:#eaf6fc;border:1px dashed #8fc8e0;border-radius:10px;color:#327fa6;font-weight:800;font-size:12px;padding:15px;cursor:pointer}
+.mt2-settings-upload input{font-size:11px;max-width:220px}
+.mt2-settings-import h3{font-size:15px;margin:23px 0 12px}
+.mt2-settings-mapping{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.mt2-settings-mapping label{display:grid;gap:6px;color:#698399;font-size:11px;font-weight:760;text-transform:capitalize}
+.mt2-settings-mapping select{min-width:0;padding:11px;border:1px solid #dbe7ee;border-radius:9px;color:#4f738b;background:#fff}
+.mt2-settings-preview{display:grid;gap:6px;padding:16px;background:#f8fafc;border-radius:12px;margin:15px 0;color:#536c85;font-size:12px}
+.mt2-settings-preview>div{display:flex;justify-content:space-between;gap:10px}
+.mt2-settings-preview small{font-size:10px;color:#9aa8b5}
+.mt2-notifications{position:relative;z-index:90}
+.mt2-notify-trigger{position:relative;border:1px solid #dce7f0;background:#fff;border-radius:11px;padding:10px 13px;min-width:42px;cursor:pointer;font-size:16px}
+.mt2-notify-trigger span{position:absolute;top:-8px;right:-5px;border-radius:50%;background:#4875d2;color:#fff;padding:3px 6px;font-size:10px;font-weight:850}
+.mt2-notify-popover{position:absolute;right:0;top:47px;width:min(340px,calc(100vw - 24px));max-height:420px;overflow:auto;border:1px solid #dfe8f2;background:#fff;border-radius:15px;box-shadow:0 20px 45px #142e4930;padding:12px;z-index:91}
+.mt2-notify-heading{display:flex;align-items:center;gap:10px;padding:8px}
+.mt2-notify-heading strong{margin-right:auto;color:#28435f;font-size:14px}
+.mt2-notify-heading button{border:0;background:#eef5fa;border-radius:7px;padding:5px 8px;color:#4c8bae;font-size:11px}
+.mt2-notify-popover article{display:flex;align-items:center;gap:8px;border-top:1px solid #edf1f5;padding:12px 7px}
+.mt2-notify-popover article.read{opacity:.65}
+.mt2-notify-popover article a{display:grid;gap:4px;min-width:0;flex:1}
+.mt2-notify-popover article b{color:#365574;font-size:12px;overflow-wrap:anywhere}
+.mt2-notify-popover article small{color:#94a5b5;font-size:10px}
+.mt2-notify-popover article>button{color:#288f78;background:#edf8f4;border:0;border-radius:6px;padding:7px}
+.mt2-notify-error{color:#bd5a5a;font-size:11px}
+@media(max-width:920px){.mt2-settings-grid{grid-template-columns:1fr}.mt2-settings-mapping{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){.mt2-settings-mapping{grid-template-columns:1fr}.mt2-settings-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.mt2-settings-upload{display:grid}.mt2-settings-upload input{max-width:100%}}

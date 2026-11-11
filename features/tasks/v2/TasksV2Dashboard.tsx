@@ -1,0 +1,372 @@
+"use client";
+import Link from "next/link";
+import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties,type FormEvent} from "react";
+import {useRouter} from "next/navigation";
+import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
+import {TasksNotifications} from "./TasksNotifications";
+import {TasksPrimaryNav} from "./TasksPrimaryNav";
+import {TasksContextTabs} from "./TasksContextTabs";
+import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
+import type {V2Task,V2Area,V2Project} from "./model";
+
+type View="day"|"inbox"|"all";
+type Priority="low"|"medium"|"high";
+type Task=V2Task;
+type Area=V2Area;
+type Project=V2Project;
+type ApiResult<T>={ok:boolean;items?:T[];item?:T;error?:string};
+type FocusSummary={active:null|{task_id:string;state:"running"|"paused";planned_minutes:number};settings?:{daily_focus_minutes:number};commitments:{area_id:string;target_sessions:number;completed_sessions:number}[]};
+
+const COLORS:Record<string,string>={blue:"#3777bb",green:"#229b83",purple:"#8565cd",amber:"#bb873d",red:"#d26763",slate:"#718399"};
+const timeLabel=(minutes:number|null)=>minutes?minutes>=60?Math.floor(minutes/60)+"h"+(minutes%60?" "+minutes%60+"m":""):minutes+"m":"";
+function dayKey(date:Date){
+ const parts=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(date);
+ const find=(name:string)=>parts.find(p=>p.type===name)?.value||"";
+ return find("year")+"-"+find("month")+"-"+find("day");
+}
+function dueKey(value:string|null){return value?dayKey(new Date(value)):"";}
+function dateTitle(value:string){return new Date(value+"T12:00:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});}
+function dateShort(value:string){return new Date(value+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});}
+
+
+function Icon({name}:{name:string}){
+ const paths:Record<string,string>={
+  plus:"M12 5v14 M5 12h14",dashboard:"M3 3h8v8H3z M13 3h8v5h-8z M13 10h8v11h-8z M3 13h8v8H3z",
+  inbox:"M4 4h16v16H4z M4 13h5l2 3h2l2-3h5",list:"M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01",
+  check:"M5 12l4 4 10-10",star:"m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z",
+  flag:"M5 3v18 M5 4h13l-2 5 2 5H5",calendar:"M4 5h16v16H4z M8 2v6 M16 2v6 M4 11h16",
+  arrow:"M5 12h14m-6-6 6 6-6 6",clock:"M12 3a9 9 0 1 0 .01 0 M12 7v5l4 2",
+  briefcase:"M3 7h18v13H3z M8 7V4h8v3 M3 13h18",search:"M19 19l-4-4 M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0",
+  sparkle:"m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z",
+  close:"M5 5l14 14 M19 5L5 19",menu:"M4 6h16 M4 12h16 M4 18h16",filter:"M4 5h16l-7 8v6l-2 2v-8z",
+  edit:"M4 20h4L20 8l-4-4L4 16z"
+ };
+ return <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]||paths.check}/></svg>;
+}
+export function TasksV2Dashboard(){
+ const router=useRouter();
+ const inputRef=useRef<HTMLInputElement|null>(null);
+ const [tasks,setTasks]=useState<Task[]>([]);
+ const [areas,setAreas]=useState<Area[]>([]);
+ const [projects,setProjects]=useState<Project[]>([]);
+ const [loading,setLoading]=useState(true);
+ const [busy,setBusy]=useState(false);
+ const [pendingId,setPendingId]=useState<string|null>(null);
+ const [userId,setUserId]=useState<string|null>(null);
+ const [error,setError]=useState("");
+ const [notice,setNotice]=useState("");
+ const [view,setView]=useState<View>("day");
+ useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("view");if(requested==="inbox"||requested==="all")setView(requested)},[]);
+ const [areaFilter,setAreaFilter]=useState("all");
+ const [search,setSearch]=useState("");
+ const [quick,setQuick]=useState("");
+ const [quickArea,setQuickArea]=useState("");
+ const [quickProject,setQuickProject]=useState("");
+ const [quickPriority,setQuickPriority]=useState<Priority>("medium");
+ const [quickDate,setQuickDate]=useState("inbox");
+ const [showCompleted,setShowCompleted]=useState(true);
+ const [listLimit,setListLimit]=useState(16);
+ const [todayLimit,setTodayLimit]=useState(8);
+ const [taskFilter,setTaskFilter]=useState<"all"|"overdue"|"high"|"waiting">("all");
+ const [mobileNav,setMobileNav]=useState(false);
+ const [createPanel,setCreatePanel]=useState<"area"|"project"|null>(null);
+ const [newName,setNewName]=useState("");
+ const [newAreaForProject,setNewAreaForProject]=useState("");
+ const [newColor,setNewColor]=useState("blue");
+ const [selected,setSelected]=useState<Task|null>(null);
+ const [focusSummary,setFocusSummary]=useState<FocusSummary|null>(null);
+ const [today,setToday]=useState(()=>dayKey(new Date()));
+
+ const request=useCallback(async <T,>(url:string,init:RequestInit={}):Promise<T>=>{
+  const client=getSupabaseBrowserClient();
+  if(!client)throw new Error("Development Supabase is not configured.");
+  const {data:{session}}=await client.auth.getSession();
+  if(!session?.access_token)throw new Error("Please sign in to use My Tasks.");
+  const response=await fetch(url,{...init,cache:"no-store",headers:{"Authorization":"Bearer "+session.access_token,"Content-Type":"application/json",...(init.headers||{})}});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||result.ok===false)throw new Error(result.error||"Couldn't complete the request.");
+  return result as T;
+ },[]);
+ const refresh=useCallback(async()=>{
+  try{
+   const [areasData,projectsData]=await Promise.all([
+    request<ApiResult<Area>>("/api/tasks/v2/areas"),
+    request<ApiResult<Project>>("/api/tasks/v2/projects")
+   ]);
+   const all:Task[]=[];
+   for(let offset=0;offset<10000;offset+=100){
+    const page=await request<ApiResult<Task>>("/api/tasks?limit=100&offset="+offset);
+    const batch=page.items||[];all.push(...batch);
+    if(batch.length<100)break;
+   }
+   const focus=await request<{ok:boolean;focus:FocusSummary}>("/api/tasks/v2/focus").catch(()=>null);
+   if(focus?.focus)setFocusSummary(focus.focus);
+   setAreas(areasData.items||[]);
+   setProjects(projectsData.items||[]);
+   setTasks([...new Map(all.map(item=>[item.id,item])).values()]);
+   setError("");
+  }catch(e){
+   const message=e instanceof Error?e.message:"Unable to load dashboard.";
+   if(message.includes("Complete My Tasks onboarding")){router.replace("/tasks/welcome");return;}
+   setError(message);
+  }finally{setLoading(false)}
+ },[request,router]);
+ useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{window.addEventListener("tasks:changed",refresh);return()=>window.removeEventListener("tasks:changed",refresh)},[refresh]);
+ useEffect(()=>{let active=true;void getSupabaseBrowserClient()?.auth.getUser().then(({data})=>{if(active)setUserId(data.user?.id||null)});return()=>{active=false}},[]);
+ useEffect(()=>{const timer=window.setInterval(()=>setToday(dayKey(new Date())),60*1000);return()=>window.clearInterval(timer)},[]);
+ useEffect(()=>{
+  const key=(e:KeyboardEvent)=>{
+   if(e.key==="Escape"){setSelected(null);setCreatePanel(null);setMobileNav(false)}
+  };
+  document.addEventListener("keydown",key);
+  return()=>document.removeEventListener("keydown",key);
+ },[]);
+ const usableProjects=useMemo(()=>projects.filter(p=>p.status==="active"&&(!quickArea||!p.area_id||p.area_id===quickArea)),[projects,quickArea]);
+ const active=tasks.filter(t=>t.status!=="done");
+ const done=tasks.filter(t=>t.status==="done");
+ const overdue=active.filter(t=>dueKey(t.due_at)&&dueKey(t.due_at)<today);
+ const todayItems=tasks.filter(t=>t.scheduled_date===today||dueKey(t.due_at)===today||t.focus_date===today);
+ const focus=active.filter(t=>t.focus_date===today&&t.focus_rank).sort((a,b)=>(a.focus_rank||9)-(b.focus_rank||9));
+ const weekStart=new Date(today+"T12:00:00");weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));
+ const doneWeek=done.filter(t=>t.completed_at&&new Date(t.completed_at).getTime()>=weekStart.getTime()).length;
+ const inbox=active.filter(t=>!t.someday&&!t.scheduled_date&&!t.due_at);
+
+ const completedToday=done.filter(t=>t.completed_at&&dayKey(new Date(t.completed_at))===today);
+ const todayOpen=todayItems.filter(t=>t.status!=="done");
+ const completionPercent=Math.round(100*completedToday.length/Math.max(1,todayOpen.length+completedToday.length));
+ const estimatedToday=todayOpen.reduce((minutes,t)=>minutes+(t.estimated_minutes||0),0);
+ const estimatedCount=todayOpen.filter(t=>!!t.estimated_minutes).length;
+ const dailyCapacity=focusSummary?.settings?.daily_focus_minutes||null;
+ const weekOutlook=Array.from({length:7},(_,i)=>{
+  const date=new Date(today+"T12:00:00");date.setDate(date.getDate()+i);
+  const key=dayKey(date);
+  const items=active.filter(t=>(t.scheduled_date||dueKey(t.due_at))===key);
+  return {key,label:date.toLocaleDateString(undefined,{weekday:"short"}),date:date.getDate(),count:items.length,minutes:items.reduce((n,t)=>n+(t.estimated_minutes||0),0)};
+ });
+ const peakLoad=Math.max(1,...weekOutlook.map(d=>d.count));
+ const recommended=focus[0]||overdue[0]||todayOpen[0]||active[0]||null;
+
+ const visibleTasks=(items:Task[])=>items.filter(t=>{
+  if(areaFilter==="unsorted" ? t.area_id!==null : areaFilter!=="all"&&t.area_id!==areaFilter)return false;
+  if(!showCompleted&&t.status==="done")return false;
+  const term=search.toLowerCase().trim();
+  return !term||[t.title,t.description,areas.find(a=>a.id===t.area_id)?.name||"",projects.find(p=>p.id===t.project_id)?.name||""].some(v=>v.toLowerCase().includes(term));
+ });
+ const chosen=visibleTasks(view==="day"?todayItems:view==="inbox"?inbox:tasks);
+ const todayAndOverdue=visibleTasks([...new Map([...todayItems,...overdue].map(t=>[t.id,t])).values()]).filter(t=>t.status!=="done"&&!focus.some(f=>f.id===t.id));
+ const dailyOpen=chosen.filter(t=>t.status!=="done").sort((a,b)=>(a.focus_rank||9)-(b.focus_rank||9)||Number(b.important)-Number(a.important)||({high:0,medium:1,low:2}[a.priority]-{high:0,medium:1,low:2}[b.priority]));
+ const dailyDone=chosen.filter(t=>t.status==="done");
+ const listOpen=view==="day"?todayAndOverdue:dailyOpen.filter(t=>view!=="all"||taskFilter==="all"||
+  (taskFilter==="overdue"&&!!dueKey(t.due_at)&&dueKey(t.due_at)<today)||
+  (taskFilter==="high"&&t.priority==="high")||
+  (taskFilter==="waiting"&&t.status==="waiting"));
+ const listItems=view==="day"?listOpen.slice(0,todayLimit):listOpen.slice(0,listLimit);
+ const areaName=(id:string|null)=>areas.find(a=>a.id===id)?.name||"Unsorted";
+ const badgeColor=(id:string|null)=>COLORS[areas.find(a=>a.id===id)?.color||"slate"]||COLORS.slate;
+ 
+ const send=async(url:string,method:string,body:unknown)=>request<ApiResult<Task>>(url,{method,body:JSON.stringify(body)});
+ const updateTask=async(task:Task,url:string,body:Record<string,unknown>)=>{
+  setPendingId(task.id);
+  try{
+   const reply=await send(url,"PATCH",body);
+   if(!reply.item)throw new Error("Task not found.");
+   setTasks(prev=>prev.map(t=>t.id===task.id?reply.item as Task:t));
+   setSelected(prev=>prev?.id===task.id?reply.item||null:prev);
+   setNotice("Saved");setError("");
+   if("status" in body)await refresh(); // Recurrences may generate another task.
+  }catch(e){setError(e instanceof Error?e.message:"Unable to save task.");}
+  finally{setPendingId(null)}
+ };
+ const toggleDone=async(task:Task)=>updateTask(task,"/api/tasks/"+task.id,{status:task.status==="done"?"todo":"done"});
+ const markFocus=async(task:Task)=>{
+  if(task.focus_date===today)return updateTask(task,"/api/tasks/"+task.id,{focus_date:null,focus_rank:null});
+  const used=new Set(focus.map(t=>t.focus_rank));
+  const next=[1,2,3].find(n=>!used.has(n));
+  if(!next){setError("Your Top 3 is full. Remove one focus star first.");return;}
+  await updateTask(task,"/api/tasks/"+task.id,{focus_date:today,focus_rank:next});
+ };
+ const capture=async(event:FormEvent)=>{
+  event.preventDefault();
+  const title=quick.trim();
+  if(!title||busy)return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   const payload:Record<string,unknown>={title,priority:quickPriority};
+   if(quickArea)payload.area_id=quickArea;
+   if(quickProject)payload.project_id=quickProject;
+   if(quickDate==="today")payload.scheduled_date=today;
+   if(quickDate==="tomorrow"){const d=new Date(today+"T12:00:00");d.setDate(d.getDate()+1);payload.scheduled_date=dayKey(d)}
+   const response=await send("/api/tasks/v2/capture","POST",payload);
+   if(!response.item)throw new Error("Unable to create task.");
+   setQuick("");
+   setNotice("Task added. Capture another when you're ready.");
+   await refresh();
+   inputRef.current?.focus();
+  }catch(e){setError(e instanceof Error?e.message:"Couldn't save task.");}
+  finally{setBusy(false)}
+ };
+ const saveCollection=async(event:FormEvent)=>{
+  event.preventDefault();
+  if(!createPanel||!newName.trim()||busy)return;
+  setBusy(true);setError("");
+  try{
+   if(createPanel==="area"){
+    const saved=await request<ApiResult<Area>>("/api/tasks/v2/areas",{method:"POST",body:JSON.stringify({name:newName.trim(),color:newColor})});
+    await refresh();
+    if(saved.item)setQuickArea(saved.item.id);
+   }else{
+    const saved=await request<ApiResult<Project>>("/api/tasks/v2/projects",{method:"POST",body:JSON.stringify({name:newName.trim(),area_id:newAreaForProject||null})});
+    await refresh();
+    if(saved.item){setQuickArea(newAreaForProject);setQuickProject(saved.item.id)}
+   }
+   setNotice(createPanel==="area"?"Area created.":"Project created.");
+   setCreatePanel(null);setNewName("");
+  }catch(e){setError(e instanceof Error?e.message:"Unable to save.");}
+  finally{setBusy(false)}
+ };
+ const openDetail=(task:Task)=>setSelected(task);
+ const taskRow=(task:Task)=>{
+  const d=dueKey(task.due_at);
+  return <article className={"mt2-task "+(task.status==="done"?"mt2-done":"")} key={task.id}>
+   <label className="mt2-check-label" title={task.status==="done"?"Reopen":"Mark completed"}>
+    <input type="checkbox" aria-label={(task.status==="done"?"Reopen ":"Complete ")+task.title} checked={task.status==="done"} disabled={pendingId===task.id||(task.owner_user_id!==userId&&task.assignee_user_id!==userId)} onChange={()=>void toggleDone(task)}/>
+    <span className="mt2-checkbox"><Icon name="check"/></span>
+   </label>
+   <button type="button" className="mt2-task-content" onClick={()=>openDetail(task)}>
+    <span className="mt2-task-title">{task.title}</span>
+    <span className="mt2-task-tags">
+     <span className="mt2-area-tag" style={{"--area":badgeColor(task.area_id)} as CSSProperties}>{areaName(task.area_id)}</span>
+     <span className={"mt2-priority mt2-priority-"+task.priority}><Icon name="flag"/>{task.priority}</span>
+     {task.estimated_minutes?<span><Icon name="clock"/>{timeLabel(task.estimated_minutes)}</span>:null}
+     {d?<span className={d<today&&task.status!=="done"?"mt2-late":""}><Icon name="calendar"/>{dateShort(d)}</span>:null}
+     {task.status==="waiting"?<span className="mt2-waiting">Waiting</span>:null}
+    </span>
+   </button>
+   {task.status!=="done"&&task.owner_user_id===userId&&<button type="button" className={"mt2-star "+(task.focus_date===today?"is-on":"")} title={task.focus_date===today?"Remove from Top 3":"Make a Top 3 priority"} aria-label={"Toggle Top 3 for "+task.title} disabled={pendingId===task.id} onClick={()=>void markFocus(task)}><Icon name="star"/></button>}
+  </article>;
+ };
+ return <div className="mt2-shell">
+  {mobileNav&&<button className="mt2-scrim" aria-label="Close navigation" onClick={()=>setMobileNav(false)}/>}
+  <aside className={"mt2-sidebar "+(mobileNav?"mt2-sidebar-open":"")}>
+   <Link href="/tasks" className="mt2-brand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
+   <div className="mt2-product">My Tasks <span>VISUAL WORKSPACE</span></div>
+   <ApplicationSwitcher current="tasks"/>
+   <div className="mt2-sidebar-heading">TASKS</div>
+   <TasksPrimaryNav section={view} inboxCount={inbox.length} onDashboardView={next=>{setView(next);setMobileNav(false);router.replace(next==="day"?"/tasks":"/tasks?view="+next,{scroll:false})}}/>
+   <div className="mt2-sidebar-heading mt2-areas-heading">AREAS <button aria-label="Add area" title="Add area" onClick={()=>{setNewName("");setCreatePanel("area")}}><Icon name="plus"/></button></div>
+   <div className="mt2-areas-nav">
+    <button className={areaFilter==="all"?"selected":""} onClick={()=>setAreaFilter("all")}><span className="mt2-area-dot" style={{background:"#98a9b6"}}/>All areas <small>{active.length}</small></button>
+    {areas.map(a=><button key={a.id} className={areaFilter===a.id?"selected":""} onClick={()=>setAreaFilter(a.id)}><span className="mt2-area-dot" style={{background:COLORS[a.color]||COLORS.slate}}/>{a.name}<small>{active.filter(t=>t.area_id===a.id).length}</small></button>)}
+    <button className={areaFilter==="unsorted"?"selected":""} onClick={()=>setAreaFilter("unsorted")}><span className="mt2-area-dot" style={{background:"#a8b3c2"}}/>Unsorted <small>{active.filter(t=>!t.area_id).length}</small></button>
+   </div>
+   <div className="mt2-sidebar-bottom">
+    <button type="button" onClick={()=>{setNewName("");setCreatePanel("project")}}><Icon name="plus"/> New project</button>
+   </div>
+  </aside>
+  <main className="mt2-main">
+   <header className="mt2-header">
+    <button className="mt2-mobile-menu" aria-label="Open navigation" onClick={()=>setMobileNav(true)}><Icon name="menu"/></button>
+    <div className="mt2-breadcrumb">MY TASKS <span>/</span> {view==="day"?"My Day":view==="all"?"All Tasks":"Inbox"}</div>
+    <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your personal workspace</span></div>
+   </header>
+   <div className="mt2-page">
+    <div className="mt2-heading"><div><p className="mt2-eyebrow">{view==="day"?"YOUR DAILY COMMAND CENTRE":view==="all"?"EVERYTHING IN VIEW":"CAPTURE FIRST, ORGANISE LATER"}</p><h1>{view==="day"?"Make today count.":view==="all"?"All your tasks. Clearly organised.":"Capture now. Plan later."}</h1><p className="mt2-subtitle">{dateTitle(today)} · Small steps, meaningful progress.</p></div><div className="mt2-heading-art"><Icon name="sparkle"/></div></div>
+    {error&&<div role="alert" className="mt2-error">{error}<button aria-label="Dismiss error" onClick={()=>setError("")}><Icon name="close"/></button></div>}
+    {notice&&<div role="status" className="mt2-notice">{notice}<button aria-label="Dismiss notification" onClick={()=>setNotice("")}><Icon name="close"/></button></div>}
+    <TasksContextTabs context={view==="day"?"day":"all"} active={view==="inbox"?"inbox":"list"} onChoose={tab=>{const next=tab==="inbox"?"inbox":view==="day"?"day":"all";setView(next);router.replace(next==="day"?"/tasks":"/tasks?view="+next,{scroll:false})}}/>
+    <form className="mt2-capture" onSubmit={capture}>
+     <div className="mt2-capture-top"><span className="mt2-capture-icon"><Icon name="plus"/></span><input ref={inputRef} aria-label="Quick add task" value={quick} onChange={e=>setQuick(e.target.value)} placeholder="What do you need to do? Just type and press Enter…" maxLength={240}/><button type="submit" disabled={busy||!quick.trim()}>Add task <Icon name="arrow"/></button></div>
+     <div className="mt2-capture-options">
+      <label><span>Where</span><select aria-label="Choose task area" value={quickArea} onChange={e=>{setQuickArea(e.target.value);setQuickProject("")}}><option value="">Inbox / Unsorted</option>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
+      <label><span>Project</span><select aria-label="Choose project" value={quickProject} onChange={e=>{setQuickProject(e.target.value);const p=projects.find(x=>x.id===e.target.value);if(p?.area_id)setQuickArea(p.area_id)}}><option value="">No project</option>{usableProjects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+      <label><span>Plan</span><select aria-label="Schedule task" value={quickDate} onChange={e=>setQuickDate(e.target.value)}><option value="inbox">No date</option><option value="today">Today</option><option value="tomorrow">Tomorrow</option></select></label>
+      <label><span>Priority</span><select aria-label="Set priority" value={quickPriority} onChange={e=>setQuickPriority(e.target.value as Priority)}><option value="medium">Normal</option><option value="high">High</option><option value="low">Low</option></select></label>
+      <span className="mt2-tip">Tip: Ctrl/⌘ + K to capture</span>
+     </div>
+    </form>
+    {loading?<div className="mt2-loading">Loading your real tasks and areas…</div>:<>
+     {view==="day"&&<section className="mt2-focus-strip" aria-label="Focus Balance">
+      <div className="mt2-focus-strip-icon">◷</div>
+      <div className="mt2-focus-strip-copy"><strong>{focusSummary?.active?"Focus session in progress":"One task. One finish line."}</strong>
+       <p>{focusSummary?.active
+        ?"Your current session is "+focusSummary.active.state+". Return to it and decide when to switch."
+        :focusSummary?.commitments?.some(c=>c.completed_sessions<c.target_sessions)
+          ?(focusSummary.commitments.filter(c=>c.completed_sessions<c.target_sessions).length+" protected Areas need a little attention this week.")
+          :"Choose a focus session, park distractions, and make room for other priorities."}</p>
+      </div><Link href="/tasks/focus">{focusSummary?.active?"Resume Focus":"Open Focus & Finish"} →</Link>
+     </section>}
+     <section className="mt2-metrics mt2-metrics--actionable" aria-label="Task overview">
+       <button type="button" className="mt2-metric" onClick={()=>setView("all")}><span>OPEN TASKS</span><strong>{active.length}</strong><small>View all work <span aria-hidden="true">→</span></small></button>
+       <button type="button" className="mt2-metric" onClick={()=>setView("day")}><span>PLANNED TODAY</span><strong>{todayOpen.length}</strong><small>Today's commitments <span aria-hidden="true">→</span></small></button>
+       <Link className="mt2-metric mt2-metric--attention" href="/tasks/planner"><span>OVERDUE</span><strong className={overdue.length?"mt2-warn":""}>{overdue.length}</strong><small>Review and reschedule <span aria-hidden="true">→</span></small></Link>
+       <div className="mt2-metric"><span>FINISHED THIS WEEK</span><strong className="mt2-good">{doneWeek}</strong><small>{doneWeek===0?"The week is yours to shape":"Completed outcomes"}</small></div>
+      </section>
+      {view==="day"&&<section className="mt2-daily-grid">
+      <div className="mt2-panel mt2-focus">
+       <div className="mt2-panel-head"><div><p className="mt2-eyebrow">KEEP IT SIMPLE</p><h2>Today's Top 3 <span className="mt2-focus-spark">✦</span></h2><small>Pick three outcomes worth finishing.</small></div><span className="mt2-count">{focus.length}/3</span></div>
+       {focus.length?focus.map(t=><div key={t.id} className="mt2-focus-line">{taskRow(t)}</div>):<p className="mt2-empty">Star any task below to make it one of today's priorities.</p>}
+       {focus.length<3&&<p className="mt2-hint">Tip: Focus is separate from urgency. You decide what matters today.</p>}
+      </div>
+      <div className="mt2-panel mt2-momentum-panel">
+        <div className="mt2-panel-head"><div><p className="mt2-eyebrow">LIVE FROM YOUR TASKS</p><h2>Daily momentum</h2><small>Your progress and the next practical step.</small></div><span className="mt2-count">{completedToday.length} finished today</span></div>
+        <div className="mt2-momentum-layout">
+         <div className="mt2-momentum-ring" style={{"--progress":completionPercent+"%"} as CSSProperties} role="img" aria-label={completionPercent+" percent of today's tracked tasks completed"}>
+          <div><strong>{completionPercent}%</strong><span>completed</span></div>
+         </div>
+         <div className="mt2-momentum-copy">
+          <strong>{todayOpen.length===0?"A clear day ahead":todayOpen.length+" tasks still on your radar"}</strong>
+          <p>{completedToday.length?"You've finished "+completedToday.length+" task"+(completedToday.length===1?"":"s")+" today. Keep the momentum.":"Progress starts with one completed outcome."}</p>
+          {recommended?<button type="button" className="mt2-recommendation" onClick={()=>openDetail(recommended)}><span>Suggested next step</span><b>{recommended.title}</b><small>Open task details →</small></button>:<button type="button" className="mt2-recommendation" onClick={()=>inputRef.current?.focus()}>Capture your first task →</button>}
+         </div>
+        </div>
+        <div className="mt2-capacity-line"><span>Known planned effort</span><strong>{estimatedCount?timeLabel(estimatedToday):"No estimates yet"}{dailyCapacity?" / "+timeLabel(dailyCapacity)+" capacity":""}</strong></div>
+        {estimatedCount>0&&dailyCapacity&&<div className="mt2-capacity-track"><span style={{width:Math.min(100,100*estimatedToday/dailyCapacity)+"%"}}/></div>}
+        <p className="mt2-capacity-help">{estimatedCount===todayOpen.length?"All planned tasks have estimates.":estimatedCount+" of "+todayOpen.length+" open tasks have estimates."} <Link href="/tasks/planner">Review plan →</Link></p>
+       </div>
+     </section>}
+     <div className={"mt2-lower-grid "+(view==="day"?"":"mt2-lower-grid--wide")}>
+      <section className="mt2-panel mt2-task-panel">
+       <div className="mt2-panel-head mt2-list-head"><div><p className="mt2-eyebrow">{view==="day"?"WHAT NEEDS YOUR ATTENTION":view==="all"?"YOUR COMPLETE TASK LIST":"UNCATEGORISED BY DATE"}</p><h2>{view==="day"?"Next up & overdue":view==="all"?"All tasks":"Inbox tasks"}</h2><small>Click a task to edit its area, project and priority.</small></div><span className="mt2-count">{listOpen.length} open</span></div>
+       <div className="mt2-task-controls"><label className="mt2-search"><Icon name="search"/><input aria-label="Search tasks" placeholder="Search tasks..." value={search} onChange={e=>setSearch(e.target.value)}/></label>{view!=="day"&&<label className="mt2-show-done"><input type="checkbox" checked={showCompleted} onChange={e=>setShowCompleted(e.target.checked)}/> Show completed</label>}</div>
+       {view==="all"&&<div className="mt2-smart-filters" role="group" aria-label="Quick task filters">
+         {([["all","All open",dailyOpen.length],["overdue","Overdue",dailyOpen.filter(t=>!!dueKey(t.due_at)&&dueKey(t.due_at)<today).length],["high","High priority",dailyOpen.filter(t=>t.priority==="high").length],["waiting","Waiting",dailyOpen.filter(t=>t.status==="waiting").length]] as const).map(([id,label,count])=><button key={id} type="button" className={taskFilter===id?"is-active":""} aria-pressed={taskFilter===id} onClick={()=>{setTaskFilter(id);setListLimit(16)}}>{label}<span>{count}</span></button>)}
+        </div>}
+       <div className={"mt2-task-list "+(view==="day"?"":"mt2-task-list--grid")}>{listItems.map(taskRow)}</div>
+        {view==="day"&&listOpen.length>todayLimit&&<button className="mt2-list-more" type="button" onClick={()=>setTodayLimit(n=>n+8)}>Show remaining today <span>({listOpen.length-todayLimit} more) ↓</span></button>}
+        {view!=="day"&&listOpen.length>listLimit&&<button className="mt2-list-more" type="button" onClick={()=>setListLimit(n=>n+16)}>Show more tasks <span>({listOpen.length-listLimit} remaining) ↓</span></button>}
+       {view==="day"&&todayAndOverdue.length===0?<p className="mt2-empty">Your day is clear. Capture a task above.</p>:null}
+       {view!=="day"&&dailyOpen.length===0?<p className="mt2-empty">No matching open tasks.</p>:null}
+       {showCompleted&&view!=="day"&&dailyDone.length>0&&<><div className="mt2-completed-label">COMPLETED · {dailyDone.length}</div><div className="mt2-task-list mt2-task-list--grid">{dailyDone.slice(0,Math.max(12,listLimit)).map(taskRow)}</div>{dailyDone.length>Math.max(12,listLimit)&&<button className="mt2-list-more" type="button" onClick={()=>setListLimit(n=>n+16)}>Show more completed ↓</button>}</>}
+      </section>
+      {view==="day"&&<div className="mt2-right-stack">
+       <section className="mt2-panel mt2-workload-panel">
+         <div className="mt2-panel-head"><div><p className="mt2-eyebrow">LOOK AHEAD</p><h2>7-day workload</h2><small>Scheduled tasks by day. Spot overloaded days early.</small></div><Link className="mt2-widget-link" href="/tasks/planner">Planner →</Link></div>
+         <div className="mt2-weekly-bars" role="img" aria-label={"Open tasks scheduled over the next seven days: "+weekOutlook.map(d=>d.label+" "+d.count).join(", ")}>
+          {weekOutlook.map(d=><div key={d.key} className={"mt2-weekly-bar "+(d.key===today?"is-today":"")} title={d.label+": "+d.count+" tasks"+(d.minutes?", "+d.minutes+" known minutes":"")}>
+           <span className="mt2-weekly-number">{d.count}</span><div className="mt2-weekly-track"><span style={{height:(d.count?Math.max(9,100*d.count/peakLoad):3)+"%"}}/></div><strong>{d.label}</strong><small>{d.date}</small>
+          </div>)}
+         </div>
+         <div className="mt2-weekly-summary"><span>{weekOutlook.reduce((n,d)=>n+d.count,0)} tasks scheduled for the next seven days</span><Link href="/tasks/planner">Balance week →</Link></div>
+        </section>
+        <section className="mt2-panel mt2-upcoming"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">STAY AHEAD</p><h2>Coming up next</h2></div></div>
+        {active.filter(t=>(t.scheduled_date&&t.scheduled_date>today)||(dueKey(t.due_at)>today)).sort((a,b)=>(a.scheduled_date||dueKey(a.due_at)).localeCompare(b.scheduled_date||dueKey(b.due_at))).slice(0,5).map(t=><button className="mt2-upcoming-item" key={t.id} onClick={()=>openDetail(t)}><span className="mt2-upcoming-dot"/><span>{t.title}</span><small>{dateShort(t.scheduled_date||dueKey(t.due_at))}</small></button>)}
+        {!active.some(t=>(t.scheduled_date&&t.scheduled_date>today)||(dueKey(t.due_at)>today))&&<p className="mt2-empty">No upcoming commitments yet.</p>}
+       </section>
+      </div>}
+     </div>
+    </>}
+   </div>
+  </main>
+  {createPanel&&<div className="mt2-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setCreatePanel(null)}}><form className="mt2-modal" onSubmit={saveCollection} aria-label={createPanel==="area"?"Create area":"Create project"}>
+   <div className="mt2-modal-head"><h2>{createPanel==="area"?"New area":"New project"}</h2><button type="button" aria-label="Close" onClick={()=>setCreatePanel(null)}><Icon name="close"/></button></div>
+   <p>{createPanel==="area"?"An area is a part of your work or life, such as Sales or Personal.":"A project groups tasks around a result you want to complete."}</p>
+   <label>Name<input autoFocus required maxLength={createPanel==="area"?80:160} value={newName} onChange={e=>setNewName(e.target.value)} placeholder={createPanel==="area"?"Sales & Outreach":"Winter STEM workshop"}/></label>
+   {createPanel==="area"?<label>Colour<select value={newColor} onChange={e=>setNewColor(e.target.value)}>{Object.keys(COLORS).map(c=><option value={c} key={c}>{c}</option>)}</select></label>:<label>Area (optional)<select value={newAreaForProject} onChange={e=>setNewAreaForProject(e.target.value)}><option value="">No area</option>{areas.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>}
+   <div className="mt2-modal-actions"><button type="button" onClick={()=>setCreatePanel(null)}>Cancel</button><button type="submit" disabled={busy||!newName.trim()}>Create {createPanel}</button></div>
+  </form></div>}
+  <TaskV2DetailDrawer task={selected} areas={areas} projects={projects}
+   userId={userId} request={request} onClose={()=>setSelected(null)} onChanged={refresh}/>
+ </div>;
+}

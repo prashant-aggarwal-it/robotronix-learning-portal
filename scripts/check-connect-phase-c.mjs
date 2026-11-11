@@ -1,0 +1,35 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+
+const read=p=>readFileSync(p,"utf8");
+const admissions=read("app/api/connect/workspaces/[tenantId]/admissions/route.ts");
+const invitation=read("app/api/admission/handoff/[token]/route.ts");
+const onb=read("app/onboarding/page.tsx");
+const crm=read("features/connect/components/ConnectAdmissionHandoffs.tsx");
+const sql=read("database/connect/saas/53_portal_admissions_rpc.sql");
+const tokenSql=read("database/connect/saas/54_portal_admission_token_rpc.sql");
+const guard=read("database/connect/saas/52_portal_admissions_handoffs.sql");
+const followup=read("database/connect/saas/55_portal_demo_followup_sync.sql");
+const reconcile=read("database/connect/saas/57_auto_reconcile_portal_enrollments_dev.sql");
+const jobs=read("app/api/connect/jobs/reminders/route.ts");
+
+assert.match(admissions,/crypto\.randomBytes\(32\)/);
+assert.match(admissions,/consentAttested/);
+assert.match(admissions,/payloadHash/);
+assert.match(admissions,/connect_portal_admissions/);
+assert.match(invitation,/portal_admission_handoff_token/);
+assert.match(invitation,/connectSession/);
+assert.match(onb,/handoffToken/);
+assert.match(onb,/onboardingSubmissionId:r\.id/);
+assert.match(onb,/do not submit the form again/i);
+assert.match(crm,/Check Portal enrolment/);
+assert.match(sql,/status='enrollment_confirmed'/);
+assert.match(sql,/verified_at is null/);
+assert.match(tokenSql,/email_confirmed_at is not null/);
+assert.match(tokenSql,/data_consent=true/);
+assert.match(guard,/guard_portal_enrollment_won/);
+assert.match(followup,/primary key\(tenant_id,portal_participant_id,outcome_kind\)/);
+assert.match(reconcile,/for update of h skip locked/);
+assert.match(jobs,/connect_reconcile_portal_enrollments/);
+for(const text of [sql,tokenSql,followup,reconcile])assert.match(text,/from public,anon,authenticated/);
+console.log("Phase C code contracts OK (live family/activation UAT remains required).");

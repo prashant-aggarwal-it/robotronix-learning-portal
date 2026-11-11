@@ -14,3 +14,6 @@
 
 [functions."system-log-retention"]
   schedule = "30 3 * * *"
+
+[functions."connect-history-drain"]
+  schedule = "*/1 * * * *"

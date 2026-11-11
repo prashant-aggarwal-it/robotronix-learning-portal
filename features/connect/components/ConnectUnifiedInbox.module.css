@@ -1,0 +1,95 @@
+
+.workspace{background:#fff;border:1px solid #dfe9f0;border-radius:18px;overflow:hidden;box-shadow:0 10px 26px rgba(15,55,87,.04);color:#18344e}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px 14px}
+.head h2{font-size:21px;margin:0;font-weight:750;color:#123550;display:flex;align-items:center;gap:10px}
+.head p{font-size:13px;color:#647e94;margin:4px 0 0}
+.count{font-size:12px;background:#eaf5fc;padding:3px 8px;border-radius:100px;color:#1672a8}
+.ghostButton,.more{border:1px solid #d4e2ec;background:#fff;border-radius:8px;color:#17618d;cursor:pointer;font-size:13px;font-weight:600;padding:8px 12px}
+.ghostButton:hover,.more:hover{background:#edf6fc}
+.ghostButton:disabled,.more:disabled{opacity:.5;cursor:not-allowed}
+.channelTabs{display:flex;gap:6px;padding:0 20px 14px;flex-wrap:wrap}
+.channelButton,.channelActive{border:1px solid transparent;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.channelButton{background:#f2f6fa;color:#55738b}
+.channelActive{background:#147abb;color:white}
+.layout{display:grid;grid-template-columns:minmax(310px,37%) minmax(0,1fr);border-top:1px solid #e5edf3;min-height:590px}
+.listPane{border-right:1px solid #e5edf3;min-width:0;background:#fbfdff;display:flex;flex-direction:column}
+.listHeader{padding:14px 14px 8px;border-bottom:1px solid #e8eef3}
+.searchWrap input{width:100%;border:1px solid #d7e5ef;border-radius:10px;padding:10px 12px;background:#fff;color:#173952;font-size:13px}
+.filters{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:10px}
+.pillGroup{display:flex;gap:3px;border:1px solid #e3ebf2;border-radius:8px;background:#f1f6fa;padding:3px}
+.pill,.pillActive{border:0;background:transparent;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px;color:#557188}
+.pillActive{background:#fff;box-shadow:0 1px 3px #d8e3ec;font-weight:700;color:#075a8c}
+.stateSelect{font-size:12px;max-width:130px;padding:7px 4px;border:1px solid #dce8f0;border-radius:8px;background:#fff;color:#294d68}
+.resultCount{font-size:11px;color:#75889a;margin:8px 0 0}
+.threadList{overflow:auto;min-height:260px;max-height:650px;flex:1}
+.thread,.threadSelected{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:13px 12px;border:0;border-bottom:1px solid #e9eff4;background:transparent;color:#18344e;cursor:pointer;min-width:0}
+.thread:hover{background:#f0f7fc}
+.threadSelected{background:#e6f4fc;box-shadow:inset 3px 0 #0875b1}
+.avatar{width:35px;height:35px;flex-shrink:0;border-radius:50%;background:#e5f0f8;color:#2b7199;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:750}
+.threadContent{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+.threadTop{display:flex;align-items:baseline;gap:7px;justify-content:space-between}
+.threadTop strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.threadTop time{color:#73899b;white-space:nowrap;font-size:10px}
+.preview{font-size:12px;color:#546e83;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.threadMeta{font-size:10px;color:#71889b;display:flex;align-items:center;gap:6px;text-transform:capitalize}
+.channelTag{background:#eaf0f7;padding:3px 6px;border-radius:5px;font-weight:650;color:#3b6685}
+.unread{background:#0f8abe;color:#fff;border-radius:100px;padding:3px 6px;font-size:11px;font-weight:800;flex-shrink:0}
+.empty{padding:30px 16px;text-align:center;color:#6b8193;font-size:13px}
+.empty p{font-size:12px}
+.more{margin:12px;width:calc(100% - 24px)}
+.chatPane{display:flex;flex-direction:column;min-width:0;min-height:590px}
+.placeholder{margin:auto;max-width:310px;text-align:center;color:#7a90a3;padding:30px}
+.placeholder h3{font-size:17px;color:#264b65;margin:12px 0 5px}
+.placeholder p{font-size:13px;line-height:1.6}
+.placeholderIcon{font-size:28px}
+.chatHead{padding:13px 17px;border-bottom:1px solid #e8eef3;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.chatIdentity{display:flex;gap:10px;align-items:center;min-width:0}
+.chatIdentity h3{font-size:15px;margin:0 0 3px}
+.chatIdentity p{font-size:12px;color:#71889b;margin:0;text-transform:capitalize}
+.messages{padding:17px;min-height:280px;max-height:460px;overflow:auto;background:#f8fbfd;display:flex;flex-direction:column;gap:12px;flex:1}
+.messageIn,.messageOut{display:flex;max-width:100%}
+.messageIn{justify-content:flex-start}
+.messageOut{justify-content:flex-end}
+.bubble{border:1px solid #e3eaf0;background:#fff;max-width:78%;padding:10px 13px;border-radius:13px;box-shadow:0 1px 3px #e9eef3}
+.messageOut .bubble{background:#e4f5f0;border-color:#d2ebe2}
+.bubble p{font-size:13px;line-height:1.5;margin:0 0 5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.bubble small{display:block;font-size:10px;color:#6e8999;text-align:right}
+.attachment{font-size:12px;color:#436c86;margin:6px 0;overflow-wrap:anywhere}
+.attachment button{margin-left:6px;border:0;color:#086aa9;background:none;text-decoration:underline;cursor:pointer}
+.chatFooter{border-top:1px solid #e8eef3;background:white;padding:13px 17px;display:grid;gap:12px}
+.reply{display:grid;gap:7px}
+.reply label,.detailContents label{font-weight:650;font-size:12px;color:#315770}
+.reply textarea,.detailContents textarea,.detailContents input,.detailContents select{width:100%;border:1px solid #d5e4ee;border-radius:9px;padding:9px 10px;font-size:13px;color:#18344e;min-width:0}
+.replyActions,.actionRow{display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.replyActions small,.muted{color:#798da0;font-size:11px;line-height:1.5}
+.primary{background:#1179ba;color:#fff;border:1px solid #1179ba;border-radius:8px;font-size:12px;font-weight:700;padding:9px 13px;cursor:pointer}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.whatsappNote{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:#53738a}
+.detailBox{border:1px solid #e3ecf2;border-radius:9px;overflow:hidden}
+.detailBox summary{padding:10px 12px;cursor:pointer;font-size:12px;font-weight:700;color:#2d5e7d}
+.detailContents{border-top:1px solid #e5eef3;padding:12px;display:grid;gap:8px}
+.advancedTools{border-top:1px solid #e8eef3;padding:16px;max-height:750px;overflow:auto}
+.alert,.notice{margin:0 20px 10px;padding:10px;border-radius:8px;font-size:12px}
+.alert{background:#fff0ef;color:#a82b21}
+.notice{background:#ecf9f3;color:#166b48}
+.srOnly{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:900px){.layout{grid-template-columns:minmax(250px,40%) minmax(0,1fr)}.threadTop{flex-wrap:wrap}.threadTop time{font-size:10px}}
+@media(max-width:690px){.head{padding:14px}.head p{max-width:240px}.channelTabs{padding:0 12px 12px;gap:4px}.channelButton,.channelActive{padding:7px 9px;font-size:12px}.layout{grid-template-columns:1fr}.listPane{border-right:0;border-bottom:1px solid #e5edf3}.threadList{max-height:285px}.chatPane{min-height:360px}.messages{max-height:330px;min-height:220px}.bubble{max-width:90%}.chatHead{padding:11px}.chatFooter{padding:11px}}
+
+/* Shared CRM Phase 1 controls, responsive inbox and empty states */
+.channelButton:hover{background:#e9f4fa;color:#206b91}
+.channelActive{background:#167fbd;color:#fff;box-shadow:0 3px 10px rgba(16,107,172,.11)}
+.channelButton:focus-visible,.channelActive:focus-visible,.pill:focus-visible,.pillActive:focus-visible,.thread:focus-visible,.threadSelected:focus-visible{outline:2px solid #138fbe;outline-offset:-2px}
+.channelTag{border-left:3px solid var(--cx-channel,#138bc6);padding-left:6px}
+.empty,.placeholder{color:#6c8599}
+.empty{border:1px dashed #dce8f1;background:#f9fcfe;border-radius:10px;padding:20px;margin:12px}
+@media(max-width:900px){.layout{grid-template-columns:minmax(270px,39%) minmax(0,1fr)}}
+@media(max-width:690px){.layout{grid-template-columns:minmax(0,1fr)}.channelTabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.channelButton,.channelActive{white-space:nowrap;flex:none}.filters{gap:6px;flex-wrap:wrap}.pillGroup{max-width:100%;overflow-x:auto}.chatPane{min-width:0}.head h2{font-size:18px}}
+
+/* Customer journey handoffs */
+.workflowSteps{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:12px 15px;border-top:1px solid #dfeaf2;background:#f5fafe}
+.workflowSteps strong{font-size:11px;color:#4f7188;margin-right:4px}
+.workflowSteps button{border-radius:8px;border:1px solid #cae2ef;background:#fff;color:#146a98;padding:8px 11px;font-size:11px;font-weight:750;cursor:pointer}
+.workflowSteps button:hover{background:#e9f7fc}
+.workflowSteps button:focus-visible{outline:2px solid #138fbe;outline-offset:2px}
+.workflowHint{margin:10px 15px;padding:12px;border:1px dashed #d7e7f0;border-radius:9px;background:#f7fbfe;color:#59778d;font-size:12px;line-height:1.5}
