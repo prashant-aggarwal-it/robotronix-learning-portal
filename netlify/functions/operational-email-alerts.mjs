@@ -1,3 +1,4 @@
+import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
 import {createClient} from "@supabase/supabase-js";
 import {randomUUID} from "node:crypto";
 
@@ -46,6 +47,7 @@ async function dispatch(db,kind,recipient,from,apiKey,subject,body,windowMs){
 }
 
 export default async ()=>{
+ if(!schedulerCapabilityEnabled("portal"))return Response.json({ok:true,enabled:false,job:"portal-module-disabled"});
  const started=Date.now();
  const recipient=process.env.ROBOTRONIX_ALERT_TO_EMAIL?.trim()||"";
  const from=process.env.ROBOTRONIX_ALERT_FROM_EMAIL?.trim()||"";
