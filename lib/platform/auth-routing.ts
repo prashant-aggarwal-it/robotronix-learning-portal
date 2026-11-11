@@ -31,7 +31,8 @@ const portalRolePath=(role:PortalAccess["role"])=>role?"/"+role:null;
 export function resolveAuthDestination(
  config:DeploymentConfig,
  access:AuthAccess,
- requested:string|null|undefined
+ requested:string|null|undefined,
+ source:"login"|"callback"="login"
 ):AuthDestination {
  const next=safeAuthNext(requested,config);
  const portalEnabled=config.products.includes("portal");
@@ -63,7 +64,7 @@ export function resolveAuthDestination(
    if(tasksEnabled && !taskSuspended && (next==="/tasks" || next==="/tasks/welcome"))
       return {path:"/tasks/welcome"};
    if(crmEnabled && !config.legacyDefault)return {path:"/connect"};
-   if(config.legacyDefault)return {path:"",denied:"Your email is not linked to an active portal profile yet. Contact Admin, or start family onboarding."};
+   if(config.legacyDefault)return source==="callback"?{path:"/onboarding"}:{path:"",denied:"Your email is not linked to an active portal profile yet. Contact Admin, or start family onboarding."};
    return {path:"/onboarding"};
  }
  if(crmEnabled)return {path:"/connect"};
