@@ -45,6 +45,7 @@ export function resolveDeploymentConfig(env: DeploymentEnv): DeploymentConfig {
   }
 
   const selected = env.ENABLED_PRODUCTS?.trim();
+  if (env.ENABLED_PRODUCTS !== undefined && !selected) throw new Error("ENABLED_PRODUCTS cannot be empty.");
   const productTokens = selected ? parseCsv(selected, "ENABLED_PRODUCTS") :
     mode === "combined" ? [...PRODUCT_IDS] : [mode];
   if (productTokens.some(item => !isProduct(item))) {
@@ -57,6 +58,7 @@ export function resolveDeploymentConfig(env: DeploymentEnv): DeploymentConfig {
   if (!products.length) throw new Error("At least one product must be enabled.");
 
   const selectedIntegrations = env.ENABLED_INTEGRATIONS?.trim();
+  if (env.ENABLED_INTEGRATIONS !== undefined && !selectedIntegrations) throw new Error("ENABLED_INTEGRATIONS cannot be empty.");
   // Legacy unconfigured combined installs continue to expose existing integration routes.
   // New explicit deployments must opt into each installed integration.
   const integrationTokens = selectedIntegrations ?
