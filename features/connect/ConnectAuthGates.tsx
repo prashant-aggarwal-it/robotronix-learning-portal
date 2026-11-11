@@ -21,18 +21,27 @@ export function ConnectSignInGate({error,busy,email,password,onEmailChange,onPas
  </section></main>;
 }
 
-export function ConnectNoWorkspaceGate({error,onRetry,onSignOut,onCreateWorkspace}:{
+export function ConnectNoWorkspaceGate({error,onRetry,onSignOut,onCreateWorkspace,onAcceptInvitation}:{
  error:string;onRetry:()=>void;onSignOut:()=>void;
  onCreateWorkspace?:(name:string,slug:string)=>Promise<void>;
+ onAcceptInvitation?:(token:string)=>Promise<void>;
 }){
  const [name,setName]=useState(""),[slug,setSlug]=useState("");
  const [creating,setCreating]=useState(false),[createError,setCreateError]=useState("");
+ const [invitation,setInvitation]=useState(""),[accepting,setAccepting]=useState(false);
  const submit=async(event:FormEvent)=>{
   event.preventDefault();if(creating||!onCreateWorkspace)return;
   setCreating(true);setCreateError("");
   try{await onCreateWorkspace(name.trim(),slug.trim().toLowerCase());}
   catch{setCreateError("Could not create your workspace. Check the name or URL identifier and try again.");}
   finally{setCreating(false);}
+ };
+ const accept=async(event:FormEvent)=>{
+  event.preventDefault();if(accepting||!onAcceptInvitation)return;
+  setAccepting(true);setCreateError("");
+  try{await onAcceptInvitation(invitation.trim());}
+  catch{setCreateError("This invitation could not be accepted. Verify the code and your account email.");}
+  finally{setAccepting(false);}
  };
  return <main className="cx-gate"><section className="cx-auth">
   <ConnectBrand/>
@@ -50,7 +59,14 @@ export function ConnectNoWorkspaceGate({error,onRetry,onSignOut,onCreateWorkspac
     {creating?"Creating workspace…":"Create workspace"}
    </button>
   </form>}
-  <p>If you were invited to an existing workspace, ask its administrator to confirm your invitation.</p>
+  {onAcceptInvitation&&<form className="cx-form" onSubmit={accept}>
+   <h2>Have an invitation?</h2>
+   <label>Secure invitation code<input required minLength={40} maxLength={64} pattern="[A-Za-z0-9_-]{40,64}" autoComplete="off"
+    value={invitation} onChange={e=>setInvitation(e.target.value)} placeholder="Paste your invitation code"/></label>
+   <button className="cx-primary" type="submit" disabled={accepting||invitation.trim().length<40}>
+    {accepting?"Joining workspace…":"Join workspace"}
+   </button>
+  </form>}
   <button className="cx-primary" type="button" onClick={onRetry}>Check access again</button>
   <button className="cx-text-button" type="button" onClick={onSignOut}>Sign out</button>
  </section></main>;
