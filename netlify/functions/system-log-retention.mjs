@@ -1,7 +1,9 @@
+import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
 import {createClient} from "@supabase/supabase-js";
 import {randomUUID} from "node:crypto";
 // Daily bounded cleanup. Only service-role can execute the retention SQL functions.
 export default async ()=>{
+ if(!schedulerCapabilityEnabled("portal"))return Response.json({ok:true,enabled:false,job:"portal-module-disabled"});
  const started=Date.now(),reference=randomUUID();
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key){console.error("[system-log-retention] configuration unavailable",reference);return Response.json({ok:false,reference},{status:500});}
