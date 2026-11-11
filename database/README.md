@@ -1,3 +1,9 @@
+## Canonical final-state database installer (in validation)
+
+**Use [canonical/README.md](./canonical/README.md) as the single source of truth for new installations.** It contains complete CREATE definitions for Tasks and CRM (tables, functions, triggers, security), rather than historical patch chains. **Do not run production installs until a clean-environment test passes.** The existing Portal generator under `01_install/` is retained for the Portal foundation.
+
+The older `release_install/`, `tasks/` and `connect/saas/` SQL sources remain temporarily for historical reference and existing CI dependencies. They are **not** the new canonical install sequence. No production database migration was executed during this consolidation.
+
 ## Production CRM + Tasks install (manual)
 
 For the existing Portal production DB, use **[release_install/README.md](./release_install/README.md)** — a guarded, categorized SQL Editor installation sequence (00–09). This is the active entrypoint for new CRM and Tasks module installation. Older per-phase SQL remains historical reference, not a bulk installer. Never run DEV-only cleanup/cron/sample-data SQL on production.
