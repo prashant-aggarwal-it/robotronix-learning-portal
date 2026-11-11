@@ -41,29 +41,44 @@ export async function verifySignInCode(email:string,code:string){
  return error?{ok:false,error:"Code expired or invalid. Request a new code."}:{ok:true};
 }
 /** Load only installed products: CRM/Tasks logins must not query Portal profiles. */
+async function taskAccess(header:Record<string,string>,legacyDefault:boolean):Promise<TaskAccess>{
+ const response=await fetch("/api/tasks/onboarding",{headers:header,cache:"no-store"});
+ if(!response.ok)throw new Error("Task account verification is unavailable.");
+ const data=await response.json();
+ if(data.portalDisabled&&legacyDefault)return "suspended";
+ if(data.account?.status==="suspended")return "suspended";
+ return data.account?.status==="active"?"active":"unlinked";
+}
+async function crmAccess(header:Record<string,string>):Promise<boolean>{
+ const response=await fetch("/api/connect/workspaces",{headers:header,cache:"no-store"});
+ if(!response.ok)throw new Error("CRM workspace verification is unavailable.");
+ const data=await response.json();
+ return Array.isArray(data.workspaces)&&data.workspaces.length>0;
+}
+/** Product-scoped discovery never reads Portal profiles in CRM-only or Tasks-only.
+ * Legacy Portal deployments must keep signing in when optional schemas are absent.
+ */
 export async function loadSignedInAccess(deployment:DeploymentConfig):Promise<AuthAccess>{
  const supabase=client();
  const {data:{session}}=await supabase.auth.getSession();
  if(!session)throw new Error("Sign in again.");
  const header={Authorization:"Bearer "+session.access_token};
- const [portal,tasks,crm]=await Promise.all([
-  deployment.products.includes("portal")?
-    import("@/lib/repository").then(m=>m.getCurrentAccountAccess()):Promise.resolve(undefined),
-  deployment.products.includes("tasks")?
-    fetch("/api/tasks/onboarding",{headers:header,cache:"no-store"}).then(async response=>{
-     if(!response.ok)throw new Error("Task account verification is unavailable.");
-     const data=await response.json();
-     if(data.portalDisabled&&deployment.legacyDefault)
-      return "suspended" as TaskAccess;
-     if(data.account?.status==="suspended")return "suspended" as TaskAccess;
-     return data.account?.status==="active"?"active" as TaskAccess:"unlinked" as TaskAccess;
-    }):Promise.resolve(undefined),
-  deployment.products.includes("crm")?
-    fetch("/api/connect/workspaces",{headers:header,cache:"no-store"}).then(async response=>{
-     if(!response.ok)throw new Error("CRM workspace verification is unavailable.");
-     const data=await response.json();
-     return Array.isArray(data.workspaces)&&data.workspaces.length>0;
-    }):Promise.resolve(undefined)
+
+ const portal=deployment.products.includes("portal")?
+  await import("@/lib/repository").then(m=>m.getCurrentAccountAccess()):undefined;
+
+ if(deployment.legacyDefault){
+  // Existing deployments are Portal-first. A Portal account must not require CRM
+  // or Tasks RPCs even when those modules have not been installed yet.
+  if(portal?.state==="active"||portal?.state==="disabled")return {portal};
+  const tasks=await taskAccess(header,true).catch(()=>"unlinked" as TaskAccess);
+  const crmWorkspace=tasks==="active"?false:await crmAccess(header).catch(()=>false);
+  return {portal,tasks,crmWorkspace};
+ }
+
+ const [tasks,crmWorkspace]=await Promise.all([
+  deployment.products.includes("tasks")?taskAccess(header,false):Promise.resolve(undefined),
+  deployment.products.includes("crm")?crmAccess(header):Promise.resolve(undefined)
  ]);
- return {portal,tasks,crmWorkspace:crm};
+ return {portal,tasks,crmWorkspace};
 }
