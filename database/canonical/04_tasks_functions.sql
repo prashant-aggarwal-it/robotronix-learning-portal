@@ -1,6 +1,6 @@
 -- FINAL My Tasks database logic, generated from the current DEV schema.
 -- Exactly one latest definition per function signature; no historical patches.
--- Requires 02_tasks_schema.sql and complete public Learning Portal/Auth foundation.
+-- Requires Tasks schema and Supabase Auth; Portal and CRM are optional integrations.
 BEGIN;
 
 -- public.task_list(p_actor_id uuid, p_status text, p_limit integer, p_offset integer)
@@ -178,18 +178,13 @@ begin
  loop
   -- Only consume a reminder for an existing active account; avoid silently marking
   -- reminders delivered to users with neither an account nor an active profile.
-  if exists(select 1 from tasks.accounts a where a.user_id=rec.owner_user_id and a.status='active')
-   or exists(select 1 from public.profiles p where p.id=rec.owner_user_id and p.active=true) then
+  if exists(select 1 from tasks.accounts a where a.user_id=rec.owner_user_id and a.status='active') then
    insert into tasks.reminder_deliveries(task_id,reminder_at) values(rec.id,rec.reminder_at) on conflict do nothing;
    if found then
     insert into tasks.notifications(recipient_user_id,task_id,kind,title,href,dedupe_key)
      values(rec.owner_user_id,rec.id,'reminder','Reminder: '||left(rec.title,220),'/tasks/all?task='||rec.id,
       'reminder:'||rec.id::text||':'||extract(epoch from rec.reminder_at)::bigint)
      on conflict(recipient_user_id,dedupe_key) do nothing;
-    insert into public.portal_notifications(recipient_role,recipient_profile_id,type,priority,title,message,href,dedupe_key)
-     select p.role,rec.owner_user_id,'task_reminder','info','Task reminder',left(rec.title,240),'/tasks?task='||rec.id::text,
-      'task:'||rec.id::text||':'||extract(epoch from rec.reminder_at)::bigint
-     from public.profiles p where p.id=rec.owner_user_id and p.active=true;
     processed:=processed+1;
    end if;
   end if;
@@ -204,7 +199,7 @@ CREATE OR REPLACE FUNCTION public.task_preferences_get(p_actor_id uuid)
  SET search_path TO ''
 AS $function$
  select coalesce((select to_jsonb(p) from tasks.user_preferences p where p.user_id=p_actor_id),
- jsonb_build_object('user_id',p_actor_id,'timezone',coalesce((select timezone from public.profiles where id=p_actor_id),'Asia/Kolkata'),'week_starts_on',1,'focus_limit',3));
+ jsonb_build_object('user_id',p_actor_id,'timezone','Asia/Kolkata','week_starts_on',1,'focus_limit',3));
 $function$;
 
 -- public.task_preferences_save(p_actor_id uuid, p_timezone text, p_week_start smallint)
@@ -312,8 +307,8 @@ CREATE OR REPLACE FUNCTION public.task_workspace_members(p_actor_id uuid, p_work
 AS $function$
  select case when exists(select 1 from tasks.workspace_members where workspace_id=p_workspace_id and user_id=p_actor_id)
  then coalesce((select jsonb_agg(to_jsonb(v) order by v.role,v.full_name) from (
-  select m.user_id,m.role,coalesce(p.full_name,'Member') as full_name from tasks.workspace_members m
-  left join public.profiles p on p.id=m.user_id where m.workspace_id=p_workspace_id) v),'[]'::jsonb) else '[]'::jsonb end;
+  select m.user_id,m.role,coalesce(nullif(a.display_name,''),'Member') as full_name from tasks.workspace_members m
+  left join tasks.accounts a on a.user_id=m.user_id where m.workspace_id=p_workspace_id) v),'[]'::jsonb) else '[]'::jsonb end;
 $function$;
 
 -- public.task_invite_send(p_actor_id uuid, p_workspace_id uuid, p_email text, p_role text)
@@ -413,9 +408,10 @@ begin
  where id=p_task_id returning * into task;
  insert into tasks.activity(task_id,actor_user_id,action,details) values(p_task_id,p_actor_id,'sharing_changed',jsonb_build_object('workspace_id',p_workspace_id,'assignee_id',p_assignee_id,'workspace_visible',p_workspace_visible));
  if p_assignee_id is not null and p_assignee_id<>p_actor_id then
-  insert into public.portal_notifications(recipient_role,recipient_profile_id,type,priority,title,message,href,dedupe_key)
-  select p.role,p_assignee_id,'task_assigned','info','New task assigned','A task was assigned to you.','/tasks/assigned','task-assigned:'||p_task_id::text||':'||extract(epoch from now())::bigint::text
-  from public.profiles p where p.id=p_assignee_id and p.active=true;
+  insert into tasks.notifications(recipient_user_id,task_id,kind,title,href,dedupe_key)
+  values(p_assignee_id,p_task_id,'assignment','New task assigned','/tasks/assigned',
+   'task-assigned:'||p_task_id::text||':'||extract(epoch from now())::bigint::text)
+  on conflict(recipient_user_id,dedupe_key) do nothing;
  end if;
  return to_jsonb(task);
 end $function$;
@@ -444,7 +440,7 @@ CREATE OR REPLACE FUNCTION public.task_collaborators_list(p_actor_id uuid, p_tas
  SET search_path TO ''
 AS $function$
  select case when tasks.can_read(p_actor_id,p_task_id) then coalesce((select jsonb_agg(to_jsonb(v)) from (
-  select c.user_id,c.permission,coalesce(p.full_name,'Member') as full_name from tasks.task_collaborators c left join public.profiles p on p.id=c.user_id where c.task_id=p_task_id) v),'[]'::jsonb) else '[]'::jsonb end;
+  select c.user_id,c.permission,coalesce(nullif(a.display_name,''),'Member') as full_name from tasks.task_collaborators c left join tasks.accounts a on a.user_id=c.user_id where c.task_id=p_task_id) v),'[]'::jsonb) else '[]'::jsonb end;
 $function$;
 
 -- public.task_comments_list(p_actor_id uuid, p_task_id uuid)
@@ -454,8 +450,8 @@ CREATE OR REPLACE FUNCTION public.task_comments_list(p_actor_id uuid, p_task_id 
  SET search_path TO ''
 AS $function$
  select case when tasks.can_read(p_actor_id,p_task_id) then coalesce((select jsonb_agg(to_jsonb(v) order by v.created_at) from (
-  select c.id,c.body,c.created_at,c.edited_at,c.author_user_id,coalesce(p.full_name,'Member') as author_name
-  from tasks.comments c left join public.profiles p on p.id=c.author_user_id where c.task_id=p_task_id order by c.created_at) v),'[]'::jsonb) else '[]'::jsonb end;
+  select c.id,c.body,c.created_at,c.edited_at,c.author_user_id,coalesce(nullif(a.display_name,''),'Member') as author_name
+  from tasks.comments c left join tasks.accounts a on a.user_id=c.author_user_id where c.task_id=p_task_id order by c.created_at) v),'[]'::jsonb) else '[]'::jsonb end;
 $function$;
 
 -- public.task_comment_add(p_actor_id uuid, p_task_id uuid, p_body text)
@@ -541,103 +537,6 @@ begin
  if new.workspace_id is distinct from old.workspace_id and new.workspace_id is not null
   and exists(select 1 from tasks.module_links l where l.task_id=old.id) then
   raise exception 'Linked module tasks must remain personal' using errcode='42501';
- end if;
- return new;
-end $function$;
-
--- public.task_module_link(p_actor_id uuid, p_module text, p_resource text, p_resource_id uuid, p_tenant_id uuid)
-CREATE OR REPLACE FUNCTION public.task_module_link(p_actor_id uuid, p_module text, p_resource text, p_resource_id uuid, p_tenant_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SET search_path TO ''
-AS $function$
-declare v_title text;v_due timestamptz;v_status text:='todo';v_task uuid;v_existing uuid;v_membership connect.memberships%rowtype;
-begin
- if not exists(select 1 from public.profiles where id=p_actor_id and active=true) then raise exception 'Inactive profile' using errcode='42501';end if;
- if p_module='connect' and p_resource in ('crm_task','crm_person','crm_opportunity') and p_tenant_id is not null then
-  select * into v_membership from connect.memberships where tenant_id=p_tenant_id and user_id=p_actor_id and status='active';
-  if v_membership.id is null then raise exception 'Connect membership required' using errcode='42501';end if;
-  if p_resource='crm_task' then
-   select t.title,t.due_at,case when t.status='done' then 'done' else 'todo' end
-     into v_title,v_due,v_status from connect.tasks t where t.tenant_id=p_tenant_id and t.id=p_resource_id
-      and (t.assignee_membership_id=v_membership.id or v_membership.role in ('owner','admin','manager'));
-  elsif p_resource='crm_person' then
-   select 'Follow up: '||p.full_name into v_title from connect.people p
-    where p.tenant_id=p_tenant_id and p.id=p_resource_id and p.status='active';
-  else
-   select 'Follow up: '||o.title into v_title from connect.opportunities o
-    where o.tenant_id=p_tenant_id and o.id=p_resource_id;
-  end if;
- elsif p_module='learning' and p_resource='schedule_event' and p_tenant_id is null then
-  select 'Review class: '||e.title into v_title from public.schedule_events e
-   where e.id=p_resource_id and (exists(select 1 from public.profiles p where p.id=p_actor_id and p.active=true and p.role='admin')
-    or exists(select 1 from public.trainers tr where tr.id=e.trainer_id and tr.profile_id=p_actor_id and tr.record_status='active'));
-  select (e.date::timestamp + e.end_time) at time zone e.timezone into v_due
-   from public.schedule_events e where e.id=p_resource_id and v_title is not null;
- else raise exception 'Invalid module link' using errcode='22023';end if;
- if v_title is null then raise exception 'Record unavailable' using errcode='42501';end if;
- select l.task_id into v_existing from tasks.module_links l where l.owner_user_id=p_actor_id and l.module=p_module
-   and l.resource=p_resource and l.resource_id=p_resource_id and l.tenant_id is not distinct from p_tenant_id;
- if v_existing is not null then return jsonb_build_object('task_id',v_existing,'created',false);end if;
- insert into tasks.items(owner_user_id,created_by_user_id,title,status,priority,due_at,completed_at)
-  values(p_actor_id,p_actor_id,left(v_title,240),v_status,'medium',v_due,case when v_status='done' then now() else null end)
-  returning id into v_task;
- insert into tasks.module_links(task_id,owner_user_id,module,resource,resource_id,tenant_id)
-  values(v_task,p_actor_id,p_module,p_resource,p_resource_id,p_tenant_id);
- insert into tasks.activity(task_id,actor_user_id,action,details) values(v_task,p_actor_id,'module_linked',jsonb_build_object('module',p_module,'resource',p_resource));
- return jsonb_build_object('task_id',v_task,'created',true);
-end $function$;
-
--- public.task_module_links_list(p_actor_id uuid, p_module text, p_tenant_id uuid)
-CREATE OR REPLACE FUNCTION public.task_module_links_list(p_actor_id uuid, p_module text DEFAULT NULL::text, p_tenant_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE sql
- STABLE
- SET search_path TO ''
-AS $function$
- select coalesce(jsonb_agg(jsonb_build_object('task_id',l.task_id,'module',l.module,'resource',l.resource,
-   'resource_id',l.resource_id,'tenant_id',l.tenant_id,'title',t.title,'status',t.status,'due_at',t.due_at)
-   order by t.updated_at desc),'[]'::jsonb)
- from tasks.module_links l join tasks.items t on t.id=l.task_id
- where l.owner_user_id=p_actor_id and t.archived_at is null and t.workspace_id is null
-  and (p_module is null or l.module=p_module) and (p_tenant_id is null or l.tenant_id=p_tenant_id)
-  and (l.module<>'connect' or exists(select 1 from connect.memberships m where m.tenant_id=l.tenant_id and m.user_id=p_actor_id and m.status='active'))
-  and (l.module<>'learning' or exists(select 1 from public.profiles p where p.id=p_actor_id and p.active=true and p.role='admin')
-    or exists(select 1 from public.schedule_events e join public.trainers tr on tr.id=e.trainer_id where e.id=l.resource_id and tr.profile_id=p_actor_id and tr.record_status='active'));
-$function$;
-
--- tasks.sync_crm_task_status()
-CREATE OR REPLACE FUNCTION tasks.sync_crm_task_status()
- RETURNS trigger
- LANGUAGE plpgsql
- SET search_path TO ''
-AS $function$
-begin
- if new.status is distinct from old.status then
-  update connect.tasks c set status=case when new.status='done' then 'done' else 'open' end,
-   completed_at=case when new.status='done' then coalesce(c.completed_at,now()) else null end
-  from tasks.module_links l join connect.memberships m on m.tenant_id=l.tenant_id and m.user_id=l.owner_user_id and m.status='active'
-  where l.task_id=new.id and l.module='connect' and l.resource='crm_task' and c.tenant_id=l.tenant_id and c.id=l.resource_id
-   and m.role in ('owner','admin','manager','counsellor')
-   and (c.assignee_membership_id=m.id or m.role in ('owner','admin','manager')) and c.status<>'cancelled';
-  update tasks.module_links set last_synced_at=now() where task_id=new.id and module='connect' and resource='crm_task';
- end if;
- return new;
-end $function$;
-
--- tasks.sync_imported_from_crm()
-CREATE OR REPLACE FUNCTION tasks.sync_imported_from_crm()
- RETURNS trigger
- LANGUAGE plpgsql
- SET search_path TO ''
-AS $function$
-begin
- if new.status is distinct from old.status and new.status in ('done','open') then
-  update tasks.items t set status=case when new.status='done' then 'done' else 'todo' end,
-   completed_at=case when new.status='done' then now() else null end,updated_at=now()
-  from tasks.module_links l join connect.memberships m on m.tenant_id=l.tenant_id and m.user_id=l.owner_user_id and m.status='active'
-  where l.task_id=t.id and l.module='connect' and l.resource='crm_task' and l.resource_id=new.id and l.tenant_id=new.tenant_id
-   and t.archived_at is null and t.status<>case when new.status='done' then 'done' else 'todo' end;
  end if;
  return new;
 end $function$;
