@@ -89,7 +89,7 @@ export function routeRequirement(pathname: string): RouteRequirement {
   if (p === "/" || p === "/login" || p === "/auth/callback" || p === "/join" ||
       p === "/privacy" || p === "/terms" || p === "/support" ||
       p === "/api/health" || p.startsWith("/api/locations/") ||
-      p === "/api/platform/capabilities") return "shared";
+      p === "/api/platform/capabilities" || p === "/api/platform/my-products") return "shared";
 
   if (p === "/api/tasks/module-links" || p === "/tasks/connected" ||
       p === "/tasks/v2/connected") return "crmTasks";
