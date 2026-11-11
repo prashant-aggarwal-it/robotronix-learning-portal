@@ -3140,21 +3140,6 @@ begin
  return new;
 end $function$;
 
--- connect.guard_portal_enrollment_won()
-CREATE OR REPLACE FUNCTION connect.guard_portal_enrollment_won()
- RETURNS trigger
- LANGUAGE plpgsql
- SET search_path TO ''
-AS $function$
-begin
- if new.stage_id is distinct from old.stage_id and exists(
-  select 1 from connect.portal_demo_integrations i where i.tenant_id=new.tenant_id and i.status='active'
- ) and exists(select 1 from connect.pipeline_stages s where s.tenant_id=new.tenant_id and s.id=new.stage_id and s.outcome='won')
- and not exists(select 1 from connect.portal_admission_handoffs h where h.tenant_id=new.tenant_id
-  and h.opportunity_id=new.id and h.status='enrollment_confirmed' and h.portal_enrollment_id is not null)
- then raise exception 'Portal enrollment confirmation required before Won' using errcode='23514';end if;
- return new;
-end $function$;
 
 -- public.connect_process_portal_demo_followups(p_batch_size integer)
 CREATE OR REPLACE FUNCTION public.connect_process_portal_demo_followups(p_batch_size integer DEFAULT 100)
