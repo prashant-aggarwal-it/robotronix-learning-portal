@@ -1,3 +1,4 @@
+import {checkServerModule} from "@/lib/platform/server-access";
 import {NextRequest,NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
 
@@ -6,6 +7,8 @@ export function portalApiFailure(message:string,status=400){
 }
 
 export async function requirePortalUser(request:NextRequest,allowedRoles?:string[]){
+  const capability=checkServerModule(request.nextUrl.pathname);
+  if(!capability.ok)return{error:portalApiFailure(capability.message,capability.status)};
   const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secret=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!secret)return{error:portalApiFailure("Server-side Supabase configuration is missing.",503)};
