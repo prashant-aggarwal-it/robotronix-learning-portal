@@ -420,6 +420,12 @@ export default function ConnectPage(){
  if(!signedIn)return <ConnectSignInGate error={error} busy={busy} email={loginEmail} password={loginPassword} onEmailChange={setLoginEmail} onPasswordChange={setLoginPassword} onSubmit={signIn}/>;
  if(!workspacesReady)return <main className="cx-gate">Loading your Connect workspace…</main>;
  if(!workspaces.length)return <ConnectNoWorkspaceGate error={error}
+  onAcceptInvitation={async token=>{
+    await connectFetch("/api/connect/invitations/accept",{method:"POST",body:JSON.stringify({token})});
+    setWorkspacesReady(false);
+    await loadWorkspaces();
+    setError("");
+  }}
   onCreateWorkspace={allowSelfCreate?async(name,slug)=>{
     await connectFetch("/api/connect/workspaces",{method:"POST",body:JSON.stringify({name,slug})});
     setWorkspacesReady(false);
