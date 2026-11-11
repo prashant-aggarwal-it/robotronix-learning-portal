@@ -6,7 +6,7 @@ import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
 import {TasksPrimaryNav} from "./TasksPrimaryNav";
 import {TasksContextTabs} from "./TasksContextTabs";
-import {getCurrentProfile} from "@/lib/repository";
+import {loadAuthDeployment} from "@/lib/platform/auth-client";
 import {TeamSpaces} from "@/features/tasks/TaskCollaboration";
 import {TaskV2DetailDrawer} from "./TaskV2DetailDrawer";
 import type {V2Task,V2ModuleLink,V2Area,V2Project,V2Request,V2Response} from "./model";
@@ -75,12 +75,16 @@ export function TasksV2Connected(){
   let mounted=true;
   void Promise.allSettled([
    getSupabaseBrowserClient()?.auth.getUser(),
-   getCurrentProfile()
+   loadAuthDeployment().then(async config=>{
+    if(!config.products.includes("portal")||!config.integrations.includes("portalTasks"))return null;
+    const {getCurrentProfile}=await import("@/lib/repository");
+    return getCurrentProfile();
+   })
   ]).then(([authResult,profileResult])=>{
    if(!mounted)return;
    if(authResult.status==="fulfilled")setUserId(authResult.value?.data.user?.id||null);
-   if(profileResult.status==="fulfilled"){
-    const role=profileResult.value?.role;
+   if(profileResult.status==="fulfilled"&&profileResult.value){
+    const role=profileResult.value.role;
     setLearningRoute(role==="admin"?"/admin/schedule":role==="trainer"?"/trainer/schedule":"/");
    }
   });
