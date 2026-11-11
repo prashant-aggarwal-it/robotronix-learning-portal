@@ -12,12 +12,12 @@ export function ConnectSignInGate({error,busy,email,password,onEmailChange,onPas
   <ConnectBrand/>
   <span className="cx-kicker">ADMISSIONS & RELATIONSHIPS</span>
   <h1>A clearer way to manage admissions.</h1>
-  <p>Sign in with your existing Robotronix account. Connect uses the same authentication system as the Learning Portal, with separate institute permissions.</p>
+  <p>Sign in with your account to access your CRM workspace. Your organisation controls membership and permissions.</p>
   <ErrorMessage error={error}/>
   <form onSubmit={onSubmit} className="cx-form"><label>Email<input type="email" required autoComplete="email" value={email} onChange={e=>onEmailChange(e.target.value)}/></label>
   <label>Password<input type="password" required autoComplete="current-password" value={password} onChange={e=>onPasswordChange(e.target.value)}/></label>
   <button className="cx-primary" disabled={busy}>{busy?"Signing in…":"Sign in to Connect"}</button></form>
-  <Link href="/login" className="cx-link">Go to Learning Portal sign-in</Link>
+  <Link href="/login?next=/connect" className="cx-link">Sign in with Google or an email code</Link>
  </section></main>;
 }
 
