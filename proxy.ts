@@ -15,6 +15,10 @@ export function proxy(request:NextRequest){
     });
   }
   const pathname=request.nextUrl.pathname;
+  // Public static assets are shared across product shells; never bypass API checks.
+  if(!pathname.startsWith("/api/") && /\.(?:svg|png|jpe?g|webp|gif|ico|woff2?|ttf|css|js)$/i.test(pathname)){
+    return NextResponse.next();
+  }
   if(pathname==="/" && !deployment.products.includes("portal")){
     return NextResponse.redirect(new URL(defaultProductPath(deployment),request.url));
   }
@@ -28,5 +32,5 @@ export function proxy(request:NextRequest){
 }
 
 export const config={
-  matcher:["/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|.*\\.[^/]+$).*)"]
+  matcher:["/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml).*)"]
 };
