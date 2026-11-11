@@ -5,8 +5,8 @@ import {resolveDeploymentConfig,type ProductId} from "@/lib/platform/deployment"
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const noStore={"Cache-Control":"no-store"};
-export type ProductNavigation={id:ProductId;label:string;href:string};
-export function portalDestination(role:unknown):string|null{
+type ProductNavigation={id:ProductId;label:string;href:string};
+function portalDestination(role:unknown):string|null{
  return role==="admin"?"/admin":role==="trainer"?"/trainer":
   role==="parent"?"/parent":role==="student"?"/student":null;
 }
