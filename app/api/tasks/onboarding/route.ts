@@ -1,3 +1,4 @@
+import {checkServerCapability,checkServerModule} from "@/lib/platform/server-access";
 import {NextRequest,NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
 import {taskError,noStore} from "@/lib/server/tasks/auth";
@@ -5,6 +6,8 @@ import {resolveDeploymentConfig} from "@/lib/platform/deployment";
 
 export const dynamic="force-dynamic";
 async function identity(request:NextRequest){
+ const gate=checkServerModule(request.nextUrl.pathname);
+ if(!gate.ok)return {moduleError:taskError(gate.message,gate.status)};
  const token=request.headers.get("authorization")?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!token||!url||!key)return null;
@@ -15,6 +18,7 @@ async function identity(request:NextRequest){
 }
 export async function GET(request:NextRequest){
  const ctx=await identity(request);if(!ctx)return taskError("Sign in to use My Tasks.",401);
+ if("moduleError" in ctx)return ctx.moduleError;
  const deployment=resolveDeploymentConfig(process.env);
  const {data:account,error}=await ctx.db.rpc("task_account_get",{p_actor_id:ctx.user.id});
  if(error)return taskError("Task account status unavailable.",503);
@@ -29,6 +33,7 @@ export async function GET(request:NextRequest){
 }
 export async function POST(request:NextRequest){
  const ctx=await identity(request);if(!ctx)return taskError("Sign in to use My Tasks.",401);
+ if("moduleError" in ctx)return ctx.moduleError;
  if(!ctx.user.email_confirmed_at||!ctx.user.email)return taskError("Verify your email before creating a task account.",403);
  // Only the pre-existing legacy combined deployment applies the Portal profile policy.
  // Explicit Tasks-only and modular suites read Tasks accounts, never Portal profiles.
