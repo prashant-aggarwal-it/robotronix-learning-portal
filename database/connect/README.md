@@ -1,3 +1,5 @@
+> **CANONICAL INSTALL LOCATION:** [../canonical/README.md](../canonical/README.md). The per-phase `saas/` SQL is historical developmental source, **not** an active installer; canonical CRM tables and final functions are now defined once in the canonical folder.
+
 **Updated 2026-11-11:** For approved manual production installation of Connect CRM into an existing Portal DB, use **[../release_install/README.md](../release_install/README.md)**. The `saas/` scripts below are historical source/provenance, *not* a runnable all-in-one production installer. The release package excludes DEV-only cleanup and cron and includes recovered unified-channel functions.
 
 # Connect database: source, history and verification
