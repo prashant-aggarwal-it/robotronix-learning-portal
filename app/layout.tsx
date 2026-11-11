@@ -12,7 +12,7 @@ import {getProductBrand} from "@/lib/platform/branding";
 
 const brand=getProductBrand(process.env);
 export const metadata:Metadata={
- ...(brand.landing==="/"?{metadataBase:new URL("https://portal.robotronixstemlab.com")}:{}),
+ ...(brand.appName==="Robotronix™ Learning Portal"?{metadataBase:new URL("https://portal.robotronixstemlab.com")}:{}),
  applicationName:brand.appName,
  title:{default:brand.title,template:"%s | "+brand.appName},
  description:brand.description,
