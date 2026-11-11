@@ -12,8 +12,9 @@ const names={
  crmSecurity:"canonical/07_crm_security.sql",
  crmPortal:"integrations/01_crm_portal.sql",
  tasksCrm:"integrations/02_tasks_crm.sql",
- tasksPortal:"integrations/03_tasks_portal_notifications.sql",
- fullSuite:"integrations/04_full_suite_task_links.sql"
+ tasksCrmLinks:"integrations/03_tasks_crm_links.sql",
+ tasksPortal:"integrations/04_tasks_portal_notifications.sql",
+ fullSuite:"integrations/05_full_suite_task_links.sql"
 };
 const sql=Object.fromEntries(Object.entries(names).map(([key,file])=>[key,fs.readFileSync(path.join(root,file),"utf8")]));
 let failures=0;
@@ -34,7 +35,9 @@ assertCount("All explicit indexes",count(sql.tasksSchema+"\n"+sql.crmSchema,/^CR
 assertCount("Core Tasks functions",count(sql.tasksFunctions,/^CREATE (?:OR REPLACE )?FUNCTION /gm),60);
 assertCount("Core CRM functions",count(sql.crmFunctions,/^CREATE (?:OR REPLACE )?FUNCTION /gm),76);
 assertCount("Optional CRM/Portal functions",count(sql.crmPortal,/^CREATE (?:OR REPLACE )?FUNCTION /gm),10);
-assertCount("Optional Tasks/CRM functions",count(sql.tasksCrm,/^CREATE (?:OR REPLACE )?FUNCTION /gm),4);
+assertCount("Optional Tasks/CRM sync functions",count(sql.tasksCrm,/^CREATE (?:OR REPLACE )?FUNCTION /gm),2);
+assertCount("CRM+Tasks-only task link functions",count(sql.tasksCrmLinks,/^CREATE (?:OR REPLACE )?FUNCTION /gm),2);
+assertCount("Full-suite task link functions",count(sql.fullSuite,/^CREATE (?:OR REPLACE )?FUNCTION /gm),2);
 assertCount("Tasks triggers",count(sql.tasksSecurity,/^CREATE TRIGGER /gm),3);
 assertCount("CRM triggers",count(sql.crmSecurity,/^CREATE TRIGGER /gm),5);
 assertCount("Tasks policies",count(sql.tasksSecurity,/^CREATE POLICY /gm),15);
