@@ -111,7 +111,7 @@ export default function ConnectPage(){
    if(!deployment.products.includes("portal")||!deployment.integrations.includes("crmPortal"))return false;
    const {getCurrentProfile}=await import("@/lib/repository");
    const profile=await getCurrentProfile();
-   return profile?.role==="admin"&&profile.active===true;
+   return profile?.role==="admin";
   }).then(canOpen=>{if(active)setCanOpenPortal(canOpen);}).catch(()=>{if(active)setCanOpenPortal(false);});
   return()=>{active=false;};
  },[signedIn]);
