@@ -24,7 +24,8 @@ export async function POST(request:NextRequest,{params}:Context){
  if(!body?.onboardingSubmissionId||!/^[0-9a-f-]{36}$/i.test(body.onboardingSubmissionId))
   return NextResponse.json({ok:false,error:"Onboarding submission is required."},{status:400,headers});
  const {data,error}=await session.admin.rpc("portal_admission_handoff_token",{
-  p_token_hash:tokenHash(token),p_action:"bind",p_user_id:session.actorId,p_submission_id:body.onboardingSubmissionId
+  p_token_hash:tokenHash(token),p_action:"bind",p_user_id:session.actorId,p_submission_id:body.onboardingSubmissionId,
+  p_confirmed_email:session.actorEmailVerified?session.actorEmail:null
  });
  if(error)return NextResponse.json({ok:false,error:"Unable to link this invitation. Check your signed-in guardian account and onboarding details."},{status:409,headers});
  return NextResponse.json({ok:true,status:data.status},{headers});
