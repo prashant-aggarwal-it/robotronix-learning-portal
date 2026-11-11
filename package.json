@@ -79,7 +79,8 @@
     "check:schedules": "node scripts/check-scheduled-jobs.mjs",
     "check:modules": "node --experimental-strip-types --test lib/platform/deployment.test.mjs",
     "check:auth": "node --test lib/platform/auth-routing.test.mjs",
-    "check:backend-modules": "node --test lib/platform/server-access.test.mjs"
+    "check:backend-modules": "node --test lib/platform/server-access.test.mjs",
+    "check:product-ui": "node --test lib/platform/product-ui.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
