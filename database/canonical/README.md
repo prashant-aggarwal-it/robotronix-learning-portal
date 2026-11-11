@@ -22,7 +22,7 @@ For **Portal + CRM**, install Portal + CRM plus integration 01. For **Portal + T
 - They assume a normal Supabase project with `auth.users` and `service_role` available. Each module can use its own Supabase project; a full suite may use one shared project, but the application must reconcile authentication.
 - The private `connect` and `tasks` schemas are not exposed to anonymous or client-authenticated Data API roles. Server-only RPCs perform tenant/user permission checks.
 - **Do not execute anything on current production yet.** The installers have passed static structural checks, but have **not passed a complete isolated clean-database installation**.
-- No destructive resets, background cron scheduling, Meta/Zoom secrets, sample customers or demo data are included.
+- No destructive resets, background cron scheduling, Meta/Zoom secrets, sample customers or demo data are included. The necessary per-module Netlify workers and activation flags are documented in [Scheduled jobs](../../docs/operations/SCHEDULED_JOBS.md); deploy those separately after the SQL package is installed and tested.
 
 ## What's canonical
 
