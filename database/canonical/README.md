@@ -1,5 +1,8 @@
 # Robotronix canonical database installation
 
+> **Product isolation status:** These are the current final-state development definitions, but the modules are **not yet standalone customer installers**. CRM has optional Portal demo/admissions and Tasks insight dependencies; Tasks has CRM integrations and Portal profile/auth dependencies. Do not run only a subset and assume every feature will work. [Read the dependency matrix](DEPENDENCIES.md).
+
+
 **Source of truth (in consolidation): FINAL database definitions, not historical migrations.**
 
 This directory defines each module's tables, constraints, indexes, functions, triggers, and security **exactly as they should exist from the beginning**. Each object is defined once. No historical ALTER-by-ALTER patch chain, destructive cleanup, or sample account data is required.
