@@ -1,3 +1,5 @@
+> **CANONICAL INSTALL LOCATION:** [../canonical/README.md](../canonical/README.md). The per-phase SQL files below are historical developmental sources, **not** a current fresh-install procedure. They remain temporarily because existing checks reference them.
+
 **Updated 2026-11-11:** For approved fresh Tasks-module installation into an existing production Learning Portal DB, use **[../release_install/README.md](../release_install/README.md)**. The phase files below are historical development sources; do not run them all or use their old development-only approval text as the release procedure.
 
 # Universal My Tasks — Phase 1 foundation
