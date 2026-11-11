@@ -15,8 +15,8 @@ function LoginContent(){
  const [deployment,setDeployment]=useState<DeploymentConfig|null>(null);
  useEffect(()=>{let active=true;void loadAuthDeployment().then(config=>{if(active)setDeployment(config);}).catch(()=>{if(active)setError("Application configuration is unavailable.");});return()=>{active=false};},[]);
  const next=deployment?safeAuthNext(requested,deployment):null;
- const productName=deployment?.mode==="crm"?"Connect CRM":deployment?.mode==="tasks"?"My Tasks":"Learning Portal";
- const hasPortal=deployment?.products.includes("portal")??true;
+ const productName=deployment?.mode==="crm"?"Connect CRM":deployment?.mode==="tasks"?"My Tasks":deployment?"Learning Portal":"Robotronix";
+ const hasPortal=deployment?.products.includes("portal")??false;
  const canRegister=Boolean(deployment&&!deployment.legacyDefault&&(deployment.products.includes("tasks")||deployment.products.includes("crm")));
  const[email,setEmail]=useState(""),[password,setPassword]=useState(""),[code,setCode]=useState("");
  const[codeSent,setCodeSent]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(false);
@@ -73,19 +73,19 @@ function LoginContent(){
   <form className="formStack" onSubmit={passwordSignIn}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
    <label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/></label>
-   <button className="button fullButton" disabled={loading}>{loading?"Signing in…":"Sign in with password"}</button>
+   <button className="button fullButton" disabled={loading||!deployment}>{loading?"Signing in…":"Sign in with password"}</button>
    {canRegister&&<button type="button" className="button secondary fullButton" disabled={loading||!email||password.length<8} onClick={register}>Create a new account</button>}
    {notice&&<p role="status" className="infoBanner">{notice}</p>}
   </form>
   <div className="authDivider"><span>or</span></div>
-  <button className="button secondary fullButton" disabled={loading} onClick={google}>Continue with Google</button>
+  <button className="button secondary fullButton" disabled={loading||!deployment} onClick={google}>Continue with Google</button>
   <details className="topGap"><summary>Sign in with a one-time email code</summary>
   <p className="fieldHint">An email code requires access to the account inbox. Password sign-in above does not.</p>
   <form className="formStack" onSubmit={codeSent?verifyCode:sendCode}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
    {codeSent&&<label>Email code<input className="input" type="text" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e=>setCode(e.target.value)} placeholder="Enter the code from your email" required/></label>}
    {notice&&<p role="status" className="infoBanner">{notice}</p>}
-   <button className="button fullButton" disabled={loading}>{loading?"Please wait…":codeSent?"Verify code & sign in":"Email me a sign-in code"}</button>
+   <button className="button fullButton" disabled={loading||!deployment}>{loading?"Please wait…":codeSent?"Verify code & sign in":"Email me a sign-in code"}</button>
    {codeSent&&<button type="button" className="button ghost" disabled={loading} onClick={()=>{setCodeSent(false);setCode("");setNotice("");}}>Request another code</button>}
   </form>
   </details>
