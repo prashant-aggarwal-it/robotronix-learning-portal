@@ -27,6 +27,8 @@ jobs:
         run: npm run check:backend-modules
       - name: Standalone branding and authorized navigation
         run: npm run check:product-ui
+      - name: Phase 7 product and deployment profile matrix
+        run: npm run check:deployment-profiles
       - name: TypeScript
         run: npm run typecheck
       - name: Portal-compatibility demo build

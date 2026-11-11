@@ -1,0 +1,12 @@
+{
+  "description": "Supported explicit deployment combinations. These are templates, not live site configurations.",
+  "profiles": [
+    {"id":"portal","mode":"portal","products":["portal"],"integrations":[],"databasePackage":"portal-only","landing":"/"},
+    {"id":"crm","mode":"crm","products":["crm"],"integrations":[],"databasePackage":"crm-only","landing":"/connect"},
+    {"id":"tasks","mode":"tasks","products":["tasks"],"integrations":[],"databasePackage":"tasks-only","landing":"/tasks"},
+    {"id":"portal-crm","mode":"combined","products":["portal","crm"],"integrations":["crmPortal"],"databasePackage":"portal-crm","landing":"/"},
+    {"id":"portal-tasks","mode":"combined","products":["portal","tasks"],"integrations":["portalTasks"],"databasePackage":"portal-tasks","landing":"/"},
+    {"id":"crm-tasks","mode":"combined","products":["crm","tasks"],"integrations":["crmTasks"],"databasePackage":"crm-tasks","landing":"/connect"},
+    {"id":"full-suite","mode":"combined","products":["portal","crm","tasks"],"integrations":["crmPortal","crmTasks","portalTasks"],"databasePackage":"full-suite","landing":"/"}
+  ]
+}

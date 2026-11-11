@@ -1,0 +1,41 @@
+name: Modular deployment build matrix (isolated)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.profile.id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - {id: portal, mode: portal, products: portal, integrations: ''}
+          - {id: crm, mode: crm, products: crm, integrations: ''}
+          - {id: tasks, mode: tasks, products: tasks, integrations: ''}
+          - {id: portal-crm, mode: combined, products: 'portal,crm', integrations: crmPortal}
+          - {id: portal-tasks, mode: combined, products: 'portal,tasks', integrations: portalTasks}
+          - {id: crm-tasks, mode: combined, products: 'crm,tasks', integrations: crmTasks}
+          - {id: full-suite, mode: combined, products: 'portal,crm,tasks', integrations: 'crmPortal,crmTasks,portalTasks'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run check:deployment-profiles
+      - name: Build isolated product selection without live credentials
+        run: |
+          if [ -z "$ENABLED_INTEGRATIONS" ]; then unset ENABLED_INTEGRATIONS; fi
+          npm run build
+        env:
+          PRODUCT_MODE: ${{ matrix.profile.mode }}
+          ENABLED_PRODUCTS: ${{ matrix.profile.products }}
+          ENABLED_INTEGRATIONS: ${{ matrix.profile.integrations }}
+          NEXT_PUBLIC_APP_ENV: demo
+          NEXT_TELEMETRY_DISABLED: '1'

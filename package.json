@@ -80,7 +80,10 @@
     "check:modules": "node --experimental-strip-types --test lib/platform/deployment.test.mjs",
     "check:auth": "node --test lib/platform/auth-routing.test.mjs",
     "check:backend-modules": "node --test lib/platform/server-access.test.mjs",
-    "check:product-ui": "node --test lib/platform/product-ui.test.mjs"
+    "check:product-ui": "node --test lib/platform/product-ui.test.mjs",
+    "check:deployment-profiles": "node --experimental-strip-types scripts/check-deployment-profiles.mjs && node --experimental-strip-types --test lib/platform/deployment-readiness.test.mjs",
+    "check:deployment-env": "node --experimental-strip-types scripts/check-deployment-env.mjs",
+    "deployment:profile": "node scripts/print-deployment-profile.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
