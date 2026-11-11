@@ -25,6 +25,8 @@ jobs:
         run: npm run check:auth
       - name: Backend module boundaries and scheduler parity
         run: npm run check:backend-modules
+      - name: Standalone branding and authorized navigation
+        run: npm run check:product-ui
       - name: TypeScript
         run: npm run typecheck
       - name: Portal-compatibility demo build
