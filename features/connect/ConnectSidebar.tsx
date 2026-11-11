@@ -12,7 +12,7 @@ export function ConnectSidebar({showMobileNav,onToggleMobile,canOpenPortal,tenan
   <button className="cx-mobile-menu" onClick={onToggleMobile} aria-label="Toggle navigation">☰</button>
   <aside className={"cx-sidebar "+(showMobileNav?"cx-mobile-open":"")}>
    <div className="cx-sidebar-brand"><div className="sidebarBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></div><div className="portalName">Connect CRM <span>Workspace</span></div></div>
-   {canOpenPortal&&<ApplicationSwitcher current="connect"/>}
+   <ApplicationSwitcher current="connect"/>
    {workspaces.length>1&&<div className="cx-workspace-picker">
     <span>ORGANIZATION</span>
     <select aria-label="Choose organization" value={tenantId} onChange={e=>onWorkspaceChange(e.target.value)}>
