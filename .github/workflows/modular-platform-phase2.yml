@@ -21,6 +21,8 @@ jobs:
       - run: npm ci
       - name: Product mode and route matrix
         run: npm run check:modules
+      - name: Product authentication and OAuth route tests
+        run: npm run check:auth
       - name: TypeScript
         run: npm run typecheck
       - name: Portal-compatibility demo build
