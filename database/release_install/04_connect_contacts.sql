@@ -132,9 +132,9 @@ begin
  select jsonb_build_object('memberId',m.id,'role',m.role) into v_owner
  from connect.contact_owners co join connect.memberships m on m.tenant_id=co.tenant_id and m.id=co.owner_membership_id
  where co.tenant_id=p_tenant_id and co.person_id=p_person_id;
- select coalesce(jsonb_agg(jsonb_build_object('id',m.id,'role',m.role,'label',coalesce(u.email,'Team member'))
- order by u.email),'[]'::jsonb) into v_members
- from connect.memberships m join auth.users u on u.id=m.user_id
+ select coalesce(jsonb_agg(jsonb_build_object('id',m.id,'role',m.role,'label',coalesce(u.full_name,'Team member'))
+ order by u.full_name),'[]'::jsonb) into v_members
+ from connect.memberships m join public.profiles u on u.id=m.user_id
  where m.tenant_id=p_tenant_id and m.status='active' and m.role<>'viewer';
  select coalesce(jsonb_agg(jsonb_build_object('id',o.id,'name',o.name,'category',o.category) order by o.name),'[]'::jsonb)
  into v_org_options from connect.organizations o where o.tenant_id=p_tenant_id;
