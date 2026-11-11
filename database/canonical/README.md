@@ -10,11 +10,11 @@ Run [00_preflight.sql](00_preflight.sql) once before selecting a package. It che
 | --- | --- |
 | **My Tasks only** | [02_tasks_schema.sql](02_tasks_schema.sql) → [04_tasks_functions.sql](04_tasks_functions.sql) → [06_tasks_security.sql](06_tasks_security.sql) → [08_verify_tasks.sql](08_verify_tasks.sql) |
 | **Connect CRM only** | [03_crm_schema.sql](03_crm_schema.sql) → [05_crm_functions.sql](05_crm_functions.sql) → [07_crm_security.sql](07_crm_security.sql) → [09_verify_crm.sql](09_verify_crm.sql) |
-| **CRM + Tasks** | Both core packages, then [optional Tasks–CRM integration](../integrations/02_tasks_crm.sql) |
+| **CRM + Tasks** | Both core packages, then integration [02 sync](../integrations/02_tasks_crm.sql) and [03 CRM-only task links](../integrations/03_tasks_crm_links.sql) |
 | **Learning Portal only** | Use the separate `database/01_install/` Portal fresh-install generator and master reference data |
-| **Complete suite** | Portal foundation, both core packages, then integrations [01](../integrations/01_crm_portal.sql), [02](../integrations/02_tasks_crm.sql), [03](../integrations/03_tasks_portal_notifications.sql), [04](../integrations/04_full_suite_task_links.sql) |
+| **Complete suite** | Portal foundation, both core packages, then integrations [01](../integrations/01_crm_portal.sql), [02](../integrations/02_tasks_crm.sql), [04](../integrations/04_tasks_portal_notifications.sql), [05](../integrations/05_full_suite_task_links.sql) |
 
-For **Portal + CRM**, install Portal + CRM plus integration 01. For **Portal + Tasks**, install Portal + Tasks plus integration 03. See [integrations/README.md](../integrations/README.md).
+For **Portal + CRM**, install Portal + CRM plus integration 01. For **Portal + Tasks**, install Portal + Tasks plus integration 04. See [integrations/README.md](../integrations/README.md).
 
 ### Execution conditions
 
@@ -33,7 +33,7 @@ For **Portal + CRM**, install Portal + CRM plus integration 01. For **Portal + T
 
 CRM's tables have RLS enabled but are accessed through trusted, authorization-enforcing server RPCs. Zero CRM policies means direct client table access is intentionally not granted.
 
-Integrations introduce the remaining Portal admission and demo functions, cross-product task-link RPCs, CRM task synchronization and Portal notification fan-out. All historical capabilities are retained as optional modules or in Git history; nothing is silently deleted from the product.
+Integrations introduce Portal admission and demo functions, CRM–Tasks synchronization and Portal notification fan-out. Task-link files 03 and 05 are mutually exclusive final implementations (CRM+Tasks vs full suite), not sequential patches. All historical capabilities are retained as optional modules or in Git history; nothing is silently deleted from the product.
 
 ## Application boundary
 
