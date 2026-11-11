@@ -1,3 +1,5 @@
+> **SUPERSEDED / NOT ACTIVE INSTALLER:** The final-state installer is now **[../canonical/README.md](../canonical/README.md)**. This folder is retained temporarily for existing QA references and historical review. It contains patch-era definitions and must not be used for a new installation. The canonical installer still requires a clean-environment certification before production execution.
+
 # Robotronix database release installation (manual SQL Editor)
 
 **Current target:** existing Robotronix Learning Portal Supabase Production project `njyktzenybimykpqaegn`. Existing Portal schema/data stay in place; this package adds the private `tasks` and `connect` modules. No sample records, production phone registration, Meta secrets, or recurring jobs are created.
