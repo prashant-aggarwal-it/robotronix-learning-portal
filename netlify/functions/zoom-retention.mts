@@ -1,4 +1,6 @@
+import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
 export default async () => {
+ if(!schedulerCapabilityEnabled("portal"))return Response.json({ok:true,enabled:false,job:"portal-module-disabled"});
   const started=Date.now();
   const base=(process.env.URL||process.env.DEPLOY_PRIME_URL||"").replace(/\/$/,"");
   const secret=process.env.INTERNAL_CRON_SECRET||"";
