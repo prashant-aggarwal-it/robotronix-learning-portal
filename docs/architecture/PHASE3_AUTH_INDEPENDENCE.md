@@ -24,7 +24,7 @@ All products use Supabase Auth within their *own selected deployment project*. T
 5. `lib/server/tasks/auth.ts`: Tasks account state and verified email enforce standalone permissions; Portal profile read happens **only in legacy mode** to preserve existing security.
 6. `app/api/tasks/onboarding/route.ts`: avoids Portal profile lookups for explicit modules and never writes onboarding error telemetry to Portal tables.
 7. `lib/server/connect-auth.ts`: CRM user token verification and email confirmation (explicit modular modes) before executing CRM membership-checked RPCs.
-8. `features/connect/ConnectAuthGates.tsx` + `app/connect/page.tsx`: independent CRM sign-in copy, Google/OTP link, verified users' new-workspace creation and Portal navigation lookup only when CRM–Portal integration is installed.
+8. `features/connect/ConnectAuthGates.tsx` + `app/connect/page.tsx`: independent CRM sign-in copy, Google/OTP link, verified users' new-workspace creation, secure invitation-code acceptance and Portal navigation lookup only when CRM–Portal integration is installed.
 9. `lib/platform/auth-routing.test.mjs`: standalone and combined destinations, legacy policies, suspended users, malicious `next` strings, Portal-free Tasks onboarding guard.
 10. `package.json`: `check:auth` command, included in `check:release`; feature branch CI runs it, TypeScript and Portal compatibility build.
 
@@ -51,7 +51,7 @@ npm run typecheck
 npm run build
 ```
 
-Clean-project E2E tests still required: (1) Portal existing admin/parent/trainer/student and disabled accounts; (2) CRM-only signup, email verification, OAuth, workspace creation, invitation, roles and tenant isolation with no Portal tables; (3) Tasks-only signup, activation, tasks creation and suspended user denial with no Portal tables; (4) combinations, OAuth callback `next` safety and cross-product identity rules. Confirm provider OAuth redirect URLs and email templates in each Supabase project before release.
+Clean-project E2E tests still required: (1) Portal existing admin/parent/trainer/student and disabled accounts; (2) CRM-only signup, email verification, OAuth, workspace creation, invitation acceptance (manual secure token delivery), roles and tenant isolation with no Portal tables; (3) Tasks-only signup, activation, tasks creation and suspended user denial with no Portal tables; (4) combinations, OAuth callback `next` safety and cross-product identity rules. Confirm provider OAuth redirect URLs and email templates in each Supabase project before release.
 
 ## Still pending in subsequent phases
 
