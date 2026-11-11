@@ -43,6 +43,7 @@ begin
    from public.schedule_events e where e.id=p_resource_id and v_title is not null;
  else raise exception 'Invalid module link' using errcode='22023';end if;
  if v_title is null then raise exception 'Record unavailable' using errcode='42501';end if;
+ perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(p_actor_id::text||':'||p_module||':'||p_resource||':'||p_resource_id::text||':'||coalesce(p_tenant_id::text,''),0));
  select l.task_id into v_existing from tasks.module_links l where l.owner_user_id=p_actor_id and l.module=p_module
    and l.resource=p_resource and l.resource_id=p_resource_id and l.tenant_id is not distinct from p_tenant_id;
  if v_existing is not null then return jsonb_build_object('task_id',v_existing,'created',false);end if;

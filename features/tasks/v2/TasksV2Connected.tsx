@@ -26,6 +26,7 @@ export function TasksV2Connected(){
  const [workspaces,setWorkspaces]=useState<Workspace[]>([]);
  const [userId,setUserId]=useState<string|null>(null);
  const [learningRoute,setLearningRoute]=useState("/");
+ const [connectedProducts,setConnectedProducts]=useState({crm:false,portal:false});
  const [selected,setSelected]=useState<V2Task|null>(null);
  const openedDeepLink=useRef(false);
  const [view,setView]=useState<View>("overview");
@@ -76,6 +77,7 @@ export function TasksV2Connected(){
   void Promise.allSettled([
    getSupabaseBrowserClient()?.auth.getUser(),
    loadAuthDeployment().then(async config=>{
+    if(mounted)setConnectedProducts({crm:config.integrations.includes("crmTasks"),portal:config.integrations.includes("portalTasks")});
     if(!config.products.includes("portal")||!config.integrations.includes("portalTasks"))return null;
     const {getCurrentProfile}=await import("@/lib/repository");
     return getCurrentProfile();
@@ -199,7 +201,7 @@ export function TasksV2Connected(){
       </section>}
       <section className="mt2-panel mt2-connected-linked-overview"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">WORK ACROSS APPLICATIONS</p><h2>Connected modules</h2></div><button className="mt2-connected-see" onClick={()=>setView("linked")}>Explore linked tasks</button></div>
        <p>Keep follow-ups connected to their source. Linking work never changes its original permissions.</p>
-       <div className="mt2-connected-source-tiles"><Link href="/connect"><span className="mt2-source-chip connect">Connect CRM</span><strong>Open CRM workspace</strong><small>Contacts, opportunities and follow-ups ↗</small></Link><Link href={learningRoute}><span className="mt2-source-chip learning">Learning Portal</span><strong>Open Learning Portal</strong><small>Classes and scheduling ↗</small></Link></div>
+       <div className="mt2-connected-source-tiles">{connectedProducts.crm&&<Link href="/connect"><span className="mt2-source-chip connect">Connect CRM</span><strong>Open CRM workspace</strong><small>Contacts, opportunities and follow-ups ↗</small></Link>}{connectedProducts.portal&&<Link href={learningRoute}><span className="mt2-source-chip learning">Learning Portal</span><strong>Open Learning Portal</strong><small>Classes and scheduling ↗</small></Link>}</div>
       </section>
      </>}
      {(view==="assigned"||view==="delegated")&&<section className="mt2-panel"><div className="mt2-panel-head"><div><p className="mt2-eyebrow">{view==="assigned"?"RESPONSIBILITIES GIVEN TO YOU":"FOLLOW-UP & HANDOFFS"}</p><h2>{view==="assigned"?"Assigned to me":"Delegated by me"}</h2></div><span className="mt2-count">{(view==="assigned"?assigned:delegated).length}</span></div>

@@ -14,7 +14,7 @@ function authorized(value:string|null,secret:string|undefined){
 export async function POST(req:NextRequest){
  const blocked=requireServerCapability("crmPortal");if(blocked)return blocked;
  // Legacy combined external scheduler entry point. Do not duplicate modular Netlify workers.
- if(process.env.CONNECT_SCHEDULER_ENABLED==="true"||process.env.CONNECT_PORTAL_JOBS_ENABLED==="true")
+ if(process.env.CONNECT_SCHEDULER_ENABLED==="true"||process.env.CONNECT_PORTAL_JOBS_ENABLED==="true"||process.env.OPTIONAL_JOB_RUNNER==="netlify")
   return NextResponse.json({ok:false,error:"Use the configured modular scheduler"},{status:409,headers:{"Cache-Control":"no-store"}});
  if(!authorized(req.headers.get("authorization"),process.env.CONNECT_REMINDER_JOB_SECRET))
   return NextResponse.json({ok:false,error:"Unauthorized"},{status:401,headers:{"Cache-Control":"no-store"}});

@@ -1,11 +1,11 @@
-import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
+import {schedulerCapabilityEnabled,netlifyJobOwned} from "../../lib/platform/scheduler-capabilities.mjs";
 import {createClient} from "@supabase/supabase-js";
 
 // Standalone Tasks deployments opt in to this worker after the Tasks schema is installed.
 // Never enable this and an equivalent pg_cron job for the same database together.
 export default async () => {
  if(!schedulerCapabilityEnabled("tasks"))return Response.json({ok:true,enabled:false,job:"module-disabled"});
- if(process.env.TASKS_SCHEDULER_ENABLED!=="true")
+ if(!netlifyJobOwned("TASKS_SCHEDULER_ENABLED"))
   return Response.json({ok:true,enabled:false,job:"process-task-reminders"});
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;

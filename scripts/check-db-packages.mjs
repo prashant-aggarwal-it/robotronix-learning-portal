@@ -21,6 +21,7 @@ for(const [name,files] of Object.entries(manifest.packages)){
   if(files.some(f=>f.startsWith("integrations/")||f.startsWith("01_install/")))fail(name+" includes another product");
  }
  if(name==="full-suite"&&!files.includes("integrations/05_full_suite_task_links.sql"))fail("full suite missing final task links");
+ if(name==="portal-tasks"&&!files.includes("integrations/06_tasks_portal_links.sql"))fail("Portal+Tasks missing independent task links");
  console.log("Checked package "+name+": "+files.length+" files");
 }
 if(failures)process.exit(1);

@@ -82,7 +82,7 @@ export function hasIntegration(config: DeploymentConfig, id: IntegrationId): boo
   return config.integrations.includes(id);
 }
 
-export type RouteRequirement = ProductId | IntegrationId | "shared";
+export type RouteRequirement = ProductId | IntegrationId | "taskIntegrations" | "shared";
 /** Route availability is deployment-scoped and never substitutes for user authorization. */
 export function routeRequirement(pathname: string): RouteRequirement {
   const p = pathname.replace(/\/$/, "") || "/";
@@ -91,8 +91,10 @@ export function routeRequirement(pathname: string): RouteRequirement {
       p === "/api/health" || p.startsWith("/api/locations/") ||
       p === "/api/platform/capabilities" || p === "/api/platform/my-products") return "shared";
 
+  // Module links are checked per requested source by their API handler.
+  // A Portal+Tasks deployment must not require CRM merely to reach the API.
   if (p === "/api/tasks/module-links" || p === "/tasks/connected" ||
-      p === "/tasks/v2/connected") return "crmTasks";
+      p === "/tasks/v2/connected") return "taskIntegrations";
 
   if (p.startsWith("/api/connect/")) {
     // The legacy combined reminder route calls CRM and Portal RPCs.
@@ -114,6 +116,8 @@ export function routeRequirement(pathname: string): RouteRequirement {
 }
 export function isRouteAvailable(config: DeploymentConfig, pathname: string): boolean {
   const requiredId = routeRequirement(pathname);
+  if (requiredId === "taskIntegrations") return hasProduct(config,"tasks") &&
+    (hasIntegration(config,"crmTasks") || hasIntegration(config,"portalTasks"));
   return requiredId === "shared" || (
     requiredId === "portal" || requiredId === "crm" || requiredId === "tasks" ?
       hasProduct(config, requiredId) : hasIntegration(config, requiredId)

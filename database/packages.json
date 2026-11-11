@@ -48,6 +48,7 @@
       "canonical/04_tasks_functions.sql",
       "canonical/06_tasks_security.sql",
       "integrations/04_tasks_portal_notifications.sql",
+      "integrations/06_tasks_portal_links.sql",
       "canonical/08_verify_tasks.sql"
     ],
     "full-suite": [
@@ -72,12 +73,14 @@
       "02_tasks_crm.sql",
       "03_tasks_crm_links.sql",
       "04_tasks_portal_notifications.sql",
-      "05_full_suite_task_links.sql"
+      "05_full_suite_task_links.sql",
+      "06_tasks_portal_links.sql"
     ],
     "exclusiveGroups": [
       [
         "integrations/03_tasks_crm_links.sql",
-        "integrations/05_full_suite_task_links.sql"
+        "integrations/05_full_suite_task_links.sql",
+        "integrations/06_tasks_portal_links.sql"
       ]
     ],
     "productionExecutionAllowed": false

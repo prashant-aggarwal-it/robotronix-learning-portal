@@ -2,6 +2,7 @@
 
 **Scheduler source of truth:** [config/scheduled-jobs.json](../../config/scheduled-jobs.json).  
 **Default for new CRM/Tasks modules:** disabled until installed, validated and deliberately enabled.  
+**Optional worker ownership:** `OPTIONAL_JOB_RUNNER=netlify` must also be set before CRM reminders, Tasks reminders or CRM–Portal operations can run. This is an explicit cutover acknowledgement, not automated proof that a `pg_cron` job has been removed. Existing Portal workers are unchanged.
 **Execution engine for this Next.js/Netlify deployment:** Netlify Scheduled Functions (UTC). No new database cron registration is part of the canonical SQL.
 
 ## Job ownership
@@ -28,7 +29,7 @@ The Portal log-retention worker now has **one canonical implementation**: `netli
 2. Deploy only the selected product's application or configure the feature flags listed above in Netlify. Keep flags unset/false for products not purchased or schemas not installed.
 3. Configure `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`) and `SUPABASE_SERVICE_ROLE_KEY` **as server-side Netlify environment variables**, not browser-exposed variables. Secrets must never be committed.
 4. **Before enabling a Netlify CRM worker, check the target Supabase project for active `cron.job` rows running the same RPCs.** Disable/retire *overlapping* `pg_cron` jobs first in a separately approved deployment change; two schedulers must not invoke the same CRM follow-ups/reminders. This is particularly relevant to the current Development database, which still has active CRM `pg_cron` registrations.
-5. Set only the appropriate enable flags to `true`, deploy, and confirm the first successful Netlify invocation and subsequent consecutive runs in function logs. Validate expected database effects with test data. Configure failure notifications/monitoring for optional workers before treating them as production ready.
+5. After verifying the old schedules are disabled, set `OPTIONAL_JOB_RUNNER=netlify` and only the appropriate enable flags to `true`, deploy, and confirm the first successful Netlify invocation and subsequent consecutive runs in function logs. Validate expected database effects with test data. Configure failure notifications/monitoring for optional workers before treating them as production ready.
 6. For **CRM-only** and **Tasks-only**, do not rely on Portal-specific `portal_job_runs` telemetry tables; monitor the job directly through Netlify until each standalone product has its own persistent operational telemetry.
 
 ## Important cautions

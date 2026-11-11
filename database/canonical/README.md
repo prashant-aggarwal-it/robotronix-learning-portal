@@ -14,7 +14,7 @@ Run [00_preflight.sql](00_preflight.sql) once before selecting a package. It che
 | **Learning Portal only** | Use the separate `database/01_install/` Portal fresh-install generator and master reference data |
 | **Complete suite** | Portal foundation, both core packages, then integrations [01](../integrations/01_crm_portal.sql), [02](../integrations/02_tasks_crm.sql), [04](../integrations/04_tasks_portal_notifications.sql), [05](../integrations/05_full_suite_task_links.sql) |
 
-For **Portal + CRM**, install Portal + CRM plus integration 01. For **Portal + Tasks**, install Portal + Tasks plus integration 04. See [integrations/README.md](../integrations/README.md).
+For **Portal + CRM**, install Portal + CRM plus integration 01. For **Portal + Tasks**, install Portal + Tasks plus integrations 04 and 06. See [integrations/README.md](../integrations/README.md).
 
 ### Execution conditions
 

@@ -9,6 +9,7 @@ Each customer's core is installed from `database/canonical`. Cross-product funct
 | [03_tasks_crm_links.sql](03_tasks_crm_links.sql) | Tasks + CRM, **without Portal** | Final CRM-only task-link RPCs |
 | [04_tasks_portal_notifications.sql](04_tasks_portal_notifications.sql) | Tasks + Portal | Optional Portal notification fan-out |
 | [05_full_suite_task_links.sql](05_full_suite_task_links.sql) | Portal + CRM + Tasks | Final full-suite task-link RPCs supporting CRM records and Portal classes |
+| [06_tasks_portal_links.sql](06_tasks_portal_links.sql) | Portal + Tasks, **without CRM** | Independent class-to-task links with duplicate prevention |
 
 ## Install the right combination
 
@@ -16,11 +17,11 @@ Each customer's core is installed from `database/canonical`. Cross-product funct
 
 **CRM + Portal:** install Portal and independent CRM core, then **01**.
 
-**Tasks + Portal:** install Portal and independent Tasks core, then **04**.
+**Tasks + Portal:** install Portal and independent Tasks core, then **04 → 06**.
 
 **Complete suite:** install Portal and both independent cores, then **01 → 02 → 04 → 05**.
 
-**Important:** 03 and 05 are **mutually exclusive**. Each gives the final initial definition of the same `task_module_link` and `task_module_links_list` functions for a particular product combination. Never install one and then the other as a patch. This preserves the no-incremental-patches principle for a fresh customer deployment.
+**Important:** 03, 05 and 06 are **mutually exclusive**. Each gives the final initial definition of the same `task_module_link` and `task_module_links_list` functions for a particular product combination. Never install one and then another as a patch. This preserves the no-incremental-patches principle for a fresh customer deployment.
 
 All scripts are transactional, reject missing dependencies and grant RPC usage only to `service_role`. After applying any integration SQL, enable its corresponding background job **only as instructed in** [Scheduled jobs](../../docs/operations/SCHEDULED_JOBS.md); never enable Netlify and Supabase pg_cron for the same RPCs simultaneously. They create no sample data, provider credentials or scheduled jobs.
 
