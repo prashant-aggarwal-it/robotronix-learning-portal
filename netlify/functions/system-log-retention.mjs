@@ -22,4 +22,3 @@ export default async ()=>{
   return Response.json({ok:false,reference},{status:500});
  }
 };
-export const config={schedule:"30 3 * * *"};
