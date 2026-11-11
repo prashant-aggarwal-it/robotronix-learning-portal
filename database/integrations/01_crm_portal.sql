@@ -397,5 +397,88 @@ begin
 end $function$;
 
 CREATE TRIGGER guard_portal_enrollment_won BEFORE UPDATE ON connect.opportunities FOR EACH ROW EXECUTE FUNCTION connect.guard_portal_enrollment_won();
-DO $acl$ DECLARE f record; BEGIN FOR f IN SELECT p.oid FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('portal_demo_reserve_slot','portal_demo_move_slot','connect_portal_demo_bridge','connect_portal_admissions','portal_admission_handoff_token','connect_reconcile_portal_enrollments','connect_sync_portal_lifecycle','guard_portal_enrollment_won') LOOP EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC,anon,authenticated',f.oid::regprocedure); EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role',f.oid::regprocedure); END LOOP; END $acl$;
+-- public.connect_process_portal_demo_followups(p_batch_size integer)
+CREATE OR REPLACE FUNCTION public.connect_process_portal_demo_followups(p_batch_size integer DEFAULT 100)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+declare v record;v_task uuid;v_new int:=0;v_kind text;v_title text;
+begin
+ for v in select l.tenant_id,l.opportunity_id,l.person_id,o.owner_membership_id,
+   p.id as participant_id,p.attendance,p.summary_published_at
+  from connect.portal_demo_links l
+  join connect.portal_demo_integrations i on i.tenant_id=l.tenant_id and i.status='active'
+  join connect.opportunities o on o.tenant_id=l.tenant_id and o.id=l.opportunity_id
+  join public.demo_session_participants p on p.demo_session_id=l.portal_session_id
+  where l.status='scheduled' and (p.summary_published_at is not null or p.attendance='no_show')
+  and not exists(select 1 from connect.portal_demo_followup_receipts r
+   where r.tenant_id=l.tenant_id and r.portal_participant_id=p.id
+   and r.outcome_kind=case when p.attendance='no_show' then 'demo_no_show' else 'demo_feedback' end)
+  order by p.updated_at limit least(greatest(p_batch_size,1),500)
+ loop
+  v_kind:=case when v.attendance='no_show' then 'demo_no_show' else 'demo_feedback' end;
+  v_title:=case when v_kind='demo_no_show' then 'Follow up after missed discovery demo' else 'Follow up after trainer demo feedback' end;
+  insert into connect.portal_demo_followup_receipts(tenant_id,portal_participant_id,outcome_kind)
+  values(v.tenant_id,v.participant_id,v_kind) on conflict do nothing;
+  if not found then continue;end if;
+  insert into connect.tasks(tenant_id,opportunity_id,person_id,assignee_membership_id,title,due_at)
+  values(v.tenant_id,v.opportunity_id,v.person_id,v.owner_membership_id,v_title,now()+interval '1 day') returning id into v_task;
+  update connect.portal_demo_followup_receipts set task_id=v_task
+   where tenant_id=v.tenant_id and portal_participant_id=v.participant_id and outcome_kind=v_kind;
+  v_new:=v_new+1;
+ end loop;
+ return jsonb_build_object('created',v_new);
+end $function$;
+
+-- public.connect_portal_lifecycle(p_actor_id uuid, p_tenant_id uuid, p_action text, p_data jsonb)
+CREATE OR REPLACE FUNCTION public.connect_portal_lifecycle(p_actor_id uuid, p_tenant_id uuid, p_action text DEFAULT 'list'::text, p_data jsonb DEFAULT '{}'::jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+declare v_role text;v_member uuid;v_id uuid;v_status text;v_result jsonb;
+begin
+ select m.role,m.id into v_role,v_member from connect.memberships m join connect.tenants t on t.id=m.tenant_id
+ where m.user_id=p_actor_id and m.tenant_id=p_tenant_id and m.status='active' and t.status in ('active','trial');
+ if v_role is null then raise exception 'Access denied' using errcode='42501';end if;
+ if not exists(select 1 from connect.portal_demo_integrations i where i.tenant_id=p_tenant_id and i.status='active')
+ then return jsonb_build_object('items','[]'::jsonb,'connected',false);end if;
+ if p_action='list' then
+  if v_role='viewer' then return jsonb_build_object('items','[]'::jsonb,'connected',true);end if;
+  select coalesce(jsonb_agg(to_jsonb(q) order by q.refreshed_at desc),'[]'::jsonb) into v_result from (
+   select l.enrollment_id,l.opportunity_id,l.learner_person_id,l.course_title,l.enrollment_status,
+    l.sessions_completed,l.planned_sessions,l.progress_percent,l.attendance_count,l.last_class_date,
+    l.package_name,l.billing_model,l.paid_session_balance,l.package_end_date,l.renewal_reason,l.refreshed_at,
+    s.status as renewal_status,s.active as renewal_active,
+    case when v_role in ('owner','admin','manager') then l.payment_attention else null end as payment_attention
+   from connect.portal_lifecycle_summaries l
+   join connect.opportunities o on o.id=l.opportunity_id and o.tenant_id=l.tenant_id
+   left join connect.portal_renewal_signals s on s.tenant_id=l.tenant_id and s.enrollment_id=l.enrollment_id
+     and s.cycle_key=coalesce(l.package_id,l.enrollment_id)
+   where l.tenant_id=p_tenant_id and (v_role in ('owner','admin','manager') or o.owner_membership_id=v_member)
+   order by l.refreshed_at desc limit 200
+  ) q;
+  return jsonb_build_object('items',v_result,'connected',true);
+ end if;
+ if p_action='mark_renewal' then
+  if v_role not in ('owner','admin','manager','counsellor') then raise exception 'Access denied' using errcode='42501';end if;
+  if coalesce(p_data->>'status','') not in ('contacted','dismissed','open') then raise exception 'Invalid status' using errcode='22023';end if;
+  v_id:=(p_data->>'enrollmentId')::uuid;
+  update connect.portal_renewal_signals s set status=p_data->>'status',handled_by=p_actor_id,handled_at=now()
+   from connect.portal_lifecycle_summaries l join connect.opportunities o on o.id=l.opportunity_id and o.tenant_id=l.tenant_id
+   where s.tenant_id=p_tenant_id and s.enrollment_id=v_id and s.active=true
+    and l.tenant_id=s.tenant_id and l.enrollment_id=s.enrollment_id and s.cycle_key=coalesce(l.package_id,l.enrollment_id)
+    and (v_role in ('owner','admin','manager') or o.owner_membership_id=v_member);
+  if not found then raise exception 'Renewal not available' using errcode='22023';end if;
+  insert into connect.audit_events(tenant_id,actor_membership_id,event_type,entity_type,entity_id,metadata)
+   values(p_tenant_id,v_member,'portal_renewal_updated','opportunity',
+    (select opportunity_id from connect.portal_lifecycle_summaries where tenant_id=p_tenant_id and enrollment_id=v_id),
+    jsonb_build_object('enrollmentId',v_id,'status',p_data->>'status'));
+  return jsonb_build_object('ok',true);
+ end if;
+ raise exception 'Invalid lifecycle action' using errcode='22023';
+end $function$;
+
+DO $acl$ DECLARE f record; BEGIN FOR f IN SELECT p.oid FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('portal_demo_reserve_slot','portal_demo_move_slot','connect_portal_demo_bridge','connect_portal_admissions','portal_admission_handoff_token','connect_reconcile_portal_enrollments','connect_sync_portal_lifecycle','guard_portal_enrollment_won','connect_process_portal_demo_followups','connect_portal_lifecycle') LOOP EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC,anon,authenticated',f.oid::regprocedure); EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role',f.oid::regprocedure); END LOOP; END $acl$;
 COMMIT;
