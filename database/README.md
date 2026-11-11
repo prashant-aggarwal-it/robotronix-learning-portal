@@ -14,6 +14,8 @@
 
 **Not installation entrypoints:** `connect/saas/`, `tasks/` and `04_existing_db_migrations/` are historical development sources referenced by older QA gates. Do not run them or combine them with canonical SQL. They remain in the working tree only until dependent checks are migrated and canonical installation has been tested.
 
+**Scheduler setup:** Database SQL does not register cron jobs. The canonical per-product Netlify schedules, opt-in flags, and duplicate-scheduler cutover procedure are documented in [Scheduled jobs](../docs/operations/SCHEDULED_JOBS.md). Run `npm run check:schedules` before deploying module schedulers.
+
 The `generated/` folder contains locally generated build output, is ignored by Git and may be regenerated. Do not version-control it.
 
 ## Product installation boundaries
