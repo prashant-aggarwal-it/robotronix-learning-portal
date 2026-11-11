@@ -552,4 +552,21 @@ begin
  return jsonb_build_object('ok',true,'inquiryId',v_inquiry);
 end $function$;
 DO $acl$ DECLARE r record; BEGIN FOR r IN SELECT p.oid FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('connect_email_attachment_context','connect_enrich_inbound_email','connect_enrich_social_attachment','connect_ingest_email_thread','connect_ingest_social_message','connect_social_reply','connect_unified_conversation','connect_unified_email_reply','connect_unified_link_contact','connect_unified_mark_read','connect_unified_message_attachments','connect_unified_threads','connect_whatsapp_triage') LOOP EXECUTE format('revoke all on function %s from public,anon,authenticated',r.oid::regprocedure); EXECUTE format('grant execute on function %s to service_role',r.oid::regprocedure); END LOOP; END $acl$;
+
+-- Final private-schema permissions reconciliation. Covers tables added by incremental source
+-- files that historically enabled RLS without explicitly granting service_role access.
+DO $final_acl$ DECLARE t record; f record; BEGIN
+ FOR t IN SELECT n.nspname,c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+ WHERE n.nspname IN ('tasks','connect') AND c.relkind='r' LOOP
+  EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY',t.nspname,t.relname);
+  EXECUTE format('REVOKE ALL ON TABLE %I.%I FROM public, anon, authenticated',t.nspname,t.relname);
+  EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE %I.%I TO service_role',t.nspname,t.relname);
+ END LOOP;
+ FOR f IN SELECT p.oid FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+ WHERE n.nspname='public' AND (p.proname LIKE 'task_%' OR p.proname LIKE 'connect_%') LOOP
+  EXECUTE format('REVOKE ALL ON FUNCTION %s FROM public, anon, authenticated',f.oid::regprocedure);
+  EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role',f.oid::regprocedure);
+ END LOOP;
+END $final_acl$;
+
 COMMIT;
