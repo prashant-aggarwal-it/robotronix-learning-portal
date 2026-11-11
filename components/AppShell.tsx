@@ -4,6 +4,7 @@ import {useEffect,useRef,useState} from "react";
 import { usePathname } from "next/navigation";
 import { ModeBadge } from "./ModeBadge";
 import {ApplicationSwitcher} from "./ApplicationSwitcher";
+import {useAuthorizedProducts} from "@/lib/platform/use-authorized-products";
 import { NotificationBell } from "./NotificationBell";
 import { SignOutButton } from "./SignOutButton";
 import { ThemeSwitcher } from "./ThemeSwitcher";
@@ -83,6 +84,8 @@ function isActive(path:string, href:string){
 
 export function AppShell({ role, children }: { role: UserRole; children: React.ReactNode }) {
   const pathname=usePathname();
+  const authorizedProducts=useAuthorizedProducts();
+  const hasTasksAccess=authorizedProducts.some(product=>product.id==="tasks");
   const sidebarRef=useRef<HTMLElement|null>(null);
   const [sidebarCollapsed,setSidebarCollapsed]=useState(false);
   useEffect(()=>{try{setSidebarCollapsed(localStorage.getItem("robotronix-admin-sidebar-collapsed")==="true")}catch{}},[]);
@@ -117,7 +120,7 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
         <div className="portalName">Learning Portal <span>{role==="admin"?"Admin":"Trainer"}</span></div>
         {role==="admin"&&<ApplicationSwitcher current="portal"/>}
         {role==="admin"&&<button type="button" className="adminSidebarToggle" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed?"Expand admin navigation":"Collapse admin navigation"} title={sidebarCollapsed?"Expand navigation":"Collapse navigation"}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d={sidebarCollapsed?"m15 10 3 2-3 2":"m17 10-3 2 3 2"}/></svg><span>{sidebarCollapsed?"":"Collapse menu"}</span></button>}
-        <nav className="sidebarNav" ref={sidebarRef}>{navByRole[role].map(item=>{
+        <nav className="sidebarNav" ref={sidebarRef}>{navByRole[role].filter(item=>item.href!=="/tasks"||hasTasksAccess).map(item=>{
           const showGroup=role==="admin"&&item.group&&item.group!==lastGroup;
           if(showGroup)lastGroup=item.group!;
           return <div key={item.href} className={showGroup?"adminSidebarGroupStart":undefined}>{showGroup&&<div className="navGroupLabel">{item.group}</div>}<Link className={isActive(pathname,item.href)?"active":""} href={item.href} title={role==="admin"&&sidebarCollapsed?item.label:undefined} aria-label={item.label}>{role==="admin"?<AdminSidebarIcon href={item.href}/>:<span className="navIndicator"/>}<span className="navItemText">{item.label}</span></Link></div>
