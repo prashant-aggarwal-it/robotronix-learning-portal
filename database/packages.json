@@ -5,67 +5,67 @@
   "sharedPrerequisite": "Supabase Auth and service_role; no Portal public tables required by CRM/Tasks core",
   "packages": {
     "tasks-only": [
-      "canonical/00_preflight.sql",
-      "canonical/tasks/01_schema.sql",
-      "canonical/tasks/02_functions.sql",
-      "canonical/tasks/03_security.sql",
-      "canonical/tasks/04_verify.sql"
+      "shared/preflight.sql",
+      "tasks/01_schema.sql",
+      "tasks/02_functions.sql",
+      "tasks/03_security.sql",
+      "tasks/04_verify.sql"
     ],
     "crm-only": [
-      "canonical/00_preflight.sql",
-      "canonical/crm/01_schema.sql",
-      "canonical/crm/02_functions.sql",
-      "canonical/crm/03_security.sql",
-      "canonical/crm/04_verify.sql"
+      "shared/preflight.sql",
+      "crm/01_schema.sql",
+      "crm/02_functions.sql",
+      "crm/03_security.sql",
+      "crm/04_verify.sql"
     ],
     "crm-tasks": [
-      "canonical/00_preflight.sql",
-      "canonical/tasks/01_schema.sql",
-      "canonical/tasks/02_functions.sql",
-      "canonical/tasks/03_security.sql",
-      "canonical/crm/01_schema.sql",
-      "canonical/crm/02_functions.sql",
-      "canonical/crm/03_security.sql",
-      "integrations/02_tasks_crm.sql",
-      "integrations/03_tasks_crm_links.sql",
-      "canonical/tasks/04_verify.sql",
-      "canonical/crm/04_verify.sql"
+      "shared/preflight.sql",
+      "tasks/01_schema.sql",
+      "tasks/02_functions.sql",
+      "tasks/03_security.sql",
+      "crm/01_schema.sql",
+      "crm/02_functions.sql",
+      "crm/03_security.sql",
+      "shared/integrations/02_tasks_crm.sql",
+      "shared/integrations/03_tasks_crm_links.sql",
+      "tasks/04_verify.sql",
+      "crm/04_verify.sql"
     ],
     "portal-only": [
-      "canonical/portal/manifest.json",
-      "03_verify/01_VERIFY_RELEASE.sql"
+      "portal/manifest.json",
+      "portal/verify.sql"
     ],
     "portal-crm": [
-      "canonical/portal/manifest.json",
-      "canonical/crm/01_schema.sql",
-      "canonical/crm/02_functions.sql",
-      "canonical/crm/03_security.sql",
-      "integrations/01_crm_portal.sql",
-      "canonical/crm/04_verify.sql"
+      "portal/manifest.json",
+      "crm/01_schema.sql",
+      "crm/02_functions.sql",
+      "crm/03_security.sql",
+      "shared/integrations/01_crm_portal.sql",
+      "crm/04_verify.sql"
     ],
     "portal-tasks": [
-      "canonical/portal/manifest.json",
-      "canonical/tasks/01_schema.sql",
-      "canonical/tasks/02_functions.sql",
-      "canonical/tasks/03_security.sql",
-      "integrations/04_tasks_portal_notifications.sql",
-      "integrations/06_tasks_portal_links.sql",
-      "canonical/tasks/04_verify.sql"
+      "portal/manifest.json",
+      "tasks/01_schema.sql",
+      "tasks/02_functions.sql",
+      "tasks/03_security.sql",
+      "shared/integrations/04_tasks_portal_notifications.sql",
+      "shared/integrations/06_tasks_portal_links.sql",
+      "tasks/04_verify.sql"
     ],
     "full-suite": [
-      "canonical/portal/manifest.json",
-      "canonical/tasks/01_schema.sql",
-      "canonical/tasks/02_functions.sql",
-      "canonical/tasks/03_security.sql",
-      "canonical/crm/01_schema.sql",
-      "canonical/crm/02_functions.sql",
-      "canonical/crm/03_security.sql",
-      "integrations/01_crm_portal.sql",
-      "integrations/02_tasks_crm.sql",
-      "integrations/04_tasks_portal_notifications.sql",
-      "integrations/05_full_suite_task_links.sql",
-      "canonical/tasks/04_verify.sql",
-      "canonical/crm/04_verify.sql"
+      "portal/manifest.json",
+      "tasks/01_schema.sql",
+      "tasks/02_functions.sql",
+      "tasks/03_security.sql",
+      "crm/01_schema.sql",
+      "crm/02_functions.sql",
+      "crm/03_security.sql",
+      "shared/integrations/01_crm_portal.sql",
+      "shared/integrations/02_tasks_crm.sql",
+      "shared/integrations/04_tasks_portal_notifications.sql",
+      "shared/integrations/05_full_suite_task_links.sql",
+      "tasks/04_verify.sql",
+      "crm/04_verify.sql"
     ]
   },
   "rules": {
@@ -79,13 +79,13 @@
     ],
     "exclusiveGroups": [
       [
-        "integrations/03_tasks_crm_links.sql",
-        "integrations/05_full_suite_task_links.sql",
-        "integrations/06_tasks_portal_links.sql"
+        "shared/integrations/03_tasks_crm_links.sql",
+        "shared/integrations/05_full_suite_task_links.sql",
+        "shared/integrations/06_tasks_portal_links.sql"
       ]
     ],
     "productionExecutionAllowed": false,
-    "portalManifest": "canonical/portal/manifest.json"
+    "portalManifest": "portal/manifest.json"
   },
   "generatedOutputs": {
     "tasks-only": "generated/ROBOTRONIX_TASKS_FRESH_INSTALL.sql",
