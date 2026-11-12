@@ -14,10 +14,10 @@ const portalManifest=JSON.parse(fs.readFileSync(path.join(dbRoot,portalManifestP
 const outputPaths=packages.generatedOutputs;
 const verificationFiles=new Set([
  portalManifest.verification,
- 'canonical/tasks/04_verify.sql',
- 'canonical/crm/04_verify.sql'
+ 'tasks/04_verify.sql',
+ 'crm/04_verify.sql'
 ]);
-const preflight='canonical/00_preflight.sql';
+const preflight='shared/preflight.sql';
 const generatedDir=path.join(dbRoot,'generated');
 
 if(portalManifest.kind!=='portal-core'||portalManifest.freshInstallOnly!==true)
@@ -43,18 +43,18 @@ if(!portalSource.trim())throw new Error('Empty generated Portal installer');
 const title={
  [preflight]:'Supabase prerequisites',
  [portalManifestPath]:'Learning Portal schema and reference data',
- 'canonical/tasks/01_schema.sql':'My Tasks schema',
- 'canonical/tasks/02_functions.sql':'My Tasks functions',
- 'canonical/tasks/03_security.sql':'My Tasks security',
- 'canonical/crm/01_schema.sql':'Connect CRM schema',
- 'canonical/crm/02_functions.sql':'Connect CRM functions',
- 'canonical/crm/03_security.sql':'Connect CRM security',
- 'integrations/01_crm_portal.sql':'CRM and Portal integration',
- 'integrations/02_tasks_crm.sql':'Tasks and CRM integration',
- 'integrations/03_tasks_crm_links.sql':'CRM-only task links',
- 'integrations/04_tasks_portal_notifications.sql':'Tasks and Portal notifications',
- 'integrations/05_full_suite_task_links.sql':'Full-suite task links',
- 'integrations/06_tasks_portal_links.sql':'Portal-only task links'
+ 'tasks/01_schema.sql':'My Tasks schema',
+ 'tasks/02_functions.sql':'My Tasks functions',
+ 'tasks/03_security.sql':'My Tasks security',
+ 'crm/01_schema.sql':'Connect CRM schema',
+ 'crm/02_functions.sql':'Connect CRM functions',
+ 'crm/03_security.sql':'Connect CRM security',
+ 'shared/integrations/01_crm_portal.sql':'CRM and Portal integration',
+ 'shared/integrations/02_tasks_crm.sql':'Tasks and CRM integration',
+ 'shared/integrations/03_tasks_crm_links.sql':'CRM-only task links',
+ 'shared/integrations/04_tasks_portal_notifications.sql':'Tasks and Portal notifications',
+ 'shared/integrations/05_full_suite_task_links.sql':'Full-suite task links',
+ 'shared/integrations/06_tasks_portal_links.sql':'Portal-only task links'
 };
 const readSource=file=>{
  if(file===portalManifestPath)return portalSource;
@@ -84,8 +84,8 @@ for(const [name,files] of Object.entries(packages.packages)){
 
  const installedChecks=[
   ...(sourceFiles.includes(portalManifestPath)?[["to_regclass('public.profiles') IS NOT NULL","Learning Portal"]]:[]),
-  ...(sourceFiles.includes('canonical/tasks/01_schema.sql')?[["to_regnamespace('tasks') IS NOT NULL","My Tasks"]]:[]),
-  ...(sourceFiles.includes('canonical/crm/01_schema.sql')?[["to_regnamespace('connect') IS NOT NULL","Connect CRM"]]:[])
+  ...(sourceFiles.includes('tasks/01_schema.sql')?[["to_regnamespace('tasks') IS NOT NULL","My Tasks"]]:[]),
+  ...(sourceFiles.includes('crm/01_schema.sql')?[["to_regnamespace('connect') IS NOT NULL","Connect CRM"]]:[])
  ];
  const freshGuard=[
   'DO $fresh_install_guard$ BEGIN',
