@@ -82,6 +82,17 @@ for(const [name,files] of Object.entries(packages.packages)){
   if(group.filter(file=>sourceFiles.includes(file)).length>1)
    throw new Error('Mutually exclusive integrations in '+name);
 
+ const installedChecks=[
+  ...(sourceFiles.includes(portalManifestPath)?[["to_regclass('public.profiles') IS NOT NULL","Learning Portal"]]:[]),
+  ...(sourceFiles.includes('canonical/02_tasks_schema.sql')?[["to_regnamespace('tasks') IS NOT NULL","My Tasks"]]:[]),
+  ...(sourceFiles.includes('canonical/03_crm_schema.sql')?[["to_regnamespace('connect') IS NOT NULL","Connect CRM"]]:[])
+ ];
+ const freshGuard=[
+  'DO $fresh_install_guard$ BEGIN',
+  ...installedChecks.map(([condition,module])=>" IF "+condition+" THEN RAISE EXCEPTION '"+module+" already installed; fresh-install bundle cannot be rerun'; END IF;"),
+  'END $fresh_install_guard$;',
+  ''
+ ].join('\n');
  const header=[
   '-- ROBOTRONIX '+name.toUpperCase()+' — GENERATED FRESH INSTALL.',
   '-- One file, ordered steps. Execute ONCE on a new/compatible DEV Supabase database.',
@@ -98,7 +109,7 @@ for(const [name,files] of Object.entries(packages.packages)){
    '-- STEP '+step+' — '+title[file],
    '-- Source: database/'+file,
    '-- ============================================================================',
-   readSource(file).trimEnd(),
+   (file===preflight?readSource(file).trimEnd()+'\n'+freshGuard:readSource(file).trimEnd()),
    ''
   ].join('\n');
  });
