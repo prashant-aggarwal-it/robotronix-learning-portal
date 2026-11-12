@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Robotronix canonical final-state clean install packages. Portal uses an explicit ordered manifest and a generated SQL bundle; CRM and Tasks use final-state SQL files.",
+  "description": "Robotronix canonical clean-install packages. Each package generates one sequential SQL installer from authoritative Portal, Tasks, CRM and optional integration sources.",
   "status": "static-validation-only-not-clean-install-certified",
   "sharedPrerequisite": "Supabase Auth and service_role; no Portal public tables required by CRM/Tasks core",
   "packages": {
@@ -86,5 +86,14 @@
     ],
     "productionExecutionAllowed": false,
     "portalManifest": "canonical/01_portal_manifest.json"
+  },
+  "generatedOutputs": {
+    "tasks-only": "generated/ROBOTRONIX_TASKS_FRESH_INSTALL.sql",
+    "crm-only": "generated/ROBOTRONIX_CRM_FRESH_INSTALL.sql",
+    "crm-tasks": "generated/ROBOTRONIX_CRM_TASKS_FRESH_INSTALL.sql",
+    "portal-only": "generated/ROBOTRONIX_FRESH_INSTALL.sql",
+    "portal-crm": "generated/ROBOTRONIX_PORTAL_CRM_FRESH_INSTALL.sql",
+    "portal-tasks": "generated/ROBOTRONIX_PORTAL_TASKS_FRESH_INSTALL.sql",
+    "full-suite": "generated/ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql"
   }
 }
