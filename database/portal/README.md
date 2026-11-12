@@ -1,7 +1,7 @@
 # Learning Portal database
 
 - `manifest.json` is the ordered canonical Portal source list.
-- `schema/`: 13 authoritative Portal SQL modules.
+- `schema/`: 13 authoritative Portal SQL modules, sequentially numbered `01` through `13` with no duplicate prefixes.
 - `reference/`: 4 reference-data SQL modules.
 - `verify.sql`: read-only verification after install.
 - `first_admin_example.sql`: optional admin bootstrap after creating an Auth account.
