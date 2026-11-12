@@ -10,7 +10,7 @@ if(portal.kind!=="portal-core"||portal.freshInstallOnly!==true)throw new Error("
 for(const group of ["schema","reference"]){
  const files=portal[group];
  if(!Array.isArray(files)||files.length===0)throw new Error("Missing Portal "+group+" modules");
- const expected=fs.readdirSync(path.join(root,"01_install/modules",group))
+ const expected=fs.readdirSync(path.join(root,"portal",group))
   .filter(n=>/^\d\d_[a-z0-9_]+\.sql$/.test(n)).sort()
   .map(n=>"portal/"+group+"/"+n);
  if(new Set(files).size!==files.length || JSON.stringify([...files].sort())!==JSON.stringify(expected))
