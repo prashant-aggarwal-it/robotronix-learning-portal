@@ -29,6 +29,6 @@ for(const [file,needles] of Object.entries(checks)){
  else console.log("PASS",file);
 }
 for(const id of ["04_PRIORITY1_ACTION_NOTIFICATIONS","05_P2_P3_REALTIME_PUBLICATION","06_PORTAL_SYSTEM_LOGS","07_TRAINER_PAYROLL_CUTOFF","08_PASSWORDLESS_PORTAL_ACCESS","09_SYSTEM_LOG_RETENTION"]){
- if(existsSync(new URL("../database/01_install/"+id+".sql",import.meta.url))){console.error("FAIL redundant incremental file remains:",id);failures++;}
+ if(existsSync(new URL("../database/portal/"+id+".sql",import.meta.url))){console.error("FAIL redundant incremental file remains:",id);failures++;}
 }
 if(failures)process.exitCode=1;
