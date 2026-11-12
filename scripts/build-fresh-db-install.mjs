@@ -1,5 +1,5 @@
 // Build the Learning Portal's canonical fresh-install SQL from the explicit
-// ordered source manifest. Source SQL remains in portal/modules and is
+// ordered source manifest. Source SQL remains in portal and is
 // NEVER copied into other canonical packages.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,7 +8,7 @@ const root=process.cwd();
 const dbRoot=path.join(root,'database');
 const manifest=JSON.parse(fs.readFileSync(path.join(dbRoot,'portal/manifest.json'),'utf8'));
 const targetPath=path.join(dbRoot,manifest.generatedOutput);
-const fileRx=/^portal\/modules\/(schema|reference)\/\d\d_[a-z0-9_]+\.sql$/;
+const fileRx=/^portal\/(schema|reference)\/\d\d_[a-z0-9_]+\.sql$/;
 
 function loadModules(group){
  const files=manifest[group];
@@ -19,7 +19,7 @@ function loadModules(group){
   if(seen.has(file))throw new Error('Duplicate Portal module: '+file);
   seen.add(file);
  }
- const dir=path.join(dbRoot,'portal/modules',group);
+ const dir=path.join(dbRoot,'portal',group);
  const actual=fs.readdirSync(dir).filter(file=>/^\d\d_[a-z0-9_]+\.sql$/.test(file)).sort().map(file=>'portal/'+group+'/'+file);
  if(JSON.stringify([...files].sort())!==JSON.stringify(actual))throw new Error('Portal '+group+' manifest must include every source SQL module exactly once');
  const combined=files.map(file=>{
