@@ -16,10 +16,10 @@
     "portal/schema/07_notifications_security_and_lifecycle.sql",
     "portal/schema/08_operational_logging.sql",
     "portal/schema/09_operational_audit_coverage.sql",
-    "portal/schema/09_system_log_issues.sql",
-    "portal/schema/10_operational_alert_states.sql",
-    "portal/schema/10_zoom_jit_provisioning.sql",
-    "portal/schema/11_zoom_host_capacity.sql"
+    "portal/schema/10_system_log_issues.sql",
+    "portal/schema/11_operational_alert_states.sql",
+    "portal/schema/12_zoom_jit_provisioning.sql",
+    "portal/schema/13_zoom_host_capacity.sql"
   ],
   "reference": [
     "portal/reference/01_geo_time_currency.sql",
