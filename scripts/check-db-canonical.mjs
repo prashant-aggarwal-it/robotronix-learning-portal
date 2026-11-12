@@ -39,7 +39,8 @@ function assertSqlFunctionOrder(label, source) {
  for(let i=0;i<declarations.length;i++){
   const body=source.slice(declarations[i].start,i+1<declarations.length?declarations[i+1].start:source.length);
   if(!/\bLANGUAGE\s+sql\b/i.test(body))continue;
-  const refs=[...body.matchAll(/\b(?:public|tasks|connect)\.[a-z_0-9]+(?=\s*\()/gi)];
+  const functionBody=body.match(/\bAS\s+(\$[a-z_0-9]*\$)([\s\S]*?)\1\s*;/i)?.[2] ?? body;
+  const refs=[...functionBody.matchAll(/\b(?:public|tasks|connect)\.[a-z_0-9]+(?=\s*\()/gi)];
   for(const ref of refs){
    const name=ref[0].toLowerCase();
    if(positions.has(name)&&positions.get(name)>i)errors.push(declarations[i].name+" requires later "+name);
