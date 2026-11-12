@@ -29,6 +29,34 @@ function assertNo(label,value,rx){
  else console.log("PASS "+label);
 }
 const count=(value,rx)=>[...value.matchAll(rx)].length;
+// SQL-language functions are validated at CREATE time. Their referenced helper
+// functions must be defined earlier in the same fresh-install script.
+function assertSqlFunctionOrder(label, source) {
+ const declarations=[...source.matchAll(/^CREATE (?:OR REPLACE )?FUNCTION\s+((?:public|tasks|connect)\.[a-z_0-9]+)\s*\(/gmi)]
+  .map(match=>({name:match[1].toLowerCase(),start:match.index}));
+ const positions=new Map(declarations.map((item,index)=>[item.name,index]));
+ const errors=[];
+ for(let i=0;i<declarations.length;i++){
+  const body=source.slice(declarations[i].start,i+1<declarations.length?declarations[i+1].start:source.length);
+  if(!/\bLANGUAGE\s+sql\b/i.test(body))continue;
+  const refs=[...body.matchAll(/\b(?:public|tasks|connect)\.[a-z_0-9]+(?=\s*\()/gi)];
+  for(const ref of refs){
+   const name=ref[0].toLowerCase();
+   if(positions.has(name)&&positions.get(name)>i)errors.push(declarations[i].name+" requires later "+name);
+  }
+ }
+ if(errors.length){console.error("FAIL "+label+": "+errors.join("; "));failures++;}
+ else console.log("PASS "+label);
+}
+function assertCompletePolicies(label,source){
+ const statements=source.split("\n").filter(line=>/^CREATE POLICY /i.test(line));
+ const incomplete=statements.filter(line=>!line.trimEnd().endsWith(";"));
+ if(incomplete.length){console.error("FAIL "+label+": "+incomplete.length+" incomplete CREATE POLICY statement(s)");failures++;}
+ else console.log("PASS "+label);
+}
+assertSqlFunctionOrder("Tasks SQL-language helper creation order",sql.tasksFunctions);
+assertSqlFunctionOrder("CRM SQL-language helper creation order",sql.crmFunctions);
+assertCompletePolicies("Tasks security policy statement completeness",sql.tasksSecurity);
 assertCount("Tasks tables",count(sql.tasksSchema,/^CREATE TABLE tasks\."[^"]+" \(/gm),21);
 assertCount("CRM tables",count(sql.crmSchema,/^CREATE TABLE connect\."[^"]+" \(/gm),66);
 assertCount("All module FKs",count(sql.tasksSchema+"\n"+sql.crmSchema,/^ALTER TABLE (?:tasks|connect)\."[^"]+" ADD CONSTRAINT /gm),172);
