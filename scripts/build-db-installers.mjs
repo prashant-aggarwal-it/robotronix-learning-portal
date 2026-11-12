@@ -29,7 +29,8 @@ if(outputPaths['portal-only']!==portalManifest.generatedOutput)
 if(new Set(Object.values(outputPaths)).size!==Object.keys(outputPaths).length)
  throw new Error('Duplicate generated installer output');
 for(const output of Object.values(outputPaths))
- if(!/^generated\\/[A-Z0-9_]+\\.sql$/.test(output))throw new Error('Unsafe installer output path: '+output);
+ if(!output.startsWith('generated/') || !/^[A-Z0-9_]+[.]sql$/.test(output.slice('generated/'.length)))
+  throw new Error('Unsafe installer output path: '+output);
 
 // Always regenerate the Portal source from its manifest so full-suite bundles
 // cannot accidentally embed a stale Portal SQL file.
