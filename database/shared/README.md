@@ -3,7 +3,6 @@
 - `preflight.sql`: Supabase Auth/service-role prerequisite check.
 - `integrations/`: optional CRM ↔ Portal, Tasks ↔ CRM, and Tasks ↔ Portal integration SQL.
 - `DEV_RESET_APP_SCHEMAS.sql`: intentionally disabled, destructive **DEV-only** application-schema reset template.
-- `legacy_public_reset.sql`: historical public-only reset, preserved for review; **do not use** for a full-suite reset.
 
 Run `npm run db:build-installers` and select one generated customer package. The generator includes the correct optional integrations; **do not run these integration scripts again**. Link variants `03`, `05` and `06` are mutually exclusive.
 
