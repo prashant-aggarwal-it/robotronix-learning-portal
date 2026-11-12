@@ -6,7 +6,7 @@ import path from 'node:path';
 
 const root=process.cwd();
 const dbRoot=path.join(root,'database');
-const manifest=JSON.parse(fs.readFileSync(path.join(dbRoot,'canonical/01_portal_manifest.json'),'utf8'));
+const manifest=JSON.parse(fs.readFileSync(path.join(dbRoot,'canonical/portal/manifest.json'),'utf8'));
 const targetPath=path.join(dbRoot,manifest.generatedOutput);
 const fileRx=/^01_install\/modules\/(schema|reference)\/\d\d_[a-z0-9_]+\.sql$/;
 
@@ -35,7 +35,7 @@ const reference=loadModules('reference');
 const header=[
  '-- ROBOTRONIX FRESH INSTALL — GENERATED; EMPTY SUPABASE PROJECTS ONLY.',
  '-- DO NOT run this on an existing database. Backup and migration plans are separate.',
- '-- Canonical source order: database/canonical/01_portal_manifest.json.',
+ '-- Canonical source order: database/canonical/portal/manifest.json.',
  '-- Schema modules retain their sequential execution order and dependencies.',
  '',
  '-- PART 1: SCHEMA',
