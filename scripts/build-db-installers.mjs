@@ -11,15 +11,7 @@ const packages=JSON.parse(fs.readFileSync(path.join(dbRoot,'packages.json'),'utf
 const portalManifestPath=packages.rules.portalManifest;
 const portalManifest=JSON.parse(fs.readFileSync(path.join(dbRoot,portalManifestPath),'utf8'));
 
-const outputNames={
- 'tasks-only':'ROBOTRONIX_TASKS_FRESH_INSTALL.sql',
- 'crm-only':'ROBOTRONIX_CRM_FRESH_INSTALL.sql',
- 'crm-tasks':'ROBOTRONIX_CRM_TASKS_FRESH_INSTALL.sql',
- 'portal-only':'ROBOTRONIX_FRESH_INSTALL.sql',
- 'portal-crm':'ROBOTRONIX_PORTAL_CRM_FRESH_INSTALL.sql',
- 'portal-tasks':'ROBOTRONIX_PORTAL_TASKS_FRESH_INSTALL.sql',
- 'full-suite':'ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql'
-};
+const outputPaths=packages.generatedOutputs;
 const verificationFiles=new Set([
  portalManifest.verification,
  'canonical/08_verify_tasks.sql',
@@ -30,8 +22,14 @@ const generatedDir=path.join(dbRoot,'generated');
 
 if(portalManifest.kind!=='portal-core'||portalManifest.freshInstallOnly!==true)
  throw new Error('Invalid Portal manifest');
-if(JSON.stringify(Object.keys(packages.packages).sort())!==JSON.stringify(Object.keys(outputNames).sort()))
+if(JSON.stringify(Object.keys(packages.packages).sort())!==JSON.stringify(Object.keys(outputPaths).sort()))
  throw new Error('Missing or unexpected customer database package');
+if(outputPaths['portal-only']!==portalManifest.generatedOutput)
+ throw new Error('Portal generated output disagrees with its canonical manifest');
+if(new Set(Object.values(outputPaths)).size!==Object.keys(outputPaths).length)
+ throw new Error('Duplicate generated installer output');
+for(const output of Object.values(outputPaths))
+ if(!/^generated\\/[A-Z0-9_]+\\.sql$/.test(output))throw new Error('Unsafe installer output path: '+output);
 
 // Always regenerate the Portal source from its manifest so full-suite bundles
 // cannot accidentally embed a stale Portal SQL file.
@@ -104,12 +102,12 @@ for(const [name,files] of Object.entries(packages.packages)){
   ].join('\n');
  });
  const output=header+sections.join('\n')+'\n';
- const target=path.join(generatedDir,outputNames[name]);
+ const target=path.join(dbRoot,outputPaths[name]);
  fs.writeFileSync(target,output,'utf8');
  if(fs.readFileSync(target,'utf8')!==output)throw new Error('Generated SQL mismatch: '+name);
  const steps=[...output.matchAll(/^-- STEP (\d\d) — /gm)].map(match=>Number(match[1]));
  if(steps.length!==sourceFiles.length||steps.some((step,index)=>step!==index+1))
   throw new Error('Invalid sequential step numbering: '+name);
- console.log('Generated database/generated/'+outputNames[name]+' ('+sourceFiles.length+' ordered steps)');
+ console.log('Generated database/'+outputPaths[name]+' ('+sourceFiles.length+' ordered steps)');
 }
 console.log('All seven customer package installers are generated; live clean-install testing is still required.');
