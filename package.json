@@ -76,6 +76,7 @@
     "test:tasks-v2": "node --experimental-strip-types --test lib/server/tasks/v2-validation.test.mjs lib/server/tasks/v2-phase2.test.mjs lib/server/tasks/v2-phase3.test.mjs lib/server/tasks/v2-phase4.test.mjs lib/server/tasks/v2-phase5.test.mjs lib/server/tasks/v2-phase6.test.mjs lib/server/tasks/v2-consolidation.test.mjs lib/server/tasks/v2-ui-polish.test.mjs lib/server/tasks/v2-final-experience.test.mjs",
     "db:check-canonical": "node scripts/check-db-canonical.mjs",
     "db:check-packages": "node scripts/check-db-packages.mjs",
+    "db:build-installers": "npm run db:check-canonical && npm run db:check-packages && npm run check:fresh-db && node scripts/build-db-installers.mjs",
     "check:schedules": "node scripts/check-scheduled-jobs.mjs",
     "check:modules": "node --experimental-strip-types --test lib/platform/deployment.test.mjs",
     "check:auth": "node --test lib/platform/auth-routing.test.mjs",
