@@ -17,7 +17,7 @@ const readFiles=(directory,results=[])=>{
   else if(/\.(?:tsx?|mjs|cjs|json|yml|yaml|md|sql)$/.test(item.name) && item.name!=='package-lock.json')results.push(p);
  }return results;
 };
-for(const folder of ['app','lib','components','database/01_install','scripts','.github/workflows']){
+for(const folder of ['app','lib','components','database/portal','scripts','.github/workflows']){
  if(!fs.existsSync(path.join(root,folder)))continue;
  for(const file of readFiles(folder)){
   const text=read(file);
