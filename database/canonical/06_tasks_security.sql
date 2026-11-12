@@ -13,7 +13,7 @@ CREATE POLICY "task_items_insert" ON "tasks"."items" AS PERMISSIVE FOR INSERT TO
 CREATE POLICY "task_items_select" ON "tasks"."items" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((( SELECT auth.uid() AS uid) = owner_user_id));
 CREATE POLICY "task_items_update" ON "tasks"."items" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ((( SELECT auth.uid() AS uid) = owner_user_id)) WITH CHECK (((( SELECT auth.uid() AS uid) = owner_user_id) AND (( SELECT auth.uid() AS uid) = created_by_user_id)));
 CREATE POLICY "task_subtasks_delete" ON "tasks"."subtasks" AS PERMISSIVE FOR DELETE TO "authenticated" USING ((( SELECT auth.uid() AS uid) = owner_user_id));
-CREATE POLICY "task_subtasks_insert" ON "tasks"."subtasks" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK (((( SELECT auth.uid() AS uid) = owner_user_id) AND (EXISTS ( SELECT 1
+CREATE POLICY "task_subtasks_insert" ON "tasks"."subtasks" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((auth.uid() = owner_user_id) AND EXISTS (SELECT 1 FROM tasks.items t WHERE t.id = task_id AND t.owner_user_id = owner_user_id));
 CREATE POLICY "task_subtasks_select" ON "tasks"."subtasks" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((( SELECT auth.uid() AS uid) = owner_user_id));
 CREATE POLICY "task_subtasks_update" ON "tasks"."subtasks" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ((( SELECT auth.uid() AS uid) = owner_user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = owner_user_id));
 CREATE POLICY "task_preferences_insert" ON "tasks"."user_preferences" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
