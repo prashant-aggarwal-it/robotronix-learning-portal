@@ -2,7 +2,7 @@ import fs from "node:fs";
 import {readCanonicalSql} from "./read-canonical-sql.mjs";
 
 const required=[
- "database/01_install/modules/schema/01_core_schema.sql",
+ "database/portal/schema/01_core_schema.sql",
  "app/api/admin/demos/route.ts",
  "app/api/demos/trainer/route.ts",
  "app/api/demo/[token]/route.ts",
