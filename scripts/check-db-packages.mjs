@@ -40,6 +40,21 @@ for(const [name,files] of Object.entries(manifest.packages)){
   seen.add(file);
   if(!fs.existsSync(path.join(root,file)))fail(name+" missing "+file);
  }
+ // Every module has contiguous 01→02→03 source steps, with read-only
+ // 04_verify kept separate. Never interleave Tasks and CRM definitions.
+ for(const module of ["tasks","crm"]){
+  const prefix="canonical/"+module+"/";
+  const core=[prefix+"01_schema.sql",prefix+"02_functions.sql",prefix+"03_security.sql"];
+  const present=core.filter(file=>seen.has(file));
+  if(present.length&&present.length!==3)fail(name+" missing "+module+" core SQL");
+  if(present.length===3){
+   const start=files.indexOf(core[0]);
+   if(core.some((file,i)=>files[start+i]!==file))
+    fail(name+" must group "+module+" 01→02→03 SQL together");
+   if(!seen.has(prefix+"04_verify.sql"))
+    fail(name+" missing "+module+" verification SQL");
+  }
+ }
  for(const group of manifest.rules.exclusiveGroups||[]){
   if(group.filter(file=>seen.has(file)).length>1)fail(name+" includes mutually exclusive integrations");
  }
