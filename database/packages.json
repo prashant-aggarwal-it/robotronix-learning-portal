@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Robotronix clean-install SQL package manifests. No historical patches. Paths relative to database/.",
+  "description": "Robotronix canonical final-state clean install packages. Portal uses an explicit ordered manifest and a generated SQL bundle; CRM and Tasks use final-state SQL files.",
   "status": "static-validation-only-not-clean-install-certified",
   "sharedPrerequisite": "Supabase Auth and service_role; no Portal public tables required by CRM/Tasks core",
   "packages": {
@@ -32,10 +32,11 @@
       "canonical/09_verify_crm.sql"
     ],
     "portal-only": [
-      "01_install/README.md"
+      "canonical/01_portal_manifest.json",
+      "03_verify/01_VERIFY_RELEASE.sql"
     ],
     "portal-crm": [
-      "01_install/README.md",
+      "canonical/01_portal_manifest.json",
       "canonical/03_crm_schema.sql",
       "canonical/05_crm_functions.sql",
       "canonical/07_crm_security.sql",
@@ -43,7 +44,7 @@
       "canonical/09_verify_crm.sql"
     ],
     "portal-tasks": [
-      "01_install/README.md",
+      "canonical/01_portal_manifest.json",
       "canonical/02_tasks_schema.sql",
       "canonical/04_tasks_functions.sql",
       "canonical/06_tasks_security.sql",
@@ -52,7 +53,7 @@
       "canonical/08_verify_tasks.sql"
     ],
     "full-suite": [
-      "01_install/README.md",
+      "canonical/01_portal_manifest.json",
       "canonical/02_tasks_schema.sql",
       "canonical/03_crm_schema.sql",
       "canonical/04_tasks_functions.sql",
@@ -83,6 +84,7 @@
         "integrations/06_tasks_portal_links.sql"
       ]
     ],
-    "productionExecutionAllowed": false
+    "productionExecutionAllowed": false,
+    "portalManifest": "canonical/01_portal_manifest.json"
   }
 }
