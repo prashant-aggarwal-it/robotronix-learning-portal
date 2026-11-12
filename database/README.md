@@ -43,30 +43,16 @@ After the install finishes, run applicable **read-only** verification SQL separa
 
 Then create DEV Auth users and optional synthetic data (`portal/qa/`, `crm/qa/`) and test login, role boundaries, notifications and integrations. Production credentials, Netlify workers, external provider webhooks and schedulers are **not** installed by SQL.
 
-## A fresh start / resetting DEV
+## Reset and reinstall the same DEV project
 
-**Preferred:** Create another brand-new Supabase DEV project. That is the only clean way to reset Supabase Auth, application objects, Storage and operational configuration together without complex cleanup.
+You **do not need a new Supabase project every time**. For a dedicated, disposable Robotronix DEV project, use **one file**: `shared/DEV_RESET_ROBOTRONIX.sql`.
 
-For a **dedicated disposable DEV project only**, the simpler `shared/DEV_RESET_ROBOTRONIX.sql` is a single-file, confirmation-token reset of the three app schemas **and all database pg_cron jobs**. It does not remove Supabase Auth accounts, Storage objects, Edge Functions or Netlify jobs. To run it, inspect the selected DEV project, back up required data, stop external workers, change `REPLACE_TO_CONFIRM_DEV_RESET` to `RESET_ROBOTRONIX_DEV`, then execute the whole SQL file once. Do **not** run on Production or a shared project. The older guarded `shared/DEV_RESET_APP_SCHEMAS.sql` is a guarded, destructive application-schema reset for `public`, `tasks`, and `connect`. It **does not reset Auth users, Storage files or separately scheduled cron jobs**, and it may remove other objects in `public`. Never use it on Production or shared instances.
+1. Verify you are in the correct **DEV** SQL Editor, back up anything important and temporarily stop Netlify / external workers.
+2. Open `shared/DEV_RESET_ROBOTRONIX.sql`. Change `REPLACE_TO_CONFIRM_DEV_RESET` to `RESET_ROBOTRONIX_DEV` (the file refuses to run otherwise).
+3. Execute the entire file once. It unschedules **all database pg_cron jobs** and drops/recreates `public`, `tasks`, and `connect`. It permanently destroys all application data in those schemas, including unrelated `public` objects.
+4. Run `npm run db:build-installers` locally and execute **one** generated SQL installer for the chosen products on that reset DEV database, followed by the applicable read-only verification SQL.
 
-Reset is deliberately **disabled by default**. It requires both:
-1. An existing dedicated DEV marker in `public.robotronix_dev_reset_marker` holding `environment='development'` and the independently verified non-production project reference. A marker must be intentionally provisioned by an operator; normal installers never create it.
-2. Replacing the explicit placeholder in the reset SQL with `DELETE_DEV_APP_DATA` after manually checking the selected Supabase project, backing up any DEV data and disabling its workers.
-
-If you deliberately want to permit a reset on a **dedicated throwaway DEV project**, first verify its dashboard project reference and create the marker there using the SQL Editor:
-
-```sql
-CREATE TABLE IF NOT EXISTS public.robotronix_dev_reset_marker (
-  environment text NOT NULL CHECK (environment = 'development'),
-  project_ref text NOT NULL
-);
-INSERT INTO public.robotronix_dev_reset_marker(environment, project_ref)
-VALUES ('development', 'REPLACE_WITH_VERIFIED_DEV_PROJECT_REF');
-```
-
-Do **not** create this marker in Production. Before a reset, back up required data and disable workers/schedulers. Open `shared/DEV_RESET_APP_SCHEMAS.sql`, replace `REPLACE_WITH_EXPLICIT_CONFIRMATION` with `DELETE_DEV_APP_DATA`, confirm the exact project again, and run the whole SQL file once. Rebuild afterward using the selected generated installer. If uncertain, create a new project instead.
-
-**These controls reduce accidents but cannot prove the Supabase project identity or make the operation intrinsically safe.** Do not create a DEV marker in Production. The reset script must never be an automatic install prerequisite. For most clean-install tests, use a new DEV project instead.
+This resets Robotronix's **application database objects and database scheduled jobs**, not the whole Supabase service. Supabase Auth users, Storage files/buckets, Edge Functions, external Netlify schedules and API settings are **not removed**. Storage objects must be deleted via the Storage API, never via direct SQL. Do **not** run the reset on Production or shared databases. The separate `shared/DEV_RESET_APP_SCHEMAS.sql` is an older marker-gated reset variant retained for compatibility; it does not remove cron jobs.
 
 ## Existing data / future changes
 
