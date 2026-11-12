@@ -1,0 +1,33 @@
+{
+  "description": "Canonical Learning Portal package: ordered final-state sources; no historical migrations.",
+  "kind": "portal-core",
+  "freshInstallOnly": true,
+  "requires": [
+    "Supabase Auth",
+    "service_role"
+  ],
+  "schema": [
+    "01_install/modules/schema/01_core_schema.sql",
+    "01_install/modules/schema/02_scheduling_operations.sql",
+    "01_install/modules/schema/03_academic_delivery_finance.sql",
+    "01_install/modules/schema/04_billing_razorpay.sql",
+    "01_install/modules/schema/05_roles_notifications_payroll.sql",
+    "01_install/modules/schema/06_zoom_calendar_demo.sql",
+    "01_install/modules/schema/07_notifications_security_and_lifecycle.sql",
+    "01_install/modules/schema/08_operational_logging.sql",
+    "01_install/modules/schema/09_operational_audit_coverage.sql",
+    "01_install/modules/schema/09_system_log_issues.sql",
+    "01_install/modules/schema/10_operational_alert_states.sql",
+    "01_install/modules/schema/10_zoom_jit_provisioning.sql",
+    "01_install/modules/schema/11_zoom_host_capacity.sql"
+  ],
+  "reference": [
+    "01_install/modules/reference/01_geo_time_currency.sql",
+    "01_install/modules/reference/02_app_settings_and_locations.sql",
+    "01_install/modules/reference/03_academic_reference.sql",
+    "01_install/modules/reference/04_course_catalogue.sql"
+  ],
+  "verification": "03_verify/01_VERIFY_RELEASE.sql",
+  "generatedOutput": "generated/ROBOTRONIX_FRESH_INSTALL.sql",
+  "notes": "Retains the original authoritative Portal SQL without duplicating it. Cross-product integration SQL is separate."
+}
