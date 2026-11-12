@@ -25,7 +25,7 @@ The Portal log-retention worker now has **one canonical implementation**: `netli
 
 ## Installation/activation by customer package
 
-1. Install the appropriate **core database package** from [database/canonical](../../database/canonical/README.md) and optional SQL integrations from [database/integrations](../../database/integrations/README.md). Verify the database before activating any background processing.
+1. Build the chosen **single database package** with `npm run db:build-installers` following [database/README.md](../../database/README.md). The generated SQL already includes any optional integrations; do not run those scripts separately. Verify the database before activating any background processing.
 2. Deploy only the selected product's application or configure the feature flags listed above in Netlify. Keep flags unset/false for products not purchased or schemas not installed.
 3. Configure `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`) and `SUPABASE_SERVICE_ROLE_KEY` **as server-side Netlify environment variables**, not browser-exposed variables. Secrets must never be committed.
 4. **Before enabling a Netlify CRM worker, check the target Supabase project for active `cron.job` rows running the same RPCs.** Disable/retire *overlapping* `pg_cron` jobs first in a separately approved deployment change; two schedulers must not invoke the same CRM follow-ups/reminders. This is particularly relevant to the current Development database, which still has active CRM `pg_cron` registrations.
