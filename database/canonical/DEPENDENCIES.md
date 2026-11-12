@@ -1,20 +1,20 @@
 # Robotronix modular database dependency boundaries
 
-## Implemented SQL separation
+## Implemented SQL separation and generated installers
 
-All new-customer **core** database definitions are split by product:
+Use `npm run db:build-installers` to generate one SQL file for each selection. The generated SQL contains sequential `STEP 01`, `STEP 02`, ... sections. Canonical source filenames retain their internal identifiers; customers do not run those source files individually.
 
-| Customer chooses | Database installer | Optional integration |
+| Customer chooses | One generated SQL installer | Optional integrations included |
 | --- | --- | --- |
-| Learning Portal only | `canonical/01_portal_manifest.json` → generated Portal fresh-install SQL (sources in `database/01_install/`) | None |
-| Connect CRM only | `canonical/03_crm_schema.sql` + `05_crm_functions.sql` + `07_crm_security.sql` | None |
-| My Tasks only | `canonical/02_tasks_schema.sql` + `04_tasks_functions.sql` + `06_tasks_security.sql` | None |
-| CRM + Tasks | Both independent cores | `integrations/02_tasks_crm.sql` + `03_tasks_crm_links.sql` |
-| Portal + CRM | Portal + CRM | `integrations/01_crm_portal.sql` |
-| Portal + Tasks | Portal + Tasks | `integrations/04_tasks_portal_notifications.sql` |
-| Full suite | Portal + CRM + Tasks | `integrations/01`, `02`, `04`, `05_full_suite_task_links.sql` |
+| Learning Portal only | `ROBOTRONIX_FRESH_INSTALL.sql` | None |
+| Connect CRM only | `ROBOTRONIX_CRM_FRESH_INSTALL.sql` | None |
+| My Tasks only | `ROBOTRONIX_TASKS_FRESH_INSTALL.sql` | None |
+| CRM + Tasks | `ROBOTRONIX_CRM_TASKS_FRESH_INSTALL.sql` | 02 + 03 |
+| Portal + CRM | `ROBOTRONIX_PORTAL_CRM_FRESH_INSTALL.sql` | 01 |
+| Portal + Tasks | `ROBOTRONIX_PORTAL_TASKS_FRESH_INSTALL.sql` | 04 + 06 |
+| Full suite | `ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql` | 01 + 02 + 04 + 05 |
 
-See [README](README.md) and [integration instructions](../integrations/README.md) for exact run order.
+All outputs live in `database/generated/` and are **fresh-install only**. Choose exactly one for a new database; never combine generated installers or run them on an already-installed module. Read-only verification is run separately. See [README](README.md) for the exact procedure.
 
 - Core schema FK relationships reference their own product tables and Supabase Auth, not another product's physical tables.
 - Tasks core functions now use `tasks.accounts`, `tasks.user_preferences`, `tasks.notifications` rather than Portal profile and notification tables.
