@@ -1,0 +1,16 @@
+{
+  "files.exclude": {
+    "**/database/connect": true,
+    "**/database/04_existing_db_migrations": true,
+    "**/database/legacy": true,
+    "**/database/release_install": true,
+    "**/database/security_qa": true
+  },
+  "search.exclude": {
+    "**/database/connect": true,
+    "**/database/04_existing_db_migrations": true,
+    "**/database/legacy": true,
+    "**/database/release_install": true,
+    "**/database/security_qa": true
+  }
+}
