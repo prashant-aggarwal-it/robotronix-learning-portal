@@ -1,26 +1,26 @@
 // Build the Learning Portal's canonical fresh-install SQL from the explicit
-// ordered source manifest. Source SQL remains in 01_install/modules and is
+// ordered source manifest. Source SQL remains in portal/modules and is
 // NEVER copied into other canonical packages.
 import fs from 'node:fs';
 import path from 'node:path';
 
 const root=process.cwd();
 const dbRoot=path.join(root,'database');
-const manifest=JSON.parse(fs.readFileSync(path.join(dbRoot,'canonical/portal/manifest.json'),'utf8'));
+const manifest=JSON.parse(fs.readFileSync(path.join(dbRoot,'portal/manifest.json'),'utf8'));
 const targetPath=path.join(dbRoot,manifest.generatedOutput);
-const fileRx=/^01_install\/modules\/(schema|reference)\/\d\d_[a-z0-9_]+\.sql$/;
+const fileRx=/^portal\/modules\/(schema|reference)\/\d\d_[a-z0-9_]+\.sql$/;
 
 function loadModules(group){
  const files=manifest[group];
  if(!Array.isArray(files)||files.length===0)throw new Error('Missing Portal '+group+' manifest entries');
  const seen=new Set();
  for(const file of files){
-  if(!fileRx.test(file)||!file.startsWith('01_install/modules/'+group+'/'))throw new Error('Invalid Portal module path: '+file);
+  if(!fileRx.test(file)||!file.startsWith('portal/'+group+'/'))throw new Error('Invalid Portal module path: '+file);
   if(seen.has(file))throw new Error('Duplicate Portal module: '+file);
   seen.add(file);
  }
- const dir=path.join(dbRoot,'01_install/modules',group);
- const actual=fs.readdirSync(dir).filter(file=>/^\d\d_[a-z0-9_]+\.sql$/.test(file)).sort().map(file=>'01_install/modules/'+group+'/'+file);
+ const dir=path.join(dbRoot,'portal/modules',group);
+ const actual=fs.readdirSync(dir).filter(file=>/^\d\d_[a-z0-9_]+\.sql$/.test(file)).sort().map(file=>'portal/'+group+'/'+file);
  if(JSON.stringify([...files].sort())!==JSON.stringify(actual))throw new Error('Portal '+group+' manifest must include every source SQL module exactly once');
  const combined=files.map(file=>{
   const content=fs.readFileSync(path.join(dbRoot,file),'utf8');
@@ -35,7 +35,7 @@ const reference=loadModules('reference');
 const header=[
  '-- ROBOTRONIX FRESH INSTALL — GENERATED; EMPTY SUPABASE PROJECTS ONLY.',
  '-- DO NOT run this on an existing database. Backup and migration plans are separate.',
- '-- Canonical source order: database/canonical/portal/manifest.json.',
+ '-- Canonical source order: database/portal/manifest.json.',
  '-- Schema modules retain their sequential execution order and dependencies.',
  '',
  '-- PART 1: SCHEMA',
