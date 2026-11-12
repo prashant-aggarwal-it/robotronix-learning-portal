@@ -58,6 +58,39 @@ function assertCompletePolicies(label,source){
 assertSqlFunctionOrder("Tasks SQL-language helper creation order",sql.tasksFunctions);
 assertSqlFunctionOrder("CRM SQL-language helper creation order",sql.crmFunctions);
 assertCompletePolicies("Tasks security policy statement completeness",sql.tasksSecurity);
+// V2 coverage guard: historical phased scripts are archived, and these objects
+// must continue to exist in the one-shot canonical Tasks sources.
+const requiredV2Functions=[
+ "task_v2_areas_list","task_v2_area_save","task_v2_projects_list",
+ "task_v2_project_save","task_v2_patch","task_v2_capture","task_v2_board_move",
+ "task_v2_detail_save","task_v2_board_list","task_v2_focus_get",
+ "task_v2_focus_action","task_v2_idea_action","task_v2_focus_settings_save",
+ "task_v2_commitment_save","task_v2_plan_move","task_v2_matrix_set"
+];
+const requiredV2Tables=["areas","projects","focus_sessions","parked_ideas","focus_settings","focus_commitments"];
+const requiredV2ItemColumns=[
+ "scheduled_date","someday","reschedule_count","urgent","important",
+ "area_id","project_id","focus_date","focus_rank","board_rank",
+ "estimated_minutes","done_definition"
+];
+for(const name of requiredV2Functions)
+ if(!new RegExp("CREATE OR REPLACE FUNCTION public\\."+name+"\\s*\\(","i").test(sql.tasksFunctions)){
+  console.error("FAIL V2 function absent from canonical Tasks: "+name);failures++;
+ }
+for(const name of requiredV2Tables)
+ if(!sql.tasksSchema.includes('CREATE TABLE tasks."'+name+'"')){
+  console.error("FAIL V2 table absent from canonical Tasks: "+name);failures++;
+ }
+for(const column of requiredV2ItemColumns)
+ if(!sql.tasksSchema.includes('"'+column+'"')){
+  console.error("FAIL V2 item column absent from canonical Tasks: "+column);failures++;
+ }
+if(!sql.tasksFunctions.includes("tasks.v2_inherit_recurring_context")||
+   !sql.tasksSecurity.includes("tasks_v2_inherit_recurring_context")){
+ console.error("FAIL V2 recurrence context function/trigger absent");failures++;
+}
+if(!failures)console.log("PASS Tasks V2 canonical object coverage (historical 10-25 scripts not required)");
+
 assertCount("Tasks tables",count(sql.tasksSchema,/^CREATE TABLE tasks\."[^"]+" \(/gm),21);
 assertCount("CRM tables",count(sql.crmSchema,/^CREATE TABLE connect\."[^"]+" \(/gm),66);
 assertCount("All module FKs",count(sql.tasksSchema+"\n"+sql.crmSchema,/^ALTER TABLE (?:tasks|connect)\."[^"]+" ADD CONSTRAINT /gm),172);
