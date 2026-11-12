@@ -1,6 +1,6 @@
 # Robotronix canonical database — one generated installer per package
 
-**Use generated installers for every fresh installation.** Do not run the internal schema/functions/security SQL files one by one. Each installer is assembled from the authoritative canonical source files in dependency order, with numbered `STEP 01`, `STEP 02`, ... sections. Internal source filenames are historical identifiers, **not** installation step numbers.
+**Use generated installers for every fresh installation.** Do not run the internal schema/functions/security SQL files one by one. Each installer is assembled from the authoritative canonical source files in dependency order, with numbered `STEP 01`, `STEP 02`, ... sections. Canonical source files are now grouped by product and numbered **01–04** within each folder; generated installers also have sequential installation steps.
 
 ## Build all seven customer installers
 
@@ -44,8 +44,8 @@ The generated SQL includes sequential `STEP 01`, `STEP 02`, etc. The non-Portal 
 ## Canonical source and architecture
 
 - `database/canonical/portal/manifest.json` selects 13 Portal schema and 4 reference modules from `database/01_install/modules/`.
-- `database/canonical/tasks/01_schema.sql`, `04_tasks_functions.sql`, `06_tasks_security.sql` are the **internal** Tasks sources.
-- `database/canonical/crm/01_schema.sql`, `05_crm_functions.sql`, `07_crm_security.sql` are the **internal** CRM sources.
+- `database/canonical/tasks/01_schema.sql` → `02_functions.sql` → `03_security.sql` → `04_verify.sql` are the **internal** Tasks sources.
+- `database/canonical/crm/01_schema.sql` → `02_functions.sql` → `03_security.sql` → `04_verify.sql` are the **internal** CRM sources.
 - `database/packages.json` is the canonical list of customer package combinations and ordered integrations.
 - `database/integrations/` contains optional bridges. Link scripts `03`, `05`, and `06` are **mutually exclusive**. The builder selects only the appropriate one.
 
