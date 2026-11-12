@@ -2,7 +2,7 @@
 
 The canonical source contains complete initial definitions of each table, foreign key, index, function, trigger and permission. **It does not contain historical patch chains.** Core CRM and My Tasks installations are independent from each other and from the Learning Portal *at the database-definition level*.
 
-## Manual Supabase installation packages
+Portal's canonical manifest references the authoritative `database/01_install/modules/` SQL files (13 schema modules and 4 reference-data modules), rather than duplicating SQL. The generator rejects missing, extra or duplicate source modules. This preserves the original installer contents and avoids two copies drifting apart.\n\n## Manual Supabase installation packages
 
 Run [00_preflight.sql](00_preflight.sql) once before selecting a package. It checks the shared Supabase Auth prerequisite; neither CRM nor Tasks requires Portal tables.
 
@@ -11,14 +11,14 @@ Run [00_preflight.sql](00_preflight.sql) once before selecting a package. It che
 | **My Tasks only** | [02_tasks_schema.sql](02_tasks_schema.sql) → [04_tasks_functions.sql](04_tasks_functions.sql) → [06_tasks_security.sql](06_tasks_security.sql) → [08_verify_tasks.sql](08_verify_tasks.sql) |
 | **Connect CRM only** | [03_crm_schema.sql](03_crm_schema.sql) → [05_crm_functions.sql](05_crm_functions.sql) → [07_crm_security.sql](07_crm_security.sql) → [09_verify_crm.sql](09_verify_crm.sql) |
 | **CRM + Tasks** | Both core packages, then integration [02 sync](../integrations/02_tasks_crm.sql) and [03 CRM-only task links](../integrations/03_tasks_crm_links.sql) |
-| **Learning Portal only** | Use the separate `database/01_install/` Portal fresh-install generator and master reference data |
-| **Complete suite** | Portal foundation, both core packages, then integrations [01](../integrations/01_crm_portal.sql), [02](../integrations/02_tasks_crm.sql), [04](../integrations/04_tasks_portal_notifications.sql), [05](../integrations/05_full_suite_task_links.sql) |
+| **Learning Portal only** | Use [01_portal_manifest.json](01_portal_manifest.json) as the canonical ordered source list; run `npm run db:build-fresh-install` to generate the single Portal SQL installer |
+| **Complete suite** | Portal generated SQL foundation, both core packages, then integrations [01](../integrations/01_crm_portal.sql), [02](../integrations/02_tasks_crm.sql), [04](../integrations/04_tasks_portal_notifications.sql), [05](../integrations/05_full_suite_task_links.sql) |
 
 For **Portal + CRM**, install Portal + CRM plus integration 01. For **Portal + Tasks**, install Portal + Tasks plus integrations 04 and 06. See [integrations/README.md](../integrations/README.md).
 
 ### Execution conditions
 
-- These are **fresh-module installers**, not upgrades. Never rerun a schema file after its module is installed.
+- For Portal, first run `npm run db:build-fresh-install`, execute `database/generated/ROBOTRONIX_FRESH_INSTALL.sql` once on an **empty DEV** Supabase project, then run `database/03_verify/01_VERIFY_RELEASE.sql`. This is separate from the CRM/Tasks SQL package and optional integration scripts.\n- These are **fresh-module installers**, not upgrades. Never rerun a schema file after its module is installed.
 - They assume a normal Supabase project with `auth.users` and `service_role` available. Each module can use its own Supabase project; a full suite may use one shared project, but the application must reconcile authentication.
 - The private `connect` and `tasks` schemas are not exposed to anonymous or client-authenticated Data API roles. Server-only RPCs perform tenant/user permission checks.
 - **Do not execute anything on current production yet.** The installers have passed static structural checks, but have **not passed a complete isolated clean-database installation**.
