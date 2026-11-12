@@ -3,7 +3,7 @@ import {readCanonicalSql} from "./read-canonical-sql.mjs";
 
 const required=[
  "hooks/useLiveRefresh.ts",
- "database/01_install/modules/schema/01_core_schema.sql",
+ "database/portal/schema/01_core_schema.sql",
  "app/api/zoom/retention/route.ts",
  "netlify/functions/zoom-retention.mts"
 ];
