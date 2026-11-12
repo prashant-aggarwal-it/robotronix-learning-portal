@@ -1,0 +1,115 @@
+// Generate one ordered, fresh-install SQL file per customer package.
+// Canonical SQL stays authoritative; these files are disposable build outputs.
+// This script never connects to Supabase or modifies a database.
+import fs from 'node:fs';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+
+const repoRoot=process.cwd();
+const dbRoot=path.join(repoRoot,'database');
+const packages=JSON.parse(fs.readFileSync(path.join(dbRoot,'packages.json'),'utf8'));
+const portalManifestPath=packages.rules.portalManifest;
+const portalManifest=JSON.parse(fs.readFileSync(path.join(dbRoot,portalManifestPath),'utf8'));
+
+const outputNames={
+ 'tasks-only':'ROBOTRONIX_TASKS_FRESH_INSTALL.sql',
+ 'crm-only':'ROBOTRONIX_CRM_FRESH_INSTALL.sql',
+ 'crm-tasks':'ROBOTRONIX_CRM_TASKS_FRESH_INSTALL.sql',
+ 'portal-only':'ROBOTRONIX_FRESH_INSTALL.sql',
+ 'portal-crm':'ROBOTRONIX_PORTAL_CRM_FRESH_INSTALL.sql',
+ 'portal-tasks':'ROBOTRONIX_PORTAL_TASKS_FRESH_INSTALL.sql',
+ 'full-suite':'ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql'
+};
+const verificationFiles=new Set([
+ portalManifest.verification,
+ 'canonical/08_verify_tasks.sql',
+ 'canonical/09_verify_crm.sql'
+]);
+const preflight='canonical/00_preflight.sql';
+const generatedDir=path.join(dbRoot,'generated');
+
+if(portalManifest.kind!=='portal-core'||portalManifest.freshInstallOnly!==true)
+ throw new Error('Invalid Portal manifest');
+if(JSON.stringify(Object.keys(packages.packages).sort())!==JSON.stringify(Object.keys(outputNames).sort()))
+ throw new Error('Missing or unexpected customer database package');
+
+// Always regenerate the Portal source from its manifest so full-suite bundles
+// cannot accidentally embed a stale Portal SQL file.
+execFileSync(process.execPath,[path.join(repoRoot,'scripts/build-fresh-db-install.mjs')],{
+ cwd:repoRoot,stdio:'inherit'
+});
+const portalSource=fs.readFileSync(path.join(dbRoot,portalManifest.generatedOutput),'utf8');
+if(!portalSource.trim())throw new Error('Empty generated Portal installer');
+
+const title={
+ [preflight]:'Supabase prerequisites',
+ [portalManifestPath]:'Learning Portal schema and reference data',
+ 'canonical/02_tasks_schema.sql':'My Tasks schema',
+ 'canonical/04_tasks_functions.sql':'My Tasks functions',
+ 'canonical/06_tasks_security.sql':'My Tasks security',
+ 'canonical/03_crm_schema.sql':'Connect CRM schema',
+ 'canonical/05_crm_functions.sql':'Connect CRM functions',
+ 'canonical/07_crm_security.sql':'Connect CRM security',
+ 'integrations/01_crm_portal.sql':'CRM and Portal integration',
+ 'integrations/02_tasks_crm.sql':'Tasks and CRM integration',
+ 'integrations/03_tasks_crm_links.sql':'CRM-only task links',
+ 'integrations/04_tasks_portal_notifications.sql':'Tasks and Portal notifications',
+ 'integrations/05_full_suite_task_links.sql':'Full-suite task links',
+ 'integrations/06_tasks_portal_links.sql':'Portal-only task links'
+};
+const readSource=file=>{
+ if(file===portalManifestPath)return portalSource;
+ if(!Object.hasOwn(title,file))throw new Error('Unexpected installer source: '+file);
+ const content=fs.readFileSync(path.join(dbRoot,file),'utf8');
+ if(!content.trim())throw new Error('Empty installer source: '+file);
+ return content;
+};
+
+fs.mkdirSync(generatedDir,{recursive:true});
+for(const [name,files] of Object.entries(packages.packages)){
+ if(name==='portal-only'){
+  console.log('Generated '+portalManifest.generatedOutput+' (Portal canonical manifest)');
+  continue;
+ }
+ if(!Array.isArray(files)||files.length===0)throw new Error('Empty package '+name);
+ // A single install file includes the preflight automatically. Keep read-only
+ // verification scripts separate, as with the existing Portal installer.
+ const sourceFiles=[preflight,...files.filter(file=>file!==preflight&&!verificationFiles.has(file))];
+ if(new Set(sourceFiles).size!==sourceFiles.length)throw new Error('Duplicate source in '+name);
+ if(sourceFiles.includes(portalManifestPath)&&sourceFiles.indexOf(portalManifestPath)!==1)
+  throw new Error('Portal must be the first product installed in '+name);
+ const groups=packages.rules.exclusiveGroups||[];
+ for(const group of groups)
+  if(group.filter(file=>sourceFiles.includes(file)).length>1)
+   throw new Error('Mutually exclusive integrations in '+name);
+
+ const header=[
+  '-- ROBOTRONIX '+name.toUpperCase()+' — GENERATED FRESH INSTALL.',
+  '-- One file, ordered steps. Execute ONCE on a new/compatible DEV Supabase database.',
+  '-- NOT a migration. Do not execute against existing production or a partially installed module.',
+  '-- Canonical source of truth: database/packages.json and database/canonical/.',
+  '-- Individual source files and historical migrations must NOT be run in addition to this installer.',
+  '-- Read-only verification is deliberately separate; see database/canonical/README.md.',
+  ''
+ ].join('\n');
+ const sections=sourceFiles.map((file,index)=>{
+  const step=String(index+1).padStart(2,'0');
+  return [
+   '-- ============================================================================',
+   '-- STEP '+step+' — '+title[file],
+   '-- Source: database/'+file,
+   '-- ============================================================================',
+   readSource(file).trimEnd(),
+   ''
+  ].join('\n');
+ });
+ const output=header+sections.join('\n')+'\n';
+ const target=path.join(generatedDir,outputNames[name]);
+ fs.writeFileSync(target,output,'utf8');
+ if(fs.readFileSync(target,'utf8')!==output)throw new Error('Generated SQL mismatch: '+name);
+ const steps=[...output.matchAll(/^-- STEP (\d\d) — /gm)].map(match=>Number(match[1]));
+ if(steps.length!==sourceFiles.length||steps.some((step,index)=>step!==index+1))
+  throw new Error('Invalid sequential step numbering: '+name);
+ console.log('Generated database/generated/'+outputNames[name]+' ('+sourceFiles.length+' ordered steps)');
+}
+console.log('All seven customer package installers are generated; live clean-install testing is still required.');
