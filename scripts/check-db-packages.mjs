@@ -43,7 +43,7 @@ for(const [name,files] of Object.entries(manifest.packages)){
  // Every module has contiguous 01→02→03 source steps, with read-only
  // 04_verify kept separate. Never interleave Tasks and CRM definitions.
  for(const module of ["tasks","crm"]){
-  const prefix="canonical/"+module+"/";
+  const prefix=module+"/";
   const core=[prefix+"01_schema.sql",prefix+"02_functions.sql",prefix+"03_security.sql"];
   const present=core.filter(file=>seen.has(file));
   if(present.length&&present.length!==3)fail(name+" missing "+module+" core SQL");
@@ -59,11 +59,10 @@ for(const [name,files] of Object.entries(manifest.packages)){
   if(group.filter(file=>seen.has(file)).length>1)fail(name+" includes mutually exclusive integrations");
  }
  if(name==="crm-only"||name==="tasks-only"){
-  if(files.some(f=>f.startsWith("shared/integrations/")||f.startsWith("01_install/")))fail(name+" includes another product");
+  if(files.some(f=>f.startsWith("shared/integrations/")||f==="portal/manifest.json"))fail(name+" includes another product");
  }
  if(name.startsWith("portal-")||name==="full-suite") {
   if(!seen.has(portalManifestPath))fail(name+" is missing Portal canonical manifest");
-  if(seen.has("01_install/README.md"))fail(name+" uses a README instead of an install manifest");
  }
  if(name==="full-suite"&&!files.includes("shared/integrations/05_full_suite_task_links.sql"))fail("full suite missing final task links");
  if(name==="portal-tasks"&&!files.includes("shared/integrations/06_tasks_portal_links.sql"))fail("Portal+Tasks missing independent task links");
