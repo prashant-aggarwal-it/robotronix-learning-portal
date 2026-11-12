@@ -14,6 +14,19 @@ const retired=['01_install','02_qa','03_verify','99_dev_tools','canonical','inte
 const errors=[];
 for(const name of required)if(!fs.existsSync(path.join(db,name)))errors.push('Required current DB source missing: '+name);
 for(const name of retired)if(fs.existsSync(path.join(db,name)))errors.push('Retired DB root folder still exists: '+name);
+// Application roots contain only final source files, not historical phase migrations.
+const allowedRootSql={
+ tasks:new Set(['01_schema.sql','02_functions.sql','03_security.sql','04_verify.sql']),
+ crm:new Set(['01_schema.sql','02_functions.sql','03_security.sql','04_verify.sql']),
+ portal:new Set(['verify.sql','first_admin_example.sql'])
+};
+for(const [app,allowed] of Object.entries(allowedRootSql)){
+ const names=fs.readdirSync(path.join(db,app)).filter(name=>name.endsWith('.sql'));
+ for(const name of names)if(!allowed.has(name))errors.push('Unexpected non-canonical SQL in '+app+'/: '+name);
+}
+const portalSchema=fs.readdirSync(path.join(db,'portal/schema')).filter(name=>name.endsWith('.sql')).sort();
+if(portalSchema.length!==13||portalSchema.some((name,i)=>Number(name.slice(0,2))!==i+1))
+ errors.push('Portal schema files must have unique sequential 01–13 prefixes');
 const scriptsDir=path.join(root,'scripts');
 const oldPrefix=/database\/(?:01_install|02_qa|03_verify|99_dev_tools|canonical|integrations)\//g;
 for(const file of fs.readdirSync(scriptsDir).filter(name=>/^(?:check-|build-).*\.mjs$/.test(name))){
