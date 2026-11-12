@@ -1,16 +1,29 @@
-# Robotronix database — generated fresh-install packages
+# Robotronix database — simple, application-based layout
 
-**Start here:** [canonical/README.md](canonical/README.md) for the single-file installation guide.
+This is the **only current installation guide**. The authoritative SQL is grouped by product:
 
-Run from the repository root:
+```text
+database/
+  portal/       schema/, reference/, qa/, manifest.json, verify.sql, first_admin_example.sql
+  tasks/        01_schema.sql, 02_functions.sql, 03_security.sql, 04_verify.sql
+  crm/          01_schema.sql, 02_functions.sql, 03_security.sql, 04_verify.sql, qa/
+  shared/       preflight.sql, integrations/, DEV_RESET_APP_SCHEMAS.sql
+  generated/    seven generated fresh installers (gitignored)
+  packages.json
+  README.md
+```
+
+## One command to build, one SQL file to install
+
+From the repo root:
 
 ```powershell
 npm run db:build-installers
 ```
 
-This creates **one complete, sequentially numbered SQL installer per customer package**, with no need to execute individual odd/even-numbered source SQL files. All generated files are in `database/generated/`:
+Pick **exactly one** generated installer for a new, empty Supabase DEV project:
 
-| Package | SQL installer |
+| Installed apps | Use one file in `database/generated/` |
 | --- | --- |
 | Portal | `ROBOTRONIX_FRESH_INSTALL.sql` |
 | Tasks | `ROBOTRONIX_TASKS_FRESH_INSTALL.sql` |
@@ -18,26 +31,34 @@ This creates **one complete, sequentially numbered SQL installer per customer pa
 | CRM + Tasks | `ROBOTRONIX_CRM_TASKS_FRESH_INSTALL.sql` |
 | Portal + CRM | `ROBOTRONIX_PORTAL_CRM_FRESH_INSTALL.sql` |
 | Portal + Tasks | `ROBOTRONIX_PORTAL_TASKS_FRESH_INSTALL.sql` |
-| Full suite | `ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql` |
+| All three | `ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql` |
 
-**Use exactly one installer** for a fresh database. The full-suite file already contains all three products and their required optional integrations. Each installer contains numbered steps in execution order. The internal canonical SQL sources and integration modules are not user-facing installation steps.
+Do **not** execute the internal source SQL files, integration files or old migrations in addition to a generated installer. Each package automatically selects the correct module order and optional bridges. CRM and Tasks core SQL are each grouped as 01 → 02 → 03.
 
-Run read-only verification **after** installation: `03_verify/01_VERIFY_RELEASE.sql` for Portal, `canonical/tasks/04_verify.sql` for Tasks and `canonical/crm/04_verify.sql` for CRM.
+After the install finishes, run applicable **read-only** verification SQL separately:
 
-## Authoritative source files
+- Portal: `portal/verify.sql`
+- Tasks: `tasks/04_verify.sql`
+- CRM: `crm/04_verify.sql`
 
-- `canonical/portal/manifest.json` and `01_install/modules/`: authoritative Portal schema and reference data.
-- `canonical/`: final Tasks and CRM schema, function, and security definitions.
-- `packages.json`: authoritative ordered customer package combinations and generated output names.
-- `integrations/`: optional cross-product functions and triggers, selected by package.
-- `02_qa/`, `security_qa/`, `99_dev_tools/`: DEV-only QA, fixtures and tools.
+Then create DEV Auth users and optional synthetic data (`portal/qa/`, `crm/qa/`) and test login, role boundaries, notifications and integrations. Production credentials, Netlify workers, external provider webhooks and schedulers are **not** installed by SQL.
 
-**Do not run** historical `connect/saas/`, `tasks/`, or `04_existing_db_migrations/` scripts for fresh installs. The `generated/` directory is Git-ignored and must be rebuilt after pulling source changes.
+## A fresh start / resetting DEV
 
-## Safety and remaining verification
+**Preferred:** Create another brand-new Supabase DEV project. That is the only clean way to reset Supabase Auth, application objects, Storage and operational configuration together without complex cleanup.
 
-These are **fresh installers, not incremental migrations**. Never execute them against an already installed module, partially installed module or the production database. For a partly installed DEV database, either complete the interrupted install from corrected source files or use a separate clean DEV database for single-file testing.
+For a **dedicated disposable DEV project only**, `shared/DEV_RESET_APP_SCHEMAS.sql` is a guarded, destructive application-schema reset for `public`, `tasks`, and `connect`. It **does not reset Auth users, Storage files or separately scheduled cron jobs**, and it may remove other objects in `public`. Never use it on Production or shared instances.
 
-The generator does not connect to Supabase, create Auth users, seed customers, schedule cron jobs, configure Netlify or deploy application code. Static checks pass independently of real SQL execution; every package still needs an isolated Supabase install, RLS verification and application tests.
+Reset is deliberately **disabled by default**. It requires both:
+1. An existing dedicated DEV marker in `public.robotronix_dev_reset_marker` holding `environment='development'` and the independently verified non-production project reference. A marker must be intentionally provisioned by an operator; normal installers never create it.
+2. Replacing the explicit placeholder in the reset SQL with `DELETE_DEV_APP_DATA` after manually checking the selected Supabase project, backing up any DEV data and disabling its workers.
 
-See [scheduled jobs](../docs/operations/SCHEDULED_JOBS.md) before enabling workers. Do not register overlapping Netlify and pg_cron jobs.
+**These controls reduce accidents but cannot prove the Supabase project identity or make the operation intrinsically safe.** Do not create a DEV marker in Production. The reset script must never be an automatic install prerequisite. For most clean-install tests, use a new DEV project instead.
+
+## Existing data / future changes
+
+These are **fresh-install installers**, not migrations. The install will refuse existing module schemas. Production and populated DEV projects need reviewed **incremental, non-destructive upgrades**, not resets or fresh installers.
+
+Historical `database/04_existing_db_migrations/`, `database/connect/` and older `database/tasks/` contain migration and development sources that are excluded from current installers. Do not delete or execute them as clean-install prerequisites; their consumers must be audited before archival. The active installer source of truth is `database/packages.json`.
+
+For Netlify/pg_cron ownership, see `docs/operations/SCHEDULED_JOBS.md`. Static checks or generated output are **not equivalent** to a successful isolated Supabase SQL execution and application QA.
