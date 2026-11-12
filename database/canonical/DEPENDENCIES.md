@@ -6,7 +6,7 @@ All new-customer **core** database definitions are split by product:
 
 | Customer chooses | Database installer | Optional integration |
 | --- | --- | --- |
-| Learning Portal only | `database/01_install/` | None |
+| Learning Portal only | `canonical/01_portal_manifest.json` → generated Portal fresh-install SQL (sources in `database/01_install/`) | None |
 | Connect CRM only | `canonical/03_crm_schema.sql` + `05_crm_functions.sql` + `07_crm_security.sql` | None |
 | My Tasks only | `canonical/02_tasks_schema.sql` + `04_tasks_functions.sql` + `06_tasks_security.sql` | None |
 | CRM + Tasks | Both independent cores | `integrations/02_tasks_crm.sql` + `03_tasks_crm_links.sql` |
