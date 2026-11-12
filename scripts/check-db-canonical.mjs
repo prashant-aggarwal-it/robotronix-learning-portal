@@ -4,12 +4,12 @@ import fs from "node:fs";
 import path from "node:path";
 const root=path.resolve(process.cwd(),"database");
 const names={
- tasksSchema:"canonical/02_tasks_schema.sql",
- crmSchema:"canonical/03_crm_schema.sql",
- tasksFunctions:"canonical/04_tasks_functions.sql",
- crmFunctions:"canonical/05_crm_functions.sql",
- tasksSecurity:"canonical/06_tasks_security.sql",
- crmSecurity:"canonical/07_crm_security.sql",
+ tasksSchema:"canonical/tasks/01_schema.sql",
+ crmSchema:"canonical/crm/01_schema.sql",
+ tasksFunctions:"canonical/tasks/02_functions.sql",
+ crmFunctions:"canonical/crm/02_functions.sql",
+ tasksSecurity:"canonical/tasks/03_security.sql",
+ crmSecurity:"canonical/crm/03_security.sql",
  crmPortal:"integrations/01_crm_portal.sql",
  tasksCrm:"integrations/02_tasks_crm.sql",
  tasksCrmLinks:"integrations/03_tasks_crm_links.sql",
