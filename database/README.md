@@ -53,6 +53,19 @@ Reset is deliberately **disabled by default**. It requires both:
 1. An existing dedicated DEV marker in `public.robotronix_dev_reset_marker` holding `environment='development'` and the independently verified non-production project reference. A marker must be intentionally provisioned by an operator; normal installers never create it.
 2. Replacing the explicit placeholder in the reset SQL with `DELETE_DEV_APP_DATA` after manually checking the selected Supabase project, backing up any DEV data and disabling its workers.
 
+If you deliberately want to permit a reset on a **dedicated throwaway DEV project**, first verify its dashboard project reference and create the marker there using the SQL Editor:
+
+```sql
+CREATE TABLE IF NOT EXISTS public.robotronix_dev_reset_marker (
+  environment text NOT NULL CHECK (environment = 'development'),
+  project_ref text NOT NULL
+);
+INSERT INTO public.robotronix_dev_reset_marker(environment, project_ref)
+VALUES ('development', 'REPLACE_WITH_VERIFIED_DEV_PROJECT_REF');
+```
+
+Do **not** create this marker in Production. Before a reset, back up required data and disable workers/schedulers. Open `shared/DEV_RESET_APP_SCHEMAS.sql`, replace `REPLACE_WITH_EXPLICIT_CONFIRMATION` with `DELETE_DEV_APP_DATA`, confirm the exact project again, and run the whole SQL file once. Rebuild afterward using the selected generated installer. If uncertain, create a new project instead.
+
 **These controls reduce accidents but cannot prove the Supabase project identity or make the operation intrinsically safe.** Do not create a DEV marker in Production. The reset script must never be an automatic install prerequisite. For most clean-install tests, use a new DEV project instead.
 
 ## Existing data / future changes
