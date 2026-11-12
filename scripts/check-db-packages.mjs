@@ -19,6 +19,17 @@ for(const group of ["schema","reference"]){
   throw new Error("Portal "+group+" must use deterministic filename order");
 }
 if(!fs.existsSync(path.join(root,portal.verification)))throw new Error("Missing Portal verification SQL");
+const outputs=manifest.generatedOutputs;
+if(!outputs||JSON.stringify(Object.keys(outputs).sort())!==JSON.stringify(Object.keys(manifest.packages).sort()))
+ throw new Error("Every package needs exactly one generated SQL output");
+if(outputs["portal-only"]!==portal.generatedOutput)
+ throw new Error("Portal output path does not match Portal manifest");
+if(new Set(Object.values(outputs)).size!==Object.keys(outputs).length)
+ throw new Error("Duplicate generated SQL output paths");
+for(const output of Object.values(outputs)){
+ if(!output.startsWith("generated/")||!/^[A-Z0-9_]+[.]sql$/.test(output.slice("generated/".length)))
+  throw new Error("Invalid generated SQL output: "+output);
+}
 let failures=0;
 const fail=m=>{console.error("FAIL "+m);failures++};
 for(const [name,files] of Object.entries(manifest.packages)){
