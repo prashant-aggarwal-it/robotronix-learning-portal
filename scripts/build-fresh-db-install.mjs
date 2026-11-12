@@ -40,7 +40,8 @@ const header=[
  '',
  '-- PART 1: SCHEMA',
 ].join('\n');
-const output=header+'\n'+schema.combined+'\n-- PART 2: REFERENCE DATA\n'+reference.combined+'\n';
+const freshGuard="DO $portal_fresh_guard$ BEGIN IF to_regclass('public.profiles') IS NOT NULL THEN RAISE EXCEPTION 'Learning Portal already installed; fresh installer cannot be rerun'; END IF; END $portal_fresh_guard$;";
+const output=header+'\n'+freshGuard+'\n'+schema.combined+'\n-- PART 2: REFERENCE DATA\n'+reference.combined+'\n';
 fs.mkdirSync(path.dirname(targetPath),{recursive:true});
 fs.writeFileSync(targetPath,output,'utf8');
 if(fs.readFileSync(targetPath,'utf8')!==output)throw new Error('Fresh SQL generation mismatch.');
