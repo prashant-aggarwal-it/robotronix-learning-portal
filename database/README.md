@@ -1,12 +1,12 @@
 # Robotronix database
 
-**Start here:** [canonical/README.md](canonical/README.md) — final-state SQL definitions for new module installations.
+**Start here:** [canonical/README.md](canonical/README.md) — final-state package definitions for new module installations (including the Portal source manifest).
 
 ## What to use
 
 | Purpose | Location | Intended use |
 | --- | --- | --- |
-| Portal clean installation | [01_install](01_install/) | Existing Portal installer generator and master reference data |
+| Portal clean installation | [canonical/01_portal_manifest.json](canonical/01_portal_manifest.json) + [01_install](01_install/) | Explicit ordered canonical manifest and authoritative Portal SQL source modules; build one generated installer |
 | CRM-only and Tasks-only SQL | [canonical](canonical/) | Separate core schemas, functions, security and read-only verification |
 | Optional cross-product integrations | [integrations](integrations/) | Portal↔CRM demos/admissions, CRM↔Tasks synchronization, Portal notifications |
 | Portal release validation | [03_verify](03_verify/) | Read-only release verification |
