@@ -22,11 +22,11 @@ This creates **one complete, sequentially numbered SQL installer per customer pa
 
 **Use exactly one installer** for a fresh database. The full-suite file already contains all three products and their required optional integrations. Each installer contains numbered steps in execution order. The internal canonical SQL sources and integration modules are not user-facing installation steps.
 
-Run read-only verification **after** installation: `03_verify/01_VERIFY_RELEASE.sql` for Portal, `canonical/08_verify_tasks.sql` for Tasks and `canonical/09_verify_crm.sql` for CRM.
+Run read-only verification **after** installation: `03_verify/01_VERIFY_RELEASE.sql` for Portal, `canonical/tasks/04_verify.sql` for Tasks and `canonical/crm/04_verify.sql` for CRM.
 
 ## Authoritative source files
 
-- `canonical/01_portal_manifest.json` and `01_install/modules/`: authoritative Portal schema and reference data.
+- `canonical/portal/manifest.json` and `01_install/modules/`: authoritative Portal schema and reference data.
 - `canonical/`: final Tasks and CRM schema, function, and security definitions.
 - `packages.json`: authoritative ordered customer package combinations and generated output names.
 - `integrations/`: optional cross-product functions and triggers, selected by package.
