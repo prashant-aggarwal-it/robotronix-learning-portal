@@ -97,9 +97,9 @@ for(const [name,files] of Object.entries(packages.packages)){
   '-- ROBOTRONIX '+name.toUpperCase()+' — GENERATED FRESH INSTALL.',
   '-- One file, ordered steps. Execute ONCE on a new/compatible DEV Supabase database.',
   '-- NOT a migration. Do not execute against existing production or a partially installed module.',
-  '-- Canonical source of truth: database/packages.json and database/canonical/.',
+  '-- Canonical source of truth: database/packages.json and database/{portal,tasks,crm,shared}/.',
   '-- Individual source files and historical migrations must NOT be run in addition to this installer.',
-  '-- Read-only verification is deliberately separate; see database/canonical/README.md.',
+  '-- Read-only verification is deliberately separate; see database/README.md.',
   ''
  ].join('\n');
  const sections=sourceFiles.map((file,index)=>{
