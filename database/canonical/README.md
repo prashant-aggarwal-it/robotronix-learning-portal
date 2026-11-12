@@ -31,8 +31,8 @@ The command runs canonical and package checks, validates the Portal source modul
 3. Choose **one** generated SQL file from the table above. Copy its entire contents into a new SQL Editor query and run it **once**. Stop at the first error; do not blindly rerun.
 4. Run the appropriate **read-only** verification files **separately**:
    - Portal installed: `database/03_verify/01_VERIFY_RELEASE.sql`
-   - Tasks installed: `database/canonical/08_verify_tasks.sql`
-   - CRM installed: `database/canonical/09_verify_crm.sql`
+   - Tasks installed: `database/canonical/tasks/04_verify.sql`
+   - CRM installed: `database/canonical/crm/04_verify.sql`
 5. Only after verification, set up DEV Auth users, application environment variables, optional provider credentials and background workers.
 
 The generated SQL includes sequential `STEP 01`, `STEP 02`, etc. The non-Portal bundles start with a Supabase prerequisite check. The Portal-only installer retains its established manifest-driven format. The verification scripts are intentionally not embedded: installation failures and verification failures must remain distinguishable.
@@ -43,9 +43,9 @@ The generated SQL includes sequential `STEP 01`, `STEP 02`, etc. The non-Portal 
 
 ## Canonical source and architecture
 
-- `database/canonical/01_portal_manifest.json` selects 13 Portal schema and 4 reference modules from `database/01_install/modules/`.
-- `database/canonical/02_tasks_schema.sql`, `04_tasks_functions.sql`, `06_tasks_security.sql` are the **internal** Tasks sources.
-- `database/canonical/03_crm_schema.sql`, `05_crm_functions.sql`, `07_crm_security.sql` are the **internal** CRM sources.
+- `database/canonical/portal/manifest.json` selects 13 Portal schema and 4 reference modules from `database/01_install/modules/`.
+- `database/canonical/tasks/01_schema.sql`, `04_tasks_functions.sql`, `06_tasks_security.sql` are the **internal** Tasks sources.
+- `database/canonical/crm/01_schema.sql`, `05_crm_functions.sql`, `07_crm_security.sql` are the **internal** CRM sources.
 - `database/packages.json` is the canonical list of customer package combinations and ordered integrations.
 - `database/integrations/` contains optional bridges. Link scripts `03`, `05`, and `06` are **mutually exclusive**. The builder selects only the appropriate one.
 
