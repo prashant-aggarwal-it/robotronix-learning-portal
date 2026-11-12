@@ -5,6 +5,9 @@
 -- NEVER enable the marker or run this file against production/shared projects.
 -- Reset is not guaranteed to preserve all unrelated public-schema objects.
 BEGIN;
+-- Deliberately edit the next placeholder to DELETE_DEV_APP_DATA only after
+-- independently verifying the exact dedicated DEV project in Supabase.
+SELECT set_config('robotronix.confirm_full_dev_reset', 'REPLACE_WITH_EXPLICIT_CONFIRMATION', true);
 DO $guard$
 DECLARE v_env text; v_ref text;
 BEGIN
