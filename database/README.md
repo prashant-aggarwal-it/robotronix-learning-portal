@@ -59,6 +59,6 @@ Reset is deliberately **disabled by default**. It requires both:
 
 These are **fresh-install installers**, not migrations. The install will refuse existing module schemas. Production and populated DEV projects need reviewed **incremental, non-destructive upgrades**, not resets or fresh installers.
 
-Historical `database/04_existing_db_migrations/`, `database/connect/` and older `database/tasks/` contain migration and development sources that are excluded from current installers. Do not delete or execute them as clean-install prerequisites; their consumers must be audited before archival. The active installer source of truth is `database/packages.json`.
+Historical `database/04_existing_db_migrations/`, `database/connect/`, `database/release_install/`, `database/security_qa/` and `database/legacy/` contain migration and development sources excluded from current installers. To keep VS Code uncluttered, `.vscode/settings.json` hides these preserved folders from the Explorer and normal search; they still exist in Git. You can override the exclusions in VS Code settings when auditing older upgrades. Do not delete or execute them as clean-install prerequisites; their consumers must be audited before archival. The active installer source of truth is `database/packages.json`.
 
 For Netlify/pg_cron ownership, see `docs/operations/SCHEDULED_JOBS.md`. Static checks or generated output are **not equivalent** to a successful isolated Supabase SQL execution and application QA.
