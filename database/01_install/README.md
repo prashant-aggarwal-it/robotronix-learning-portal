@@ -1,6 +1,6 @@
 # Install — production-equivalent database structure and reference data
 
-**These are authoritative Portal SQL sources, selected in order by [`../canonical/01_portal_manifest.json`](../canonical/01_portal_manifest.json). They are not historical migrations.**
+**These are authoritative Portal SQL sources, selected in order by [`../canonical/portal/manifest.json`](../canonical/portal/manifest.json). They are not historical migrations.**
 
 - `modules/schema/` — 13 ordered SQL modules for real tables, RLS, triggers, functions, scheduling, finance, Zoom and logging.
 - `modules/reference/` — 4 ordered SQL modules for currencies, locations, settings, academic reference and course catalogue.
