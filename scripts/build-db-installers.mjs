@@ -14,8 +14,8 @@ const portalManifest=JSON.parse(fs.readFileSync(path.join(dbRoot,portalManifestP
 const outputPaths=packages.generatedOutputs;
 const verificationFiles=new Set([
  portalManifest.verification,
- 'canonical/08_verify_tasks.sql',
- 'canonical/09_verify_crm.sql'
+ 'canonical/tasks/04_verify.sql',
+ 'canonical/crm/04_verify.sql'
 ]);
 const preflight='canonical/00_preflight.sql';
 const generatedDir=path.join(dbRoot,'generated');
@@ -43,12 +43,12 @@ if(!portalSource.trim())throw new Error('Empty generated Portal installer');
 const title={
  [preflight]:'Supabase prerequisites',
  [portalManifestPath]:'Learning Portal schema and reference data',
- 'canonical/02_tasks_schema.sql':'My Tasks schema',
- 'canonical/04_tasks_functions.sql':'My Tasks functions',
- 'canonical/06_tasks_security.sql':'My Tasks security',
- 'canonical/03_crm_schema.sql':'Connect CRM schema',
- 'canonical/05_crm_functions.sql':'Connect CRM functions',
- 'canonical/07_crm_security.sql':'Connect CRM security',
+ 'canonical/tasks/01_schema.sql':'My Tasks schema',
+ 'canonical/tasks/02_functions.sql':'My Tasks functions',
+ 'canonical/tasks/03_security.sql':'My Tasks security',
+ 'canonical/crm/01_schema.sql':'Connect CRM schema',
+ 'canonical/crm/02_functions.sql':'Connect CRM functions',
+ 'canonical/crm/03_security.sql':'Connect CRM security',
  'integrations/01_crm_portal.sql':'CRM and Portal integration',
  'integrations/02_tasks_crm.sql':'Tasks and CRM integration',
  'integrations/03_tasks_crm_links.sql':'CRM-only task links',
@@ -84,8 +84,8 @@ for(const [name,files] of Object.entries(packages.packages)){
 
  const installedChecks=[
   ...(sourceFiles.includes(portalManifestPath)?[["to_regclass('public.profiles') IS NOT NULL","Learning Portal"]]:[]),
-  ...(sourceFiles.includes('canonical/02_tasks_schema.sql')?[["to_regnamespace('tasks') IS NOT NULL","My Tasks"]]:[]),
-  ...(sourceFiles.includes('canonical/03_crm_schema.sql')?[["to_regnamespace('connect') IS NOT NULL","Connect CRM"]]:[])
+  ...(sourceFiles.includes('canonical/tasks/01_schema.sql')?[["to_regnamespace('tasks') IS NOT NULL","My Tasks"]]:[]),
+  ...(sourceFiles.includes('canonical/crm/01_schema.sql')?[["to_regnamespace('connect') IS NOT NULL","Connect CRM"]]:[])
  ];
  const freshGuard=[
   'DO $fresh_install_guard$ BEGIN',
