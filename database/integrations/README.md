@@ -1,6 +1,6 @@
 # Optional integration packages — final product-specific SQL
 
-Each customer's core is installed from `database/canonical`. Cross-product functions, business synchronization and Portal notifications install **only when those products coexist**.
+Each customer's core is installed from `database/canonical`. Cross-product functions, business synchronization and Portal notifications install **only when those products coexist**. **For a new database, prefer `npm run db:build-installers` and execute one generated package SQL file; do not manually run the individual integration files in addition to that generated installer.**
 
 | File | Required modules | Installs |
 | --- | --- | --- |
