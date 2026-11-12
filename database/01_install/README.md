@@ -17,6 +17,8 @@ npm run db:build-fresh-install
 
 The builder validates the explicit canonical Portal manifest against every source module and generates `database/generated/ROBOTRONIX_FRESH_INSTALL.sql`. Execute that **single generated file once** in Supabase DEV SQL Editor. **Do not run individual modules**, and do not run the installer over an existing database. Next execute `database/03_verify/01_VERIFY_RELEASE.sql`.
 
+For **Portal + Tasks**, **Portal + CRM**, or the **complete suite**, run `npm run db:build-installers` and use the corresponding **single generated combination installer** instead of running Portal and other packages separately. See `database/canonical/README.md`.
+
 For test users and data, follow `database/02_qa/README.md`.
 
 If deliberately resetting an existing DEV project, see `database/99_dev_tools/README.md` first. Do not use any reset in PROD.
