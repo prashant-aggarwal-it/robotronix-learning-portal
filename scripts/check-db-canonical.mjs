@@ -4,18 +4,18 @@ import fs from "node:fs";
 import path from "node:path";
 const root=path.resolve(process.cwd(),"database");
 const names={
- tasksSchema:"canonical/tasks/01_schema.sql",
- crmSchema:"canonical/crm/01_schema.sql",
- tasksFunctions:"canonical/tasks/02_functions.sql",
- crmFunctions:"canonical/crm/02_functions.sql",
- tasksSecurity:"canonical/tasks/03_security.sql",
- crmSecurity:"canonical/crm/03_security.sql",
- crmPortal:"integrations/01_crm_portal.sql",
- tasksCrm:"integrations/02_tasks_crm.sql",
- tasksCrmLinks:"integrations/03_tasks_crm_links.sql",
- tasksPortal:"integrations/04_tasks_portal_notifications.sql",
- fullSuite:"integrations/05_full_suite_task_links.sql",
- portalTasksLinks:"integrations/06_tasks_portal_links.sql"
+ tasksSchema:"tasks/01_schema.sql",
+ crmSchema:"crm/01_schema.sql",
+ tasksFunctions:"tasks/02_functions.sql",
+ crmFunctions:"crm/02_functions.sql",
+ tasksSecurity:"tasks/03_security.sql",
+ crmSecurity:"crm/03_security.sql",
+ crmPortal:"shared/integrations/01_crm_portal.sql",
+ tasksCrm:"shared/integrations/02_tasks_crm.sql",
+ tasksCrmLinks:"shared/integrations/03_tasks_crm_links.sql",
+ tasksPortal:"shared/integrations/04_tasks_portal_notifications.sql",
+ fullSuite:"shared/integrations/05_full_suite_task_links.sql",
+ portalTasksLinks:"shared/integrations/06_tasks_portal_links.sql"
 };
 const sql=Object.fromEntries(Object.entries(names).map(([key,file])=>[key,fs.readFileSync(path.join(root,file),"utf8")]));
 let failures=0;
