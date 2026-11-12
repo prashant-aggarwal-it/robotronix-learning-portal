@@ -1,31 +1,43 @@
-# Robotronix database
+# Robotronix database — generated fresh-install packages
 
-**Start here:** [canonical/README.md](canonical/README.md) — final-state package definitions for new module installations (including the Portal source manifest).
+**Start here:** [canonical/README.md](canonical/README.md) for the single-file installation guide.
 
-## What to use
+Run from the repository root:
 
-| Purpose | Location | Intended use |
-| --- | --- | --- |
-| Portal clean installation | [canonical/01_portal_manifest.json](canonical/01_portal_manifest.json) + [01_install](01_install/) | Explicit ordered canonical manifest and authoritative Portal SQL source modules; build one generated installer |
-| CRM-only and Tasks-only SQL | [canonical](canonical/) | Separate core schemas, functions, security and read-only verification |
-| Optional cross-product integrations | [integrations](integrations/) | Portal↔CRM demos/admissions, CRM↔Tasks synchronization, Portal notifications |
-| Portal release validation | [03_verify](03_verify/) | Read-only release verification |
-| Development fixtures and security tests | `02_qa/`, `security_qa/`, `99_dev_tools/` | Internal development/QA only; never use in production |
+```powershell
+npm run db:build-installers
+```
 
-**Not installation entrypoints:** `connect/saas/`, `tasks/` and `04_existing_db_migrations/` are historical development sources referenced by older QA gates. Do not run them or combine them with canonical SQL. They remain in the working tree only until dependent checks are migrated and canonical installation has been tested.
+This creates **one complete, sequentially numbered SQL installer per customer package**, with no need to execute individual odd/even-numbered source SQL files. All generated files are in `database/generated/`:
 
-**Scheduler setup:** Database SQL does not register cron jobs. The canonical per-product Netlify schedules, opt-in flags, and duplicate-scheduler cutover procedure are documented in [Scheduled jobs](../docs/operations/SCHEDULED_JOBS.md). Run `npm run check:schedules` before deploying module schedulers.
+| Package | SQL installer |
+| --- | --- |
+| Portal | `ROBOTRONIX_FRESH_INSTALL.sql` |
+| Tasks | `ROBOTRONIX_TASKS_FRESH_INSTALL.sql` |
+| CRM | `ROBOTRONIX_CRM_FRESH_INSTALL.sql` |
+| CRM + Tasks | `ROBOTRONIX_CRM_TASKS_FRESH_INSTALL.sql` |
+| Portal + CRM | `ROBOTRONIX_PORTAL_CRM_FRESH_INSTALL.sql` |
+| Portal + Tasks | `ROBOTRONIX_PORTAL_TASKS_FRESH_INSTALL.sql` |
+| Full suite | `ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql` |
 
-The `generated/` folder contains locally generated build output, is ignored by Git and may be regenerated. Do not version-control it.
+**Use exactly one installer** for a fresh database. The full-suite file already contains all three products and their required optional integrations. Each installer contains numbered steps in execution order. The internal canonical SQL sources and integration modules are not user-facing installation steps.
 
-## Product installation boundaries
+Run read-only verification **after** installation: `03_verify/01_VERIFY_RELEASE.sql` for Portal, `canonical/08_verify_tasks.sql` for Tasks and `canonical/09_verify_crm.sql` for CRM.
 
-The canonical **database core** now supports separate Portal, CRM and Tasks installations, with cross-module SQL in optional integration packages. All require Supabase Auth, not Portal tables. **The application remains coupled** in places, and no standalone deployment is certified until isolated SQL execution and API testing pass.
+## Authoritative source files
 
-See [canonical/README.md](canonical/README.md) for the current database ordering and safety gates. There is **no customer data, sample user, external credential or cron schedule** in the new module canonical installers.
+- `canonical/01_portal_manifest.json` and `01_install/modules/`: authoritative Portal schema and reference data.
+- `canonical/`: final Tasks and CRM schema, function, and security definitions.
+- `packages.json`: authoritative ordered customer package combinations and generated output names.
+- `integrations/`: optional cross-product functions and triggers, selected by package.
+- `02_qa/`, `security_qa/`, `99_dev_tools/`: DEV-only QA, fixtures and tools.
 
-## Existing production
+**Do not run** historical `connect/saas/`, `tasks/`, or `04_existing_db_migrations/` scripts for fresh installs. The `generated/` directory is Git-ignored and must be rebuilt after pulling source changes.
 
-Production Supabase project `njyktzenybimykpqaegn` already has genuine Portal tables and auth users. **Never rerun the Portal full installer, use dev resets, or drop populated data there.** Back up and validate a new module installation in an isolated database before manual production installation.
+## Safety and remaining verification
 
-Database setup is separate from Netlify environment configuration, app deployment and Meta/Zoom integrations.
+These are **fresh installers, not incremental migrations**. Never execute them against an already installed module, partially installed module or the production database. For a partly installed DEV database, either complete the interrupted install from corrected source files or use a separate clean DEV database for single-file testing.
+
+The generator does not connect to Supabase, create Auth users, seed customers, schedule cron jobs, configure Netlify or deploy application code. Static checks pass independently of real SQL execution; every package still needs an isolated Supabase install, RLS verification and application tests.
+
+See [scheduled jobs](../docs/operations/SCHEDULED_JOBS.md) before enabling workers. Do not register overlapping Netlify and pg_cron jobs.
