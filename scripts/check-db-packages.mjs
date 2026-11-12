@@ -15,6 +15,11 @@ for(const group of ["schema","reference"]){
   .map(n=>"portal/"+group+"/"+n);
  if(new Set(files).size!==files.length || JSON.stringify([...files].sort())!==JSON.stringify(expected))
   throw new Error("Portal "+group+" manifest does not cover exact source module set");
+ if(group==="schema"){
+  const numbers=files.map(file=>Number(file.split("/").pop().slice(0,2)));
+  if(numbers.some((number,index)=>number!==index+1))
+   throw new Error("Portal schema must use unique, sequential 01.."+files.length+" filenames");
+ }
  if(JSON.stringify(files)!==JSON.stringify([...files].sort()))
   throw new Error("Portal "+group+" must use deterministic filename order");
 }
