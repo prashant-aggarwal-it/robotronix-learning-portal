@@ -6,66 +6,66 @@
   "packages": {
     "tasks-only": [
       "canonical/00_preflight.sql",
-      "canonical/02_tasks_schema.sql",
-      "canonical/04_tasks_functions.sql",
-      "canonical/06_tasks_security.sql",
-      "canonical/08_verify_tasks.sql"
+      "canonical/tasks/01_schema.sql",
+      "canonical/tasks/02_functions.sql",
+      "canonical/tasks/03_security.sql",
+      "canonical/tasks/04_verify.sql"
     ],
     "crm-only": [
       "canonical/00_preflight.sql",
-      "canonical/03_crm_schema.sql",
-      "canonical/05_crm_functions.sql",
-      "canonical/07_crm_security.sql",
-      "canonical/09_verify_crm.sql"
+      "canonical/crm/01_schema.sql",
+      "canonical/crm/02_functions.sql",
+      "canonical/crm/03_security.sql",
+      "canonical/crm/04_verify.sql"
     ],
     "crm-tasks": [
       "canonical/00_preflight.sql",
-      "canonical/02_tasks_schema.sql",
-      "canonical/03_crm_schema.sql",
-      "canonical/04_tasks_functions.sql",
-      "canonical/05_crm_functions.sql",
-      "canonical/06_tasks_security.sql",
-      "canonical/07_crm_security.sql",
+      "canonical/tasks/01_schema.sql",
+      "canonical/crm/01_schema.sql",
+      "canonical/tasks/02_functions.sql",
+      "canonical/crm/02_functions.sql",
+      "canonical/tasks/03_security.sql",
+      "canonical/crm/03_security.sql",
       "integrations/02_tasks_crm.sql",
       "integrations/03_tasks_crm_links.sql",
-      "canonical/08_verify_tasks.sql",
-      "canonical/09_verify_crm.sql"
+      "canonical/tasks/04_verify.sql",
+      "canonical/crm/04_verify.sql"
     ],
     "portal-only": [
-      "canonical/01_portal_manifest.json",
+      "canonical/portal/manifest.json",
       "03_verify/01_VERIFY_RELEASE.sql"
     ],
     "portal-crm": [
-      "canonical/01_portal_manifest.json",
-      "canonical/03_crm_schema.sql",
-      "canonical/05_crm_functions.sql",
-      "canonical/07_crm_security.sql",
+      "canonical/portal/manifest.json",
+      "canonical/crm/01_schema.sql",
+      "canonical/crm/02_functions.sql",
+      "canonical/crm/03_security.sql",
       "integrations/01_crm_portal.sql",
-      "canonical/09_verify_crm.sql"
+      "canonical/crm/04_verify.sql"
     ],
     "portal-tasks": [
-      "canonical/01_portal_manifest.json",
-      "canonical/02_tasks_schema.sql",
-      "canonical/04_tasks_functions.sql",
-      "canonical/06_tasks_security.sql",
+      "canonical/portal/manifest.json",
+      "canonical/tasks/01_schema.sql",
+      "canonical/tasks/02_functions.sql",
+      "canonical/tasks/03_security.sql",
       "integrations/04_tasks_portal_notifications.sql",
       "integrations/06_tasks_portal_links.sql",
-      "canonical/08_verify_tasks.sql"
+      "canonical/tasks/04_verify.sql"
     ],
     "full-suite": [
-      "canonical/01_portal_manifest.json",
-      "canonical/02_tasks_schema.sql",
-      "canonical/03_crm_schema.sql",
-      "canonical/04_tasks_functions.sql",
-      "canonical/05_crm_functions.sql",
-      "canonical/06_tasks_security.sql",
-      "canonical/07_crm_security.sql",
+      "canonical/portal/manifest.json",
+      "canonical/tasks/01_schema.sql",
+      "canonical/crm/01_schema.sql",
+      "canonical/tasks/02_functions.sql",
+      "canonical/crm/02_functions.sql",
+      "canonical/tasks/03_security.sql",
+      "canonical/crm/03_security.sql",
       "integrations/01_crm_portal.sql",
       "integrations/02_tasks_crm.sql",
       "integrations/04_tasks_portal_notifications.sql",
       "integrations/05_full_suite_task_links.sql",
-      "canonical/08_verify_tasks.sql",
-      "canonical/09_verify_crm.sql"
+      "canonical/tasks/04_verify.sql",
+      "canonical/crm/04_verify.sql"
     ]
   },
   "rules": {
@@ -85,7 +85,7 @@
       ]
     ],
     "productionExecutionAllowed": false,
-    "portalManifest": "canonical/01_portal_manifest.json"
+    "portalManifest": "canonical/portal/manifest.json"
   },
   "generatedOutputs": {
     "tasks-only": "generated/ROBOTRONIX_TASKS_FRESH_INSTALL.sql",
