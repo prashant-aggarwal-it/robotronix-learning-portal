@@ -1,20 +1,28 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin} from "@/lib/server/admin-api";
+import {requireLegacyAcademyAdminOrg} from "@/lib/server/saas/legacy-admin-org";
+import {SaaSAccessError} from "@/lib/server/saas/organization-context";
 import {cancelGeneralZoomMeeting,createGeneralZoomMeeting} from "@/lib/server/zoom-classroom";
 import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
 
 export async function GET(request:NextRequest){
  const auth=await requireAdmin(request);if("error" in auth)return auth.error;
- const {data,error}=await auth.admin.from("zoom_meetings")
+ let orgId:string|null;
+ try{orgId=await requireLegacyAcademyAdminOrg(request)}catch(error){return NextResponse.json({ok:false,error:error instanceof SaaSAccessError?error.message:"Organization unavailable"},{status:error instanceof SaaSAccessError?error.status:503})}
+ let query=auth.admin.from("zoom_meetings")
   .select("id,host_account_id,topic,status,scheduled_start,duration_minutes,join_url,passcode,recording_enabled,recording_status,meeting_notes,created_at")
   .eq("purpose","general").order("scheduled_start",{ascending:false}).limit(100);
+ if(orgId)query=query.eq("saas_org_id",orgId);
+ const {data,error}=await query;
  if(error){const referenceId=await logSystemEvent({source:"zoom-meetings",action:"list",code:"ZOOM_MEETING_LIST_FAILURE",message:"Zoom meeting list query failed"});return NextResponse.json({ok:false,error:"Unable to load meetings.",referenceId},{status:500});}
  return NextResponse.json({ok:true,meetings:data||[]},{headers:{"Cache-Control":"no-store"}});
 }
 
 export async function POST(request:NextRequest){
  const auth=await requireAdmin(request);if("error" in auth)return auth.error;
+ let orgId:string|null;
+ try{orgId=await requireLegacyAcademyAdminOrg(request)}catch(error){return NextResponse.json({ok:false,error:error instanceof SaaSAccessError?error.message:"Organization unavailable"},{status:error instanceof SaaSAccessError?error.status:503})}
  try{
   const body=await request.json().catch(()=>({})) as {
    title?:string;startAt?:string;durationMinutes?:number;hostId?:string;recording?:boolean;notes?:string;
@@ -23,7 +31,7 @@ export async function POST(request:NextRequest){
   if(!title)return NextResponse.json({ok:false,error:"Meeting title is required."},{status:400});
   const meeting=await createGeneralZoomMeeting(auth.admin,{
    title,startAt:body.startAt,durationMinutes:body.durationMinutes,hostId:body.hostId,
-   recording:body.recording,notes:body.notes,createdBy:auth.actorId
+   recording:body.recording,notes:body.notes,createdBy:auth.actorId,saasOrganizationId:orgId
   });
   return NextResponse.json({ok:true,meeting},{headers:{"Cache-Control":"no-store"}});
  }catch{
@@ -38,6 +46,11 @@ export async function PATCH(request:NextRequest){
   const body=await request.json().catch(()=>({})) as {id?:string;action?:"cancel"};
   if(!body.id)return NextResponse.json({ok:false,error:"Meeting id is required."},{status:400});
   if(body.action!=="cancel")return NextResponse.json({ok:false,error:"Unsupported meeting action."},{status:400});
+  if(orgId){
+   const {data:owned,error:ownershipError}=await auth.admin.from("zoom_meetings").select("id")
+    .eq("id",body.id).eq("purpose","general").eq("saas_org_id",orgId).maybeSingle();
+   if(ownershipError||!owned)return NextResponse.json({ok:false,error:"Meeting not accessible in this organization."},{status:403});
+  }
   const result=await cancelGeneralZoomMeeting(auth.admin,body.id);
   return NextResponse.json({ok:true,meeting:result});
  }catch{
