@@ -434,6 +434,24 @@ async function run(){
   .insert(scheduleInput).select("id").single();
  assert(!scheduleError&&Boolean(createdSchedule?.id),"School A can create its own class through legacy REST");
  if(createdSchedule?.id)syntheticScheduleIds.push(createdSchedule.id);
+ // Phase 3D: Academy scheduled class → private Tasks, with authorization and idempotency.
+ const classLink={module:"learning",resource:"schedule_event",resource_id:createdSchedule.id,tenant_id:null};
+ r=await request(b,"POST","/api/tasks/module-links",classLink);
+ assert(r.status===403,"Other school admin denied Academy class follow-up Tasks link");
+ r=await request(a,"POST","/api/tasks/module-links",classLink);
+ assert(r.status===201&&r.body?.item?.created===true&&Boolean(r.body.item.task_id),
+  "Authorized Academy admin creates class follow-up task");
+ const academyTaskId=r.body.item.task_id;
+ r=await request(a,"POST","/api/tasks/module-links",classLink);
+ assert(r.status===200&&r.body?.item?.created===false&&r.body?.item?.task_id===academyTaskId,
+  "Class follow-up task creation is idempotent");
+ r=await request(a,"GET","/api/tasks/module-links?module=learning");
+ assert(r.status===200&&r.body?.items?.some(item=>item.task_id===academyTaskId),
+  "Academy admin sees linked class follow-up");
+ r=await request(b,"GET","/api/tasks/module-links?module=learning");
+ assert(r.status===200&&!r.body?.items?.some(item=>item.task_id===academyTaskId),
+  "Foreign school cannot list private Academy follow-up task");
+
  const directB=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false},
   global:{headers:{authorization:"Bearer "+b.token,"x-organization-id":B}}});
  for(const [actor,expected,label] of [
@@ -633,6 +651,13 @@ finally{
  if(syntheticEarningIds.length){
   const {error}=await admin.from("trainer_earnings").delete().in("id",syntheticEarningIds);
   if(error){console.error("Synthetic payroll cleanup failed: "+error.message);failure??=error}
+ }
+
+ if(syntheticScheduleIds.length){
+  for(const scheduleId of syntheticScheduleIds){
+   const {error}=await admin.rpc("saas_qa_phase3d_schedule_link_cleanup",{p_schedule_id:scheduleId});
+   if(error){console.error("Phase 3D synthetic schedule task cleanup failed: "+error.message);failure??=error}
+  }
  }
  if(syntheticScheduleIds.length){
   const {error:attendanceCleanupError}=await admin.from("class_attendance").delete().in("schedule_event_id",syntheticScheduleIds);
