@@ -219,6 +219,25 @@ async function run(){
  };
  const sa=await create(a,A,"students",{full_name:"SaaS E2E Student A"});
  const sb=await create(b,B,"students",{full_name:"SaaS E2E Student B"});
+ const directRead=async(actor,selectedOrg,studentId)=>{
+  const client=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false},
+   global:{headers:{authorization:"Bearer "+actor.token,...(selectedOrg?{"x-organization-id":selectedOrg}:{})}}});
+  const {data,error}=await client.from("students").select("id").eq("id",studentId);
+  if(error)throw new Error("DEV direct RLS read failed: "+error.message);
+  return data??[];
+ };
+ assert((await directRead(a,A,sa)).length===1,
+  "Existing Supabase REST student read permits own selected organization");
+ assert((await directRead(a,B,sb)).length===0,
+  "Forged foreign organization header cannot read School B student");
+ assert((await directRead(a,null,sa)).length===0,
+  "SaaS member without organization selection cannot read student records");
+ assert((await directRead(multi,A,sa)).length===1,
+  "Multi-organization member can read explicitly selected School A student");
+ assert((await directRead(multi,A,sb)).length===0,
+  "Multi-organization member cannot read School B records while selecting School A");
+ assert((await directRead(multi,B,sb)).length===1,
+  "Multi-organization member can switch REST tenant selection to School B");
  const ownership=async(actor,org,kind,id)=>{
   const {data,error}=await admin.rpc("saas_academy_resource_owned",{
    p_actor_id:actor.id,p_organization_id:org,p_kind:kind,p_resource_id:id
