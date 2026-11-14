@@ -66,6 +66,13 @@ BEGIN
   AND lower(u.email) !~ '^saas-e2e-[a-z0-9-]+@example[.]invalid$') THEN
   RAISE EXCEPTION 'Refusing to remove non-synthetic members' USING ERRCODE='42501';
  END IF;
+ IF EXISTS(SELECT 1 FROM tasks.items i WHERE i.workspace_id IN (wa,wb)
+    AND i.title NOT LIKE 'SaaS E2E %') THEN
+  RAISE EXCEPTION 'Refusing to remove non-synthetic Tasks data' USING ERRCODE='42501';
+ END IF;
+ DELETE FROM tasks.items i WHERE i.owner_user_id IN
+  (SELECT user_id FROM saas.memberships WHERE organization_id=ANY(ids))
+  AND i.title LIKE 'SaaS E2E %' AND (i.workspace_id IS NULL OR i.workspace_id IN (wa,wb));
  DELETE FROM saas.workspace_links WHERE organization_id=ANY(ids);
  DELETE FROM saas.legacy_tenant_links WHERE organization_id=ANY(ids);
  DELETE FROM tasks.workspace_members WHERE workspace_id IN (wa,wb);
