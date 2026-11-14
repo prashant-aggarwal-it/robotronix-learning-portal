@@ -6,6 +6,7 @@ on:
       - feature/education-suite-phase3d
       - feature/education-suite-phase3e
       - feature/education-suite-phase3f
+      - feature/education-suite-phase3g
     paths:
       - 'app/**'
       - 'lib/**'
