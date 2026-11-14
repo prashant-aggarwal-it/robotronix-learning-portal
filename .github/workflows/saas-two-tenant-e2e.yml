@@ -5,6 +5,7 @@ on:
       - feature/education-suite-release1
     paths:
       - scripts/saas-two-tenant-e2e.mjs
+      - scripts/saas-phase3c-invitations-e2e.mjs
       - app/api/platform/organization-links/route.ts
       - database/saas/12_module_links_rpc.sql
       - database/saas/3*.sql
