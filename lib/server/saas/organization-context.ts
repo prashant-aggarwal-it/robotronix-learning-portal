@@ -89,3 +89,14 @@ export async function requireAuthorizedTenantModule(
  requireModuleAccess(enabled,organization);
  return {userId,organization,moduleKey};
 }
+
+/** Authorize organization roles after membership/module checks, before any sensitive resource lookup. */
+export async function requireAuthorizedTenantRole(
+ bearer:string,organizationId:string,moduleKey:string,allowedRoles:readonly string[]
+):Promise<{userId:string;organization:OrganizationAccess;moduleKey:string}> {
+ if(allowedRoles.length===0)throw new SaaSAccessError(403,"Organization role not permitted");
+ const context=await requireAuthorizedTenantModule(bearer,organizationId,moduleKey);
+ if(!allowedRoles.includes(context.organization.role))
+  throw new SaaSAccessError(403,"Organization role not permitted");
+ return context;
+}
