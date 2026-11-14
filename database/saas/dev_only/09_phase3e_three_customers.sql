@@ -52,6 +52,22 @@ BEGIN
  DELETE FROM connect.tenants WHERE id=t;
  DELETE FROM tasks.workspace_members WHERE workspace_id=w;
  DELETE FROM tasks.workspaces WHERE id=w;
+ IF EXISTS(SELECT 1 FROM saas.academy_students l JOIN public.students st ON st.id=l.student_id
+  WHERE l.organization_id=p_school_c AND st.full_name NOT LIKE 'SaaS E2E %')
+ OR EXISTS(SELECT 1 FROM saas.academy_trainers l JOIN public.trainers tr ON tr.id=l.trainer_id
+  WHERE l.organization_id=p_school_c AND tr.full_name NOT LIKE 'SaaS E2E %')
+ OR EXISTS(SELECT 1 FROM saas.academy_courses l JOIN public.courses co ON co.id=l.course_id
+  WHERE l.organization_id=p_school_c AND co.title NOT LIKE 'SaaS E2E %') THEN
+  RAISE EXCEPTION 'Non-synthetic Academy customer C records' USING ERRCODE='42501';
+ END IF;
+ DELETE FROM public.enrollments e USING saas.academy_enrollments l
+  WHERE e.id=l.enrollment_id AND l.organization_id=p_school_c;
+ DELETE FROM public.students st USING saas.academy_students l
+  WHERE st.id=l.student_id AND l.organization_id=p_school_c;
+ DELETE FROM public.trainers tr USING saas.academy_trainers l
+  WHERE tr.id=l.trainer_id AND l.organization_id=p_school_c;
+ DELETE FROM public.courses co USING saas.academy_courses l
+  WHERE co.id=l.course_id AND l.organization_id=p_school_c;
  DELETE FROM saas.module_entitlements WHERE organization_id=p_school_c;
  DELETE FROM saas.memberships WHERE organization_id=p_school_c;
  DELETE FROM saas.organizations WHERE id=p_school_c;
