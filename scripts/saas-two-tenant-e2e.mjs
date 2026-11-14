@@ -83,6 +83,21 @@ async function run(){
  const cookie=r.cookie?.split(";")[0];
  r=await request(multi,"GET","/api/platform/organizations",null,cookie);
  assert(r.status===200&&r.body?.selectedOrganizationId===B,"Selected organization persists");
+ // Phase 3A: verify authenticated linkage discovery for synthetic organizations.
+ // These test organizations intentionally have no CRM/Tasks mappings, and must
+ // never acquire another user's legacy workspace as an implicit fallback.
+ r=await request(a,"GET","/api/platform/organization-links?organizationId="+A);
+ assert(r.status===200&&r.body?.links?.crm?.status==="disabled"&&r.body?.links?.tasks?.status==="disabled",
+  "Unentitled linked workspaces unavailable for School A");
+ r=await request(b,"GET","/api/platform/organization-links?organizationId="+B);
+ assert(r.status===200&&r.body?.links?.crm?.tenantId==null,
+  "School B CRM tenant never inferred without explicit mapping");
+ r=await request(a,"GET","/api/platform/organization-links?organizationId="+B);
+ assert(r.status===403,"Foreign organization linkage discovery rejected");
+ r=await request(null,"GET","/api/platform/organization-links?organizationId="+A);
+ assert(r.status===401,"Anonymous organization linkage discovery rejected");
+ r=await request(a,"GET","/api/platform/organization-links?organizationId=invalid");
+ assert(r.status===400,"Invalid organization linkage identifier rejected");
  const create=async(actor,org,kind,data)=>{
   const response=await request(actor,"POST","/api/platform/academy/"+kind,{organizationId:org,...data});
   if(response.status!==201||!response.body?.data?.id)
