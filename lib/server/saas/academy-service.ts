@@ -1,7 +1,7 @@
 import "server-only";
 import {createClient} from "@supabase/supabase-js";
 import {NextRequest,NextResponse} from "next/server";
-import {requireAuthorizedTenantRole,readBearerToken,SaaSAccessError} from "@/lib/server/saas/organization-context";
+import {requireAuthorizedTenantCapability,readBearerToken,SaaSAccessError} from "@/lib/server/saas/organization-context";
 
 export type AcademyKind="students"|"courses"|"trainers"|"enrollments";
 export type AcademyAction="list"|"get"|"create"|"update";
@@ -25,7 +25,8 @@ export async function executeAcademy(
  if(!payload||Array.isArray(payload)||typeof payload!=="object")return invalid("JSON object required");
  try {
   const token=readBearerToken(request.headers.get("authorization"));
-  const {userId}=await requireAuthorizedTenantRole(token,orgId,"academy",["owner","admin"]);
+  const capability=kind==="students"?"academy.students.manage":kind==="courses"?"academy.courses.manage":kind==="trainers"?"academy.trainers.manage":"academy.enrollments.manage";
+  const {userId}=await requireAuthorizedTenantCapability(token,orgId,"academy",capability);
   const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!key)throw new SaaSAccessError(503,"Academy service unavailable");

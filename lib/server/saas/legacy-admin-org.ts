@@ -1,7 +1,7 @@
 import "server-only";
 import {createClient} from "@supabase/supabase-js";
 import {NextRequest} from "next/server";
-import {getAuthorizedOrganizations,readBearerToken,requireAuthorizedTenantRole,SaaSAccessError} from "./organization-context";
+import {getAuthorizedOrganizations,readBearerToken,requireAuthorizedTenantCapability,SaaSAccessError} from "./organization-context";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Authorized org for SaaS users; returns null for a genuine standalone legacy Admin.
  * Revoked SaaS accounts cannot fall back to global legacy privileges.
@@ -21,6 +21,6 @@ export async function requireLegacyAcademyAdminOrg(request:NextRequest):Promise<
  }
  const orgId=request.headers.get("x-organization-id")??"";
  if(!uuid.test(orgId))throw new SaaSAccessError(403,"Select an authorized organization");
- await requireAuthorizedTenantRole(bearer,orgId,"academy",["owner","admin"]);
+ await requireAuthorizedTenantCapability(bearer,orgId,"academy","academy.students.manage");
  return orgId;
 }

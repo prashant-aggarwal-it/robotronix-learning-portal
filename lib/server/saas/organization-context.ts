@@ -1,5 +1,6 @@
 import "server-only";
 import {createClient} from "@supabase/supabase-js";
+import {roleHasCapability} from "./role-capabilities.mjs";
 
 export type OrganizationAccess={
  id:string;slug:string;displayName:string;role:string;
@@ -98,5 +99,17 @@ export async function requireAuthorizedTenantRole(
  const context=await requireAuthorizedTenantModule(bearer,organizationId,moduleKey);
  if(!allowedRoles.includes(context.organization.role))
   throw new SaaSAccessError(403,"Organization role not permitted");
+ return context;
+}
+
+/** Capability enforcement is additive to verified active membership and entitlement checks. */
+export async function requireAuthorizedTenantCapability(
+ bearer:string,organizationId:string,moduleKey:string,capability:string
+):Promise<{userId:string;organization:OrganizationAccess;moduleKey:string}>{
+ if(!capability.startsWith(moduleKey+"."))
+  throw new SaaSAccessError(403,"Capability does not match requested module");
+ const context=await requireAuthorizedTenantModule(bearer,organizationId,moduleKey);
+ if(!roleHasCapability(context.organization.role,capability))
+  throw new SaaSAccessError(403,"Organization capability not permitted");
  return context;
 }
