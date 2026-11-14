@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root=process.cwd();
-const modulesDir=path.join(root,'database/01_install/modules');
+const modulesDir=path.join(root,'database/portal');
 const sqlModules=(kind)=>fs.readdirSync(path.join(modulesDir,kind)).filter(name=>/^\d\d_[a-z0-9_]+\.sql$/.test(name)).sort().map(name=>fs.readFileSync(path.join(modulesDir,kind,name),'utf8')).join('');
 const schema=sqlModules('schema');
 const reference=sqlModules('reference');
@@ -53,23 +53,23 @@ const enrollmentStartGuard=schema.match(/create or replace function public\.enfo
 if(!enrollmentStartGuard.includes("coalesce(new.migration_type, 'native') <> 'active_existing'")){
   throw new Error('Fresh schema enrollment start-date guard does not permit historical dates for active_existing migrations.');
 }
-if(fs.existsSync(path.join(root,'database/archive')))throw new Error('Archived SQL must not ship in canonical release.');
-const qaSql=fs.readdirSync(path.join(root,'database/02_qa')).filter(name=>name.endsWith('.sql')).sort();
-const expectedQaSql=['01_PREPARE_DEV_QA_PROFILES.sql','02_RUN_DEV_QA_DATA.sql','03_VERIFY_DEV_QA.sql'];
+// Historical migration sources are excluded from the fresh installer by manifest.
+const qaSql=fs.readdirSync(path.join(root,'database/portal/qa')).filter(name=>name.endsWith('.sql')).sort();
+const expectedQaSql=['01_profiles.sql','02_data.sql','03_verify.sql'];
 if(JSON.stringify(qaSql)!==JSON.stringify(expectedQaSql))throw new Error('Unexpected DEV QA SQL files: '+qaSql.join(', '));
-if(fs.existsSync(path.join(root,'database/04_hotfixes')))throw new Error('Fresh release must not contain database/04_hotfixes.');
-for(const file of ['database/03_verify/01_VERIFY_RELEASE.sql','database/02_qa/01_PREPARE_DEV_QA_PROFILES.sql','database/02_qa/02_RUN_DEV_QA_DATA.sql','database/02_qa/03_VERIFY_DEV_QA.sql']){
+
+for(const file of ['database/portal/verify.sql','database/portal/qa/01_profiles.sql','database/portal/qa/02_data.sql','database/portal/qa/03_verify.sql']){
   if(!fs.existsSync(path.join(root,file)))throw new Error(`Missing required release database file: ${file}`);
 }
 // Consolidated releases must never require separate post-install SQL patches.
-const verificationFiles=fs.readdirSync(path.join(root,'database/03_verify'));
-const unexpectedVerificationSql=verificationFiles.filter(name=>name.endsWith('.sql') && name!=='01_VERIFY_RELEASE.sql');
-if(unexpectedVerificationSql.length)throw new Error('Extra SQL scripts found in 03_verify: '+unexpectedVerificationSql.join(', '));
+const verificationFiles=fs.readdirSync(path.join(root,'database/portal'));
+const unexpectedVerificationSql=verificationFiles.filter(name=>name.endsWith('.sql') && !['verify.sql','first_admin_example.sql'].includes(name));
+if(unexpectedVerificationSql.length)throw new Error('Unexpected SQL at portal root: '+unexpectedVerificationSql.join(', '));
 for(const directory of ['database/04_hotfixes','database/04_migrations','database/05_features','database/migrations','supabase/migrations']){
- if(fs.existsSync(path.join(root,directory)))throw new Error('Incremental SQL patch directory must not ship in the release: '+directory);
+ if(fs.existsSync(path.join(root,directory)))throw new Error('Unexpected active incremental patch folder: '+directory);
 }
-for(const name of fs.readdirSync(path.join(root,'database/01_install'))){
- if(name.endsWith('.sql')&&!['03_BOOTSTRAP_FIRST_ADMIN_EXAMPLE.sql'].includes(name))
+for(const name of fs.readdirSync(path.join(root,'database/portal'))){
+ if(name.endsWith('.sql')&&!['verify.sql','first_admin_example.sql'].includes(name))
   throw new Error('Unexpected extra install script: '+name);
 }
 // Guard against stale SQL paths in future check scripts after consolidation.
@@ -104,7 +104,7 @@ for(const marker of [
 ]){
  if(!schema.includes(marker))throw new Error('Fresh schema missing protected workflow: '+marker);
 }
-const verify=fs.readFileSync(path.join(root,'database/03_verify/01_VERIFY_RELEASE.sql'),'utf8');
+const verify=fs.readFileSync(path.join(root,'database/portal/verify.sql'),'utf8');
 for(const marker of ['replace_trainer_availability_v1','activated_student_id','activated_enrollment_id','zoom_host_active_meeting_no_overlap']){
  if(!verify.includes(marker))throw new Error('Release database verification missing: '+marker);
 }

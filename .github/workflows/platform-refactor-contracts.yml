@@ -1,0 +1,61 @@
+name: Platform refactor contract gates
+on:
+  pull_request:
+    paths:
+      - 'lib/platform/**'
+      - 'lib/server/connect-auth.ts'
+      - 'lib/server/tasks/auth.ts'
+      - 'app/api/platform/**'
+      - 'app/api/tasks/module-links/**'
+      - 'database/**'
+      - 'config/scheduled-jobs.json'
+      - 'scripts/check-platform-refactor-baseline.mjs'
+      - 'scripts/check-cross-module-refactor-contracts.mjs'
+      - 'database/platform/**'
+      - 'scripts/test-platform-foundation.test.mjs'
+      - '.github/workflows/platform-refactor-contracts.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches:
+      - 'feature/portal-canonical-db-package'
+    paths:
+      - 'lib/platform/**'
+      - 'lib/server/connect-auth.ts'
+      - 'lib/server/tasks/auth.ts'
+      - 'app/api/platform/**'
+      - 'app/api/tasks/module-links/**'
+      - 'database/**'
+      - 'config/scheduled-jobs.json'
+      - 'scripts/check-platform-refactor-baseline.mjs'
+      - 'scripts/check-cross-module-refactor-contracts.mjs'
+      - '.github/workflows/platform-refactor-contracts.yml'
+      - 'package.json'
+      - 'package-lock.json'
+permissions:
+  contents: read
+jobs:
+  contract-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Platform source contract baseline
+        run: node scripts/check-platform-refactor-baseline.mjs
+      - name: Cross-module source contract baseline
+        run: node scripts/check-cross-module-refactor-contracts.mjs
+      - name: Additive Platform foundation safety assertions
+        run: node --test scripts/test-platform-foundation.test.mjs
+      - name: Deployment profiles
+        run: npm run check:deployment-profiles
+      - name: Portal, CRM and Tasks route availability
+        run: npm run check:modules
+      - name: Auth destination tests (admin, trainer, parent, student, CRM, Tasks)
+        run: npm run check:auth
+      - name: Server module checks
+        run: npm run check:backend-modules

@@ -8,7 +8,7 @@ const required=[
  "lib/server/razorpay-invoices.ts",
  "app/admin/invoices/page.tsx",
  "components/finance/EnrollmentInvoicePanel.tsx",
- "database/01_install/modules/schema/01_core_schema.sql"
+ "database/portal/schema/01_core_schema.sql"
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing Razorpay operations file: "+file);
 

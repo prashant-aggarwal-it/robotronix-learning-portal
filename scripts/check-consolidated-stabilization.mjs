@@ -9,7 +9,7 @@ const checks={
  "lib/server/system-log.ts":["SUPABASE_SERVICE_ROLE_KEY","portal_system_logs","reference_id"],
  "app/api/admin/portal-access/route.ts":["logSystemEvent","Reference:","action===\"provision\"","createUser","provisioned"],
  "components/admin/PortalAccessPanel.tsx":["Grant portal access","awaiting_first_login"],
- "app/login/page.tsx":["requestEmailSignInCode","verifyEmailSignInCode","Continue with Google"],
+ "app/login/page.tsx":["emailSignInCode(email)","verifySignInCode(email,code)","Continue with Google"],
  "__CANONICAL_SCHEMA__":["enable row level security","revoke all","public.is_admin()","provisioned","effective_payroll_month","payout_instruction_version_id","trainer_payout_instruction_lock_trg","service_role","purge_old_portal_system_logs","trainer_payout_action_insert_trg","notify_admin_on_onboarding_submission"],
  "app/admin/trainer-finance/[trainerId]/page.tsx":["Approve and lock the monthly payroll","netbanking transaction reference","agreed scheduled duration"],
  "lib/trainer-payroll.ts":["const scheduledMinutes=range.durationMinutes","durationMinutes:scheduledMinutes"],
@@ -29,6 +29,6 @@ for(const [file,needles] of Object.entries(checks)){
  else console.log("PASS",file);
 }
 for(const id of ["04_PRIORITY1_ACTION_NOTIFICATIONS","05_P2_P3_REALTIME_PUBLICATION","06_PORTAL_SYSTEM_LOGS","07_TRAINER_PAYROLL_CUTOFF","08_PASSWORDLESS_PORTAL_ACCESS","09_SYSTEM_LOG_RETENTION"]){
- if(existsSync(new URL("../database/01_install/"+id+".sql",import.meta.url))){console.error("FAIL redundant incremental file remains:",id);failures++;}
+ if(existsSync(new URL("../database/portal/"+id+".sql",import.meta.url))){console.error("FAIL redundant incremental file remains:",id);failures++;}
 }
 if(failures)process.exitCode=1;

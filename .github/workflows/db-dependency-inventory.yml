@@ -1,0 +1,36 @@
+name: Database dependency inventory
+on:
+  push:
+    branches: ['feature/portal-canonical-db-package']
+    paths:
+      - 'scripts/inventory-db-callers.mjs'
+      - 'scripts/check-db-catalog-compatibility.mjs'
+      - 'scripts/export-db-disposition-register.mjs'
+      - 'database/audit/dev_catalog_snapshot.json'
+      - '.github/workflows/db-dependency-inventory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate static database caller index
+        run: node scripts/inventory-db-callers.mjs artifacts/db-call-inventory
+      - name: Reconcile inventory against DEV catalog snapshot
+        run: node scripts/check-db-catalog-compatibility.mjs artifacts/db-compatibility
+      - name: Export conservative existing-object dispositions
+        if: always()
+        run: node scripts/export-db-disposition-register.mjs artifacts/db-object-dispositions
+      - name: Upload audit for architecture review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-caller-inventory
+          path: |
+            artifacts/db-call-inventory/
+            artifacts/db-compatibility/
+            artifacts/db-object-dispositions/
+          retention-days: 14

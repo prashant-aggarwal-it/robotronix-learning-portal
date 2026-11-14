@@ -2,6 +2,33 @@
 -- Exactly one latest definition per function signature; no historical patches.
 -- Requires Tasks schema and Supabase Auth; Portal and CRM are optional integrations.
 BEGIN;
+-- tasks.can_read(p_actor uuid, p_task uuid)
+CREATE OR REPLACE FUNCTION tasks.can_read(p_actor uuid, p_task uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO ''
+AS $function$
+ select exists(select 1 from tasks.items t where t.id=p_task and t.archived_at is null and (
+  (t.workspace_id is null and t.owner_user_id=p_actor)
+  or (t.workspace_id is not null and exists(select 1 from tasks.workspace_members m where m.workspace_id=t.workspace_id and m.user_id=p_actor)
+   and (t.owner_user_id=p_actor or t.assignee_user_id=p_actor or t.share_with_workspace
+    or exists(select 1 from tasks.task_collaborators c where c.task_id=t.id and c.user_id=p_actor)))))
+$function$;
+
+-- tasks.can_edit(p_actor uuid, p_task uuid)
+CREATE OR REPLACE FUNCTION tasks.can_edit(p_actor uuid, p_task uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO ''
+AS $function$
+ select exists(select 1 from tasks.items t where t.id=p_task and t.archived_at is null and (
+  (t.workspace_id is null and t.owner_user_id=p_actor)
+  or (t.workspace_id is not null and exists(select 1 from tasks.workspace_members m where m.workspace_id=t.workspace_id and m.user_id=p_actor)
+   and (t.owner_user_id=p_actor or exists(select 1 from tasks.task_collaborators c where c.task_id=t.id and c.user_id=p_actor and c.permission='edit')))))
+$function$;
+
 
 -- public.task_list(p_actor_id uuid, p_status text, p_limit integer, p_offset integer)
 CREATE OR REPLACE FUNCTION public.task_list(p_actor_id uuid, p_status text DEFAULT NULL::text, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0)
@@ -237,33 +264,6 @@ CREATE OR REPLACE FUNCTION public.task_category_archive(p_actor_id uuid, p_id uu
 AS $function$
  with changed as (update tasks.categories set archived_at=now() where owner_user_id=p_actor_id and id=p_id and archived_at is null returning id)
  select exists(select 1 from changed);
-$function$;
-
--- tasks.can_read(p_actor uuid, p_task uuid)
-CREATE OR REPLACE FUNCTION tasks.can_read(p_actor uuid, p_task uuid)
- RETURNS boolean
- LANGUAGE sql
- STABLE
- SET search_path TO ''
-AS $function$
- select exists(select 1 from tasks.items t where t.id=p_task and t.archived_at is null and (
-  (t.workspace_id is null and t.owner_user_id=p_actor)
-  or (t.workspace_id is not null and exists(select 1 from tasks.workspace_members m where m.workspace_id=t.workspace_id and m.user_id=p_actor)
-   and (t.owner_user_id=p_actor or t.assignee_user_id=p_actor or t.share_with_workspace
-    or exists(select 1 from tasks.task_collaborators c where c.task_id=t.id and c.user_id=p_actor)))))
-$function$;
-
--- tasks.can_edit(p_actor uuid, p_task uuid)
-CREATE OR REPLACE FUNCTION tasks.can_edit(p_actor uuid, p_task uuid)
- RETURNS boolean
- LANGUAGE sql
- STABLE
- SET search_path TO ''
-AS $function$
- select exists(select 1 from tasks.items t where t.id=p_task and t.archived_at is null and (
-  (t.workspace_id is null and t.owner_user_id=p_actor)
-  or (t.workspace_id is not null and exists(select 1 from tasks.workspace_members m where m.workspace_id=t.workspace_id and m.user_id=p_actor)
-   and (t.owner_user_id=p_actor or exists(select 1 from tasks.task_collaborators c where c.task_id=t.id and c.user_id=p_actor and c.permission='edit')))))
 $function$;
 
 -- public.task_access_check(p_actor_id uuid, p_task_id uuid)

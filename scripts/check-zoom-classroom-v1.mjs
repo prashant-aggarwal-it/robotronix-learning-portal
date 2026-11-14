@@ -19,7 +19,7 @@ const required=[
  "components/ZoomClassActions.tsx",
  "lib/server/zoom-classroom.ts",
  "lib/server/zoom-recording.ts",
- "database/01_install/modules/schema/01_core_schema.sql"
+ "database/portal/schema/01_core_schema.sql"
 ];
 for(const file of required)if(!fs.existsSync(file))throw new Error("Missing Zoom Classroom V1 file: "+file);
 
