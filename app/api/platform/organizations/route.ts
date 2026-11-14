@@ -8,7 +8,7 @@ const noStore={"Cache-Control":"no-store"};
 /** Opt-in organization discovery; does not alter legacy Portal, CRM or Tasks authorization. */
 export async function GET(request:NextRequest){
  try {
-  const token=request.headers.get("authorization")?.match(/^Bearer\\s+([^\\s]+)$/i)?.[1]??"";
+  const token=request.headers.get("authorization")?.match(/^Bearer\s+([^\s]+)$/i)?.[1]??"";
   const {organizations}=await getAuthorizedOrganizations(token);
   const selected=resolveAuthorizedOrganization(organizations,request.nextUrl.searchParams.get("organizationId"));
   return NextResponse.json({ok:true,organizations,selectedOrganizationId:selected?.id??null,
