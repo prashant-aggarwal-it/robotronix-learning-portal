@@ -76,10 +76,10 @@ async function run(){
  if(setupLinks.error||!setupLinks.data?.crmA||!setupLinks.data?.tasksB)
   throw new Error("DEV Phase 3A mapping fixtures failed: "+(setupLinks.error?.message||"invalid fixture"));
  links=setupLinks.data;
- const templateRows=await admin.schema("saas").from("academy_course_templates").select("course_id").eq("availability","available").limit(1);
- if(templateRows.error||!templateRows.data?.[0]?.course_id)throw new Error("Shared Academy template catalog unavailable");
+ const templateRows=await admin.from("courses").select("id").eq("code","RTX-PYTHON").limit(1);
+ if(templateRows.error||!templateRows.data?.[0]?.id)throw new Error("Shared Academy template catalog unavailable");
  const adopted=await admin.rpc("saas_academy_clone_course_template",{
-  p_actor_id:a.id,p_organization_id:A,p_template_id:templateRows.data[0].course_id,
+  p_actor_id:a.id,p_organization_id:A,p_template_id:templateRows.data[0].id,
   p_slug:name+"-adopted",p_code:("SAAS-E2E-ADOPTED-"+name.slice(-10)).toUpperCase()
  });
  if(adopted.error||!adopted.data)throw new Error("Tenant-owned course adoption failed: "+(adopted.error?.message||"no course id"));
