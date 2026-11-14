@@ -1,10 +1,12 @@
-name: DEV SaaS Academy authenticated two-tenant E2E
+name: DEV SaaS authenticated Academy and Phase 3A two-tenant E2E
 on:
   push:
     branches:
       - feature/education-suite-release1
     paths:
       - scripts/saas-two-tenant-e2e.mjs
+      - app/api/platform/organization-links/route.ts
+      - database/saas/12_module_links_rpc.sql
       - .github/workflows/saas-two-tenant-e2e.yml
   workflow_dispatch:
 permissions:
@@ -26,5 +28,5 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
-      - name: Authenticated real HTTP two-tenant Academy test on verified DEV project only
+      - name: Authenticated DEV Academy and linked CRM/Tasks tenant isolation test
         run: node scripts/saas-two-tenant-e2e.mjs
