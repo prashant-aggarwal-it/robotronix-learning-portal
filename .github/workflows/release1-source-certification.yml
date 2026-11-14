@@ -1,0 +1,49 @@
+name: Education Suite Release 1 source certification
+on:
+  push:
+    branches:
+      - feature/education-suite-release1
+    paths:
+      - 'app/**'
+      - 'lib/**'
+      - 'components/**'
+      - 'database/**'
+      - 'scripts/**'
+      - 'qa/**'
+      - 'config/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/release1-source-certification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-certification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Release source regression suite
+        run: npm run check:release
+      - name: Source security checks
+        run: npm run check:security
+      - name: Database package preflight
+        run: node scripts/check-release1-db-preflight.mjs
+      - name: Dynamic database contract preflight
+        run: node scripts/check-release1-dynamic-db-targets.mjs
+      - name: Publish non-sensitive check reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release1-source-certification
+          path: |
+            artifacts/release1-certification/
+            artifacts/release1-dynamic-contracts/
+          retention-days: 14
