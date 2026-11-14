@@ -19,6 +19,9 @@ BEGIN
  OR (SELECT count(*) FROM saas.memberships WHERE user_id=p_user_multi AND organization_id IN (p_school_a,p_school_b) AND status='active')<>2 THEN
   RAISE EXCEPTION 'Synthetic memberships missing' USING ERRCODE='42501';
  END IF;
+ INSERT INTO tasks.accounts(user_id,display_name) VALUES
+ (p_user_a,'SaaS E2E Tester A'),(p_user_b,'SaaS E2E Tester B'),(p_user_multi,'SaaS E2E Tester Multi')
+ ON CONFLICT (user_id) DO NOTHING;
  INSERT INTO connect.tenants(id,slug,name) VALUES
  (ca,'saas-e2e-crm-a-'||left(replace(ca::text,'-',''),12),'SaaS E2E CRM A'),
  (cb,'saas-e2e-crm-b-'||left(replace(cb::text,'-',''),12),'SaaS E2E CRM B');
