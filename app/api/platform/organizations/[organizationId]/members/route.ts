@@ -11,7 +11,7 @@ export async function GET(request:NextRequest,context:{params:Promise<{organizat
   const {organizationId}=await context.params;
   if(!uuid.test(organizationId))return NextResponse.json({ok:false,error:"Invalid organization"},{status:400,headers});
   const bearer=readBearerToken(request.headers.get("authorization"));
-  const {organizations}=await getAuthorizedOrganizations(bearer);
+  const {userId:actorId,organizations}=await getAuthorizedOrganizations(bearer);
   const org=resolveAuthorizedOrganization(organizations,organizationId);
   if(!org||!roleHasCapability(org.role,"saas.members.manage"))
    throw new SaaSAccessError(403,"Membership access denied");
@@ -19,7 +19,6 @@ export async function GET(request:NextRequest,context:{params:Promise<{organizat
   const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!key)throw new SaaSAccessError(503,"Service unavailable");
   const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
-  const {userId:actorId}=await getAuthorizedOrganizations(bearer);
   const {data,error}=await db.rpc("saas_list_members_v1",{p_actor_id:actorId,p_organization_id:organizationId});
   if(error)throw new SaaSAccessError(503,"Membership list unavailable");
   return NextResponse.json({ok:true,organizationId,members:data??[]},{headers});

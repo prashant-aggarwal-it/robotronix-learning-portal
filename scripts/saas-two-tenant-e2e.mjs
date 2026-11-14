@@ -198,6 +198,12 @@ async function run(){
   assert(r.status===200&&r.body?.workspaces?.some(w=>w.tenant_id===expected)&&
    !r.body.workspaces.some(w=>w.tenant_id===excluded),label+" CRM module isolation");
  }
+ r=await request(b,"GET","/api/connect/workspaces/"+links.crmA+"/members");
+ assert(r.status===403,"Other organization's CRM member roster denied");
+ r=await request(a,"GET","/api/connect/workspaces/"+links.crmA+"/members");
+ assert(r.status===200&&Array.isArray(r.body?.members),"Owner can read own CRM workspace members");
+ r=await request(b,"PATCH","/api/connect/workspaces/"+links.crmA+"/members/00000000-0000-4000-8000-000000000001",{role:"viewer",status:"active"});
+ assert(r.status===403,"Other organization's CRM member update denied");
  r=await request(multi,"GET","/api/connect/workspaces");
  assert(r.status===200&&r.body?.workspaces?.some(w=>w.tenant_id===links.crmA)&&
   r.body.workspaces.some(w=>w.tenant_id===links.crmB),"Multi-organization CRM memberships");
@@ -228,6 +234,10 @@ async function run(){
  r=await request(b,"GET","/api/tasks?limit=100");
  assert(r.status===200&&!r.body?.items?.some(t=>t.id===privateTaskId),
   "Other school member cannot see personal task");
+ r=await request(b,"PATCH","/api/tasks/"+privateTaskId,{status:"done"});
+ assert(r.status===404||r.status===403,"Foreign member cannot modify personal task");
+ r=await request(b,"DELETE","/api/tasks/"+privateTaskId);
+ assert(r.status===404||r.status===403,"Foreign member cannot archive personal task");
  r=await request(multi,"GET","/api/tasks?limit=100");
  assert(r.status===200&&!r.body?.items?.some(t=>t.id===privateTaskId),
   "Multi-organization member cannot see another user's personal task");
