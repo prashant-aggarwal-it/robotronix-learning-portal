@@ -3,12 +3,15 @@ on:
   push:
     branches:
       - feature/education-suite-release1
+      - feature/education-suite-phase3d
     paths:
       - scripts/saas-two-tenant-e2e.mjs
       - scripts/saas-phase3c-invitations-e2e.mjs
       - app/api/platform/organization-links/route.ts
       - database/saas/12_module_links_rpc.sql
       - database/saas/3*.sql
+      - database/saas/45_phase3d_crm_tasks_owner_sync_guard.sql
+      - database/shared/integrations/02_tasks_crm.sql
       - database/saas/2*.sql
       - app/api/zoom/**
       - app/api/admin/invoices/**
