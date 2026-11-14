@@ -355,6 +355,20 @@ async function run(){
  if(createdSchedule?.id)syntheticScheduleIds.push(createdSchedule.id);
  const directB=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false},
   global:{headers:{authorization:"Bearer "+b.token,"x-organization-id":B}}});
+ for(const [actor,expected,label] of [
+  [a,true,"School A Admin"],
+  [b,false,"School B Admin"],
+  [parent,true,"School A Parent"],
+  [studentActor,true,"School A Student"],
+  [trainerActor,true,"School A Trainer"]
+ ]){
+  const {data,error}=await admin.rpc("saas_academy_schedule_scope",{
+   p_actor_id:actor.id,p_schedule_event_id:createdSchedule.id
+  });
+  assert(!error&&data===expected,label+" Zoom classroom ownership scope");
+ }
+ r=await request(b,"GET","/api/zoom/classroom/"+createdSchedule.id);
+ assert(r.status===403,"Foreign School B user cannot retrieve School A Zoom classroom");
  const {data:foreignSchedule,error:foreignScheduleReadError}=await directB.from("schedule_events")
   .select("id").eq("id",createdSchedule.id);
  assert(!foreignScheduleReadError&&foreignSchedule?.length===0,"School B cannot read School A class");
