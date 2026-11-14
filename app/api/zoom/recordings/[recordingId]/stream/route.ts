@@ -23,6 +23,15 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
   stage="meeting";
   const {data:meeting,error:meetingError}=await db.from("zoom_meetings").select("id,host_account_id,zoom_meeting_id,zoom_meeting_uuid,schedule_event_id,purpose,learner_recording_visible").eq("id",recording.zoom_meeting_id).maybeSingle();
   if(meetingError||!meeting)return new NextResponse("Recording meeting is unavailable.",{status:404});
+  stage="saas-authorization";
+  // A signed legacy recording token is not sufficient for a SaaS Admin to stream
+  // a different organization's recording. Verify current tenant membership and
+  // all class ownership links before contacting the Zoom provider.
+  const {data:saasAllowed,error:saasScopeError}=await db.rpc("saas_academy_recording_scope",{
+   p_actor_id:grant.profileId,p_recording_id:recordingId
+  });
+  if(saasScopeError||saasAllowed===false)
+   return new NextResponse("Recording is not accessible for this organization.",{status:403,headers:{"Cache-Control":"private, no-store"}});
   stage="authorization";
   let allowed=profile.role==="admin";
   if(!allowed&&meeting.purpose==="class"&&meeting.schedule_event_id){
