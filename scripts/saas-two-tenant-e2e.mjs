@@ -15,6 +15,7 @@ const base="http://127.0.0.1:3457";
 const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
 const users=[];
 const adoptedCourseIds=[];
+const syntheticScheduleIds=[];
 let schools=null,links=null,server=null;
 let passed=0;
 const assert=(condition,label)=>{if(!condition)throw new Error("FAILED: "+label);passed++;console.log("PASS: "+label)};
@@ -303,6 +304,38 @@ async function run(){
  assert(Boolean(foreignInsert)&&foreignInsert.code==="42501",
   "Legacy direct enrollment insert rejects cross-school course relationships");
  const ea=await create(a,A,"enrollments",{student_id:sa,course_id:ca,trainer_id:ta});
+ const scheduleInput={
+  trainer_id:ta,course_id:ca,enrollment_id:ea,student_id:sa,
+  title:"SaaS E2E Class A",date:"2027-01-15",start_time:"12:00",end_time:"13:00",
+  event_type:"class",delivery_mode:"one_to_one"
+ };
+ const {data:createdSchedule,error:scheduleError}=await directA.from("schedule_events")
+  .insert(scheduleInput).select("id").single();
+ assert(!scheduleError&&Boolean(createdSchedule?.id),"School A can create its own class through legacy REST");
+ if(createdSchedule?.id)syntheticScheduleIds.push(createdSchedule.id);
+ const directB=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false},
+  global:{headers:{authorization:"Bearer "+b.token,"x-organization-id":B}}});
+ const {data:foreignSchedule,error:foreignScheduleReadError}=await directB.from("schedule_events")
+  .select("id").eq("id",createdSchedule.id);
+ assert(!foreignScheduleReadError&&foreignSchedule?.length===0,"School B cannot read School A class");
+ const {error:badScheduleWrite}=await directA.from("schedule_events").insert({
+  ...scheduleInput,trainer_id:tb,title:"SaaS E2E Foreign Trainer Class"
+ });
+ assert(Boolean(badScheduleWrite)&&badScheduleWrite.code==="42501",
+  "School A cannot schedule a trainer belonging to School B");
+ const {data:attendance,error:attendanceError}=await directA.from("class_attendance").insert({
+  schedule_event_id:createdSchedule.id,student_id:sa,enrollment_id:ea,status:"attended"
+ }).select("id").single();
+ assert(!attendanceError&&Boolean(attendance?.id),"School A can record attendance for its own class");
+ const {data:foreignAttendance,error:foreignAttendanceError}=await directB.from("class_attendance")
+  .select("id").eq("id",attendance.id);
+ assert(!foreignAttendanceError&&foreignAttendance?.length===0,"School B cannot read School A attendance");
+ const {error:badAttendance}=await directA.from("class_attendance").insert({
+  schedule_event_id:createdSchedule.id,student_id:sb,enrollment_id:ea,status:"attended"
+ });
+ assert(Boolean(badAttendance)&&badAttendance.code==="42501",
+  "Attendance rejects a foreign-school student even when the class is local");
+
  assert(Boolean(ea&&tb),"Authorized enrollment created");
  r=await request(a,"GET","/api/platform/academy/students?organizationId="+A);
  assert(r.status===200&&r.body?.data?.length===2&&r.body.data.some(x=>x.id===sa)&&r.body.data.some(x=>x.id===directCreated.id)&&!r.body.data.some(x=>x.id===sb),"School A lists both authorized students and excludes School B");
@@ -340,6 +373,10 @@ finally{
    server.once("close",()=>{clearTimeout(limit);resolve()});
   });
   server.stdout?.destroy();server.stderr?.destroy();
+ }
+ if(syntheticScheduleIds.length){
+  const {error}=await admin.from("schedule_events").delete().in("id",syntheticScheduleIds);
+  if(error){console.error("Synthetic schedule cleanup failed: "+error.message);failure??=error}
  }
  if(adoptedCourseIds.length){
   const {error}=await admin.from("courses").delete().in("id",adoptedCourseIds);
