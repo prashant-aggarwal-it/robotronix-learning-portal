@@ -11,10 +11,11 @@ const currentId:Record<"portal"|"connect"|"tasks",ProductId>={portal:"portal",co
 export function ApplicationSwitcher({current}:{current:"portal"|"connect"|"tasks"}){
  const products=useAuthorizedProducts();
  const selected=currentId[current];
- if(products.length<2||!products.some(product=>product.id===selected))return null;
+ if(!products.some(product=>product.id===selected))return null;
  const ordered=[...products].sort((a,b)=>Number(b.id===selected)-Number(a.id===selected));
  return <nav className="portalWorkspaceSwitch" aria-label="Switch application">
   <span className="portalWorkspaceSwitchLabel">SUITE MODULES</span>
+  <Link href="/suite" className="portalWorkspaceLink" title="Open Suite home">▦ <span>Suite Home</span></Link>
   {ordered.map(product=>product.id===selected?
    <span key={product.id} className="portalWorkspaceCurrent" aria-current="page" title={product.label}>
     {icons[product.id]} <span>{product.label}</span>
