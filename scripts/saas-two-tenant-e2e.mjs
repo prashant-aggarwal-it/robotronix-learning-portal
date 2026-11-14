@@ -15,6 +15,7 @@ const base="http://127.0.0.1:3457";
 const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
 const users=[];
 const adoptedCourseIds=[];
+const syntheticParentIds=[];
 const syntheticScheduleIds=[];
 let schools=null,links=null,server=null;
 let passed=0;
@@ -65,6 +66,7 @@ async function startServer(){
 }
 async function run(){
  const a=await account("a"),b=await account("b"),multi=await account("multi");
+ const parent=await account("parent"),studentActor=await account("student"),trainerActor=await account("trainer");
  const setup=await admin.rpc("saas_qa_fixture_create",{
   p_user_a:a.id,p_user_b:b.id,p_user_multi:multi.id
  });
@@ -81,9 +83,18 @@ async function run(){
  const {error:profileSetupError}=await admin.from("profiles").upsert([
   {id:a.id,full_name:"SaaS E2E Admin A",role:"admin",active:true},
   {id:b.id,full_name:"SaaS E2E Admin B",role:"admin",active:true},
-  {id:multi.id,full_name:"SaaS E2E Admin Multi",role:"admin",active:true}
+  {id:multi.id,full_name:"SaaS E2E Admin Multi",role:"admin",active:true},
+  {id:parent.id,full_name:"SaaS E2E Parent",role:"parent",active:true},
+  {id:studentActor.id,full_name:"SaaS E2E Student User",role:"student",active:true},
+  {id:trainerActor.id,full_name:"SaaS E2E Trainer User",role:"trainer",active:true}
  ],{onConflict:"id"});
  if(profileSetupError)throw new Error("Synthetic Academy role profiles unavailable: "+profileSetupError.message);
+ for(const [actor,role] of [[parent,"member"],[studentActor,"member"],[trainerActor,"trainer"]]){
+  const {error}=await admin.rpc("saas_qa_add_synthetic_member",{
+   p_actor_id:actor.id,p_organization_id:A,p_role_key:role
+  });
+  if(error)throw new Error("Synthetic Academy role membership failed: "+error.message);
+ }
 
  const templateRows=await admin.from("courses").select("id").eq("code","RTX-PYTHON").limit(1);
  if(templateRows.error||!templateRows.data?.[0]?.id)throw new Error("Shared Academy template catalog unavailable");
@@ -322,6 +333,16 @@ async function run(){
  });
  assert(Boolean(foreignInsert)&&foreignInsert.code==="42501",
   "Legacy direct enrollment insert rejects cross-school course relationships");
+ const {error:studentLinkError}=await admin.from("students").update({profile_id:studentActor.id}).eq("id",sa);
+ if(studentLinkError)throw new Error("Synthetic student user link failed: "+studentLinkError.message);
+ const {error:trainerLinkError}=await admin.from("trainers").update({profile_id:trainerActor.id}).eq("id",ta);
+ if(trainerLinkError)throw new Error("Synthetic trainer user link failed: "+trainerLinkError.message);
+ const {data:parentRecord,error:parentRecordError}=await admin.from("parents")
+  .insert({profile_id:parent.id}).select("id").single();
+ if(parentRecordError||!parentRecord?.id)throw new Error("Synthetic parent profile link failed: "+(parentRecordError?.message||"no parent ID"));
+ syntheticParentIds.push(parentRecord.id);
+ const {error:parentLinkError}=await admin.from("parent_students").insert({parent_id:parentRecord.id,student_id:sa});
+ if(parentLinkError)throw new Error("Synthetic parent student link failed: "+parentLinkError.message);
  const ea=await create(a,A,"enrollments",{student_id:sa,course_id:ca,trainer_id:ta});
  const scheduleInput={
   trainer_id:ta,course_id:ca,enrollment_id:ea,student_id:sa,
@@ -356,6 +377,13 @@ async function run(){
   "Attendance rejects a foreign-school student even when the class is local");
 
  assert(Boolean(ea&&tb),"Authorized enrollment created");
+ assert((await directRead(parent,A,sa)).length===1,"Parent can read own School A child");
+ assert((await directRead(parent,A,sb)).length===0,"Parent cannot read School B student");
+ assert((await directRead(studentActor,A,sa)).length===1,"Student can read own School A record");
+ assert((await directRead(studentActor,A,sb)).length===0,"Student cannot read School B record");
+ assert((await directRead(trainerActor,A,sa)).length===1,"Trainer can read assigned School A learner");
+ assert((await directRead(trainerActor,A,sb)).length===0,"Trainer cannot read unassigned School B learner");
+
  r=await request(a,"GET","/api/platform/academy/students?organizationId="+A);
  assert(r.status===200&&r.body?.data?.length===2&&r.body.data.some(x=>x.id===sa)&&r.body.data.some(x=>x.id===directCreated.id)&&!r.body.data.some(x=>x.id===sb),"School A lists both authorized students and excludes School B");
  r=await request(b,"GET","/api/platform/academy/students?organizationId="+B);
@@ -427,6 +455,12 @@ finally{
   if(attendanceCleanupError){console.error("Synthetic attendance cleanup failed: "+attendanceCleanupError.message);failure??=attendanceCleanupError}
   const {error}=await admin.from("schedule_events").delete().in("id",syntheticScheduleIds);
   if(error){console.error("Synthetic schedule cleanup failed: "+error.message);failure??=error}
+ }
+ if(syntheticParentIds.length){
+  const {error:relationshipCleanup}=await admin.from("parent_students").delete().in("parent_id",syntheticParentIds);
+  if(relationshipCleanup){console.error("Synthetic parent link cleanup failed: "+relationshipCleanup.message);failure??=relationshipCleanup}
+  const {error}=await admin.from("parents").delete().in("id",syntheticParentIds);
+  if(error){console.error("Synthetic parent cleanup failed: "+error.message);failure??=error}
  }
  if(adoptedCourseIds.length){
   const {error}=await admin.from("courses").delete().in("id",adoptedCourseIds);
