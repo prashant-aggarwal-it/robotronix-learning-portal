@@ -255,7 +255,7 @@ async function run(){
   global:{headers:{authorization:"Bearer "+a.token,"x-organization-id":A}}});
  const {data:directCreated,error:directCreateError}=await directA.from("students")
   .insert({full_name:"SaaS E2E Direct Student A",grade:"5",school:"Synthetic School A"}).select("id").single();
- assert(!directCreateError&&Boolean(directCreated?.id),"Legacy browser insert creates organization-owned student atomically");
+ assert(!directCreateError&&Boolean(directCreated?.id),"Legacy browser insert creates organization-owned student atomically"+(directCreateError?" ("+directCreateError.code+")":""));
  if(directCreated?.id){
   const {data:linked,error:linkError}=await admin.rpc("saas_academy_resource_owned",{
    p_actor_id:a.id,p_organization_id:A,p_kind:"students",p_resource_id:directCreated.id
