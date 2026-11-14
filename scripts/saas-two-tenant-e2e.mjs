@@ -61,7 +61,7 @@ async function startServer(){
    ...process.env,
    NEXT_PUBLIC_APP_ENV:"live",SUPABASE_URL:url,NEXT_PUBLIC_SUPABASE_URL:url,
    NEXT_PUBLIC_SUPABASE_ANON_KEY:anon,SUPABASE_SERVICE_ROLE_KEY:service,
-   PRODUCT_MODE:"combined"
+   PRODUCT_MODE:"combined",ENABLED_INTEGRATIONS:"crmPortal,crmTasks,portalTasks"
   }
  });
  let output="";
