@@ -91,6 +91,6 @@ test.describe("Phase 3 form quality release contracts",()=>{
   const schema=readCanonicalSql();
   expect(schema).toContain("onboarding_submission_admin_notification_trg");
   for(const table of ["portal_access_requests","student_invoices","zoom_meetings","zoom_recordings"])expect(schema).toContain(table);
-  expect(source("database/03_verify/01_VERIFY_RELEASE.sql")).toContain("CONSOLIDATED_AUDIT_COVERAGE_GATE");
+  expect(source("database/portal/verify.sql")).toContain("CONSOLIDATED_AUDIT_COVERAGE_GATE");
  });
 });
