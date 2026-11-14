@@ -39,3 +39,9 @@ The certified three-customer tests cover independent integrations, onboarding ad
 - [Source certification 43625449088](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449088): PASS for latest scheduler behavior; [source certification 43625614582](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625614582): PASS with read-only preflight file.
 - [Authenticated DEV regression 43625449064](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449064): running at report update, so no unobserved PASS claim.
 - **Staging certification remains PARTIAL.** No separate staging environment or production backup rehearsal is authorized, and no live Zoom/WhatsApp/Razorpay sandbox evidence exists in this assignment.
+
+## Final Phase 3F automated DEV verification
+- [Source certification 43625614582](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625614582): **PASS** on final source-change SHA `f5d2a51a` (earlier `562d86e3` source run also PASS).
+- [Authenticated DEV E2E 43625449064](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449064): **PASS** on final behavioral-change SHA `562d86e3`, 175 authenticated Academy/CRM/Tasks assertions and 17 Phase 3C regressions; subsequent commits changed only read-only preflight SQL and documentation.
+- Read-only DEV preflight: **11/11 PASS**.
+- **Automated DEV certification: PASS** for tested code. **Overall Phase 3F production-readiness certification: PARTIAL; NO-GO**, because no separately authorized staging clone, restoration rehearsal, provider sandbox tests or PROD inventory was performed.

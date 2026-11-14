@@ -31,3 +31,9 @@ Go only after security review, latest-source E2E verification, production schema
 - Added explicit scheduler-owner guards on both CRM history drain and portal system-log retention, covering the configured Netlify scheduled functions. Source contract included and current-branch CI triggered.
 - Verified no missing explicit `search_path` in SECURITY DEFINER function catalog across `public`, `connect`, `saas`, `tasks`.
 - **NO-GO remains:** external provider tests, independent staging deployments, approved staging clone and rollback rehearsal, settings controlled by dashboard, and detailed grants/policy assessment have not been executed. Do not represent Phase 3F as full production release certification.
+
+## Final Phase 3F automated DEV verification
+- [Source certification 43625614582](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625614582): **PASS** on final source-change SHA `f5d2a51a` (earlier `562d86e3` source run also PASS).
+- [Authenticated DEV E2E 43625449064](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449064): **PASS** on final behavioral-change SHA `562d86e3`, 175 authenticated Academy/CRM/Tasks assertions and 17 Phase 3C regressions; subsequent commits changed only read-only preflight SQL and documentation.
+- Read-only DEV preflight: **11/11 PASS**.
+- **Automated DEV certification: PASS** for tested code. **Overall Phase 3F production-readiness certification: PARTIAL; NO-GO**, because no separately authorized staging clone, restoration rehearsal, provider sandbox tests or PROD inventory was performed.
