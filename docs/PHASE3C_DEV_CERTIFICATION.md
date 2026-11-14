@@ -83,3 +83,8 @@ Status: **PARTIAL**. The capability matrix alone is insufficient to certify auth
 - GitHub Actions queued for latest commit: source certification 43598909116; authenticated DEV E2E 43598909093. Results were queued at last inspection and must not be treated as PASS.
 - A DEV transaction-only owner fixture test returned no SQL error and was rolled back; do not substitute that for user-level authenticated role coverage. DEV remains without persistent test memberships.
 - Current status: **PARTIAL — NOT DEV CERTIFIED**. Required latest-commit typecheck, source tests, authenticated cross-tenant role-management and regression verification still pending evidence. No PROD/Netlify/main changes were made.
+
+## Confirmed DEV transactional security checks
+- A rollback-contained DEV test returned PASS after verifying three denied operations against a temporary organization and membership: last-active-owner demotion, self-removal, and cross-organization membership change. Temporary records were rolled back. This is a SQL-level guard check, not a full HTTP authenticated test.
+- GitHub Actions source-certification run 43598820332 for commit 57469fce62a54031a195de0ea57189956981880a has **conclusion: success**. Subsequent code commits are not covered by this result; later runs were in progress at last check.
+- Overall decision remains **PARTIAL — NOT DEV CERTIFIED** pending latest HEAD successful CI, complete CRM/Tasks security review and authenticated role-management E2E evidence.
