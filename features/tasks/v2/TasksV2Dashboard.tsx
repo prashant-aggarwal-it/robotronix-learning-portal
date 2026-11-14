@@ -4,6 +4,7 @@ import {useCallback,useEffect,useMemo,useRef,useState,type CSSProperties,type Fo
 import {useRouter} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
+import {SuiteContextLink} from "@/components/SuiteContextLink";
 import {TasksNotifications} from "./TasksNotifications";
 import {TasksPrimaryNav} from "./TasksPrimaryNav";
 import {TasksContextTabs} from "./TasksContextTabs";
@@ -268,7 +269,7 @@ export function TasksV2Dashboard(){
   <main className="mt2-main">
    <header className="mt2-header">
     <button className="mt2-mobile-menu" aria-label="Open navigation" onClick={()=>setMobileNav(true)}><Icon name="menu"/></button>
-    <div className="mt2-breadcrumb">MY TASKS <span>/</span> {view==="day"?"My Day":view==="all"?"All Tasks":"Inbox"}</div>
+    <div className="mt2-breadcrumb"><SuiteContextLink module="tasks"/> <span>/</span> {view==="day"?"My Day":view==="all"?"All Tasks":"Inbox"}</div>
     <div className="mt2-header-actions"><TasksNotifications/><span className="mt2-sync"><i/> Your personal workspace</span></div>
    </header>
    <div className="mt2-page">
