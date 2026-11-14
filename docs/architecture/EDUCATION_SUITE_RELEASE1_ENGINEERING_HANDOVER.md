@@ -34,7 +34,10 @@ These changes validate and protect **existing** canonical SQL; they do not repla
 - GitHub Actions `Database dependency inventory` success for `c7bb34cc` and `b1b362b2`.
 - GitHub Actions `Education Suite Release 1 source certification` passed at `21018dbb` and `daff89ec`, with typecheck, release source checks, security and package-generator preflight.
 - The source-certification run `bae94f72` passed with the dynamic signature audit code present.
-- Additional commits will require current-run verification; do not infer success from prior runs.
+- - Latest targeted offline Playwright rerun on commit `2f047aa1` completed successfully: GitHub Actions run `43551387784`, including typecheck, source release suite, targeted finance/scheduling/form checks, security, canonical installer generation and preflight.
+- Database dependency inventory on commit `08c86a24` completed successfully: run `43551233241`; 619 recognised literal DB calls had no missing names, 35 dynamic targets resolved, and 93 inline literal RPC argument-key checks matched their signature names.
+
+Additional commits will require current-run verification; do not infer success from prior runs.
 
 Generated SQL presence and package/marker checks are **static**. No isolated database execution, true RLS behavioural proof or payment/Zoom/CRM provider E2E proof occurred.
 
