@@ -21,6 +21,7 @@
 4. Apply source 49: per-request authorized CRM↔Academy access scope, installer validity.
 5. Apply source 50: database trigger for legacy/direct installation safety, then replace global unique active index with per-tenant index. Keep all changes in one controlled migration window.
 6. Apply source 51: require BOTH CRM and Academy module entitlements on activation, access and direct integration writes.
+7. Apply source 52: require CRM admission enrollment/student and CRM demo trainer/schedule foreign IDs to belong to the mapped Academy tenant. Apply in staging before re-enabling multi-customer demos/admissions.
 7. Deploy matching application branch only after PROD SQL functions and policy grants are present; do not expose a window where SaaS clients can use an unscoped fallback.
 8. Configure mapped organizations, CRM tenant links, Academy/CRM/Tasks module entitlements and owner/admin memberships. Confirm each tenant mapping is unique.
 9. Activate first test tenant, then second, then third. Verify A/B/C active simultaneously with no data cross-over, then test B disable/re-enable and unchanged A/C behavior.
@@ -62,3 +63,7 @@ The production deployment itself requires separate explicit user authorization a
 - Supabase DEV security advisors currently report 15 anonymous EXECUTE grants on legacy SECURITY DEFINER helper functions, 35 authenticated grants, and leaked-password protection not enabled. Review each legacy helper for RPC exposure; do not blanket-revoke RLS helpers that application policies require. Enable supported authentication password protection before release.
 - Explicitly verify Netlify job configuration and credentials for all scheduled functions; do not enable competing pg_cron or external schedules. Current DEV has no pg_cron extension installed.
 - During production change control, verify migration step 51 and execute a staging three-customer test that disables CRM entitlement for one tenant without impacting the other two.
+
+## Additional cross-record data safety
+
+The required Phase 3E additive package now includes migration **52**, which guards the CRM admission handoff's Academy student/enrollment IDs and CRM demo links' Academy trainer/schedule IDs. Smoke tests must attempt foreign A→C enrollment and foreign demo trainer links and observe safe denial, not just test menu navigation. External Zoom is not exercised during synthetic DEV E2E and remains a go-live verification dependency.

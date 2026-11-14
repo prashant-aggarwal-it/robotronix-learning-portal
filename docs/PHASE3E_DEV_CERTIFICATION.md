@@ -66,3 +66,11 @@ Phase 3E code state (test jobs initiated):
 - Source and strict TypeScript certification [43615868850](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43615868850): **SUCCESS** on `584271f7`.
 - Latest three-customer authenticated run [43615868864](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43615868864) was pending at last inspection. This remains an explicit certification gate.
 - Supabase DEV advisors still report 15 anonymously executable legacy SECURITY DEFINER helpers, 35 authenticated ones, and disabled leaked-password protection. They require release security review. Phase 3E functions themselves are service-role-only.
+
+## Record-level cross-customer protection — implemented
+
+- `database/saas/52_phase3e_portal_record_ownership.sql` applied on DEV as `phase3e_portal_record_ownership`. A confirmed CRM admission must reference an Academy student and active enrollment in the CRM tenant's mapped SaaS organization. Scheduled CRM demo links must reference an Academy trainer and schedule in that same organization.
+- DEV-only `database/saas/dev_only/11_phase3e_cross_record_probe.sql` adds an explicitly synthetic, guarded attempt to attach CRM A to Academy C enrollment; authenticated E2E now requires SQLSTATE `42501` denial.
+- Per-tenant CRM admission acceptance for customers B and C and Academy student/course/trainer/enrollment for customer C are included in the newest synthetic E2E run.
+- **Source certification:** [GitHub Actions 43616182248](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43616182248), source commit `8333c8fd` — **PASS**.
+- **Authenticated latest-code DEV E2E:** [GitHub Actions 43616182287](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43616182287) — pending at report update; no premature assertion count or PASS claim.
