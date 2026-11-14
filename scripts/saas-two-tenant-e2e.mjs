@@ -29,9 +29,21 @@ async function account(suffix){
  if(error||!data?.user)throw new Error("Unable to create synthetic Auth account: "+(error?.message||"unknown error"));
  users.push(data.user.id);
  const browser=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
- const login=await browser.auth.signInWithPassword({email,password});
- if(login.error||!login.data.session)throw new Error("Synthetic user sign-in failed");
- return {id:data.user.id,token:login.data.session.access_token,session:login.data.session};
+ let session=null;
+ let lastError=null;
+ for(let attempt=0;attempt<4;attempt++){
+  const login=await browser.auth.signInWithPassword({email,password});
+  if(login.data.session){session=login.data.session;break;}
+  lastError=login.error;
+  // DEV Auth may briefly lag behind admin.createUser; never retry credentials or
+  // authorization failures other than short-lived service / rate-limit errors.
+  if(![429,500,502,503,504].includes(Number(login.error?.status))&&
+     !/user not found|email not confirmed/i.test(login.error?.message||""))break;
+  await new Promise(resolve=>setTimeout(resolve,400*(attempt+1)));
+ }
+ if(!session)throw new Error("Synthetic user sign-in failed (status="+
+  (lastError?.status??"unknown")+", code="+(lastError?.code??"unknown")+")");
+ return {id:data.user.id,token:session.access_token,session};
 }
 async function request(actor,method,path,payload,cookie,extraHeaders={}){
  const res=await fetch(base+path,{method,headers:{
