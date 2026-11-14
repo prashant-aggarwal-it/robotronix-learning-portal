@@ -1,15 +1,8 @@
 {
-  "status": "future-design-validated-transaction-only",
+  "status": "future-modules-use-existing-saas-foundation",
   "productionExecutionAllowed": false,
   "release1InstallerIncluded": false,
   "modules": [
-    {
-      "name": "platform",
-      "tables": 6,
-      "dependencies": [
-        "Supabase Auth"
-      ]
-    },
     {
       "name": "lms",
       "tables": 6,
@@ -42,14 +35,14 @@
       "name": "analytics",
       "tables": 3,
       "dependencies": [
-        "Platform"
+        "SaaS"
       ]
     },
     {
       "name": "ai",
       "tables": 6,
       "dependencies": [
-        "Platform",
+        "SaaS",
         "Supabase Auth"
       ]
     },
@@ -57,7 +50,7 @@
       "name": "operations",
       "tables": 5,
       "dependencies": [
-        "Platform",
+        "SaaS",
         "Academy"
       ]
     }
