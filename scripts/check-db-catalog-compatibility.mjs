@@ -21,6 +21,8 @@ const tables=new Set(snap.tables.map(x=>x.schema+'.'+x.name));
 const functions=new Set(snap.functions.map(x=>x.name));
 const results=[];
 for(const x of calls){
+ // Generic .from() matching also finds Buffer.from() and Array.from(); they are not Supabase table calls.
+ if(x.kind==='supabase.from' && /\b(?:Buffer|Array|Object)\.from\s*\(/.test(x.excerpt)) continue;
  if(x.kind==='supabase.from'){
   const candidates=x.object.includes('.')?[x.object]:['public.'+x.object,'connect.'+x.object,'tasks.'+x.object];
   results.push({...x,status:candidates.some(c=>tables.has(c))?'found':'missing',note:'table name existence only'});
