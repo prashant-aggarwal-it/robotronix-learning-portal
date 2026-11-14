@@ -38,3 +38,11 @@ Date: 2026-11-14
 
 ## Certification
 Status: **PARTIAL**. The capability matrix alone is insufficient to certify authorization. No new PASS claim for Phase 3C or its regression suite is made.
+
+## Pass 1 subsequent implementation (2026-11-14)
+- Commit 304d99fbb684afcf2aeef60de5bb71610fb24990: connected capability check to tenant-authenticated Academy service and legacy Academy Admin guard; role/capability denial is evaluated after existing membership/entitlement verification. Existing saas_academy_v1 still enforces record-level scope.
+- Commit 6cd9bc383779aded25e390af7c119b246e037275: added database/saas/37_phase3c_last_active_owner_guard.sql, a membership UPDATE/DELETE guard preventing removal/demotion/suspension of the last active owner. Applied via DEV-only Supabase migration phase3c_last_active_owner_guard (success).
+- Read-only DEV verification returned zero active organizations with memberships but no active owner. This is not a substitute for an authenticated negative-operation test.
+- Scope remains incomplete: CRM and Tasks permission integration, broad Academy legacy route inventory, RLS exhaustive review, role-management UI and complete automated regressions.
+- No completed typecheck, browser E2E, Phase 3B regression run or CI evidence from these commits is claimed.
+- Overall Phase 3C status remains PARTIAL / NOT CERTIFIED.
