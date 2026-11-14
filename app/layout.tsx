@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./suite-shell.css";
 import "./theme.css";
 import "./schedule-unified.css";
 import "./typography.css";
