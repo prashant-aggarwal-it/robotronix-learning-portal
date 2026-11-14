@@ -7,6 +7,12 @@ on:
       - scripts/saas-two-tenant-e2e.mjs
       - app/api/platform/organization-links/route.ts
       - database/saas/12_module_links_rpc.sql
+      - database/saas/3*.sql
+      - database/saas/2*.sql
+      - app/api/zoom/**
+      - app/api/admin/invoices/**
+      - lib/server/saas/**
+      - components/RoleGuard.tsx
       - .github/workflows/saas-two-tenant-e2e.yml
   workflow_dispatch:
 permissions:
