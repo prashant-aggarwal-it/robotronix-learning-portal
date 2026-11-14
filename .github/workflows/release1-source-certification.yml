@@ -50,6 +50,8 @@ jobs:
         run: npm run db:build-installers
       - name: Build additive Academy Phase 3B upgrade package
         run: node scripts/build-phase3b-upgrade.mjs
+      - name: Build additive Phase 3C security and membership upgrade package
+        run: node scripts/build-phase3c-upgrade.mjs
       - name: Database package preflight
         run: node scripts/check-release1-db-preflight.mjs
       - name: Dynamic database contract preflight
