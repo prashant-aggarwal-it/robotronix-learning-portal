@@ -115,3 +115,10 @@ Security audit notes:
 - DEV scan identified 39 anon-executable public SECURITY DEFINER functions, mostly triggers and predicate helpers; not automatically a vulnerability, but requires function-by-function privilege analysis.
 - Remaining hard gates: verified email invitation/new-account acceptance lifecycle, detailed CRM and Tasks RPC-level authorization audit, complete authenticated role matrix and latest-HEAD regressions.
 - No production or main branch changes. Decision remains PARTIAL, not certified.
+
+## Continued Phase 3C module authorization review
+- Commit c54e4b7cbe7e30586de3e54c82dee389e6b90582 adds CRM and Tasks authenticated identity/source-contract regression tests.
+- Reviewed CRM workspace membership PATCH and Tasks create/list/update/archive entry points: bearer identity is verified server-side and passed to module-specific RPCs as p_actor_id; no authorization is derived from request-body actor ID.
+- DEV read-only SQL confirmed public task_update/task_archive/task_create/task_list and connect_update_member/connect_workspace_members RPCs are not directly EXECUTE-granted to anon. This validates the external caller boundary only, not full internal row/tenant policy.
+- Prior source certification 43600331551 passed on d1f6f59c; current new-test run 43600965588 was queued at last check.
+- Outstanding: new-user email invitation/acceptance, full authenticated CRM/Tasks role and private task matrix, privilege-function audit and latest-head CI verification. Remains **PARTIAL / NOT CERTIFIED**.
