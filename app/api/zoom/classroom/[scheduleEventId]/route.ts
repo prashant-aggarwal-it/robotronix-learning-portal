@@ -1,5 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requirePortalUser} from "@/lib/server/portal-api";
+import {verifyZoomTenantScope} from "@/lib/server/saas/legacy-zoom-scope";
 import {classAccessForProfile,classJoinWindow,syncZoomForScheduleEvent} from "@/lib/server/zoom-classroom";
 import {logSystemEvent} from "@/lib/server/system-log";
 export const dynamic="force-dynamic";
@@ -8,10 +9,8 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{schedule
  const auth=await requirePortalUser(request,["admin","trainer","parent","student"]);if("error" in auth)return auth.error;
  try{
   const {scheduleEventId}=await params;
-  const {data:saasGranted,error:saasError}=await auth.admin.rpc("saas_academy_schedule_scope",{
-   p_actor_id:auth.profile.id,p_schedule_event_id:scheduleEventId
-  });
-  if(saasError||saasGranted===false)
+  const scoped=await verifyZoomTenantScope(auth.admin,auth.profile.id,"schedule",scheduleEventId);
+  if(!scoped)
    return NextResponse.json({ok:false,error:"Classroom not accessible in this organization."},
     {status:403,headers:{"Cache-Control":"no-store"}});
   const access=await classAccessForProfile(auth.admin,scheduleEventId,auth.profile);
