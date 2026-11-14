@@ -15,7 +15,8 @@ const files=[
  "22_core_org_preinsert_ownership.sql",
  "23_inline_core_owner_returning_rls.sql",
  "24_shared_course_template_read_api.sql",
- "25_fk_scoped_legacy_academy_crud.sql"
+ "25_fk_scoped_legacy_academy_crud.sql",
+ "26_restrict_legacy_global_admin_overrides.sql"
 ];
 const guard=`-- PHASE 3B: ADDITIVE ACADEMY + SAAS UPGRADE (not a fresh installer)
 -- Requires Academy and the Phase 3A SaaS foundation already installed.
