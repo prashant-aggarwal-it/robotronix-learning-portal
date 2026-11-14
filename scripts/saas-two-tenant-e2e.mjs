@@ -17,6 +17,7 @@ const users=[];
 const adoptedCourseIds=[];
 const syntheticParentIds=[];
 const syntheticScheduleIds=[];
+const syntheticEarningIds=[];
 let schools=null,links=null,server=null;
 let passed=0;
 const assert=(condition,label)=>{if(!condition)throw new Error("FAILED: "+label);passed++;console.log("PASS: "+label)};
@@ -401,6 +402,25 @@ async function run(){
  });
  assert(Boolean(badAttendance)&&badAttendance.code==="42501",
   "Attendance rejects a foreign-school student even when the class is local");
+ // Payroll must remain private even when two organizations share the same database.
+ const {data:earning,error:earningError}=await admin.from("trainer_earnings").insert({
+  trainer_id:ta,schedule_event_id:createdSchedule.id,earning_date:scheduleInput.date,
+  session_type:"one_to_one",pay_band:"day",class_outcome:"completed",
+  duration_minutes:60,learner_count:1,base_rate:500,total_amount:500,status:"pending",
+  notes:"SaaS E2E payroll isolation"
+ }).select("id").single();
+ assert(!earningError&&Boolean(earning?.id),
+  "DEV School A payroll record created for isolation regression");
+ syntheticEarningIds.push(earning.id);
+ const {data:ownerPayroll,error:ownerPayrollError}=await directA.from("trainer_earnings")
+  .select("id").eq("id",earning.id);
+ assert(!ownerPayrollError&&ownerPayroll?.some(x=>x.id===earning.id),
+  "School A admin can read own trainer earnings");
+ const {data:foreignPayroll,error:foreignPayrollError}=await directB.from("trainer_earnings")
+  .select("id").eq("id",earning.id);
+ assert(!foreignPayrollError&&foreignPayroll?.length===0,
+  "School B admin cannot read School A trainer earnings");
+
 
  assert(Boolean(ea&&tb),"Authorized enrollment created");
  assert((await directRead(parent,A,sa)).length===1,"Parent can read own School A child");
@@ -517,6 +537,10 @@ finally{
    server.once("close",()=>{clearTimeout(limit);resolve()});
   });
   server.stdout?.destroy();server.stderr?.destroy();
+ }
+ if(syntheticEarningIds.length){
+  const {error}=await admin.from("trainer_earnings").delete().in("id",syntheticEarningIds);
+  if(error){console.error("Synthetic payroll cleanup failed: "+error.message);failure??=error}
  }
  if(syntheticScheduleIds.length){
   const {error:attendanceCleanupError}=await admin.from("class_attendance").delete().in("schedule_event_id",syntheticScheduleIds);
