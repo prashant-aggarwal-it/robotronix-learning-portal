@@ -627,12 +627,12 @@ finally{
   if(error){console.error("Synthetic course cleanup failed: "+error.message);failure??=error}
  }
  if(schools){
-  // These are exclusively synthetic organization IDs. Remove invitation and audit FKs before organization cleanup.
-  const ids=[schools.schoolA,schools.schoolB];
-  const {error:invitationsError}=await admin.schema("saas").from("organization_invitations").delete().in("organization_id",ids);
-  if(invitationsError){console.error("Synthetic invitation cleanup failed: "+invitationsError.message);failure??=invitationsError}
-  const {error:eventsError}=await admin.schema("saas").from("audit_events").delete().in("organization_id",ids);
-  if(eventsError){console.error("Synthetic SaaS audit cleanup failed: "+eventsError.message);failure??=eventsError}
+  // DEV-only privileged fixture cleanup checks exact synthetic organization slugs.
+  // Never access the private saas schema via PostgREST: it is intentionally unexposed.
+  const {error:phase3cCleanupError}=await admin.rpc("saas_qa_phase3c_cleanup",{
+   p_school_a:schools.schoolA,p_school_b:schools.schoolB
+  });
+  if(phase3cCleanupError){console.error("Synthetic SaaS invitation/audit cleanup failed: "+phase3cCleanupError.message);failure??=phase3cCleanupError}
  }
  if(schools&&links){
   const {error}=await admin.rpc("saas_qa_phase3a_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
