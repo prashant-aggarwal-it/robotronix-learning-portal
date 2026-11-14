@@ -1,10 +1,28 @@
 import crypto from "node:crypto";
+import type {SupabaseClient} from "@supabase/supabase-js";
 import {NextRequest,NextResponse} from "next/server";
 import {connectFailure,noStore,uuid} from "@/lib/server/connect-auth";
 import {portalBridgeAccess} from "@/lib/server/connect-portal-access";
 import {createPortalDemoBooking} from "@/lib/server/portal-demo-booking";
 
 export const dynamic="force-dynamic";
+
+/** SaaS mapped customers must use scoped trainer RPC.
+ * A legacy non-SaaS Portal+CRM installation may use the historical trainer list
+ * only when BOTH the SaaS trainer RPC and SaaS context RPC are absent.
+ */
+async function accessibleTrainers(db:SupabaseClient,actorId:string,tenantId:string){
+ const result=await db.rpc("saas_crm_portal_trainers_v1",{p_actor_id:actorId,p_tenant_id:tenantId});
+ if(!result.error)return result;
+ if(["PGRST202","42883"].includes(result.error.code||"")){
+  const saas=await db.rpc("saas_authorized_organizations",{p_actor_id:actorId});
+  if(saas.error&&["PGRST202","42883"].includes(saas.error.code||""))
+   return db.from("trainers").select("id,full_name,specialties").eq("record_status","active")
+    .is("saas_org_id",null).order("full_name");
+ }
+ return result;
+}
+
 type Context={params:Promise<{tenantId:string}>};
 
 export async function GET(request:NextRequest,{params}:Context){
@@ -14,7 +32,7 @@ export async function GET(request:NextRequest,{params}:Context){
  if(access.role==="viewer")return NextResponse.json({ok:true,installed:true,trainers:[],demos:[]},{headers:noStore});
  const db=access.session.admin;
  const [{data:trainers,error:trainerError},{data:linkResult,error:linkError}]=await Promise.all([
-  db.rpc("saas_crm_portal_trainers_v1",{p_actor_id:access.session.actorId,p_tenant_id:tenantId}),
+  accessibleTrainers(db,access.session.actorId,tenantId),
   db.rpc("connect_portal_demo_bridge",{p_actor_id:access.session.actorId,p_tenant_id:tenantId,p_action:"list",p_data:{}})
  ]);
  if(trainerError||linkError)return connectFailure("Unable to load connected demos.",503);
@@ -53,7 +71,7 @@ export async function POST(request:NextRequest,{params}:Context){
  const [{data:context,error:contextError},{data:availableTrainers,error:trainerError}]=await Promise.all([
   db.rpc("connect_portal_demo_bridge",{p_actor_id:access.session.actorId,p_tenant_id:tenantId,p_action:"booking_context",
    p_data:{opportunityId,learnerPersonId}}),
-  db.rpc("saas_crm_portal_trainers_v1",{p_actor_id:access.session.actorId,p_tenant_id:tenantId})
+  accessibleTrainers(db,access.session.actorId,tenantId)
  ]);
  if(contextError||trainerError||!context||!(availableTrainers||[]).some(t=>t.id===trainerId))return connectFailure("Verify learner/admission, guardian phone and an authorized trainer.",400);
  const guardianId=String(opportunityId); // Stable identity for the request fingerprint; guardian lookup is server-authoritative.
