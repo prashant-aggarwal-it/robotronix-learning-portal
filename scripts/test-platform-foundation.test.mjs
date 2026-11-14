@@ -26,7 +26,7 @@ test('tenant status and entitlement state use closed allowlists',()=>{
  assert.match(sql,/product_id IN \('portal','crm','tasks'\)/);
 });
 test('existing role, workspace and product routes still have explicit test coverage',()=>{
- const routing=readFileSync('lib/platform/auth-routing.test.mjs','utf8');
+ const routing=readFileSync('lib/platform/auth-routing.ts','utf8');
  const deployment=readFileSync('lib/platform/deployment.test.mjs','utf8');
  for(const word of ['admin','trainer','parent','student','crm','tasks'])
   assert.ok(routing.toLowerCase().includes(word), 'missing auth route role/product '+word);
