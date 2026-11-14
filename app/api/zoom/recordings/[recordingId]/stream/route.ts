@@ -1,6 +1,7 @@
 import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
 import {logSystemEvent} from "@/lib/server/system-log";
 import {NextRequest,NextResponse} from "next/server";
+import {verifyZoomTenantScope} from "@/lib/server/saas/legacy-zoom-scope";
 import {ZoomApiError,zoomApi,zoomAuthorizedFetchUrl,zoomServiceClient} from "@/lib/server/zoom";
 import {classAccessForProfile} from "@/lib/server/zoom-classroom";
 import {readRecordingStreamToken} from "@/lib/server/zoom-recording";
@@ -27,10 +28,8 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
   // A signed legacy recording token is not sufficient for a SaaS Admin to stream
   // a different organization's recording. Verify current tenant membership and
   // all class ownership links before contacting the Zoom provider.
-  const {data:saasAllowed,error:saasScopeError}=await db.rpc("saas_academy_recording_scope",{
-   p_actor_id:grant.profileId,p_recording_id:recordingId
-  });
-  if(saasScopeError||saasAllowed===false)
+  const saasAllowed=await verifyZoomTenantScope(db,grant.profileId,"recording",recordingId);
+  if(!saasAllowed)
    return new NextResponse("Recording is not accessible for this organization.",{status:403,headers:{"Cache-Control":"private, no-store"}});
   stage="authorization";
   let allowed=profile.role==="admin";
