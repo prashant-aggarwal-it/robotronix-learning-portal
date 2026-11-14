@@ -65,7 +65,7 @@ export async function getAuthorizedModuleEntitlements(
 
 /** Strictly accept Bearer authentication; cookies only select a tenant, never authenticate. */
 export function readBearerToken(header:string|null):string {
- return header?.match(/^Bearer\\s+([^\\s]+)$/i)?.[1]??"";
+ return header?.match(/^Bearer\s+([^\s]+)$/i)?.[1]??"";
 }
 
 /** Re-check membership and entitlements before executing tenant-owned operations. */
