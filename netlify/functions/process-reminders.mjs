@@ -1,9 +1,10 @@
-import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
+import {schedulerCapabilityEnabled,netlifyJobOwned} from "../../lib/platform/scheduler-capabilities.mjs";
 import {createClient} from "@supabase/supabase-js";
 import {randomUUID} from "node:crypto";
 
 export default async () => {
  if(!schedulerCapabilityEnabled("portal"))return Response.json({ok:true,enabled:false,job:"portal-module-disabled"});
+ if(!netlifyJobOwned("PORTAL_SCHEDULER_ENABLED"))return Response.json({ok:true,enabled:false,job:"portal-scheduler-not-owned"});
  const started=Date.now(),reference=randomUUID();
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;

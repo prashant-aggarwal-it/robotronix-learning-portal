@@ -1,6 +1,7 @@
-import {schedulerCapabilityEnabled} from "../../lib/platform/scheduler-capabilities.mjs";
+import {schedulerCapabilityEnabled,netlifyJobOwned} from "../../lib/platform/scheduler-capabilities.mjs";
 export default async () => {
  if(!schedulerCapabilityEnabled("portal"))return Response.json({ok:true,enabled:false,job:"portal-module-disabled"});
+ if(!netlifyJobOwned("PORTAL_SCHEDULER_ENABLED"))return Response.json({ok:true,enabled:false,job:"portal-scheduler-not-owned"});
   const started=Date.now();
   const base=(process.env.URL||process.env.DEPLOY_PRIME_URL||"").replace(/\/$/,"");
   const secret=process.env.INTERNAL_CRON_SECRET||"";

@@ -5,11 +5,13 @@ on:
       - feature/education-suite-release1
       - feature/education-suite-phase3d
       - feature/education-suite-phase3e
+      - feature/education-suite-phase3f
     paths:
       - 'app/**'
       - 'lib/**'
       - 'components/**'
       - 'features/**'
+      - 'netlify/functions/**'
       - 'database/**'
       - 'scripts/**'
       - 'qa/**'

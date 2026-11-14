@@ -5,6 +5,7 @@ on:
       - feature/education-suite-release1
       - feature/education-suite-phase3d
       - feature/education-suite-phase3e
+      - feature/education-suite-phase3f
     paths:
       - scripts/saas-two-tenant-e2e.mjs
       - scripts/saas-phase3c-invitations-e2e.mjs
