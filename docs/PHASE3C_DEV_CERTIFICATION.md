@@ -1,124 +1,64 @@
-# Phase 3C — DEV progress and certification gate
+# Robotronix Education Suite — Phase 3C DEV Engineering Certification
 
-Date: 2026-11-14
+Date: 2026-11-14  
+Repository: `prashant-aggarwal-it/robotronix-learning-portal`  
+Branch: `feature/education-suite-release1`  
+DEV Supabase: `uzzuquxeeqonxeqcuohh`  
+Production: `njyktzenybimykpqaegn` — **not touched**
 
-## Decision
-**PARTIAL — NOT DEV CERTIFIED.** Do not begin Phase 3D on the assumption that Phase 3C is complete.
+## Certification decision
 
-## Baseline
-- Repository: prashant-aggarwal-it/robotronix-learning-portal
-- Branch: feature/education-suite-release1
-- Phase 3B certified HEAD on entry: 85f9c6ebae696a73d2477315f030f1d2add0221d
-- Target DEV: uzzuquxeeqonxeqcuohh
-- Production was not targeted; no Netlify operations were requested.
+**PARTIAL — NOT YET CERTIFIED.** All source, TypeScript, and authenticated E2E checks must pass on the current code state before considering PASS. Do not start Phase 3D assuming Phase 3C is certified.
 
-## Verified by connected services
-- DEV contains saas.organizations, saas.memberships, saas.module_entitlements, saas.audit_events and Phase 3B Academy resources.
-- The underlying saas membership role check constrains role_key to owner, admin, staff, trainer, member.
-- Organization/membership authorization and Academy RLS code from Phase 3B already exist and must be preserved.
-- 11 public tables have RLS disabled: academic_levels, cities, city_aliases, countries, course_academic_levels, currencies, invoice_sequences, reference_data_sources, states, system_settings, timezones.
-- A focused privilege check shows neither anon nor authenticated has UPDATE on those 11 tables and anon has no SELECT. Do not treat disabled RLS alone as proof of publicly accessible data. Decide table-specific RLS after reviewing all callers and access grants.
+## Implemented changes
 
-## Code changes
-- Added lib/server/saas/role-capabilities.mjs containing a conservative, deny-by-default organization-capability baseline.
-- Added lib/server/saas/role-capabilities.test.mjs to cover unknown roles, sensitive capability denial, and immutable matrix.
-- These are preliminary code artifacts and **are not wired into application authorization**; no runtime enforcement or test success is claimed.
-- CRM and Tasks retain their own authorization models pending boundary audit.
-- No database mutations were performed.
+- Canonical deny-by-default organization capability policy `lib/server/saas/role-capabilities.mjs`, typed definitions, tests and service-side enforcement for tenant Academy operations, finance, legacy Admin, and membership actions.
+- Organization member list, existing-user addition, role/status update, suspension/revocation, last-active-owner guard, audited changes and UI.
+- New pre-registration invitation lifecycle: create by email with cryptographically random 256-bit one-time token (SHA-256 stored only), 7-day expiry, verified-email matching on authenticated acceptance, replay rejection, invitation listing and revocation, audits, private-schema-safe service RPCs, and UI. **Email delivery is not configured**: manual secure sharing, like the existing CRM workflow.
+- CRM and Tasks remain independent; separate validated bearer actor identity, CRM tenant and Tasks private ownership checks retained; added source and authenticated cross-tenant negative contracts.
+- Hardening of nine legacy invoker trigger search paths, removal of direct execution grants from 22 trigger-only privileged functions, anonymous restrictions on trainer profile and finance operations.
+- Controlled DEV-only fixture cleanup RPC for test invitation/audit references, with strict synthetic-org and synthetic-email validation. Integrated with two-tenant E2E teardown.
+- Phase 3C canonical additive SQL upgrade builder `scripts/build-phase3c-upgrade.mjs`, ordered sources 37,38,40–44. Phase 3C DEV-only QA migration 06 excluded from release package.
+- Isolated Phase 3C invitation E2E from the full Academy/CRM/Tasks regression, then configured sequential execution within one authenticated DEV workflow. Original Phase 3A/3B regression assertions retained.
 
-## Unfinished Phase 3C acceptance criteria
-- Complete role/capability inventory and resource-specific policy mapping.
-- Integrate capabilities into all eligible server routes and operations without weakening existing resource checks.
-- Review and harden role changes, revocations, last-owner protection and audit.
-- Complete independent CRM and Tasks authorization regression.
-- Verify SECURITY DEFINER, RPC and service-role boundary behavior.
-- Prepare canonical DB changes if needed, apply to DEV with review and execute authenticated cross-tenant negative tests.
-- Run typecheck, capability tests, existing 121-assertion Phase 3B regression and browser security journeys.
-- Confirm UI, navigation, role switch behavior; record actual CI evidence.
+## DEV migrations
 
-## Certification
-Status: **PARTIAL**. The capability matrix alone is insufficient to certify authorization. No new PASS claim for Phase 3C or its regression suite is made.
+Applied successfully: `phase3c_last_active_owner_guard`; `phase3c_membership_management`; `phase3c_membership_null_hardening`; `phase3c_add_existing_member`; `phase3c_organization_invitations`; `phase3c_invitation_revocation`; `phase3c_private_roster_rpcs`; `phase3c_dev_only_invitation_cleanup`; `phase3c_public_function_hardening`.
 
-## Pass 1 subsequent implementation (2026-11-14)
-- Commit 304d99fbb684afcf2aeef60de5bb71610fb24990: connected capability check to tenant-authenticated Academy service and legacy Academy Admin guard; role/capability denial is evaluated after existing membership/entitlement verification. Existing saas_academy_v1 still enforces record-level scope.
-- Commit 6cd9bc383779aded25e390af7c119b246e037275: added database/saas/37_phase3c_last_active_owner_guard.sql, a membership UPDATE/DELETE guard preventing removal/demotion/suspension of the last active owner. Applied via DEV-only Supabase migration phase3c_last_active_owner_guard (success).
-- Read-only DEV verification returned zero active organizations with memberships but no active owner. This is not a substitute for an authenticated negative-operation test.
-- Scope remains incomplete: CRM and Tasks permission integration, broad Academy legacy route inventory, RLS exhaustive review, role-management UI and complete automated regressions.
-- No completed typecheck, browser E2E, Phase 3B regression run or CI evidence from these commits is claimed.
-- Overall Phase 3C status remains PARTIAL / NOT CERTIFIED.
+Read-only 39 contains verification queries; later canonical sources 40–44 extend the DEV installation.
 
-## Continued Pass 1 — membership operations
-- Added database/saas/38_phase3c_membership_management.sql and an authenticated server PATCH endpoint at app/api/platform/organizations/[organizationId]/members/[membershipId]/route.ts in commit 2fe46a0fff969d1626354a90edfa2794516e2aa6.
-- Applied DEV migration phase3c_membership_management successfully.
-- RPC checks current active SaaS owner/admin membership, row belongs to same organization, denies admin privilege escalation, prevents self-revocation, and emits audit events for changes. Existing last-active-owner trigger remains active.
-- Verified RPC is SECURITY DEFINER, callable by service_role, and not callable by anon/authenticated directly.
-- This covers updates to existing membership rows only. Invitation/member creation, SaaS management UI, exhaustive API authorization, CRM/Tasks permission audits, full application typecheck and regression testing remain outstanding.
-- **Pass 1 is NOT fully certified and Phase 3C remains PARTIAL** until remaining coverage and regression evidence are available.
+## Authorization boundaries
 
-## Additional Pass 1 continuation — 2026-11-14
-- Commit 9643d453c6813aa5b60a33d63f708a9a76ed7c7d: reject null role/status in RPC; added organization-scoped membership GET endpoint. DEV migration phase3c_membership_null_hardening applied.
-- Commit 8184f13685710af24d6e7f46a9313dbdd16cd037: added minimal /saas/members role/status management UI for owners.
-- DEV currently has zero persistent SaaS membership rows. Authenticated owner-management journeys and last-owner rejection have not been verified with representative real accounts.
-- CRM/Tasks still use their independently maintained auth mechanisms, subject to Phase 3C exhaustive audits.
-- No successful typecheck, CI or Playwright regression has been observed for the new commits.
-- Status: PARTIAL, not Phase 3C certified.
+- SaaS owner: organization/member/role management and Academy management, subject to organization and record-level checks.
+- SaaS admin: Academy management and restricted member management; cannot assign owner/admin roles, manage owners/admins, or elevate to owner.
+- Staff and trainers: narrow Academy capabilities and record scope; no finance or SaaS membership authority.
+- Member: no privileged global SaaS capabilities. Parent and student Academy resources continue to rely on their existing role/relationship and RLS boundaries.
+- CRM roles and Tasks account/workspace roles remain independent; no Academy role implies access to CRM customer contacts or another user's private Tasks.
+- No platform-global tenant data bypass is introduced.
 
-## Continuous implementation / verification follow-up
-- Added typed declaration for role-capabilities.mjs and a read-only Phase 3C security query in commit 87fed6d50dc05ed7c6cadf62098b0ff465ac5fa5.
-- Extended admin membership-management capability without granting the admin the ability to change protected owner/admin roles, and reflected this in the UI/test contract in commit d1bb374ed12520145f89b6839cee4b61c1366492.
-- Fixed a stale Academy API source contract test that expected requireAuthorizedTenantRole instead of the new requireAuthorizedTenantCapability in commit 57469fce62a54031a195de0ea57189956981880a.
-- GitHub Actions source-certification run 43598712986 failed on that stale assertion; its log was examined. Newer runs were in progress at last query. No claim of a successful new source certification run.
-- Previously observed authenticated DEV E2E GitHub Action runs 43596954036 and 43596534335 succeeded on earlier intermediate commits, but this does NOT certify the latest branch.
-- DEV read-only checks verified service-only privilege on public.saas_manage_membership_v1, enabled last-owner guard, and zero active organizations with existing memberships lacking an active owner.
-- A transaction-only DEV fixture exercise was run against last-owner demotion, self-removal, and cross-organization operation, with transaction rollback; connector did not return per-assertion notices, so these are not represented as confirmed individual PASS evidence.
-- DEV Auth user count 1, SaaS membership count 0; full authenticated multi-user RBAC certification still requires the existing E2E fixture workflow and newer passing Actions evidence.
-- Supabase advisor review surfaced RLS-enabled/no-policy findings, including unexposed private schemas; triage is required per table, not blanket policy addition.
-- Phase 3C remains PARTIAL / NOT DEV CERTIFIED. This document supersedes earlier references to the capability model as unwired.
+## Verified test evidence
 
-## Continued execution evidence (same day)
-- Commit d1bb374ed12520145f89b6839cee4b61c1366492: align organization-admin membership management capability and UI restriction with SQL privilege-escalation guard.
-- Commit 57469fce62a54031a195de0ea57189956981880a: replace outdated Academy source contract assertion for requireAuthorizedTenantRole with requireAuthorizedTenantCapability. The previous source-certification run 43598712986 failed due to the outdated assertion; the fix was pushed and rerun automatically.
-- Commit f93f0ab5081eae4ec58385710e45b3ee81d0a9d4: add academy.finance.manage authorization requirement before the existing scoped finance RPC.
-- Commit ba0583d01ec5650ae948b3ded02d46bb0efdd870: add Phase 3C security source-contract tests for Academy, legacy finance and membership routes.
-- GitHub Actions queued for latest commit: source certification 43598909116; authenticated DEV E2E 43598909093. Results were queued at last inspection and must not be treated as PASS.
-- A DEV transaction-only owner fixture test returned no SQL error and was rolled back; do not substitute that for user-level authenticated role coverage. DEV remains without persistent test memberships.
-- Current status: **PARTIAL — NOT DEV CERTIFIED**. Required latest-commit typecheck, source tests, authenticated cross-tenant role-management and regression verification still pending evidence. No PROD/Netlify/main changes were made.
+- Prior source certification, including typecheck, static SaaS security contracts, CRM/Tasks business checks, modular deployment profiles, source security and canonical SQL build: **PASS** e.g. [run 43602283193](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602283193), commit `39a6aa73`.
+- Baseline two-tenant authenticated DEV Academy/CRM/Tasks E2E: **PASS** [run 43600965591](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43600965591), commit `c54e4b7c` before new invitation code.
+- DEV SQL transaction-only guards **PASS**: owner demotion, self-removal and foreign membership; unknown/duplicate member; invalid or wrong-email invitation; revoke and prevent reuse; admin escalation denial; owner-only roster reads and unauthorized roster denial. All temporary transaction fixtures were rolled back.
+- Post-hardening Supabase advisors: mutable search paths **9 → 0**; anon-executable SECURITY DEFINER findings **39 → 15**; authenticated-definer warnings **57 → 35**. RLS no-policy notices largely concern service-only/private or dormant schemas, not proof of public data access.
+- 11 public reference/config tables without RLS: verified no SELECT or write grant for either `anon` or `authenticated`; no blind policy change applied.
+- The initial extended two-tenant E2E failed on a negative HTTP status assertion (400 instead of expected 403) despite no roster data, and previously on private-schema direct cleanup. The private-roster RPC and cleanup defects have been fixed; assertions now require fail-closed 400/403 and no members, and the invitations test has been isolated.
 
-## Confirmed DEV transactional security checks
-- A rollback-contained DEV test returned PASS after verifying three denied operations against a temporary organization and membership: last-active-owner demotion, self-removal, and cross-organization membership change. Temporary records were rolled back. This is a SQL-level guard check, not a full HTTP authenticated test.
-- GitHub Actions source-certification run 43598820332 for commit 57469fce62a54031a195de0ea57189956981880a has **conclusion: success**. Subsequent code commits are not covered by this result; later runs were in progress at last check.
-- Overall decision remains **PARTIAL — NOT DEV CERTIFIED** pending latest HEAD successful CI, complete CRM/Tasks security review and authenticated role-management E2E evidence.
+## Current automated verification gates
 
-## Latest Phase 3C completion attempt — 2026-11-14
+- Latest source certification on code commit `16ce3c18`: **running as of last review** [run 43602392749](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392749).
+- Latest combined authenticated DEV regression and Phase 3C invitation lifecycle: **queued** [run 43602392753](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392753).
+- Earlier authenticated run on `39a6aa73` remained in progress at last review [run 43602283223](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602283223).
+- Final certification requires actual results for both latest source and authenticated suites; any further failure must be fixed and retested.
 
-Current implementation changes:
-- Commit 0688d10b7154437dbeaa68465e8875d46a6974fa: added `database/saas/40_phase3c_add_existing_member.sql` (atomic service-only RPC for adding an existing Auth user to an organization with owner/admin role restrictions and audit).
-- Commit 6dbdd43111df90a5d9da2c771ad1d03cb30c1514: added authenticated organization-member POST API; caller identity resolved from validated bearer, no client-supplied actor identity.
-- Commit ed595ce32caf836fdc319478ab8670d4b35bff53: added registered-account membership UI to `/saas/members`.
-- DEV migration `phase3c_add_existing_member` applied successfully; function has EXECUTE for service_role only, not anon/authenticated.
-- Rollback-contained DEV tests **PASS** for unknown account rejection, foreign organization denial, duplicate-membership rejection. Test temporary records rolled back.
-- Current GitHub Actions source-certification runs for commits 0688d10b, 6dbdd431, ed595ce3 were still in progress at last query. Prior pass runs 43598909116 (source) and 43598909093 (authenticated two-tenant) are verified successful but predate these changes.
+## Remaining issues/limitations
 
-Security audit notes:
-- Independent CRM and Tasks server session helpers verify bearer JWT via Supabase Auth and enforce their own independent product/account guards. Detailed business RPC permission boundaries have not all been exercised in this execution.
-- DEV scan found 39 public-schema SECURITY DEFINER functions executable by anon; many are trigger or predicate routines. Access review required case by case; no blind mass revocation applied.
-- A real pre-registration invitation flow and its invitation acceptance/email lifecycle remain unimplemented; `saas_add_existing_member_v1` handles **already registered** identities only.
-- DEV lacks persistent diversified SaaS memberships for a multi-role HTTP negative matrix; current tested SQL assertions cannot substitute for this.
-- No additional production changes, main merge, or Netlify operations were made.
+- No automated email provider. Invite acceptance is implemented for securely shared one-time tokens; user must sign up/sign in with the matching verified email.
+- Supabase Auth leaked password protection is an external project configuration warning: [Supabase guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+- Residual legacy privilege warnings require case-by-case treatment; no blanket changes to policy helper functions or dormant private tables.
+- Any remaining failed-run synthetic Auth users should be removed through the DEV Auth Admin API with strict QA identifiers, never by deleting directly from `auth.users`.
 
-**Final status: PARTIAL / NOT CERTIFIED.** Phase 3D should not be represented as cleared by Phase 3C. Complete authenticated membership invitation/user journeys and CRM/Tasks role regression, then verify latest branch CI before upgrade to PASS.
+## Operating constraints
 
-## Further execution / status check
-- Confirmed source-certification actions passed for 0688d10b (43599780220), 6dbdd431 (43599799670), ed595ce3 (43599819479); prior authenticated two-tenant E2E at ba0583d0 (43598909093) also passed. Those checks precede the latest UI fix.
-- Commit d1f6f59cec8118146dedb4a8162a0527118c7a58: fix admins unable to preselect their authorized organization in membership management and refresh role/status drafts from server after updating.
-- Inspected foundational SaaS RLS: membership tables have tenant-scoped read policies and service-managed writes. CRM and Tasks independent session checks use bearer Auth validation and retain separate permission models.
-- DEV scan identified 39 anon-executable public SECURITY DEFINER functions, mostly triggers and predicate helpers; not automatically a vulnerability, but requires function-by-function privilege analysis.
-- Remaining hard gates: verified email invitation/new-account acceptance lifecycle, detailed CRM and Tasks RPC-level authorization audit, complete authenticated role matrix and latest-HEAD regressions.
-- No production or main branch changes. Decision remains PARTIAL, not certified.
-
-## Continued Phase 3C module authorization review
-- Commit c54e4b7cbe7e30586de3e54c82dee389e6b90582 adds CRM and Tasks authenticated identity/source-contract regression tests.
-- Reviewed CRM workspace membership PATCH and Tasks create/list/update/archive entry points: bearer identity is verified server-side and passed to module-specific RPCs as p_actor_id; no authorization is derived from request-body actor ID.
-- DEV read-only SQL confirmed public task_update/task_archive/task_create/task_list and connect_update_member/connect_workspace_members RPCs are not directly EXECUTE-granted to anon. This validates the external caller boundary only, not full internal row/tenant policy.
-- Prior source certification 43600331551 passed on d1f6f59c; current new-test run 43600965588 was queued at last check.
-- Outstanding: new-user email invitation/acceptance, full authenticated CRM/Tasks role and private task matrix, privilege-function audit and latest-head CI verification. Remains **PARTIAL / NOT CERTIFIED**.
+No production database modifications, no `main` merge, and no Netlify deployment. CI and automated DEV validation only.
