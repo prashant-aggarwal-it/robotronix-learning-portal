@@ -3,6 +3,13 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 let browserClient: SupabaseClient | null = null;
 const activeOrganizationKey="robotronix_saas_active_organization";
 const validOrganizationId=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function getAcademyBrowserOrganizationContext():string|null {
+ if(typeof window==="undefined")return null;
+ try{
+  const selected=window.sessionStorage.getItem(activeOrganizationKey);
+  return selected&&validOrganizationId.test(selected)?selected:null;
+ }catch{return null}
+}
 /** A client organization choice is only a filter; database RLS independently validates membership. */
 export function setAcademyBrowserOrganizationContext(organizationId:string|null):void {
  if(typeof window==="undefined")return;
