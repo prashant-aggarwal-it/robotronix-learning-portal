@@ -14,6 +14,7 @@ if(hostname!==EXPECTED_REF+".supabase.co")throw new Error("Refusing to run outsi
 const base="http://127.0.0.1:3457";
 const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
 const users=[];
+const adoptedCourseIds=[];
 let schools=null,links=null,server=null;
 let passed=0;
 const assert=(condition,label)=>{if(!condition)throw new Error("FAILED: "+label);passed++;console.log("PASS: "+label)};
@@ -75,6 +76,14 @@ async function run(){
  if(setupLinks.error||!setupLinks.data?.crmA||!setupLinks.data?.tasksB)
   throw new Error("DEV Phase 3A mapping fixtures failed: "+(setupLinks.error?.message||"invalid fixture"));
  links=setupLinks.data;
+ const templateRows=await admin.schema("saas").from("academy_course_templates").select("course_id").eq("availability","available").limit(1);
+ if(templateRows.error||!templateRows.data?.[0]?.course_id)throw new Error("Shared Academy template catalog unavailable");
+ const adopted=await admin.rpc("saas_academy_clone_course_template",{
+  p_actor_id:a.id,p_organization_id:A,p_template_id:templateRows.data[0].course_id,
+  p_slug:name+"-adopted",p_code:("SAAS-E2E-ADOPTED-"+name.slice(-10)).toUpperCase()
+ });
+ if(adopted.error||!adopted.data)throw new Error("Tenant-owned course adoption failed: "+(adopted.error?.message||"no course id"));
+ adoptedCourseIds.push(adopted.data);
  await startServer();
  let r=await request(a,"GET","/api/platform/organizations");
  assert(r.status===200&&r.body?.selectedOrganizationId===A,"School A organization discovery");
@@ -89,6 +98,14 @@ async function run(){
  const cookie=r.cookie?.split(";")[0];
  r=await request(multi,"GET","/api/platform/organizations",null,cookie);
  assert(r.status===200&&r.body?.selectedOrganizationId===B,"Selected organization persists");
+ const {data:ownTemplateCourse,error:ownerError}=await admin.rpc("saas_academy_resource_owned",{
+  p_actor_id:a.id,p_organization_id:A,p_kind:"courses",p_resource_id:adoptedCourseIds[0]
+ });
+ assert(!ownerError&&ownTemplateCourse===true,"School A owns adopted template course");
+ const {data:foreignTemplateCourse,error:foreignError}=await admin.rpc("saas_academy_resource_owned",{
+  p_actor_id:b.id,p_organization_id:B,p_kind:"courses",p_resource_id:adoptedCourseIds[0]
+ });
+ assert(!foreignError&&foreignTemplateCourse===false,"School B cannot access School A adopted course");
  // Phase 3A: actual CRM and Tasks membership + mapping validation for two schools.
  r=await request(a,"GET","/api/platform/organization-links?organizationId="+A);
  assert(r.status===200&&r.body?.links?.crm?.status==="ready"&&r.body.links.crm.tenantId===links.crmA,
@@ -261,6 +278,10 @@ finally{
    server.once("close",()=>{clearTimeout(limit);resolve()});
   });
   server.stdout?.destroy();server.stderr?.destroy();
+ }
+ if(adoptedCourseIds.length){
+  const {error}=await admin.from("courses").delete().in("id",adoptedCourseIds);
+  if(error){console.error("Synthetic course cleanup failed: "+error.message);failure??=error}
  }
  if(schools&&links){
   const {error}=await admin.rpc("saas_qa_phase3a_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
