@@ -24,7 +24,7 @@ export default function MembersPage(){
  const [busy,setBusy]=useState(false);
  useEffect(()=>{let active=true;request("/api/platform/organizations").then(x=>{
   if(!active)return;
-  setOrgs((x.organizations as Org[]).filter(o=>o.role==="owner"));
+  setOrgs((x.organizations as Org[]).filter(o=>(o.role==="owner"||o.role==="admin")));
   const selected=(x.organizations as Org[]).find(o=>o.id===x.selectedOrganizationId&&o.role==="owner");
   if(selected)setOrganizationId(selected.id);
  }).catch(e=>{if(active)setError(String(e))});return()=>{active=false}},[]);
@@ -47,8 +47,8 @@ export default function MembersPage(){
  }
  return <main style={{maxWidth:880,margin:"2rem auto",padding:"1rem"}}>
   <h1>Organization members</h1>
-  <p>Owners can review members and change roles. Changes are audited. The last active owner cannot be removed.</p>
-  {orgs.length===0?<p>No organization owner access is available.</p>:<>
+  <p>Owners and organization admins can review members and request permitted role changes. Changes are audited. The last active owner cannot be removed.</p>
+  {orgs.length===0?<p>No organization member-management access is available.</p>:<>
    <label htmlFor="org-select">Organization</label>{" "}
    <select id="org-select" value={organizationId} onChange={e=>setOrganizationId(e.target.value)}>
     <option value="">Select organization</option>
@@ -56,11 +56,11 @@ export default function MembersPage(){
    </select>
    {members.map(m=><section key={m.id} style={{border:"1px solid #aaa",borderRadius:8,padding:12,marginTop:12}}>
     <p>Member: {m.user_id}</p>
-    <label>Role <select aria-label={"Role for "+m.user_id} value={drafts[m.id]?.role??m.role_key}
+    <label>Role <select disabled={orgs.find(o=>o.id===organizationId)?.role==="admin"&&["owner","admin"].includes(m.role_key)} aria-label={"Role for "+m.user_id} value={drafts[m.id]?.role??m.role_key}
       onChange={e=>setDrafts(d=>({...d,[m.id]:{...(d[m.id]??{role:m.role_key,status:m.status}),role:e.target.value}}))}>
-      {roles.map(role=><option key={role}>{role}</option>)}
+      {roles.filter(role=>orgs.find(o=>o.id===organizationId)?.role==="owner"||!["owner","admin"].includes(role)).map(role=><option key={role} value={role}>{role}</option>)}
     </select></label>{" "}
-    <label>Status <select aria-label={"Status for "+m.user_id} value={drafts[m.id]?.status??m.status}
+    <label>Status <select disabled={orgs.find(o=>o.id===organizationId)?.role==="admin"&&["owner","admin"].includes(m.role_key)} aria-label={"Status for "+m.user_id} value={drafts[m.id]?.status??m.status}
       onChange={e=>setDrafts(d=>({...d,[m.id]:{...(d[m.id]??{role:m.role_key,status:m.status}),status:e.target.value}}))}>
       {statuses.map(status=><option key={status}>{status}</option>)}
     </select></label>{" "}
