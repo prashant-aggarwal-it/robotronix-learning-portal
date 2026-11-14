@@ -8,6 +8,7 @@ on:
       - 'scripts/export-db-disposition-register.mjs'
       - 'scripts/check-release1-db-preflight.mjs'
       - 'scripts/check-release1-dynamic-db-targets.mjs'
+      - 'scripts/check-release1-rpc-arguments.mjs'
       - 'database/packages.json'
       - 'database/portal/manifest.json'
       - 'database/audit/dev_catalog_snapshot.json'
@@ -34,6 +35,9 @@ jobs:
       - name: Verify dynamic database target allowlists
         if: always()
         run: node scripts/check-release1-dynamic-db-targets.mjs artifacts/release1-dynamic-contracts
+      - name: Reconcile literal RPC argument names
+        if: always()
+        run: node scripts/check-release1-rpc-arguments.mjs artifacts/release1-rpc-signatures
       - name: Upload audit for architecture review
         if: always()
         uses: actions/upload-artifact@v4
@@ -45,4 +49,5 @@ jobs:
             artifacts/db-object-dispositions/
             artifacts/release1-certification/
             artifacts/release1-dynamic-contracts/
+            artifacts/release1-rpc-signatures/
           retention-days: 14
