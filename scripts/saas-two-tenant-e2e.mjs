@@ -238,6 +238,19 @@ async function run(){
   "Multi-organization member cannot read School B records while selecting School A");
  assert((await directRead(multi,B,sb)).length===1,
   "Multi-organization member can switch REST tenant selection to School B");
+ const changeSyntheticRole=async(role)=>{
+  const {error}=await admin.rpc("saas_qa_set_synthetic_role",{
+   p_actor_id:multi.id,p_organization_id:A,p_role:role
+  });
+  if(error)throw new Error("Synthetic role switch failed: "+error.message);
+ };
+ await changeSyntheticRole("member");
+ try{
+  assert((await directRead(multi,A,sa)).length===0,
+   "Ordinary organization member cannot read all school student records");
+  assert((await directRead(multi,B,sb)).length===1,
+   "Role downgrade in School A does not revoke authorized admin access in School B");
+ }finally{await changeSyntheticRole("admin")}
  const ownership=async(actor,org,kind,id)=>{
   const {data,error}=await admin.rpc("saas_academy_resource_owned",{
    p_actor_id:actor.id,p_organization_id:org,p_kind:kind,p_resource_id:id
