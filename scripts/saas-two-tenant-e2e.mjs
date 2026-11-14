@@ -106,6 +106,17 @@ async function run(){
   p_actor_id:b.id,p_organization_id:B,p_kind:"courses",p_resource_id:adoptedCourseIds[0]
  });
  assert(!foreignError&&foreignTemplateCourse===false,"School B cannot access School A adopted course");
+ r=await request(a,"GET","/api/platform/academy/course-templates?organizationId="+A);
+ assert(r.status===200&&r.body?.templates?.some(t=>t.id===templateRows.data[0].id),
+  "School A admin lists approved shared course templates");
+ r=await request(b,"GET","/api/platform/academy/course-templates?organizationId="+A);
+ assert(r.status===403,"School B cannot request School A template adoption context");
+ r=await request(a,"POST","/api/platform/academy/course-templates/adopt",{
+  organizationId:A,templateId:templateRows.data[0].id,
+  slug:name+"-ui-adopted",code:("SAAS-E2E-UI-"+name.slice(-10)).toUpperCase()
+ });
+ assert(r.status===201&&Boolean(r.body?.courseId),"School A imports shared template through authenticated HTTP API");
+ if(r.body?.courseId)adoptedCourseIds.push(r.body.courseId);
  // Phase 3A: actual CRM and Tasks membership + mapping validation for two schools.
  r=await request(a,"GET","/api/platform/organization-links?organizationId="+A);
  assert(r.status===200&&r.body?.links?.crm?.status==="ready"&&r.body.links.crm.tenantId===links.crmA,
@@ -310,7 +321,7 @@ async function run(){
  r=await request(a,"GET","/api/platform/academy/enrollments?organizationId="+A);
  assert(r.status===200&&r.body?.data?.length===1&&r.body.data[0].id===ea,"Authorized enrollment listing");
  r=await request(a,"GET","/api/platform/academy/courses?organizationId="+A);
- assert(r.status===200&&r.body?.data?.length===2&&r.body.data.some(x=>x.id===ca)&&r.body.data.some(x=>x.id===adoptedCourseIds[0])&&!r.body.data.some(x=>x.id===cb),"Organization-scoped course listing includes owned adopted course but excludes foreign courses");
+ assert(r.status===200&&r.body?.data?.length===3&&r.body.data.some(x=>x.id===ca)&&adoptedCourseIds.every(id=>r.body.data.some(x=>x.id===id))&&!r.body.data.some(x=>x.id===cb),"Organization-scoped course listing includes owned adopted course but excludes foreign courses");
  const ui=await fetch(base+"/saas/academy");
  assert(ui.status===200,"Academy workspace page serves successfully");
  console.log("Verified "+passed+" authenticated HTTP assertions against DEV");
