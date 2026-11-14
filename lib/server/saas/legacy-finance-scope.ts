@@ -1,7 +1,7 @@
 import "server-only";
 import {createClient} from "@supabase/supabase-js";
 import {NextRequest} from "next/server";
-import {getAuthorizedOrganizations,requireAuthorizedTenantRole,readBearerToken,SaaSAccessError} from "./organization-context";
+import {getAuthorizedOrganizations,requireAuthorizedTenantCapability,readBearerToken,SaaSAccessError} from "./organization-context";
 export type AcademyLegacyFinanceScope={organizationId:string;packageIds:string[];invoiceIds:string[]}|null;
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Legacy standalone users retain their existing authorization; SaaS users need BOTH
@@ -22,7 +22,7 @@ export async function requireLegacyFinanceScope(request:NextRequest):Promise<Aca
  }
  const organizationId=request.headers.get("x-organization-id")||"";
  if(!uuid.test(organizationId))throw new SaaSAccessError(403,"Select an Academy organization");
- await requireAuthorizedTenantRole(bearer,organizationId,"academy",["owner","admin"]);
+ await requireAuthorizedTenantCapability(bearer,organizationId,"academy","academy.finance.manage");
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)throw new SaaSAccessError(503,"Academy finance service unavailable");
