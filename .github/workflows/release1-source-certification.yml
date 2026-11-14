@@ -8,6 +8,7 @@ on:
       - 'app/**'
       - 'lib/**'
       - 'components/**'
+      - 'features/**'
       - 'database/**'
       - 'scripts/**'
       - 'qa/**'
