@@ -22,7 +22,7 @@ export async function requireLegacyFinanceScope(request:NextRequest):Promise<Aca
  }
  const organizationId=request.headers.get("x-organization-id")||"";
  if(!uuid.test(organizationId))throw new SaaSAccessError(403,"Select an Academy organization");
- const {userId}=await requireAuthorizedTenantRole(bearer,organizationId,"academy",["owner","admin"]);
+ await requireAuthorizedTenantRole(bearer,organizationId,"academy",["owner","admin"]);
  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)throw new SaaSAccessError(503,"Academy finance service unavailable");
