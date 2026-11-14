@@ -17,6 +17,8 @@ BEGIN
  VALUES(p_tenant_id,'SaaS E2E Phase3D Pipeline','admissions') RETURNING id INTO v_pipeline;
  INSERT INTO connect.pipeline_stages(tenant_id,pipeline_id,name,sort_order,outcome)
  VALUES(p_tenant_id,v_pipeline,'SaaS E2E Phase3D Stage',1,'open') RETURNING id INTO v_stage;
+ INSERT INTO connect.pipeline_stages(tenant_id,pipeline_id,name,sort_order,outcome)
+ VALUES(p_tenant_id,v_pipeline,'SaaS E2E Phase3D Won',2,'won');
  INSERT INTO connect.people(tenant_id,full_name)
  VALUES(p_tenant_id,'SaaS E2E Phase3D Contact') RETURNING id INTO v_person;
  INSERT INTO connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id)
@@ -70,9 +72,11 @@ BEGIN
  DELETE FROM connect.realized_revenue WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
  DELETE FROM connect.stage_events WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
  DELETE FROM connect.opportunities WHERE id=p_opportunity_id AND tenant_id=p_tenant_id;
+ DELETE FROM connect.contact_methods WHERE tenant_id=p_tenant_id AND person_id=v_opportunity.contact_id;
  DELETE FROM connect.people WHERE id=v_opportunity.contact_id AND tenant_id=p_tenant_id
-  AND full_name='SaaS E2E Phase3D Contact';
- DELETE FROM connect.pipeline_stages WHERE id=v_opportunity.stage_id AND tenant_id=p_tenant_id;
+  AND full_name IN ('SaaS E2E Phase3D Contact','SaaS E2E Student A');
+ DELETE FROM connect.pipeline_stages WHERE tenant_id=p_tenant_id AND pipeline_id=v_opportunity.pipeline_id
+  AND name IN ('SaaS E2E Phase3D Stage','SaaS E2E Phase3D Won');
  DELETE FROM connect.pipelines WHERE id=v_opportunity.pipeline_id AND tenant_id=p_tenant_id
   AND name='SaaS E2E Phase3D Pipeline';
  RETURN true;
@@ -107,3 +111,48 @@ BEGIN
 END $fn$;
 REVOKE ALL ON FUNCTION public.saas_qa_phase3d_schedule_link_cleanup(uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.saas_qa_phase3d_schedule_link_cleanup(uuid) TO service_role;
+
+-- DEV-only binding of the verified QA parent email to the CRM guardian.
+CREATE OR REPLACE FUNCTION public.saas_qa_phase3d_guardian_contact(
+ p_tenant_id uuid,p_opportunity_id uuid,p_parent_user_id uuid
+) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $fn$
+DECLARE v_person uuid;v_email text;
+BEGIN
+ SELECT o.contact_id INTO v_person FROM connect.opportunities o
+ JOIN connect.tenants t ON t.id=o.tenant_id
+ WHERE o.id=p_opportunity_id AND o.tenant_id=p_tenant_id
+   AND o.title='SaaS E2E Phase3D Opportunity'
+   AND t.slug ~ '^saas-e2e-crm-[ab]-[a-f0-9]{12}$';
+ SELECT lower(email) INTO v_email FROM auth.users
+ WHERE id=p_parent_user_id AND email_confirmed_at IS NOT NULL
+ AND lower(email) ~ '^saas-e2e-[a-z0-9-]+@example[.]invalid$';
+ IF v_person IS NULL OR v_email IS NULL THEN
+  RAISE EXCEPTION 'Only confirmed synthetic guardian permitted' USING ERRCODE='42501';
+ END IF;
+ UPDATE connect.people SET full_name='SaaS E2E Student A' WHERE id=v_person AND tenant_id=p_tenant_id;
+ INSERT INTO connect.contact_methods(tenant_id,person_id,kind,normalized_value,display_value,is_primary)
+ VALUES(p_tenant_id,v_person,'email',v_email,v_email,true);
+ RETURN true;
+END $fn$;
+CREATE OR REPLACE FUNCTION public.saas_qa_phase3d_admission_summary(
+ p_tenant_id uuid,p_opportunity_id uuid
+) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $fn$
+DECLARE v_confirmed integer;v_won_events integer;v_task_links integer;
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM connect.opportunities o JOIN connect.tenants t ON t.id=o.tenant_id
+  WHERE o.tenant_id=p_tenant_id AND o.id=p_opportunity_id
+    AND o.title='SaaS E2E Phase3D Opportunity' AND t.slug ~ '^saas-e2e-crm-[ab]-[a-f0-9]{12}$') THEN
+  RAISE EXCEPTION 'Only synthetic admission allowed' USING ERRCODE='42501';
+ END IF;
+ SELECT count(*) INTO v_confirmed FROM connect.portal_admission_handoffs
+  WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id AND status='enrollment_confirmed';
+ SELECT count(*) INTO v_won_events FROM connect.stage_events
+  WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id AND note='Portal enrollment confirmed';
+ SELECT count(*) INTO v_task_links FROM tasks.module_links
+  WHERE tenant_id=p_tenant_id AND module='connect' AND resource='crm_opportunity' AND resource_id=p_opportunity_id;
+ RETURN jsonb_build_object('confirmed',v_confirmed,'wonEvents',v_won_events,'linkedTasks',v_task_links);
+END $fn$;
+REVOKE ALL ON FUNCTION public.saas_qa_phase3d_guardian_contact(uuid,uuid,uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.saas_qa_phase3d_admission_summary(uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.saas_qa_phase3d_guardian_contact(uuid,uuid,uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.saas_qa_phase3d_admission_summary(uuid,uuid) TO service_role;
