@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/repository";
+import {setAcademyBrowserOrganizationContext} from "@/lib/supabase/browser";
 
 export function SignOutButton({ className = "button ghost smallButton", label = "Sign out" }: { className?: string; label?: string }) {
   const router = useRouter();
@@ -14,6 +15,7 @@ export function SignOutButton({ className = "button ghost smallButton", label = 
     try {
       await signOut();
     } finally {
+      setAcademyBrowserOrganizationContext(null);
       router.replace("/");
       router.refresh();
       setBusy(false);
