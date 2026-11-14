@@ -32,11 +32,12 @@ async function account(suffix){
  if(login.error||!login.data.session)throw new Error("Synthetic user sign-in failed");
  return {id:data.user.id,token:login.data.session.access_token,session:login.data.session};
 }
-async function request(actor,method,path,payload,cookie){
+async function request(actor,method,path,payload,cookie,extraHeaders={}){
  const res=await fetch(base+path,{method,headers:{
   authorization:actor?.token?"Bearer "+actor.token:"",
   ...(payload?{"Content-Type":"application/json"}:{}),
-  ...(cookie?{cookie}: {})
+  ...(cookie?{cookie}: {}),
+  ...extraHeaders
  },body:payload?JSON.stringify(payload):undefined,redirect:"manual"});
  return {status:res.status,body:await res.json().catch(()=>null),cookie:res.headers.get("set-cookie")};
 }
@@ -125,6 +126,17 @@ async function run(){
  });
  assert(r.status===201&&Boolean(r.body?.courseId),"School A imports shared template through authenticated HTTP API");
  if(r.body?.courseId)adoptedCourseIds.push(r.body.courseId);
+ r=await request(a,"GET","/api/admin/invoices",undefined,undefined,{"x-organization-id":A});
+ assert(r.status===200&&r.body?.ok===true&&r.body?.invoices?.length===0&&r.body?.packageSummaries?.length===0,
+  "SaaS Admin finance endpoint returns only mapped organization invoices");
+ r=await request(a,"GET","/api/admin/invoices");
+ assert(r.status===403,"SaaS Admin invoice access requires selected organization");
+ r=await request(b,"GET","/api/admin/invoices",undefined,undefined,{"x-organization-id":A});
+ assert(r.status===403,"SaaS Admin invoice endpoint rejects foreign organization header");
+ r=await request(a,"POST","/api/admin/invoices",{
+  action:"create",packageId:"00000000-0000-0000-0000-000000000003"
+ },undefined,{"x-organization-id":A});
+ assert(r.status===403,"Foreign or unmapped invoice package blocked before Razorpay operation");
  // Phase 3A: actual CRM and Tasks membership + mapping validation for two schools.
  r=await request(a,"GET","/api/platform/organization-links?organizationId="+A);
  assert(r.status===200&&r.body?.links?.crm?.status==="ready"&&r.body.links.crm.tenantId===links.crmA,
