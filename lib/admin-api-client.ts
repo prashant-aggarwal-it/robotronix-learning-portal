@@ -1,5 +1,5 @@
 "use client";
-import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {getSupabaseBrowserClient,getAcademyBrowserOrganizationContext} from "@/lib/supabase/browser";
 
 export async function adminApi(path:string,init?:RequestInit){
  const db=getSupabaseBrowserClient();
