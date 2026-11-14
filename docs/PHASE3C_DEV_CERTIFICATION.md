@@ -88,3 +88,22 @@ Status: **PARTIAL**. The capability matrix alone is insufficient to certify auth
 - A rollback-contained DEV test returned PASS after verifying three denied operations against a temporary organization and membership: last-active-owner demotion, self-removal, and cross-organization membership change. Temporary records were rolled back. This is a SQL-level guard check, not a full HTTP authenticated test.
 - GitHub Actions source-certification run 43598820332 for commit 57469fce62a54031a195de0ea57189956981880a has **conclusion: success**. Subsequent code commits are not covered by this result; later runs were in progress at last check.
 - Overall decision remains **PARTIAL — NOT DEV CERTIFIED** pending latest HEAD successful CI, complete CRM/Tasks security review and authenticated role-management E2E evidence.
+
+## Latest Phase 3C completion attempt — 2026-11-14
+
+Current implementation changes:
+- Commit 0688d10b7154437dbeaa68465e8875d46a6974fa: added `database/saas/40_phase3c_add_existing_member.sql` (atomic service-only RPC for adding an existing Auth user to an organization with owner/admin role restrictions and audit).
+- Commit 6dbdd43111df90a5d9da2c771ad1d03cb30c1514: added authenticated organization-member POST API; caller identity resolved from validated bearer, no client-supplied actor identity.
+- Commit ed595ce32caf836fdc319478ab8670d4b35bff53: added registered-account membership UI to `/saas/members`.
+- DEV migration `phase3c_add_existing_member` applied successfully; function has EXECUTE for service_role only, not anon/authenticated.
+- Rollback-contained DEV tests **PASS** for unknown account rejection, foreign organization denial, duplicate-membership rejection. Test temporary records rolled back.
+- Current GitHub Actions source-certification runs for commits 0688d10b, 6dbdd431, ed595ce3 were still in progress at last query. Prior pass runs 43598909116 (source) and 43598909093 (authenticated two-tenant) are verified successful but predate these changes.
+
+Security audit notes:
+- Independent CRM and Tasks server session helpers verify bearer JWT via Supabase Auth and enforce their own independent product/account guards. Detailed business RPC permission boundaries have not all been exercised in this execution.
+- DEV scan found 39 public-schema SECURITY DEFINER functions executable by anon; many are trigger or predicate routines. Access review required case by case; no blind mass revocation applied.
+- A real pre-registration invitation flow and its invitation acceptance/email lifecycle remain unimplemented; `saas_add_existing_member_v1` handles **already registered** identities only.
+- DEV lacks persistent diversified SaaS memberships for a multi-role HTTP negative matrix; current tested SQL assertions cannot substitute for this.
+- No additional production changes, main merge, or Netlify operations were made.
+
+**Final status: PARTIAL / NOT CERTIFIED.** Phase 3D should not be represented as cleared by Phase 3C. Complete authenticated membership invitation/user journeys and CRM/Tasks role regression, then verify latest branch CI before upgrade to PASS.
