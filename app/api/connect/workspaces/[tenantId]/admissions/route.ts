@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
 import {connectFailure,noStore,uuid} from "@/lib/server/connect-auth";
 import {portalBridgeAccess} from "@/lib/server/connect-portal-access";
+import {checkServerCapability} from "@/lib/platform/server-access";
 
 export const dynamic="force-dynamic";
 type Context={params:Promise<{tenantId:string}>};
@@ -53,9 +54,28 @@ export async function POST(request:NextRequest,{params}:Context){
   if(error.code==="22023"||error.code==="23514")return connectFailure("Admission is not eligible for this action. Check the offer, learner and onboarding status.",409);
   return connectFailure("Admission action could not be completed.",503);
  }
+ // Optional CRM → Tasks follow-up, explicitly requested by the CRM operator.
+ // Tasks is independent: an unavailable integration must never roll back admission.
+ let followUpTask: {status:"created"|"existing"|"unavailable";taskId?:string}|undefined;
+ if(action==="accept"&&body.createFollowupTask===true){
+  const capability=checkServerCapability("crmTasks");
+  if(!capability.ok){
+   followUpTask={status:"unavailable"};
+  }else{
+   try{
+    const task=await access.session.admin.rpc("task_module_link",{
+     p_actor_id:access.session.actorId,p_module:"connect",p_resource:"crm_opportunity",
+     p_resource_id:body.opportunityId,p_tenant_id:tenantId
+    });
+    followUpTask=!task.error&&typeof task.data?.task_id==="string"?
+     {status:task.data.created===true?"created":"existing",taskId:task.data.task_id}:
+     {status:"unavailable"};
+   }catch{followUpTask={status:"unavailable"}}
+  }
+ }
  if(action==="accept"&&data.existing){
   return data.payloadHash!==p_data.payloadHash?connectFailure("Request ID was already used for a different offer.",409):
-   NextResponse.json({ok:true,id:data.id,status:data.status,existing:true,inviteUrl:null},{headers:noStore});
+   NextResponse.json({ok:true,id:data.id,status:data.status,existing:true,inviteUrl:null,...(followUpTask?{followUpTask}:{})},{headers:noStore});
  }
- return NextResponse.json({ok:true,...data,...(action==="accept"?{inviteUrl:request.nextUrl.origin+"/onboarding?handoff="+encodeURIComponent(token)}:{})},{headers:noStore});
+ return NextResponse.json({ok:true,...data,...(followUpTask?{followUpTask}:{}),...(action==="accept"?{inviteUrl:request.nextUrl.origin+"/onboarding?handoff="+encodeURIComponent(token)}:{})},{headers:noStore});
 }
