@@ -145,6 +145,19 @@ async function run(){
   action:"task_create",workspace_id:links.tasksB,task:{title:"SaaS E2E Unauthorized"}
  });
  assert(r.status===403||r.status===400,"Foreign Tasks workspace creation rejected");
+ // Personal tasks remain private even when the owner belongs to multiple schools.
+ r=await request(a,"POST","/api/tasks",{title:"SaaS E2E Private Task A"});
+ assert(r.status===201&&Boolean(r.body?.item?.id),"Create private task for School A user");
+ const privateTaskId=r.body.item.id;
+ r=await request(a,"GET","/api/tasks?limit=100");
+ assert(r.status===200&&r.body?.items?.some(t=>t.id===privateTaskId),
+  "Owner sees personal task");
+ r=await request(b,"GET","/api/tasks?limit=100");
+ assert(r.status===200&&!r.body?.items?.some(t=>t.id===privateTaskId),
+  "Other school member cannot see personal task");
+ r=await request(multi,"GET","/api/tasks?limit=100");
+ assert(r.status===200&&!r.body?.items?.some(t=>t.id===privateTaskId),
+  "Multi-organization member cannot see another user's personal task");
  const create=async(actor,org,kind,data)=>{
   const response=await request(actor,"POST","/api/platform/academy/"+kind,{organizationId:org,...data});
   if(response.status!==201||!response.body?.data?.id)
