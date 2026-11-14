@@ -8,7 +8,7 @@ Production: `njyktzenybimykpqaegn` — **not touched**
 
 ## Certification decision
 
-**PARTIAL — NOT YET CERTIFIED.** All source, TypeScript, and authenticated E2E checks must pass on the current code state before considering PASS. Do not start Phase 3D assuming Phase 3C is certified.
+**PASS — DEV AUTOMATED CERTIFICATION.** Source/typecheck and authenticated Academy, CRM, Tasks and Phase 3C membership E2E all passed on verified code SHA `fa6d9fb1c162114a9e13a21e0d370513ff4cb03a`. This is not production certification or a deployment authorization.
 
 ## Implemented changes
 
@@ -70,3 +70,16 @@ No production database modifications, no `main` merge, and no Netlify deployment
 - Combined latest authenticated QA run [43602392753](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392753) was pending behind prior QA run 43602283223 at last inspection. No complete authenticated invitation PASS is claimed.
 - DEV read-only check confirmed all six sensitive member/invitation RPCs service-only (`anon=false`, `authenticated=false`, `service_role=true`).
 - Status **PARTIAL / NOT CERTIFIED** until last authenticated run passes. No production deployment or main merge.
+
+## Final resolution — 2026-11-14
+
+**Root cause fixed:** `app/api/platform/organizations/[organizationId]/members/route.ts` rejected valid UUIDs due to an incomplete `8-4-4-12` pattern. Fixed to standard `8-4-4-4-12`, with regression coverage `lib/server/saas/membership-uuid-contract.test.mjs`. Commit `fa6d9fb1c162114a9e13a21e0d370513ff4cb03a`.
+
+**Verified results (on that exact code SHA):**
+- [Release 1 source certification run 43605718195](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43605718195): **SUCCESS**, including TypeScript, authorization contracts, modular/regression checks and SQL package generation.
+- [Authenticated DEV suite run 43605718281](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43605718281): **SUCCESS**.
+- Test log: **126** authenticated Academy/CRM/Tasks two-tenant assertions passed, plus **17** authenticated Phase 3C invitation/membership assertions passed.
+- Critical regression: authorized membership roster **HTTP 200**; foreign tenant roster **HTTP 403** without data leakage.
+- Email invitation acceptance, token replay rejection, tenant denial, admin privilege guard, suspension/restoration and invitation revocation all passed.
+
+**Certification decision: PASS for Phase 3C automated DEV acceptance criteria.** Pending production deployment readiness and non-blocking configuration reviews (manual invitation delivery, legacy security advisor warnings, leaked-password protection) remain separate from this DEV certification. PROD Supabase, main and Netlify were not changed.
