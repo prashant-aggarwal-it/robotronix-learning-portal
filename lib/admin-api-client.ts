@@ -8,7 +8,8 @@ export async function adminApi(path:string,init?:RequestInit){
  if(sessionError)throw new Error("Unable to read the current Admin session. Please retry.");
  const token=session?.access_token;
  if(!token)throw new Error("Your Admin session is still loading or has expired. Please sign in again.");
- const response=await fetch(path,{...init,cache:"no-store",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`,...(init?.headers||{})}});
+ const organizationId=getAcademyBrowserOrganizationContext();
+ const response=await fetch(path,{...init,cache:"no-store",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`,...(organizationId?{"x-organization-id":organizationId}:{}),...(init?.headers||{})}});
  const raw=await response.text();
  let json:any={};try{json=raw?JSON.parse(raw):{}}catch{}
  if(!response.ok||json.ok===false){
