@@ -5,7 +5,7 @@ CREATE SCHEMA IF NOT EXISTS operations;
 REVOKE ALL ON SCHEMA operations FROM PUBLIC, anon, authenticated;
 GRANT USAGE ON SCHEMA operations TO service_role;
 CREATE TABLE operations.facilities (
- id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid REFERENCES platform.organizations(id),
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid REFERENCES saas.organizations(id),
  legacy_center_id uuid UNIQUE REFERENCES public.delivery_centers(id), name text NOT NULL
 );
 
