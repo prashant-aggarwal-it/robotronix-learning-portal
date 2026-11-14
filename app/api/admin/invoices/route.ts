@@ -1,5 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin,apiFailure} from "@/lib/server/admin-api";
+import {requireLegacyFinanceScope,financeScopeError} from "@/lib/server/saas/legacy-finance-scope";
 import {razorpayMode,razorpayRequest} from "@/lib/server/razorpay";
 import {applyRazorpayInvoiceEntity,syncRazorpayInvoice} from "@/lib/server/razorpay-invoices";
 import {logSystemEvent} from "@/lib/server/system-log";
@@ -51,10 +52,15 @@ function uiInvoice(i:any){return{...i,package_id:i.fee_package_id,amount:Number(
 
 export async function GET(request:NextRequest){
  const ctx=await requireAdmin(request);if(ctx.error)return ctx.error;const admin=ctx.admin!;
+ let scope;
+ try{scope=await requireLegacyFinanceScope(request)}
+ catch(error){const f=financeScopeError(error);return apiFailure(f.message,f.status)}
  try{
+  const invoiceQuery=admin.from("student_invoices").select("*").order("created_at",{ascending:false});
+  const packageQuery=admin.from("student_fee_packages").select("*").order("created_at",{ascending:false});
   const [{data:invoices,error:ie},{data:packages,error:pe}]=await Promise.all([
-    admin.from("student_invoices").select("*").order("created_at",{ascending:false}),
-    admin.from("student_fee_packages").select("*").order("created_at",{ascending:false})
+    scope?(scope.invoiceIds.length?invoiceQuery.in("id",scope.invoiceIds):Promise.resolve({data:[],error:null})):invoiceQuery,
+    scope?(scope.packageIds.length?packageQuery.in("id",scope.packageIds):Promise.resolve({data:[],error:null})):packageQuery
   ]);if(ie||pe)throw new Error(ie?.message||pe?.message);
   const rows=[] as any[];
   const packageSummaries=[] as any[];
@@ -76,11 +82,16 @@ export async function GET(request:NextRequest){
 
 export async function POST(request:NextRequest){
  const auth=await requireAdmin(request);if(auth.error)return auth.error;const admin=auth.admin!,actorId=auth.actorId!;
+ let scope;
+ try{scope=await requireLegacyFinanceScope(request)}
+ catch(error){const f=financeScopeError(error);return apiFailure(f.message,f.status)}
  let body:any;try{body=await request.json()}catch{return apiFailure("Invalid request.")}
  const action=String(body.action||"");
  try{
   if(action==="create"){
-    const packageId=String(body.packageId||"");const rate=Number(body.exchangeRate);const rateSource=String(body.exchangeRateSource||"");const fxFetchedAt=String(body.fxFetchedAt||"");
+    const packageId=String(body.packageId||"");
+    if(scope&&!scope.packageIds.includes(packageId))return apiFailure("Fee package not accessible for this organization.",403);
+    const rate=Number(body.exchangeRate);const rateSource=String(body.exchangeRateSource||"");const fxFetchedAt=String(body.fxFetchedAt||"");
     if(!packageId||!Number.isFinite(rate)||rate<=0||!rateSource||!fxFetchedAt)return apiFailure("A fresh automatic exchange rate is required.");
     if(!body.exportEligibilityConfirmed)return apiFailure("Confirm the export-service/LUT eligibility review before creating the invoice.");
     const {data:existingInvoice,error:existingError}=await admin.from("student_invoices").select("*").eq("fee_package_id",packageId).maybeSingle();
@@ -115,6 +126,7 @@ export async function POST(request:NextRequest){
     return NextResponse.json({ok:true,invoice:uiInvoice(data)});
   }
   const id=String(body.id||"");if(!id)return apiFailure("Invoice id is required.");
+  if(scope&&!scope.invoiceIds.includes(id))return apiFailure("Invoice not accessible for this organization.",403);
   const {data:invoice,error}=await admin.from("student_invoices").select("*").eq("id",id).maybeSingle();if(error||!invoice)return apiFailure("Invoice not found.",404);
   if(!invoice.razorpay_invoice_id)return apiFailure("Razorpay invoice id is missing.");
   if(action==="issue"){
