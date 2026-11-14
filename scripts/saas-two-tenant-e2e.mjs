@@ -251,6 +251,19 @@ async function run(){
   assert((await directRead(multi,B,sb)).length===1,
    "Role downgrade in School A does not revoke authorized admin access in School B");
  }finally{await changeSyntheticRole("admin")}
+ const directA=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false},
+  global:{headers:{authorization:"Bearer "+a.token,"x-organization-id":A}}});
+ const {data:directCreated,error:directCreateError}=await directA.from("students")
+  .insert({full_name:"SaaS E2E Direct Student A",grade:"5",school:"Synthetic School A"}).select("id").single();
+ assert(!directCreateError&&Boolean(directCreated?.id),"Legacy browser insert creates organization-owned student atomically");
+ if(directCreated?.id){
+  const {data:linked,error:linkError}=await admin.rpc("saas_academy_resource_owned",{
+   p_actor_id:a.id,p_organization_id:A,p_kind:"students",p_resource_id:directCreated.id
+  });
+  assert(!linkError&&linked===true,"Direct student insert automatically creates School A ownership link");
+  assert((await directRead(b,B,directCreated.id)).length===0,
+   "Directly created student cannot leak to School B");
+ }
  const ownership=async(actor,org,kind,id)=>{
   const {data,error}=await admin.rpc("saas_academy_resource_owned",{
    p_actor_id:actor.id,p_organization_id:org,p_kind:kind,p_resource_id:id
@@ -272,6 +285,12 @@ async function run(){
  const cb=await create(b,B,"courses",{title:"SaaS E2E Course B",slug:slug+"-b",code:slug.toUpperCase()+"B",category:"Robotics",grade_from:1,grade_to:8,total_sessions:8});
  const ta=await create(a,A,"trainers",{full_name:"SaaS E2E Trainer A"});
  const tb=await create(b,B,"trainers",{full_name:"SaaS E2E Trainer B"});
+ const {error:foreignInsert}=await directA.from("enrollments").insert({
+  student_id:sa,course_id:cb,trainer_id:ta,enrollment_type:"one_to_one",
+  started_at:new Date().toISOString().slice(0,10)
+ });
+ assert(Boolean(foreignInsert)&&foreignInsert.code==="42501",
+  "Legacy direct enrollment insert rejects cross-school course relationships");
  const ea=await create(a,A,"enrollments",{student_id:sa,course_id:ca,trainer_id:ta});
  assert(Boolean(ea&&tb),"Authorized enrollment created");
  r=await request(a,"GET","/api/platform/academy/students?organizationId="+A);
