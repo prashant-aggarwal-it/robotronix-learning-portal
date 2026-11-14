@@ -37,4 +37,23 @@
 - No live external Zoom scheduling, email/WhatsApp delivery, full background-worker recovery or production readiness is certified by DEV synthetic E2E.
 - No production or main branch changes, no Netlify builds or deployments.
 
-**Certification decision at last update: PARTIAL / pending the latest code SHA's passing CI and resolution of production rollout caveats.** Prior cross-module automation passes are verified evidence but are not a blanket live-production acceptance.
+**Certification decision: PASS for automated DEV Phase 3D integration acceptance. Production and simultaneous multi-customer activation are NOT certified.**
+
+## Final completed automated DEV verification — 14 November 2026
+
+**DEV automated acceptance: PASS.** This certification supersedes the earlier pending-commit note above.
+
+- Source and strict TypeScript / module compatibility certification: **PASS** on SHA `55196117fa476120181a79ad17b51c7dc437e13c`, [GitHub Actions run 43609349664](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43609349664).
+- Authenticated DEV two-tenant regression: **PASS** on SHA `c6599c1da1f07abc85f4140b6890c51d51f6c04a`, [GitHub Actions run 43609306438](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43609306438).
+- **156** authenticated Academy, CRM, Tasks, and Phase 3D assertions passed plus **17** Phase 3C regressions. Last behavioral code and final source-certified code are equivalent except for a strict TypeScript callback parameter annotation.
+- Confirmed in CI: CRM A/B can list only their mapped Academy trainers, foreign CRM actor trainer enumeration denied, and previous admission/onboarding-to-Won/idempotent-task/class workflows passed.
+- DEV service role is the only role authorized to execute the SaaS CRM demo-trainer scope RPC.
+- Independent optional SQL packages are generated for CRM+Tasks, SaaS Academy+Tasks and SaaS CRM+Portal trainer scope.
+
+### Explicit rollout exclusions
+
+Full simultaneous multi-customer CRM→Portal activation is NOT certified: legacy `connect_portal_single_active_integration` still limits the shared Portal to one active CRM integration. This restriction must be resolved with a verified fully tenant-scoped Portal migration before onboarding multiple active CRM customers.
+
+External Zoom, delivery channels, scheduler activation and independent production deployments still require environment-specific testing. No PROD database access, main merge, or Netlify deployment occurred.
+
+**Final decision: Phase 3D automated DEV integration certification PASS. Production/multi-customer readiness remains conditional.**
