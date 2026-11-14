@@ -9,8 +9,17 @@ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 export async function requireLegacyFinanceScope(request:NextRequest):Promise<AcademyLegacyFinanceScope>{
  const bearer=readBearerToken(request.headers.get("authorization"));
- const {organizations}=await getAuthorizedOrganizations(bearer);
- if(!organizations.length)return null;
+ const {userId,organizations}=await getAuthorizedOrganizations(bearer);
+ if(!organizations.length){
+  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!url||!key)throw new SaaSAccessError(503,"Academy finance access unavailable");
+  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+  const {data:everMember,error}=await db.rpc("saas_actor_ever_member",{p_actor_id:userId});
+  if(error)throw new SaaSAccessError(503,"Academy membership history unavailable");
+  if(everMember)throw new SaaSAccessError(403,"No active Academy organization membership");
+  return null;
+ }
  const organizationId=request.headers.get("x-organization-id")||"";
  if(!uuid.test(organizationId))throw new SaaSAccessError(403,"Select an Academy organization");
  const {userId}=await requireAuthorizedTenantRole(bearer,organizationId,"academy",["owner","admin"]);
