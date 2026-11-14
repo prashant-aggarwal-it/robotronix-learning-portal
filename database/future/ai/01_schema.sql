@@ -5,7 +5,7 @@ CREATE SCHEMA IF NOT EXISTS ai;
 REVOKE ALL ON SCHEMA ai FROM PUBLIC, anon, authenticated;
 GRANT USAGE ON SCHEMA ai TO service_role;
 CREATE TABLE ai.agents (
- id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid REFERENCES platform.organizations(id),
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid REFERENCES saas.organizations(id),
  name text NOT NULL, enabled boolean NOT NULL DEFAULT false
 );
 
