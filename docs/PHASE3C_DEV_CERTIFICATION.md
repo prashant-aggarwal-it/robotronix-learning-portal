@@ -54,3 +54,11 @@ Status: **PARTIAL**. The capability matrix alone is insufficient to certify auth
 - Verified RPC is SECURITY DEFINER, callable by service_role, and not callable by anon/authenticated directly.
 - This covers updates to existing membership rows only. Invitation/member creation, SaaS management UI, exhaustive API authorization, CRM/Tasks permission audits, full application typecheck and regression testing remain outstanding.
 - **Pass 1 is NOT fully certified and Phase 3C remains PARTIAL** until remaining coverage and regression evidence are available.
+
+## Additional Pass 1 continuation — 2026-11-14
+- Commit 9643d453c6813aa5b60a33d63f708a9a76ed7c7d: reject null role/status in RPC; added organization-scoped membership GET endpoint. DEV migration phase3c_membership_null_hardening applied.
+- Commit 8184f13685710af24d6e7f46a9313dbdd16cd037: added minimal /saas/members role/status management UI for owners.
+- DEV currently has zero persistent SaaS membership rows. Authenticated owner-management journeys and last-owner rejection have not been verified with representative real accounts.
+- CRM/Tasks still use their independently maintained auth mechanisms, subject to Phase 3C exhaustive audits.
+- No successful typecheck, CI or Playwright regression has been observed for the new commits.
+- Status: PARTIAL, not Phase 3C certified.
