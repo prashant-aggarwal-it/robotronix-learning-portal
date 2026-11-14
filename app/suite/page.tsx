@@ -27,7 +27,6 @@ export default function SuiteHome(){
  const [organizationName,setOrganizationName]=useState("");
  const [hasOrganizations,setHasOrganizations]=useState(false);
  const [organizationUnavailable,setOrganizationUnavailable]=useState(false);
- const [standalone,setStandalone]=useState(false);
  const [needsSelection,setNeedsSelection]=useState(false);
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
@@ -36,7 +35,6 @@ export default function SuiteHome(){
   (async()=>{
    const [p,capabilities]=await Promise.all([request("/api/platform/my-products"),request("/api/platform/capabilities")]);
    const singleModule=capabilities.legacyDefault!==true&&capabilities.products?.length===1;
-   if(active)setStandalone(singleModule);
    if(!active)return;
    const verified=(p.products||[]).filter((x:Product)=>["portal","crm","tasks"].includes(x.id));
    setProducts(verified);
@@ -58,7 +56,7 @@ export default function SuiteHome(){
   .finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
  },[]);
- const visible=products.filter(p=>!organizationUnavailable&&(standalone&&!hasOrganizations||!hasOrganizations||(!needsSelection&&modules?.[suiteModuleById(p.id).entitlement]===true)));
+ const visible=products.filter(p=>!organizationUnavailable&&(!hasOrganizations||(!needsSelection&&modules?.[suiteModuleById(p.id).entitlement]===true)));
  return <main className="suiteHome">
   <header className="suiteHomeHeader">
    <div><span className="suiteEyebrow">Robotronix</span><h1>Education Suite</h1><p>Choose a workspace you are authorized to use.</p></div>
