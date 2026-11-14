@@ -1,7 +1,7 @@
 // Real authenticated HTTP + Supabase integration test. Creates and cleans DEV-only synthetic accounts.
 // Absolutely never run on PROD. No passwords or service credentials are logged or persisted.
 import {createClient} from "@supabase/supabase-js";
-import {randomBytes} from "node:crypto";
+import {randomBytes,randomUUID} from "node:crypto";
 import {spawn} from "node:child_process";
 
 const EXPECTED_REF="uzzuquxeeqonxeqcuohh";
@@ -247,6 +247,40 @@ async function run(){
  r=await request(b,"GET","/api/tasks/module-links?module=connect&tenant_id="+links.crmA);
  assert(r.status===200&&!r.body?.items?.some(item=>item.task_id===linkedTaskId),
   "Foreign CRM member cannot list linked private Tasks");
+
+ // Phase 3D: real CRM accepted admission → Academy onboarding handoff → optional Tasks.
+ const acceptance={
+  action:"accept",requestId:randomUUID(),opportunityId:phase3dOpportunity,
+  learnerPersonId:fixture.data.personId,consentAttested:true,
+  offer:{fee:1200,currency:"INR",sessions:8,terms:"SaaS E2E Phase3D guardian-approved terms."},
+  createFollowupTask:true
+ };
+ r=await request(b,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",acceptance);
+ assert(r.status===403,"Foreign CRM tenant cannot accept another organization's Academy admission");
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",acceptance);
+ assert(r.status===200&&Boolean(r.body?.id)&&Boolean(r.body?.inviteUrl)
+  &&r.body?.followUpTask?.taskId===linkedTaskId,
+  "Authorized CRM admission creates secure Academy onboarding handoff and reuses linked Tasks");
+ const handoffId=r.body.id;
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",acceptance);
+ assert(r.status===200&&r.body?.existing===true&&r.body?.id===handoffId
+  &&r.body?.followUpTask?.taskId===linkedTaskId,
+  "Admission request replay preserves handoff and reuses existing linked task");
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",{
+  ...acceptance,offer:{...acceptance.offer,fee:1300}
+ });
+ assert(r.status===409,"Reused admission request ID with different offer is rejected before Tasks side effects");
+ r=await request(a,"GET","/api/connect/workspaces/"+links.crmA+"/admissions");
+ assert(r.status===200&&r.body?.items?.some(item=>item.id===handoffId),
+  "CRM owner can review linked Academy onboarding handoff");
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",{action:"revoke",handoffId});
+ assert(r.status===200&&r.body?.status==="revoked","Authorized CRM owner can revoke pending Academy onboarding handoff");
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/portal-integration",{action:"disable"});
+ assert(r.status===200,"CRM owner can disable optional Academy integration");
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",{
+  ...acceptance,requestId:randomUUID()
+ });
+ assert(r.status===409,"Disabled Academy integration fails gracefully without admission conversion");
  // Personal tasks remain private even when the owner belongs to multiple schools.
  r=await request(a,"POST","/api/tasks",{title:"SaaS E2E Private Task A"});
  assert(r.status===201&&Boolean(r.body?.item?.id),"Create private task for School A user");
