@@ -86,10 +86,11 @@ export type RouteRequirement = ProductId | IntegrationId | "taskIntegrations" | 
 /** Route availability is deployment-scoped and never substitutes for user authorization. */
 export function routeRequirement(pathname: string): RouteRequirement {
   const p = pathname.replace(/\/$/, "") || "/";
-  if (p === "/" || p === "/login" || p === "/auth/callback" || p === "/join" ||
+  if (p === "/" || p === "/suite" || p === "/login" || p === "/auth/callback" || p === "/join" ||
       p === "/privacy" || p === "/terms" || p === "/support" ||
       p === "/api/health" || p.startsWith("/api/locations/") ||
-      p === "/api/platform/capabilities" || p === "/api/platform/my-products") return "shared";
+      p === "/api/platform/capabilities" || p === "/api/platform/my-products" ||
+      p === "/api/platform/organizations" || p === "/api/platform/organization-modules") return "shared";
 
   // Module links are checked per requested source by their API handler.
   // A Portal+Tasks deployment must not require CRM merely to reach the API.
