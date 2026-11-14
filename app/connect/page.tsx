@@ -121,7 +121,14 @@ export default function ConnectPage(){
  const loadWorkspaces=useCallback(async()=>{
   const result=await connectFetch<{workspaces:ConnectWorkspace[]}>("/api/connect/workspaces");
   setWorkspaces(result.workspaces||[]);setWorkspacesReady(true);
-  setTenantId(previous=>result.workspaces.some(x=>x.tenant_id===previous)?previous:(result.workspaces[0]?.tenant_id||""));
+  const requested=new URLSearchParams(window.location.search).get("suiteTenant");
+  // The requested tenant is a navigation hint, not authorization. Only actual CRM
+  // workspaces returned by the authenticated CRM API may be selected.
+  setTenantId(previous=>{
+   if(requested&&result.workspaces.some(x=>x.tenant_id===requested))return requested;
+   if(requested)return ""; // Fail closed if a linked workspace is not accessible.
+   return result.workspaces.some(x=>x.tenant_id===previous)?previous:(result.workspaces[0]?.tenant_id||"");
+  });
  },[]);
  useEffect(()=>{
   if(!signedIn){setWorkspaces([]);setTenantId("");setWorkspacesReady(false);return;}
