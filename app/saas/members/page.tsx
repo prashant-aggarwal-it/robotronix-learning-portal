@@ -3,6 +3,7 @@ import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 type Org={id:string;displayName:string;role:string};
 type Member={id:string;user_id:string;role_key:string;status:string};
+type Invitation={id:string;email:string;role_key:string;status:string;expires_at:string};
 const roles=["owner","admin","staff","trainer","member"];
 const statuses=["active","suspended","removed"];
 async function request(path:string,init:RequestInit={}) {
@@ -19,6 +20,7 @@ export default function MembersPage(){
  const [orgs,setOrgs]=useState<Org[]>([]);
  const [organizationId,setOrganizationId]=useState("");
  const [members,setMembers]=useState<Member[]>([]);
+ const [invitations,setInvitations]=useState<Invitation[]>([]);
  const [drafts,setDrafts]=useState<Record<string,{role:string;status:string}>>({});
  const [error,setError]=useState("");
  const [busy,setBusy]=useState(false);
@@ -34,10 +36,12 @@ export default function MembersPage(){
   setOrganizationId(selected?.id||"");
  }).catch(e=>{if(active)setError(String(e))});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;setMembers([]);setDrafts({});
-  if(organizationId)request("/api/platform/organizations/"+organizationId+"/members").then(x=>{
+  if(organizationId){request("/api/platform/organizations/"+organizationId+"/invitations").then(x=>{if(active)setInvitations(x.invitations as Invitation[])}).catch(e=>{if(active)setError(e instanceof Error?e.message:"Invitations unavailable")});
+  request("/api/platform/organizations/"+organizationId+"/members").then(x=>{
    if(!active)return;const rows=x.members as Member[];setMembers(rows);
    setDrafts(Object.fromEntries(rows.map(m=>[m.id,{role:m.role_key,status:m.status}])));
   }).catch(e=>{if(active)setError(e instanceof Error?e.message:"Members unavailable")});
+  }else setInvitations([]);
   return()=>{active=false};
  },[organizationId]);
  async function inviteMember(){
@@ -46,8 +50,19 @@ export default function MembersPage(){
   try{
    const result=await request("/api/platform/organizations/"+organizationId+"/invitations",{method:"POST",body:JSON.stringify({email:inviteEmail.trim(),role:inviteRole})});
    setInvitationToken(result.acceptToken);
+   const latest=await request("/api/platform/organizations/"+organizationId+"/invitations");
+   setInvitations(latest.invitations as Invitation[]);
    setInviteEmail("");
   }catch(e){setError(e instanceof Error?e.message:"Invitation failed")}finally{setBusy(false)}
+ }
+ async function revokeInvitation(id:string){
+  if(busy||!organizationId)return;
+  setBusy(true);setError("");
+  try{
+   await request("/api/platform/organizations/"+organizationId+"/invitations/"+id,{method:"DELETE"});
+   const latest=await request("/api/platform/organizations/"+organizationId+"/invitations");
+   setInvitations(latest.invitations as Invitation[]);
+  }catch(e){setError(e instanceof Error?e.message:"Revocation failed")}finally{setBusy(false)}
  }
  async function addExistingMember(){
   if(busy||!organizationId||!newUser.trim())return;
@@ -90,6 +105,11 @@ export default function MembersPage(){
     </select></label>{" "}
     <button type="button" disabled={busy||!inviteEmail.trim()} onClick={()=>void inviteMember()}>Create invitation</button>
     {invitationToken&&<p>One-time token (copy now; it will not be displayed again): <code>{invitationToken}</code></p>}
+    <h3>Recent invitations</h3>
+    {invitations.map(i=><div key={i.id} style={{marginBottom:8}}>
+     {i.email} — {i.role_key} — {i.status}
+     {i.status==="pending"&&<button type="button" disabled={busy} onClick={()=>void revokeInvitation(i.id)}>Revoke</button>}
+    </div>)}
    </section>}
    {organizationId&&<section style={{marginTop:20}}>
     <h2>Add existing account</h2>
