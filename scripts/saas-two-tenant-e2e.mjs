@@ -449,7 +449,7 @@ async function run(){
     try{
      const page=await context.newPage();
      await page.goto(base+path,{waitUntil:"domcontentloaded"});
-     await page.locator("main").first().waitFor({timeout:35000});
+     await page.locator(".experienceShell, .workspaceContent").first().waitFor({timeout:35000});
      await page.waitForTimeout(1200);
      assert(new URL(page.url()).pathname===path,
       label+" original Academy dashboard remains accessible after org context resolution");
@@ -511,6 +511,11 @@ finally{
  if(schools&&links){
   const {error}=await admin.rpc("saas_qa_phase3a_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
   if(error){console.error("Phase 3A fixture cleanup failed: "+error.message);failure??=error}
+ }
+ if(schools){
+  const {error:auditCleanupError}=await admin.from("portal_audit_log").delete()
+   .in("saas_org_id",[schools.schoolA,schools.schoolB]);
+  if(auditCleanupError){console.error("Synthetic Academy audit cleanup failed: "+auditCleanupError.message);failure??=auditCleanupError}
  }
  if(schools){
   const {error}=await admin.rpc("saas_qa_fixture_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
