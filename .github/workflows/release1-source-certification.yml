@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/education-suite-release1
+      - feature/education-suite-phase3d
     paths:
       - 'app/**'
       - 'lib/**'
