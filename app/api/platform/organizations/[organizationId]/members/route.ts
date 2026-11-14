@@ -5,7 +5,7 @@ import {roleHasCapability} from "@/lib/server/saas/role-capabilities.mjs";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store","Vary":"Authorization, Cookie"};
-const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function GET(request:NextRequest,context:{params:Promise<{organizationId:string}>}) {
  try {
   const {organizationId}=await context.params;
