@@ -1,0 +1,24 @@
+name: Database dependency inventory
+on:
+  push:
+    branches: ['feature/portal-canonical-db-package']
+    paths:
+      - 'scripts/inventory-db-callers.mjs'
+      - '.github/workflows/db-dependency-inventory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate static database caller index
+        run: node scripts/inventory-db-callers.mjs artifacts/db-call-inventory
+      - name: Upload audit for architecture review
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-caller-inventory
+          path: artifacts/db-call-inventory/
+          retention-days: 14
