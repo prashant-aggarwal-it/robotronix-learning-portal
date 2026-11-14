@@ -1,6 +1,7 @@
 import {isPlayableZoomVideo} from "@/lib/zoom-recording-types";
 import {NextRequest,NextResponse} from "next/server";
 import {requirePortalUser} from "@/lib/server/portal-api";
+import {verifyZoomTenantScope} from "@/lib/server/saas/legacy-zoom-scope";
 import {classAccessForProfile} from "@/lib/server/zoom-classroom";
 import {createRecordingStreamToken} from "@/lib/server/zoom-recording";
 import {zoomApi,ZoomApiError} from "@/lib/server/zoom";
@@ -8,7 +9,10 @@ import {logSystemEvent} from "@/lib/server/system-log";
 import {zoomMeetingInstancePath} from "@/lib/server/zoom-recording-instance";
 export const dynamic="force-dynamic";
 
+class SaaSRecordingAccessDenied extends Error{}
 async function load(auth:any,recordingId:string){
+ const allowed=await verifyZoomTenantScope(auth.admin,auth.profile.id,"recording",recordingId);
+ if(!allowed)throw new SaaSRecordingAccessDenied();
  const {data,error}=await auth.admin.from("zoom_recordings")
   .select("id,zoom_meeting_id,zoom_recording_file_id,recording_type,file_type,file_extension,file_size_bytes,recording_start,recording_end,status,learner_visible,retain_until,protected_from_deletion,download_url")
   .eq("id",recordingId).maybeSingle();
@@ -42,7 +46,9 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{recordin
    sizeBytes:recording.file_size_bytes,status:recording.status,retainUntil:recording.retain_until,protected:recording.protected_from_deletion,
    learnerVisible:recording.learner_visible,streamUrl:`/api/zoom/recordings/${recording.id}/stream?token=${encodeURIComponent(token)}`}},
    {headers:{"Cache-Control":"no-store"}});
- }catch{
+ }catch(error){
+  if(error instanceof SaaSRecordingAccessDenied)return NextResponse.json({ok:false,error:"Recording is not accessible in this organization."},
+   {status:403,headers:{"Cache-Control":"no-store"}});
   const referenceId=await logSystemEvent({source:"zoom-recording",action:"details",code:"ZOOM_DETAILS_"+stage.toUpperCase(),message:"Recording details request failed"});
   console.error("[zoom-recording] details failed",{stage,referenceId});
   return NextResponse.json({ok:false,error:"Unable to process recording request.",referenceId},{status:500,headers:{"Cache-Control":"no-store"}});
@@ -102,6 +108,8 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{record
   }
   return NextResponse.json({ok:false,error:"Unsupported recording action."},{status:400});
  }catch(error){
+  if(error instanceof SaaSRecordingAccessDenied)return NextResponse.json({ok:false,error:"Recording is not accessible in this organization."},
+   {status:403,headers:{"Cache-Control":"no-store"}});
   const upstreamStatus=error instanceof ZoomApiError?error.status:null;
   const providerCode=error instanceof ZoomApiError?error.providerCode:null;
   const code="ZOOM_UPDATE_"+stage.toUpperCase().replace(/-/g,"_")+(upstreamStatus?"_HTTP_"+upstreamStatus:"")+(providerCode!==null?"_Z"+providerCode:"");
