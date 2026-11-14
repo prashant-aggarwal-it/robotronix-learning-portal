@@ -42,3 +42,23 @@ export function requireModuleAccess(enabled:boolean,organization:OrganizationAcc
  if(!organization)throw new SaaSAccessError(403,"Select an authorized organization");
  if(!enabled)throw new SaaSAccessError(403,"Module not enabled for this organization");
 }
+
+/** Resolve entitlements only after validating the caller and active membership. */
+export async function getAuthorizedModuleEntitlements(
+ bearer:string,organizationId:string
+):Promise<{organization:OrganizationAccess;modules:Record<string,boolean>}>{
+ const {userId,organizations}=await getAuthorizedOrganizations(bearer);
+ const organization=resolveAuthorizedOrganization(organizations,organizationId);
+ if(!organization)throw new SaaSAccessError(403,"Select an authorized organization");
+ const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
+ const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+ if(!url||!key)throw new SaaSAccessError(503,"Organization service unavailable");
+ const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+ const {data,error}=await client.rpc("saas_authorized_module_entitlements",{
+  p_actor_id:userId,p_organization_id:organization.id
+ });
+ if(error)throw new SaaSAccessError(503,"Module entitlements unavailable");
+ const modules:Record<string,boolean>=Object.create(null);
+ for(const row of data??[])modules[row.module_key]=row.enabled===true;
+ return {organization,modules};
+}
