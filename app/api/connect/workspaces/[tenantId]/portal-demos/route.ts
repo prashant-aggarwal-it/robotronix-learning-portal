@@ -14,7 +14,7 @@ export async function GET(request:NextRequest,{params}:Context){
  if(access.role==="viewer")return NextResponse.json({ok:true,installed:true,trainers:[],demos:[]},{headers:noStore});
  const db=access.session.admin;
  const [{data:trainers,error:trainerError},{data:linkResult,error:linkError}]=await Promise.all([
-  db.from("trainers").select("id,full_name,specialties").eq("record_status","active").order("full_name"),
+  db.rpc("saas_crm_portal_trainers_v1",{p_actor_id:access.session.actorId,p_tenant_id:tenantId}),
   db.rpc("connect_portal_demo_bridge",{p_actor_id:access.session.actorId,p_tenant_id:tenantId,p_action:"list",p_data:{}})
  ]);
  if(trainerError||linkError)return connectFailure("Unable to load connected demos.",503);
@@ -50,12 +50,12 @@ export async function POST(request:NextRequest,{params}:Context){
  if(typeof data.date!=="string"||typeof data.startTime!=="string"||typeof data.timezone!=="string"||typeof data.grade!=="string")
   return connectFailure("Date, time, timezone and learner grade are required.",400);
  const db=access.session.admin;
- const [{data:context,error:contextError},{data:trainer}]=await Promise.all([
+ const [{data:context,error:contextError},{data:availableTrainers,error:trainerError}]=await Promise.all([
   db.rpc("connect_portal_demo_bridge",{p_actor_id:access.session.actorId,p_tenant_id:tenantId,p_action:"booking_context",
    p_data:{opportunityId,learnerPersonId}}),
-  db.from("trainers").select("id").eq("id",trainerId).eq("record_status","active").maybeSingle()
+  db.rpc("saas_crm_portal_trainers_v1",{p_actor_id:access.session.actorId,p_tenant_id:tenantId})
  ]);
- if(contextError||!context||!trainer)return connectFailure("Verify learner/admission, guardian phone and active trainer.",400);
+ if(contextError||trainerError||!context||!(availableTrainers||[]).some(t=>t.id===trainerId))return connectFailure("Verify learner/admission, guardian phone and an authorized trainer.",400);
  const guardianId=String(opportunityId); // Stable identity for the request fingerprint; guardian lookup is server-authoritative.
  const payload={opportunityId,learnerPersonId,guardianId,trainerId,date:data.date,startTime:data.startTime,timezone:data.timezone,grade:data.grade,
   interest:String(data.interest||context.opportunityTitle).slice(0,160),durationMinutes:Number(data.durationMinutes||45),sessionType:(data.sessionType==="group"?"group":"one_to_one") as "group"|"one_to_one"};
