@@ -827,6 +827,10 @@ finally{
   const {error}=await admin.from("onboarding_submissions").delete().eq("id",phase3dOnboardingSubmissionId);
   if(error){console.error("Phase 3D synthetic onboarding cleanup failed: "+error.message);failure??=error}
  }
+ if(third){
+  const {error}=await admin.from("portal_audit_log").delete().eq("saas_org_id",third.schoolC);
+  if(error){console.error("Phase 3E Academy C audit cleanup failed: "+error.message);failure??=error}
+ }
  if(third&&schools){
   const {error}=await admin.rpc("saas_qa_phase3e_cleanup_third",{
    p_school_a:schools.schoolA,p_school_b:schools.schoolB,p_school_c:third.schoolC
