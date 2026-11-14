@@ -44,7 +44,7 @@ async function startServer(){
    ...process.env,
    NEXT_PUBLIC_APP_ENV:"live",SUPABASE_URL:url,NEXT_PUBLIC_SUPABASE_URL:url,
    NEXT_PUBLIC_SUPABASE_ANON_KEY:anon,SUPABASE_SERVICE_ROLE_KEY:service,
-   PRODUCT_MODE:"portal"
+   PRODUCT_MODE:"combined"
   }
  });
  let output="";
@@ -116,6 +116,35 @@ async function run(){
  assert(r.status===401,"Anonymous organization linkage discovery rejected");
  r=await request(a,"GET","/api/platform/organization-links?organizationId=invalid");
  assert(r.status===400,"Invalid organization linkage identifier rejected");
+ // Independently authenticate against the actual CRM and Tasks API services.
+ for(const [actor,expected,excluded,label] of [
+  [a,links.crmA,links.crmB,"School A"],
+  [b,links.crmB,links.crmA,"School B"]
+ ]){
+  r=await request(actor,"GET","/api/connect/workspaces");
+  assert(r.status===200&&r.body?.workspaces?.some(w=>w.tenant_id===expected)&&
+   !r.body.workspaces.some(w=>w.tenant_id===excluded),label+" CRM module isolation");
+ }
+ r=await request(multi,"GET","/api/connect/workspaces");
+ assert(r.status===200&&r.body?.workspaces?.some(w=>w.tenant_id===links.crmA)&&
+  r.body.workspaces.some(w=>w.tenant_id===links.crmB),"Multi-organization CRM memberships");
+ for(const [actor,expected,excluded,label] of [
+  [a,links.tasksA,links.tasksB,"School A"],
+  [b,links.tasksB,links.tasksA,"School B"]
+ ]){
+  r=await request(actor,"GET","/api/tasks/collaboration?scope=workspaces");
+  assert(r.status===200&&r.body?.items?.some(w=>w.id===expected)&&
+   !r.body.items.some(w=>w.id===excluded),label+" Tasks module workspace isolation");
+ }
+ r=await request(multi,"GET","/api/tasks/collaboration?scope=workspaces");
+ assert(r.status===200&&r.body?.items?.some(w=>w.id===links.tasksA)&&
+  r.body.items.some(w=>w.id===links.tasksB),"Multi-organization Tasks memberships");
+ r=await request(a,"GET","/api/tasks/collaboration?scope=members&workspace_id="+links.tasksB);
+ assert(r.status===200&&r.body?.items?.length===0,"Foreign Tasks workspace members not exposed");
+ r=await request(a,"POST","/api/tasks/collaboration",{
+  action:"task_create",workspace_id:links.tasksB,task:{title:"SaaS E2E Unauthorized"}
+ });
+ assert(r.status===403||r.status===400,"Foreign Tasks workspace creation rejected");
  const create=async(actor,org,kind,data)=>{
   const response=await request(actor,"POST","/api/platform/academy/"+kind,{organizationId:org,...data});
   if(response.status!==201||!response.body?.data?.id)
