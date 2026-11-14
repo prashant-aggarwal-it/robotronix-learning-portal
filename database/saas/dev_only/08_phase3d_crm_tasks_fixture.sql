@@ -56,6 +56,18 @@ BEGIN
  DELETE FROM connect.portal_demo_integrations WHERE tenant_id=p_tenant_id
    AND installed_by IN (SELECT user_id FROM connect.memberships
       WHERE tenant_id=p_tenant_id AND role='owner' AND status='active');
+ DELETE FROM connect.staff_notifications WHERE tenant_id=p_tenant_id
+  AND task_id IN (SELECT id FROM connect.tasks WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id);
+ DELETE FROM connect.tasks WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.activities WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.appointments WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.attribution WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.inquiries WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.opportunity_people WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.opportunity_programs WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.portal_demo_links WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.realized_revenue WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.stage_events WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
  DELETE FROM connect.opportunities WHERE id=p_opportunity_id AND tenant_id=p_tenant_id;
  DELETE FROM connect.people WHERE id=v_opportunity.contact_id AND tenant_id=p_tenant_id
   AND full_name='SaaS E2E Phase3D Contact';
