@@ -18,7 +18,7 @@ const adoptedCourseIds=[];
 const syntheticParentIds=[];
 const syntheticScheduleIds=[];
 const syntheticEarningIds=[];
-let schools=null,links=null,server=null,phase3dOpportunity=null,phase3dActiveToken=null,phase3dHandoffId=null,phase3dOnboardingSubmissionId=null;
+let schools=null,links=null,third=null,server=null,phase3dOpportunity=null,phase3dActiveToken=null,phase3dHandoffId=null,phase3dOnboardingSubmissionId=null;
 let passed=0;
 const assert=(condition,label)=>{if(!condition)throw new Error("FAILED: "+label);passed++;console.log("PASS: "+label)};
 const name="saas-e2e-"+randomBytes(5).toString("hex");
@@ -78,7 +78,7 @@ async function startServer(){
  throw new Error("Next.js development server did not become ready: "+output.slice(-1000));
 }
 async function run(){
- const a=await account("a"),b=await account("b"),multi=await account("multi");
+ const a=await account("a"),b=await account("b"),multi=await account("multi"),c=await account("c");
  const parent=await account("parent"),studentActor=await account("student"),trainerActor=await account("trainer");
  const setup=await admin.rpc("saas_qa_fixture_create",{
   p_user_a:a.id,p_user_b:b.id,p_user_multi:multi.id
@@ -96,12 +96,18 @@ async function run(){
  const {error:profileSetupError}=await admin.from("profiles").upsert([
   {id:a.id,full_name:"SaaS E2E Admin A",role:"admin",active:true},
   {id:b.id,full_name:"SaaS E2E Admin B",role:"admin",active:true},
+  {id:c.id,full_name:"SaaS E2E Admin C",role:"admin",active:true},
   {id:multi.id,full_name:"SaaS E2E Admin Multi",role:"admin",active:true},
   {id:parent.id,full_name:"SaaS E2E Parent",role:"parent",active:true},
   {id:studentActor.id,full_name:"SaaS E2E Student User",role:"student",active:true},
   {id:trainerActor.id,full_name:"SaaS E2E Trainer User",role:"trainer",active:true}
  ],{onConflict:"id"});
  if(profileSetupError)throw new Error("Synthetic Academy role profiles unavailable: "+profileSetupError.message);
+ const thirdSetup=await admin.rpc("saas_qa_phase3e_create_third",{p_user_c:c.id});
+ if(thirdSetup.error||!thirdSetup.data?.schoolC||!thirdSetup.data?.crmC)
+  throw new Error("Third synthetic SaaS tenant unavailable: "+(thirdSetup.error?.message||"invalid response"));
+ third=thirdSetup.data;
+
  for(const [actor,role] of [[parent,"member"],[studentActor,"member"],[trainerActor,"trainer"]]){
   const {error}=await admin.rpc("saas_qa_add_synthetic_member",{
    p_actor_id:actor.id,p_organization_id:A,p_role_key:role
@@ -118,6 +124,32 @@ async function run(){
  if(adopted.error||!adopted.data)throw new Error("Tenant-owned course adoption failed: "+(adopted.error?.message||"no course id"));
  adoptedCourseIds.push(adopted.data);
  await startServer();
+ // Phase 3E: three independent active CRM↔Academy installations concurrently.
+ for(const [actor,tenant,label] of [[a,links.crmA,"A"],[b,links.crmB,"B"],[c,third.crmC,"C"]]){
+  let response=await request(actor,"POST","/api/connect/workspaces/"+tenant+"/portal-integration",{action:"enable"});
+  assert(response.status===200&&response.body?.status==="active",
+    "CRM↔Academy customer "+label+" activates independent integration");
+ }
+ let r3=await request(a,"POST","/api/connect/workspaces/"+links.crmB+"/portal-integration",{action:"disable"});
+ assert(r3.status===403,"CRM A cannot disable CRM B integration");
+ r3=await request(b,"POST","/api/connect/workspaces/"+third.crmC+"/portal-integration",{action:"disable"});
+ assert(r3.status===403,"CRM B cannot disable CRM C integration");
+ r3=await request(b,"POST","/api/connect/workspaces/"+links.crmB+"/portal-integration",{action:"disable"});
+ assert(r3.status===200&&r3.body?.status==="disabled","CRM B disables its integration independently");
+ for(const [actor,tenant,label] of [[a,links.crmA,"A"],[c,third.crmC,"C"]]){
+  const response=await request(actor,"GET","/api/connect/workspaces/"+tenant+"/portal-demos");
+  assert(response.status===200&&response.body?.installed===true,
+   "Disabling CRM B leaves customer "+label+" integration active");
+ }
+ r3=await request(b,"POST","/api/connect/workspaces/"+links.crmB+"/portal-integration",{action:"enable"});
+ assert(r3.status===200&&r3.body?.status==="active","CRM B can re-enable without changing A or C");
+ r3=await request(c,"GET","/api/connect/workspaces/"+links.crmA+"/portal-demos");
+ assert(r3.status===403,"CRM C cannot read CRM A demo integration");
+ r3=await request(c,"GET","/api/platform/organizations");
+ assert(r3.status===200&&r3.body?.organizations?.some(o=>o.id===third.schoolC)
+  &&!r3.body.organizations.some(o=>o.id===A||o.id===B),
+ "CRM C SaaS context excludes Academy A and B");
+
  let r=await request(a,"GET","/api/platform/organizations");
  assert(r.status===200&&r.body?.selectedOrganizationId===A,"School A organization discovery");
  r=await request(b,"GET","/api/platform/organizations");
@@ -751,6 +783,12 @@ finally{
  if(phase3dOnboardingSubmissionId){
   const {error}=await admin.from("onboarding_submissions").delete().eq("id",phase3dOnboardingSubmissionId);
   if(error){console.error("Phase 3D synthetic onboarding cleanup failed: "+error.message);failure??=error}
+ }
+ if(third&&schools){
+  const {error}=await admin.rpc("saas_qa_phase3e_cleanup_third",{
+   p_school_a:schools.schoolA,p_school_b:schools.schoolB,p_school_c:third.schoolC
+  });
+  if(error){console.error("Phase 3E third tenant cleanup failed: "+error.message);failure??=error}
  }
  if(schools&&links){
   const {error}=await admin.rpc("saas_qa_phase3a_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
