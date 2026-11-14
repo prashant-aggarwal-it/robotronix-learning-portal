@@ -433,6 +433,22 @@ async function run(){
    await context.close();
   }finally{await browser.close()}
  }
+ const toggleMembership=async(status)=>{
+  const {error}=await admin.rpc("saas_qa_set_synthetic_membership_status",{
+   p_actor_id:b.id,p_organization_id:B,p_status:status
+  });
+  if(error)throw new Error("Synthetic membership status switch failed: "+error.message);
+ };
+ await toggleMembership("removed");
+ try{
+  r=await request(b,"GET","/api/admin/invoices",undefined,undefined,{"x-organization-id":B});
+  assert(r.status===403,"Revoked SaaS Admin cannot fall back to legacy invoice access");
+  const {data:recordingGrant,error:recordingGrantError}=await admin.rpc("saas_academy_recording_scope",{
+   p_actor_id:b.id,p_recording_id:"00000000-0000-4000-8000-000000000003"
+  });
+  assert(!recordingGrantError&&recordingGrant===false,
+   "Revoked SaaS user cannot fall back to legacy signed recording access");
+ }finally{await toggleMembership("active")}
  console.log("Verified "+passed+" authenticated HTTP assertions against DEV");
 }
 let failure;
