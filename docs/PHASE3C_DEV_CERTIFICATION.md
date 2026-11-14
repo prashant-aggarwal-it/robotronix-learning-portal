@@ -74,3 +74,12 @@ Status: **PARTIAL**. The capability matrix alone is insufficient to certify auth
 - DEV Auth user count 1, SaaS membership count 0; full authenticated multi-user RBAC certification still requires the existing E2E fixture workflow and newer passing Actions evidence.
 - Supabase advisor review surfaced RLS-enabled/no-policy findings, including unexposed private schemas; triage is required per table, not blanket policy addition.
 - Phase 3C remains PARTIAL / NOT DEV CERTIFIED. This document supersedes earlier references to the capability model as unwired.
+
+## Continued execution evidence (same day)
+- Commit d1bb374ed12520145f89b6839cee4b61c1366492: align organization-admin membership management capability and UI restriction with SQL privilege-escalation guard.
+- Commit 57469fce62a54031a195de0ea57189956981880a: replace outdated Academy source contract assertion for requireAuthorizedTenantRole with requireAuthorizedTenantCapability. The previous source-certification run 43598712986 failed due to the outdated assertion; the fix was pushed and rerun automatically.
+- Commit f93f0ab5081eae4ec58385710e45b3ee81d0a9d4: add academy.finance.manage authorization requirement before the existing scoped finance RPC.
+- Commit ba0583d01ec5650ae948b3ded02d46bb0efdd870: add Phase 3C security source-contract tests for Academy, legacy finance and membership routes.
+- GitHub Actions queued for latest commit: source certification 43598909116; authenticated DEV E2E 43598909093. Results were queued at last inspection and must not be treated as PASS.
+- A DEV transaction-only owner fixture test returned no SQL error and was rolled back; do not substitute that for user-level authenticated role coverage. DEV remains without persistent test memberships.
+- Current status: **PARTIAL — NOT DEV CERTIFIED**. Required latest-commit typecheck, source tests, authenticated cross-tenant role-management and regression verification still pending evidence. No PROD/Netlify/main changes were made.
