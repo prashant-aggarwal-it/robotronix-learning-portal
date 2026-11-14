@@ -202,6 +202,22 @@ async function run(){
  };
  const sa=await create(a,A,"students",{full_name:"SaaS E2E Student A"});
  const sb=await create(b,B,"students",{full_name:"SaaS E2E Student B"});
+ const ownership=async(actor,org,kind,id)=>{
+  const {data,error}=await admin.rpc("saas_academy_resource_owned",{
+   p_actor_id:actor.id,p_organization_id:org,p_kind:kind,p_resource_id:id
+  });
+  if(error)throw new Error("DEV ownership guard failed: "+error.message);
+  return data;
+ };
+ assert(await ownership(a,A,"students",sa)===true,
+  "Phase 3B owner can resolve own student resource");
+ assert(await ownership(b,B,"students",sa)===false,
+  "Phase 3B denies cross-school student ownership");
+ assert(await ownership(a,A,"student_invoices",sa)===false,
+  "Phase 3B denies unmapped invoice resource");
+ assert(await ownership(a,A,"zoom_recordings",sa)===false,
+  "Phase 3B denies unmapped Zoom recording resource");
+
  const slug=name.replace(/[^a-z0-9-]/g,"");
  const ca=await create(a,A,"courses",{title:"SaaS E2E Course A",slug:slug+"-a",code:slug.toUpperCase()+"A",category:"Robotics",grade_from:1,grade_to:8,total_sessions:8});
  const cb=await create(b,B,"courses",{title:"SaaS E2E Course B",slug:slug+"-b",code:slug.toUpperCase()+"B",category:"Robotics",grade_from:1,grade_to:8,total_sessions:8});
