@@ -6,6 +6,7 @@ on:
       - feature/education-suite-phase3d
       - feature/education-suite-phase3e
       - feature/education-suite-phase3f
+      - feature/education-suite-phase3g
     paths:
       - scripts/saas-two-tenant-e2e.mjs
       - scripts/saas-phase3c-invitations-e2e.mjs
@@ -14,6 +15,7 @@ on:
       - database/saas/3*.sql
       - database/saas/45_phase3d_crm_tasks_owner_sync_guard.sql
       - database/saas/4*.sql
+      - 'database/saas/5*.sql'
       - database/saas/50_phase3e_guard_legacy_portal_installs.sql
       - app/api/connect/workspaces/[tenantId]/portal-integration/route.ts
       - lib/server/connect-portal-access.ts
