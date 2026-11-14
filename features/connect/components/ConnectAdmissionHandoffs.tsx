@@ -9,13 +9,13 @@ const label=(s:string)=>s.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase()
 export function ConnectAdmissionHandoffs({tenantId,opportunities,people,canWrite,canManage,onChanged}:Props){
  const [items,setItems]=useState<Handoff[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[invite,setInvite]=useState("");
  const [open,setOpen]=useState(false),[evidenceId,setEvidenceId]=useState(""),[evidenceNote,setEvidenceNote]=useState("");
- const [form,setForm]=useState({opportunityId:opportunities[0]?.id||"",learnerPersonId:opportunities[0]?.contact_id||"",fee:opportunities[0]?.expected_value||0,currency:opportunities[0]?.currency||"INR",sessions:8,terms:"Programme fee and sessions agreed with parent.",consentAttested:false});
+ const [form,setForm]=useState({opportunityId:opportunities[0]?.id||"",learnerPersonId:opportunities[0]?.contact_id||"",fee:opportunities[0]?.expected_value||0,currency:opportunities[0]?.currency||"INR",sessions:8,terms:"Programme fee and sessions agreed with parent.",consentAttested:false,createFollowupTask:false});
  const api="/api/connect/workspaces/"+encodeURIComponent(tenantId)+"/admissions";
  async function reload(){const result=await connectFetch<{items:Handoff[]}>(api);setItems(result.items||[]);}
  useEffect(()=>{let active=true;void connectFetch<{items:Handoff[]}>(api).then(r=>{if(active)setItems(r.items||[]);}).catch(e=>{if(active)setError(e instanceof Error?e.message:"Admissions unavailable.");});return()=>{active=false;};},[api]);
  async function submit(event:React.FormEvent){event.preventDefault();if(busy)return;setBusy(true);setError("");setInvite("");
-  try{const response=await connectFetch<{id:string;status:string;inviteUrl:string|null}>(api,{method:"POST",body:JSON.stringify({action:"accept",requestId:crypto.randomUUID(),opportunityId:form.opportunityId,learnerPersonId:form.learnerPersonId,consentAttested:form.consentAttested,offer:{fee:form.fee,currency:form.currency,sessions:form.sessions,terms:form.terms}})});
-   await reload();setInvite(response.inviteUrl||"");setNotice("Accepted offer recorded. Share the secure onboarding invitation with the parent.");setOpen(false);
+  try{const response=await connectFetch<{id:string;status:string;inviteUrl:string|null;followUpTask?:{status:string;taskId?:string}}>(api,{method:"POST",body:JSON.stringify({action:"accept",requestId:crypto.randomUUID(),opportunityId:form.opportunityId,learnerPersonId:form.learnerPersonId,consentAttested:form.consentAttested,createFollowupTask:form.createFollowupTask,offer:{fee:form.fee,currency:form.currency,sessions:form.sessions,terms:form.terms}})});
+   await reload();setInvite(response.inviteUrl||"");setNotice("Accepted offer recorded. Share the secure onboarding invitation with the parent."+(response.followUpTask?.status==="created"?" CRM follow-up task created.":response.followUpTask?.status==="existing"?" Existing follow-up task linked.":response.followUpTask?.status==="unavailable"?" Optional Tasks integration unavailable; admission saved.":""));setOpen(false);
   }catch(e){setError(e instanceof Error?e.message:"Could not prepare admission.");}finally{setBusy(false);}
  }
  async function action(kind:"reconcile"|"verify"|"revoke",handoffId:string){setBusy(true);setError("");setNotice("");
@@ -35,6 +35,7 @@ export function ConnectAdmissionHandoffs({tenantId,opportunities,people,canWrite
    <label>Sessions *<input type="number" min={1} required value={form.sessions} onChange={e=>setForm(f=>({...f,sessions:Number(e.target.value)}))}/></label>
    <label style={{gridColumn:"1 / -1"}}>Accepted terms *<textarea maxLength={2000} required rows={2} value={form.terms} onChange={e=>setForm(f=>({...f,terms:e.target.value}))}/></label>
    <label style={{gridColumn:"1 / -1"}}><input type="checkbox" checked={form.consentAttested} required onChange={e=>setForm(f=>({...f,consentAttested:e.target.checked}))}/> I confirm the parent/guardian has accepted these commercial terms.</label>
+   <label style={{gridColumn:"1 / -1"}}><input type="checkbox" checked={form.createFollowupTask} onChange={e=>setForm(f=>({...f,createFollowupTask:e.target.checked}))}/> Create a linked CRM follow-up task (if Tasks integration is available)</label>
    <button type="submit" className="cx-primary" disabled={busy}>Save accepted offer and create invitation</button>
   </form>}
   {items.length?<div style={{display:"grid",gap:10}}>{items.map(item=><div key={item.id} style={{border:"1px solid #dce8ef",padding:12,borderRadius:12}}>
