@@ -47,7 +47,7 @@ REVOKE ALL ON FUNCTION public.saas_crm_portal_install_v1(uuid,uuid,text) FROM PU
 GRANT EXECUTE ON FUNCTION public.saas_crm_portal_install_v1(uuid,uuid,text) TO service_role;
 
 -- All activation writes must be routed through the secure installer above.
-DROP INDEX IF EXISTS connect.connect_portal_single_active_integration;
+-- Legacy restriction is removed only AFTER the Phase 3E trigger is installed in step 50.
 CREATE INDEX IF NOT EXISTS portal_demo_integrations_active_by_tenant
  ON connect.portal_demo_integrations(tenant_id) WHERE status='active';
 COMMIT;

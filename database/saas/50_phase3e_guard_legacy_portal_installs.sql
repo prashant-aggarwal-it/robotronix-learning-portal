@@ -36,4 +36,8 @@ DROP TRIGGER IF EXISTS guard_portal_install_tenant_v1 ON connect.portal_demo_int
 CREATE TRIGGER guard_portal_install_tenant_v1 BEFORE INSERT OR UPDATE OF status,installed_by
 ON connect.portal_demo_integrations FOR EACH ROW EXECUTE FUNCTION connect.guard_portal_install_tenant_v1();
 REVOKE ALL ON FUNCTION connect.guard_portal_install_tenant_v1() FROM PUBLIC,anon,authenticated;
+-- Remove the global restriction only after the trigger has enforced mapped tenant ownership.
+DROP INDEX IF EXISTS connect.connect_portal_single_active_integration;
+CREATE INDEX IF NOT EXISTS portal_demo_integrations_active_by_tenant
+ ON connect.portal_demo_integrations(tenant_id) WHERE status='active';
 COMMIT;

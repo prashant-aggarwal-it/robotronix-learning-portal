@@ -4,6 +4,7 @@ on:
     branches:
       - feature/education-suite-release1
       - feature/education-suite-phase3d
+      - feature/education-suite-phase3e
     paths:
       - scripts/saas-two-tenant-e2e.mjs
       - scripts/saas-phase3c-invitations-e2e.mjs
@@ -11,6 +12,10 @@ on:
       - database/saas/12_module_links_rpc.sql
       - database/saas/3*.sql
       - database/saas/45_phase3d_crm_tasks_owner_sync_guard.sql
+      - database/saas/4*.sql
+      - database/saas/50_phase3e_guard_legacy_portal_installs.sql
+      - app/api/connect/workspaces/[tenantId]/portal-integration/route.ts
+      - lib/server/connect-portal-access.ts
       - database/shared/integrations/02_tasks_crm.sql
       - database/saas/2*.sql
       - app/api/zoom/**

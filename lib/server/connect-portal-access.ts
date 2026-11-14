@@ -20,8 +20,19 @@ export async function portalBridgeAccess(request:NextRequest,tenantId:string,wri
  const {data:authorized,error:scopeError}=await session.admin.rpc("saas_crm_portal_access_v1",{
   p_actor_id:session.actorId,p_tenant_id:tenantId
  });
- if(scopeError||authorized!==true)
+ if(scopeError){
+  // Compatibility for genuinely standalone legacy CRM + Portal only.
+  // A SaaS deployment MUST fail closed if its scope RPC is unavailable.
+  if(!["PGRST202","42883"].includes(scopeError.code||""))
+   return {error:connectFailure("Organization access or Academy entitlement unavailable.",403)};
+  const {error:saasContextError}=await session.admin.rpc("saas_authorized_organizations",{
+   p_actor_id:session.actorId
+  });
+  if(!saasContextError||!["PGRST202","42883"].includes(saasContextError.code||""))
+   return {error:connectFailure("SaaS organization authorization unavailable.",503)};
+ }else if(authorized!==true){
   return {error:connectFailure("Organization access or Academy entitlement unavailable.",403)};
+ }
 
  if(write&&context.role==="viewer")return {error:connectFailure("CRM booking access denied.",403)};
  return {session,role:context.role as string,installed:Boolean(context.installed),portalActorId:context.portalActorId as string|null};

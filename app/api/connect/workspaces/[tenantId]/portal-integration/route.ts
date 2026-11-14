@@ -13,9 +13,20 @@ export async function POST(request:NextRequest,{params}:Context){
  const body=await request.json().catch(()=>null) as {action?:string}|null;
  if(!body||!["enable","disable"].includes(body.action||""))return connectFailure("Choose enable or disable.",400);
  const status=body.action==="enable"?"active":"disabled";
- const {error}=await session.admin.rpc("saas_crm_portal_install_v1",{
+ let {error}=await session.admin.rpc("saas_crm_portal_install_v1",{
   p_actor_id:session.actorId,p_tenant_id:tenantId,p_status:status
  });
+ if(error&&["PGRST202","42883"].includes(error.code||"")){
+  // Only legacy installations without SaaS authorization functions may fall back.
+  const {error:saasContextError}=await session.admin.rpc("saas_authorized_organizations",{
+   p_actor_id:session.actorId
+  });
+  if(saasContextError&&["PGRST202","42883"].includes(saasContextError.code||"")){
+   ({error}=await session.admin.rpc("connect_portal_demo_bridge",{
+    p_actor_id:session.actorId,p_tenant_id:tenantId,p_action:"install",p_data:{status}
+   }));
+  }
+ }
  if(error)return connectFailure(error.code==="42501"?"A CRM owner/admin who is also a Portal admin must connect these applications.":"Unable to update Portal connection.",error.code==="42501"?403:error.code==="23505"?409:503);
  return NextResponse.json({ok:true,status},{headers:noStore});
 }
