@@ -433,6 +433,32 @@ async function run(){
    await context.close();
   }finally{await browser.close()}
  }
+ // Role-specific original dashboard smoke tests with independently authenticated users.
+ {
+  const {chromium}=await import("@playwright/test");
+  const browser=await chromium.launch({headless:true});
+  try{
+   for(const [actor,path,label] of [
+    [parent,"/parent","Parent"],
+    [studentActor,"/student","Student"],
+    [trainerActor,"/trainer","Trainer"]
+   ]){
+    const context=await browser.newContext({viewport:{width:1280,height:850}});
+    await context.addInitScript(({key,session})=>window.localStorage.setItem(key,JSON.stringify(session)),
+     {key:"sb-"+EXPECTED_REF+"-auth-token",session:actor.session});
+    try{
+     const page=await context.newPage();
+     await page.goto(base+path,{waitUntil:"domcontentloaded"});
+     await page.locator("main").first().waitFor({timeout:35000});
+     await page.waitForTimeout(1200);
+     assert(new URL(page.url()).pathname===path,
+      label+" original Academy dashboard remains accessible after org context resolution");
+     assert((await page.getByText("SaaS E2E Student B",{exact:false}).count())===0,
+      label+" original Academy dashboard does not render School B learner");
+    }finally{await context.close()}
+   }
+  }finally{await browser.close()}
+ }
  const toggleMembership=async(status)=>{
   const {error}=await admin.rpc("saas_qa_set_synthetic_membership_status",{
    p_actor_id:b.id,p_organization_id:B,p_status:status
