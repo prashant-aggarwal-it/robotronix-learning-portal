@@ -4,6 +4,8 @@ on:
     branches: ['feature/portal-canonical-db-package']
     paths:
       - 'scripts/inventory-db-callers.mjs'
+      - 'scripts/check-db-catalog-compatibility.mjs'
+      - 'database/audit/dev_catalog_snapshot.json'
       - '.github/workflows/db-dependency-inventory.yml'
   workflow_dispatch:
 permissions:
@@ -16,9 +18,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Generate static database caller index
         run: node scripts/inventory-db-callers.mjs artifacts/db-call-inventory
+      - name: Reconcile inventory against DEV catalog snapshot
+        run: node scripts/check-db-catalog-compatibility.mjs artifacts/db-compatibility
       - name: Upload audit for architecture review
         uses: actions/upload-artifact@v4
         with:
           name: db-caller-inventory
-          path: artifacts/db-call-inventory/
+          path: |
+            artifacts/db-call-inventory/
+            artifacts/db-compatibility/
           retention-days: 14
