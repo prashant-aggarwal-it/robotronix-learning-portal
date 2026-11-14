@@ -107,3 +107,11 @@ Security audit notes:
 - No additional production changes, main merge, or Netlify operations were made.
 
 **Final status: PARTIAL / NOT CERTIFIED.** Phase 3D should not be represented as cleared by Phase 3C. Complete authenticated membership invitation/user journeys and CRM/Tasks role regression, then verify latest branch CI before upgrade to PASS.
+
+## Further execution / status check
+- Confirmed source-certification actions passed for 0688d10b (43599780220), 6dbdd431 (43599799670), ed595ce3 (43599819479); prior authenticated two-tenant E2E at ba0583d0 (43598909093) also passed. Those checks precede the latest UI fix.
+- Commit d1f6f59cec8118146dedb4a8162a0527118c7a58: fix admins unable to preselect their authorized organization in membership management and refresh role/status drafts from server after updating.
+- Inspected foundational SaaS RLS: membership tables have tenant-scoped read policies and service-managed writes. CRM and Tasks independent session checks use bearer Auth validation and retain separate permission models.
+- DEV scan identified 39 anon-executable public SECURITY DEFINER functions, mostly triggers and predicate helpers; not automatically a vulnerability, but requires function-by-function privilege analysis.
+- Remaining hard gates: verified email invitation/new-account acceptance lifecycle, detailed CRM and Tasks RPC-level authorization audit, complete authenticated role matrix and latest-HEAD regressions.
+- No production or main branch changes. Decision remains PARTIAL, not certified.
