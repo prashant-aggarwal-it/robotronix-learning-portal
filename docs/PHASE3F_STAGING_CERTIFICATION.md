@@ -27,3 +27,8 @@ The certified three-customer tests cover independent integrations, onboarding ad
 | Three-customer Full Suite | DEV authenticated E2E verified in Phase 3E; independent live staging deployments not performed |
 
 **Certification: PARTIAL.** Production-like staging and external provider tests are not complete. Never infer live release safety from module contracts alone.
+
+## Updated executed CI evidence
+- Source run [43620897305](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43620897305): PASS.
+- Authenticated DEV run [43620897318](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43620897318): PASS.
+- Latest additional scheduler hardening revalidation runs [43625449088](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449088) / [43625449064](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449064): pending at writing. Source and DEV evidence is not a full staging clone or external provider certification.

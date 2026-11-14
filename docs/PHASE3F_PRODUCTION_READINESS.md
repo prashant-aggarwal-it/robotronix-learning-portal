@@ -25,3 +25,9 @@ No PROD Supabase modification, `main` merge, Netlify deployment, live message or
 
 ## Go/no-go
 Go only after security review, latest-source E2E verification, production schema comparison, successful staging migration and rollback rehearsal, provider checks, on-call monitoring and explicit deployment authorization.
+
+## Further completed work and remaining gate
+- Both Phase 3F source and authenticated DEV regression runs passed on earlier scheduler hardening commit `a6c9de4b`.
+- Added explicit scheduler-owner guards on both CRM history drain and portal system-log retention, covering the configured Netlify scheduled functions. Source contract included and current-branch CI triggered.
+- Verified no missing explicit `search_path` in SECURITY DEFINER function catalog across `public`, `connect`, `saas`, `tasks`.
+- **NO-GO remains:** external provider tests, independent staging deployments, approved staging clone and rollback rehearsal, settings controlled by dashboard, and detailed grants/policy assessment have not been executed. Do not represent Phase 3F as full production release certification.

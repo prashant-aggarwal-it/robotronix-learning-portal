@@ -23,3 +23,10 @@ Phase 3E SaaS CRM integration installer, access functions, and trainer-scoping R
 - Review `auth_rls_initplan` warnings (29), `multiple_permissive_policies` (277), and analyze policy equivalence before rewriting RLS.
 - Audit browser service-key exposure, OAuth/refresh/session behavior, live payment, WhatsApp and Zoom webhooks, and cross-tenant IDOR in a production-like environment.
 - **Status: PARTIAL** until these are verified; no production certification granted.
+
+## Additional audit and remediation — 14 November 2026
+- Reviewed DEV PostgreSQL catalog: no SECURITY DEFINER function in `public`, `connect`, `saas` or `tasks` lacked an explicit `search_path` setting.
+- Phase 3F hardened the remaining scheduled Netlify functions `system-log-retention.mjs` and `connect-history-drain.mts` with `netlifyJobOwned`. The history job retains its separate explicit feature switch. All five modified scheduler functions require a declared single scheduler owner before running side effects.
+- The 15 anon/35 authenticated SECURITY DEFINER warnings are not all direct vulnerabilities; RLS helper functions and authenticated business functions require distinct usage and grants analysis before any revoke. No unsafe blanket changes made.
+- Duplicate CRM message indexes identified: `connect_message_idempotency_idx` vs `idx_connect_msg_external_id`, and `connect_message_history_idx` vs `idx_connect_msg_recent`. No index dropped without query-plan/release proof.
+- Phase 3F code CI at [43620897305](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43620897305) PASS; authenticated DEV E2E [43620897318](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43620897318) PASS. Latest scheduler source commit `562d86e3` workflows [43625449088](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449088) and [43625449064](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449064) pending at report update.
