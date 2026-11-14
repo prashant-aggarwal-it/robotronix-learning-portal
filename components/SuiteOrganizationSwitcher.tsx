@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
-import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {getSupabaseBrowserClient,setAcademyBrowserOrganizationContext} from "@/lib/supabase/browser";
 
 type Organization={id:string;displayName:string;role:string;slug:string};
 type Discovery={ok:boolean;organizations:Organization[];selectedOrganizationId:string|null;requiresSelection:boolean};
@@ -29,6 +29,7 @@ export function SuiteOrganizationSwitcher(){
    if(!active)return;
    setOrganizations(data.organizations);
    setSelected(data.selectedOrganizationId||"");
+   setAcademyBrowserOrganizationContext(data.selectedOrganizationId||null);
   }).catch(()=>{if(active)setOrganizations([])}).finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
  },[]);
@@ -37,6 +38,7 @@ export function SuiteOrganizationSwitcher(){
   setBusy(true);setError("");
   try{
    await authorizedRequest("/api/platform/organizations",next?{method:"POST",body:JSON.stringify({organizationId:next})}:{method:"DELETE"});
+   setAcademyBrowserOrganizationContext(next||null);
    // A hard navigation deliberately clears module-owned browser caches and live state.
    window.location.reload();
   }catch(e){
