@@ -30,6 +30,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Typecheck
         run: npm run typecheck
+      - name: Unified suite navigation registry contracts
+        run: node --experimental-strip-types --test lib/platform/suite-modules.test.mjs
       - name: SaaS organization and Academy authorization contracts
         run: node --test lib/server/saas/*.test.mjs
       - name: Standalone Academy CRM Tasks deployment and authorization compatibility
