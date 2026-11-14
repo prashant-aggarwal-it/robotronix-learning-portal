@@ -30,3 +30,14 @@ Phase 3E SaaS CRM integration installer, access functions, and trainer-scoping R
 - The 15 anon/35 authenticated SECURITY DEFINER warnings are not all direct vulnerabilities; RLS helper functions and authenticated business functions require distinct usage and grants analysis before any revoke. No unsafe blanket changes made.
 - Duplicate CRM message indexes identified: `connect_message_idempotency_idx` vs `idx_connect_msg_external_id`, and `connect_message_history_idx` vs `idx_connect_msg_recent`. No index dropped without query-plan/release proof.
 - Phase 3F code CI at [43620897305](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43620897305) PASS; authenticated DEV E2E [43620897318](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43620897318) PASS. Latest scheduler source commit `562d86e3` workflows [43625449088](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449088) and [43625449064](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449064) pending at report update.
+
+## Additional DEV exposure and provider code review
+
+- PostgreSQL catalog check returned **0 directly granted anonymous/non-RLS application tables**, for application schemas `public`, `connect`, `tasks`, `saas`.
+- Catalog check returned **0 publicly readable privileged views lacking a security-invoker setting**, across those schemas.
+- The existing Meta webhook route checks `x-hub-signature-256` against the configured Meta secret and uses provider event IDs to identify duplicates.
+- The existing Razorpay webhook route verifies `x-razorpay-signature` before using the service-role database client and skips already processed webhook events.
+- The existing Zoom webhook route validates the signed timestamp and signature with SHA-256 HMAC and constant-time comparison, and handles already processed events.
+- These checks are **code review/static evidence only**: live provider credentials, message delivery, payment reconciliation and Zoom event redelivery were not exercised.
+
+No schema or provider settings changed during this review. Existing advisor warnings still require operator and/or targeted business-rule remediation, and **production is not approved**.
