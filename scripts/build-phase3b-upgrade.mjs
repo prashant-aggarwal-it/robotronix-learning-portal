@@ -18,7 +18,9 @@ const files=[
  "25_fk_scoped_legacy_academy_crud.sql",
  "26_restrict_legacy_global_admin_overrides.sql",
  "27_privileged_finance_scope.sql",
- "28_role_aware_academy_core_reads.sql"
+ "28_role_aware_academy_core_reads.sql",
+ "29_zoom_recording_stream_tenant_guard.sql",
+ "30_session_records_role_scoped_rls.sql"
 ];
 const guard=`-- PHASE 3B: ADDITIVE ACADEMY + SAAS UPGRADE (not a fresh installer)
 -- Requires Academy and the Phase 3A SaaS foundation already installed.
