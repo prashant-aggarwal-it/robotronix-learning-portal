@@ -53,6 +53,7 @@ BEGIN
  DELETE FROM connect.portal_admission_handoffs WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
  DELETE FROM connect.audit_events WHERE tenant_id=p_tenant_id AND entity_type='opportunity' AND entity_id=p_opportunity_id
    AND event_type='portal_offer_accepted';
+ DELETE FROM connect.automation_settings WHERE tenant_id=p_tenant_id;
  DELETE FROM connect.portal_demo_integrations WHERE tenant_id=p_tenant_id
    AND installed_by IN (SELECT user_id FROM connect.memberships
       WHERE tenant_id=p_tenant_id AND role='owner' AND status='active');
