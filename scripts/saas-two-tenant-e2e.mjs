@@ -266,7 +266,7 @@ async function run(){
  await changeSyntheticRole("member");
  try{
   assert((await directRead(multi,A,sa)).length===0,
-   "Ordinary organization member cannot read all school student records");
+   "Downgraded legacy global Admin profile cannot bypass School A SaaS member role cannot read all school student records");
   assert((await directRead(multi,B,sb)).length===1,
    "Role downgrade in School A does not revoke authorized admin access in School B");
  }finally{await changeSyntheticRole("admin")}
