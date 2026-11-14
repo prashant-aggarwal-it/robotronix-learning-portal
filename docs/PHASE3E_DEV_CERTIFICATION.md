@@ -74,3 +74,13 @@ Phase 3E code state (test jobs initiated):
 - Per-tenant CRM admission acceptance for customers B and C and Academy student/course/trainer/enrollment for customer C are included in the newest synthetic E2E run.
 - **Source certification:** [GitHub Actions 43616182248](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43616182248), source commit `8333c8fd` — **PASS**.
 - **Authenticated latest-code DEV E2E:** [GitHub Actions 43616182287](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43616182287) — pending at report update; no premature assertion count or PASS claim.
+
+## Final Phase 3E automated DEV certification — PASS
+
+- [Source certification run 43616182248](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43616182248): **SUCCESS** at final functional SHA `8333c8fdcda3bd419a5aa30e5139b5a0e00d7392`.
+- [Authenticated multi-customer E2E run 43616182287](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43616182287): **SUCCESS** at the same functional SHA.
+- Test log: **175 authenticated Academy/CRM/Tasks/Phase 3E assertions PASSED**, plus **17 Phase 3C regressions PASSED**, including protected CRM A→Academy C enrollment confirmation denial (42501).
+- Three CRM↔Academy integration tenants activated concurrently, cross-customer CRM and Academy access denied, disabled tenant isolation verified, customers B and C independently created onboarding invitations, customer C independently enrolled a learner, historical admission and task regression suite remained green.
+- DEV source and service-only privileged functions migrated. No non-synthetic data changed; DEV synthetic cleanup completed in authenticated suite. No PROD, main, or Netlify modifications.
+
+**Decision: PASS — Phase 3E automated DEV multi-customer integration certification.** This is **NOT** production or full external-provider certification. Live Zoom, messaging, Razorpay, production rollback rehearsal, full standalone deployment smoke runs, and per-customer delivery/runtime monitoring remain separately gated in `docs/PHASE3E_PRODUCTION_RELEASE_PLAN.md`. Do not deploy without explicit approval.
