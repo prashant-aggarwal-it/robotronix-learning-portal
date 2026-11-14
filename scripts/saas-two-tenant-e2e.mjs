@@ -28,7 +28,7 @@ async function account(suffix){
  const browser=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
  const login=await browser.auth.signInWithPassword({email,password});
  if(login.error||!login.data.session)throw new Error("Synthetic user sign-in failed");
- return {id:data.user.id,token:login.data.session.access_token};
+ return {id:data.user.id,token:login.data.session.access_token,session:login.data.session};
 }
 async function request(actor,method,path,payload,cookie){
  const res=await fetch(base+path,{method,headers:{
@@ -158,6 +158,42 @@ async function run(){
  r=await request(multi,"GET","/api/tasks?limit=100");
  assert(r.status===200&&!r.body?.items?.some(t=>t.id===privateTaskId),
   "Multi-organization member cannot see another user's personal task");
+ // Real browser organization-switching verification using the synthetic user's
+ // authenticated Supabase session. Never log access or refresh credentials.
+ {
+  const {chromium}=await import("@playwright/test");
+  const browser=await chromium.launch({headless:true});
+  try{
+   const context=await browser.newContext({viewport:{width:1280,height:850}});
+   await context.addInitScript(({key,session})=>{
+    window.localStorage.setItem(key,JSON.stringify(session));
+   },{key:"sb-"+EXPECTED_REF+"-auth-token",session:multi.session});
+   const page=await context.newPage();
+   await page.goto(base+"/suite",{waitUntil:"domcontentloaded"});
+   const picker=page.getByRole("combobox",{name:"Active organization"});
+   await picker.waitFor({timeout:25000});
+   for(const [org,crm,workspace,label] of [
+    [A,links.crmA,links.tasksA,"School A"],
+    [B,links.crmB,links.tasksB,"School B"]
+   ]){
+    await picker.selectOption(org);
+    await page.waitForFunction(expected=>document.body.innerText.includes("Active organization: "+expected),
+     "Synthetic "+label,{timeout:25000});
+    const crmLink=page.locator('a[href*="suiteTenant="]').first();
+    await crmLink.waitFor({timeout:25000});
+    assert((await crmLink.getAttribute("href"))?.includes(crm),
+     label+" browser CRM navigation has correct organization link");
+    const taskLink=page.locator('a[href*="suiteWorkspace="]').first();
+    await taskLink.waitFor({timeout:25000});
+    assert((await taskLink.getAttribute("href"))?.includes(workspace),
+     label+" browser Tasks navigation has correct organization link");
+   }
+   await page.setViewportSize({width:390,height:844});
+   assert(await page.getByRole("combobox",{name:"Active organization"}).isVisible(),
+    "Mobile organization switcher remains keyboard-accessible and visible");
+   await context.close();
+  }finally{await browser.close();}
+ }
  const create=async(actor,org,kind,data)=>{
   const response=await request(actor,"POST","/api/platform/academy/"+kind,{organizationId:org,...data});
   if(response.status!==201||!response.body?.data?.id)
