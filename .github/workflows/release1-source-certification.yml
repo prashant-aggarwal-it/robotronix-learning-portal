@@ -32,6 +32,10 @@ jobs:
         run: npm run typecheck
       - name: SaaS organization and Academy authorization contracts
         run: node --test lib/server/saas/*.test.mjs
+      - name: Standalone Academy CRM Tasks deployment and authorization compatibility
+        run: npm run check:modules && npm run check:auth && npm run check:backend-modules && npm run check:deployment-profiles
+      - name: Tasks and CRM business regressions
+        run: npm run test:tasks-v2 && npm run test:connect-business
       - name: Release source regression suite
         run: npm run check:release
       - name: Targeted offline academic, finance and permission contract specs
