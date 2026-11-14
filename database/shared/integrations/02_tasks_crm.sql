@@ -32,7 +32,7 @@ begin
   update tasks.items t set status=case when new.status='done' then 'done' else 'todo' end,
    completed_at=case when new.status='done' then now() else null end,updated_at=now()
   from tasks.module_links l join connect.memberships m on m.tenant_id=l.tenant_id and m.user_id=l.owner_user_id and m.status='active'
-  where l.task_id=t.id and l.module='connect' and l.resource='crm_task' and l.resource_id=new.id and l.tenant_id=new.tenant_id
+  where l.task_id=t.id and t.owner_user_id=l.owner_user_id and l.module='connect' and l.resource='crm_task' and l.resource_id=new.id and l.tenant_id=new.tenant_id
    and t.archived_at is null and t.status<>case when new.status='done' then 'done' else 'todo' end;
  end if;
  return new;
