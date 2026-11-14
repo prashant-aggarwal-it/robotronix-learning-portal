@@ -1,5 +1,5 @@
 import {NextRequest,NextResponse} from "next/server";
-import {getAuthorizedOrganizations,resolveAuthorizedOrganization,SaaSAccessError} from "@/lib/server/saas/organization-context";
+import {getAuthorizedOrganizations,resolveAuthorizedOrganization,readBearerToken,SaaSAccessError} from "@/lib/server/saas/organization-context";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -8,7 +8,7 @@ const cookieName="robotronix_active_org";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function bearerFrom(request:NextRequest):string {
- return request.headers.get("authorization")?.match(/^Bearer\s+([^\s]+)$/i)?.[1]??"";
+ return readBearerToken(request.headers.get("authorization"));
 }
 function fail(error:unknown) {
  const status=error instanceof SaaSAccessError?error.status:503;
