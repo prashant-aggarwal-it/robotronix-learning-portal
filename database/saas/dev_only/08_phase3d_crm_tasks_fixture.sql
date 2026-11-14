@@ -68,3 +68,29 @@ REVOKE ALL ON FUNCTION public.saas_qa_phase3d_opportunity_create(uuid,uuid) FROM
 REVOKE ALL ON FUNCTION public.saas_qa_phase3d_opportunity_cleanup(uuid,uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.saas_qa_phase3d_opportunity_create(uuid,uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.saas_qa_phase3d_opportunity_cleanup(uuid,uuid) TO service_role;
+-- DEV-only cleanup for a synthetic Academy class → private Tasks source link.
+CREATE OR REPLACE FUNCTION public.saas_qa_phase3d_schedule_link_cleanup(
+ p_schedule_id uuid
+) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $fn$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.schedule_events e
+   WHERE e.id=p_schedule_id AND e.title='SaaS E2E Class A') THEN
+  RAISE EXCEPTION 'Non-synthetic Academy class cleanup denied' USING ERRCODE='42501';
+ END IF;
+ IF EXISTS(SELECT 1 FROM tasks.module_links l JOIN tasks.items i ON i.id=l.task_id
+  WHERE l.module='learning' AND l.resource='schedule_event' AND l.resource_id=p_schedule_id
+    AND i.title<>'Review class: SaaS E2E Class A') THEN
+  RAISE EXCEPTION 'Non-synthetic linked task cleanup denied' USING ERRCODE='42501';
+ END IF;
+ DELETE FROM tasks.activity WHERE task_id IN(
+  SELECT task_id FROM tasks.module_links
+   WHERE module='learning' AND resource='schedule_event' AND resource_id=p_schedule_id);
+ DELETE FROM tasks.items WHERE id IN(
+  SELECT task_id FROM tasks.module_links
+   WHERE module='learning' AND resource='schedule_event' AND resource_id=p_schedule_id);
+ DELETE FROM tasks.module_links
+  WHERE module='learning' AND resource='schedule_event' AND resource_id=p_schedule_id;
+ RETURN true;
+END $fn$;
+REVOKE ALL ON FUNCTION public.saas_qa_phase3d_schedule_link_cleanup(uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.saas_qa_phase3d_schedule_link_cleanup(uuid) TO service_role;
