@@ -77,6 +77,13 @@ async function run(){
  if(setupLinks.error||!setupLinks.data?.crmA||!setupLinks.data?.tasksB)
   throw new Error("DEV Phase 3A mapping fixtures failed: "+(setupLinks.error?.message||"invalid fixture"));
  links=setupLinks.data;
+ const {error:profileSetupError}=await admin.from("profiles").upsert([
+  {id:a.id,full_name:"SaaS E2E Admin A",role:"admin",active:true},
+  {id:b.id,full_name:"SaaS E2E Admin B",role:"admin",active:true},
+  {id:multi.id,full_name:"SaaS E2E Admin Multi",role:"admin",active:true}
+ ],{onConflict:"id"});
+ if(profileSetupError)throw new Error("Synthetic Academy role profiles unavailable: "+profileSetupError.message);
+
  const templateRows=await admin.from("courses").select("id").eq("code","RTX-PYTHON").limit(1);
  if(templateRows.error||!templateRows.data?.[0]?.id)throw new Error("Shared Academy template catalog unavailable");
  const adopted=await admin.rpc("saas_academy_clone_course_template",{
