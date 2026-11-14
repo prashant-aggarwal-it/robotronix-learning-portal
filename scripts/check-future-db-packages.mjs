@@ -9,6 +9,7 @@ let combined='',total=0;
 for(const mod of manifest.modules){
  if(!/^[a-z_]+$/.test(mod.name)||!Number.isInteger(mod.tables)||mod.tables<1)throw new Error('Bad module manifest');
  const source=fs.readFileSync(path.join(folder,mod.name,'01_schema.sql'),'utf8');
+ if(source.includes('platform.organizations')) throw new Error('Retired platform identity reference: '+mod.name);
  const re=new RegExp('CREATE TABLE '+mod.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\.','g');
  const tableNames=[...source.matchAll(new RegExp('CREATE TABLE '+mod.name+'\\.([a-z_]+)','g'))].map(x=>x[1]);
  if(tableNames.length!==mod.tables||new Set(tableNames).size!==mod.tables)throw new Error(mod.name+': table count or duplicate mismatch');
@@ -20,7 +21,7 @@ for(const mod of manifest.modules){
  combined+='\n-- MODULE '+mod.name.toUpperCase()+'\n'+source+'\n';
  total+=mod.tables;
 }
-if(total!==41)throw new Error('Expected 41 future tables');
+if(total!==35)throw new Error('Expected 35 future feature tables');
 const dest=path.join(folder,'generated');
 fs.mkdirSync(dest,{recursive:true});
 fs.writeFileSync(path.join(dest,'FUTURE_FULL_DESIGN_INSTALL_DO_NOT_DEPLOY.sql'),'-- DRAFT: ONLY EXECUTE IN A TRANSACTION THAT IS ROLLED BACK UNTIL RLS TESTS ARE CERTIFIED.\n'+combined);
