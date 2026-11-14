@@ -428,6 +428,15 @@ async function run(){
  const cb=await create(b,B,"courses",{title:"SaaS E2E Course B",slug:slug+"-b",code:slug.toUpperCase()+"B",category:"Robotics",grade_from:1,grade_to:8,total_sessions:8});
  const ta=await create(a,A,"trainers",{full_name:"SaaS E2E Trainer A"});
  const tb=await create(b,B,"trainers",{full_name:"SaaS E2E Trainer B"});
+ const {data:crmATrainers,error:crmATrainersError}=await admin.rpc("saas_crm_portal_trainers_v1",{p_actor_id:a.id,p_tenant_id:links.crmA});
+ assert(!crmATrainersError&&crmATrainers?.some(t=>t.id===ta)&&!crmATrainers.some(t=>t.id===tb),
+  "CRM A demo trainer roster includes only mapped Academy A trainer");
+ const {data:crmBTrainers,error:crmBTrainersError}=await admin.rpc("saas_crm_portal_trainers_v1",{p_actor_id:b.id,p_tenant_id:links.crmB});
+ assert(!crmBTrainersError&&crmBTrainers?.some(t=>t.id===tb)&&!crmBTrainers.some(t=>t.id===ta),
+  "CRM B demo trainer roster includes only mapped Academy B trainer");
+ const {error:foreignTrainerError}=await admin.rpc("saas_crm_portal_trainers_v1",{p_actor_id:b.id,p_tenant_id:links.crmA});
+ assert(foreignTrainerError?.code==="42501","Foreign CRM member cannot enumerate SaaS demo trainers");
+
  const {error:foreignInsert}=await directA.from("enrollments").insert({
   student_id:sa,course_id:cb,trainer_id:ta,enrollment_type:"one_to_one",
   started_at:new Date().toISOString().slice(0,10)
