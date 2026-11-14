@@ -4,6 +4,7 @@ import {useEffect,useRef,useState} from "react";
 import { usePathname } from "next/navigation";
 import { ModeBadge } from "./ModeBadge";
 import {ApplicationSwitcher} from "./ApplicationSwitcher";
+import {SuiteContextLink} from "./SuiteContextLink";
 import {useAuthorizedProducts} from "@/lib/platform/use-authorized-products";
 import { NotificationBell } from "./NotificationBell";
 import { SignOutButton } from "./SignOutButton";
@@ -127,7 +128,7 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
         })}</nav>
         <div className="sidebarFooter"><div className="roleBadge"><span className="statusDot"/> {role==="admin"?"Administrator":"Trainer account"}</div><SignOutButton className="sidebarSignout" label="Sign out"/></div>
       </aside>
-      <div className="workspaceMain"><header className="workspaceTopbar"><div><b>Robotronix™ Learning Portal</b><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main>{role==="admin"&&<AdminRecordHistory/>}<div className="footer">Robotronix™ Learning Portal · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
+      <div className="workspaceMain"><header className="workspaceTopbar"><div><SuiteContextLink module="portal"/><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main>{role==="admin"&&<AdminRecordHistory/>}<div className="footer">Robotronix™ Learning Portal · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
   }
   return <>
     <div className="shell experienceShell">
