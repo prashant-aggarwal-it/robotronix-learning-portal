@@ -1,12 +1,12 @@
 import {NextRequest,NextResponse} from "next/server";
-import {getAuthorizedModuleEntitlements,SaaSAccessError} from "@/lib/server/saas/organization-context";
+import {getAuthorizedModuleEntitlements,readBearerToken,SaaSAccessError} from "@/lib/server/saas/organization-context";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
-const headers={"Cache-Control":"no-store"};
+const headers={"Cache-Control":"private, no-store","Vary":"Authorization, Cookie"};
 export async function GET(request:NextRequest){
  try{
-  const token=request.headers.get("authorization")?.replace(/^Bearer\s+/i,"").trim()??"";
+  const token=readBearerToken(request.headers.get("authorization"));
   const organizationId=request.nextUrl.searchParams.get("organizationId")??"";
   if(!organizationId)return NextResponse.json({ok:false,error:"organizationId required"},{status:400,headers});
   const result=await getAuthorizedModuleEntitlements(token,organizationId);
