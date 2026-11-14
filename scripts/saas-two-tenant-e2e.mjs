@@ -18,6 +18,7 @@ const adoptedCourseIds=[];
 const syntheticParentIds=[];
 const syntheticScheduleIds=[];
 const syntheticEarningIds=[];
+const phase3eAdmissionOpportunities=[];
 let schools=null,links=null,third=null,server=null,phase3dOpportunity=null,phase3dActiveToken=null,phase3dHandoffId=null,phase3dOnboardingSubmissionId=null;
 let passed=0;
 const assert=(condition,label)=>{if(!condition)throw new Error("FAILED: "+label);passed++;console.log("PASS: "+label)};
@@ -143,6 +144,25 @@ async function run(){
  }
  r3=await request(b,"POST","/api/connect/workspaces/"+links.crmB+"/portal-integration",{action:"enable"});
  assert(r3.status===200&&r3.body?.status==="active","CRM B can re-enable without changing A or C");
+ // Independent CRM admission offers for B and C in parallel with A's later full parent enrollment flow.
+ for(const [actor,tenant,label] of [[b,links.crmB,"B"],[c,third.crmC,"C"]]){
+  const made=await admin.rpc("saas_qa_phase3d_opportunity_create",{
+   p_actor_id:actor.id,p_tenant_id:tenant
+  });
+  if(made.error||!made.data?.opportunityId)throw new Error("Unable to create CRM "+label+" synthetic admission: "+(made.error?.message||"missing"));
+  phase3eAdmissionOpportunities.push({tenant,id:made.data.opportunityId});
+  const offer={action:"accept",requestId:randomUUID(),opportunityId:made.data.opportunityId,
+   learnerPersonId:made.data.personId,consentAttested:true,offer:{
+    fee:1200,currency:"INR",sessions:8,terms:"SaaS E2E Phase3E verified admission offer."
+   }};
+  const result=await request(actor,"POST","/api/connect/workspaces/"+tenant+"/admissions",offer);
+  assert(result.status===200&&Boolean(result.body?.id)&&Boolean(result.body?.inviteUrl),
+   "CRM "+label+" independently creates Academy onboarding invitation");
+  const other=actor===b?c:b;
+  const denied=await request(other,"GET","/api/connect/workspaces/"+tenant+"/admissions");
+  assert(denied.status===403,"CRM "+(actor===b?"C":"B")+" cannot read CRM "+label+" admissions");
+ }
+
  r3=await request(c,"GET","/api/connect/workspaces/"+links.crmA+"/portal-demos");
  assert(r3.status===403,"CRM C cannot read CRM A demo integration");
  r3=await request(c,"GET","/api/platform/organizations");
@@ -393,6 +413,7 @@ async function run(){
   return response.body.data.id;
  };
  const sa=await create(a,A,"students",{full_name:"SaaS E2E Student A"});
+ const sc=await create(c,third.schoolC,"students",{full_name:"SaaS E2E Student C"});
  const sb=await create(b,B,"students",{full_name:"SaaS E2E Student B"});
  const directRead=async(actor,selectedOrg,studentId)=>{
   const client=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false},
@@ -458,8 +479,21 @@ async function run(){
  const slug=name.replace(/[^a-z0-9-]/g,"");
  const ca=await create(a,A,"courses",{title:"SaaS E2E Course A",slug:slug+"-a",code:slug.toUpperCase()+"A",category:"Robotics",grade_from:1,grade_to:8,total_sessions:8});
  const cb=await create(b,B,"courses",{title:"SaaS E2E Course B",slug:slug+"-b",code:slug.toUpperCase()+"B",category:"Robotics",grade_from:1,grade_to:8,total_sessions:8});
+ const cc=await create(c,third.schoolC,"courses",{title:"SaaS E2E Course C",slug:slug+"-c",code:slug.toUpperCase()+"C",category:"Robotics",grade_from:1,grade_to:8,total_sessions:8});
  const ta=await create(a,A,"trainers",{full_name:"SaaS E2E Trainer A"});
  const tb=await create(b,B,"trainers",{full_name:"SaaS E2E Trainer B"});
+ const tc=await create(c,third.schoolC,"trainers",{full_name:"SaaS E2E Trainer C"});
+ const {data:crmCTrainers,error:crmCTrainersError}=await admin.rpc("saas_crm_portal_trainers_v1",{
+  p_actor_id:c.id,p_tenant_id:third.crmC
+ });
+ assert(!crmCTrainersError&&crmCTrainers?.some(t=>t.id===tc)
+  &&!crmCTrainers.some(t=>t.id===ta||t.id===tb),
+  "CRM C demo trainer roster contains only independent School C trainers");
+ const {error:crossTrainerError}=await admin.rpc("saas_crm_portal_trainers_v1",{
+  p_actor_id:c.id,p_tenant_id:links.crmA
+ });
+ assert(crossTrainerError?.code==="42501","School C cannot enumerate School A demo trainers");
+
  const {data:crmATrainers,error:crmATrainersError}=await admin.rpc("saas_crm_portal_trainers_v1",{p_actor_id:a.id,p_tenant_id:links.crmA});
  assert(!crmATrainersError&&crmATrainers?.some(t=>t.id===ta)&&!crmATrainers.some(t=>t.id===tb),
   "CRM A demo trainer roster includes only mapped Academy A trainer");
@@ -486,6 +520,9 @@ async function run(){
  const {error:parentLinkError}=await admin.from("parent_students").insert({parent_id:parentRecord.id,student_id:sa});
  if(parentLinkError)throw new Error("Synthetic parent student link failed: "+parentLinkError.message);
  const ea=await create(a,A,"enrollments",{student_id:sa,course_id:ca,trainer_id:ta});
+ const ec=await create(c,third.schoolC,"enrollments",{student_id:sc,course_id:cc,trainer_id:tc});
+ assert(Boolean(ec),"Customer C independently creates Academy enrollment");
+
  // Parent uses a verified account to bind consented onboarding to the CRM admission.
  const {data:submission,error:submissionError}=await admin.from("onboarding_submissions")
   .insert({user_id:parent.id,login_email:parent.email,child_name:"SaaS E2E Student A",
@@ -773,6 +810,12 @@ finally{
  if(adoptedCourseIds.length){
   const {error}=await admin.from("courses").delete().in("id",adoptedCourseIds);
   if(error){console.error("Synthetic course cleanup failed: "+error.message);failure??=error}
+ }
+ for(const entry of phase3eAdmissionOpportunities.reverse()){
+  const {error}=await admin.rpc("saas_qa_phase3d_opportunity_cleanup",{
+   p_tenant_id:entry.tenant,p_opportunity_id:entry.id
+  });
+  if(error){console.error("Phase 3E extra admission cleanup failed: "+error.message);failure??=error}
  }
  if(phase3dOpportunity&&links){
   const {error}=await admin.rpc("saas_qa_phase3d_opportunity_cleanup",{
