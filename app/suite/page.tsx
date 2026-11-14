@@ -78,7 +78,11 @@ export default function SuiteHome(){
     const module=suiteModuleById(p.id);
     const mappedOrg=hasOrganizations&&Boolean(modules);
     const unavailable=mappedOrg&&((p.id==="crm"&&links?.crm.status!=="ready")||(p.id==="tasks"&&links?.tasks.status!=="ready"));
-    const href=p.id==="crm"&&mappedOrg&&links?.crm.tenantId?p.href+"?suiteTenant="+encodeURIComponent(links.crm.tenantId):p.href;
+    const href=p.id==="crm"&&mappedOrg&&links?.crm.tenantId
+     ?p.href+"?suiteTenant="+encodeURIComponent(links.crm.tenantId)
+     :p.id==="tasks"&&mappedOrg&&links?.tasks.workspaces?.length
+      ?"/tasks/connected?view=teams&suiteWorkspace="+encodeURIComponent(links.tasks.workspaces[0].id)
+      :p.href;
     const body=<><span className="suiteHomeIcon" aria-hidden="true">{module.icon}</span><strong>{module.label}</strong><span>{module.description}</span><small>{unavailable?"Organization workspace unavailable":"Open module →"}</small></>;
     return unavailable?<div className="suiteHomeCard" aria-disabled="true" key={p.id}>{body}</div>:<Link className="suiteHomeCard" href={href} key={p.id}>
      {body}
