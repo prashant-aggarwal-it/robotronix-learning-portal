@@ -24,6 +24,9 @@ export default function MembersPage(){
  const [busy,setBusy]=useState(false);
  const [newUser,setNewUser]=useState("");
  const [newRole,setNewRole]=useState("member");
+ const [inviteEmail,setInviteEmail]=useState("");
+ const [inviteRole,setInviteRole]=useState("member");
+ const [invitationToken,setInvitationToken]=useState("");
  useEffect(()=>{let active=true;request("/api/platform/organizations").then(x=>{
   if(!active)return;
   setOrgs((x.organizations as Org[]).filter(o=>(o.role==="owner"||o.role==="admin")));
@@ -37,6 +40,15 @@ export default function MembersPage(){
   }).catch(e=>{if(active)setError(e instanceof Error?e.message:"Members unavailable")});
   return()=>{active=false};
  },[organizationId]);
+ async function inviteMember(){
+  if(busy||!organizationId||!inviteEmail.trim())return;
+  setBusy(true);setError("");setInvitationToken("");
+  try{
+   const result=await request("/api/platform/organizations/"+organizationId+"/invitations",{method:"POST",body:JSON.stringify({email:inviteEmail.trim(),role:inviteRole})});
+   setInvitationToken(result.acceptToken);
+   setInviteEmail("");
+  }catch(e){setError(e instanceof Error?e.message:"Invitation failed")}finally{setBusy(false)}
+ }
  async function addExistingMember(){
   if(busy||!organizationId||!newUser.trim())return;
   setBusy(true);setError("");
@@ -69,6 +81,16 @@ export default function MembersPage(){
     <option value="">Select organization</option>
     {orgs.map(o=><option key={o.id} value={o.id}>{o.displayName}</option>)}
    </select>
+   {organizationId&&<section style={{marginTop:20}}>
+    <h2>Invite by email</h2>
+    <p>Generate a 7-day one-time acceptance code. Share it securely with the intended recipient; email is not sent automatically.</p>
+    <label>Email <input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)}/></label>{" "}
+    <label>Role <select value={inviteRole} onChange={e=>setInviteRole(e.target.value)}>
+     {roles.filter(role=>orgs.find(o=>o.id===organizationId)?.role==="owner"||!["owner","admin"].includes(role)).map(role=><option key={role} value={role}>{role}</option>)}
+    </select></label>{" "}
+    <button type="button" disabled={busy||!inviteEmail.trim()} onClick={()=>void inviteMember()}>Create invitation</button>
+    {invitationToken&&<p>One-time token (copy now; it will not be displayed again): <code>{invitationToken}</code></p>}
+   </section>}
    {organizationId&&<section style={{marginTop:20}}>
     <h2>Add existing account</h2>
     <p>For a user who already has a registered account; this does not send an invitation.</p>
