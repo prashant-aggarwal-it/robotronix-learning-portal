@@ -22,6 +22,8 @@ export default function MembersPage(){
  const [drafts,setDrafts]=useState<Record<string,{role:string;status:string}>>({});
  const [error,setError]=useState("");
  const [busy,setBusy]=useState(false);
+ const [newUser,setNewUser]=useState("");
+ const [newRole,setNewRole]=useState("member");
  useEffect(()=>{let active=true;request("/api/platform/organizations").then(x=>{
   if(!active)return;
   setOrgs((x.organizations as Org[]).filter(o=>(o.role==="owner"||o.role==="admin")));
@@ -35,6 +37,17 @@ export default function MembersPage(){
   }).catch(e=>{if(active)setError(e instanceof Error?e.message:"Members unavailable")});
   return()=>{active=false};
  },[organizationId]);
+ async function addExistingMember(){
+  if(busy||!organizationId||!newUser.trim())return;
+  setBusy(true);setError("");
+  try{
+   await request("/api/platform/organizations/"+organizationId+"/members",{method:"POST",body:JSON.stringify({userId:newUser.trim(),role:newRole})});
+   const next=await request("/api/platform/organizations/"+organizationId+"/members");
+   setMembers(next.members as Member[]);
+   setDrafts(Object.fromEntries((next.members as Member[]).map(m=>[m.id,{role:m.role_key,status:m.status}])));
+   setNewUser("");
+  }catch(e){setError(e instanceof Error?e.message:"Member creation failed")}finally{setBusy(false)}
+ }
  async function save(m:Member){
   const draft=drafts[m.id];if(!draft||busy)return;
   setBusy(true);setError("");
@@ -54,6 +67,15 @@ export default function MembersPage(){
     <option value="">Select organization</option>
     {orgs.map(o=><option key={o.id} value={o.id}>{o.displayName}</option>)}
    </select>
+   {organizationId&&<section style={{marginTop:20}}>
+    <h2>Add existing account</h2>
+    <p>For a user who already has a registered account; this does not send an invitation.</p>
+    <label>User ID <input value={newUser} onChange={e=>setNewUser(e.target.value)} placeholder="Registered user UUID"/></label>{" "}
+    <label>Role <select value={newRole} onChange={e=>setNewRole(e.target.value)}>
+     {roles.filter(role=>orgs.find(o=>o.id===organizationId)?.role==="owner"||!["owner","admin"].includes(role)).map(role=><option key={role} value={role}>{role}</option>)}
+    </select></label>{" "}
+    <button type="button" disabled={busy||!newUser.trim()} onClick={()=>void addExistingMember()}>Add member</button>
+   </section>}
    {members.map(m=><section key={m.id} style={{border:"1px solid #aaa",borderRadius:8,padding:12,marginTop:12}}>
     <p>Member: {m.user_id}</p>
     <label>Role <select disabled={orgs.find(o=>o.id===organizationId)?.role==="admin"&&["owner","admin"].includes(m.role_key)} aria-label={"Role for "+m.user_id} value={drafts[m.id]?.role??m.role_key}
