@@ -522,6 +522,12 @@ async function run(){
  const ea=await create(a,A,"enrollments",{student_id:sa,course_id:ca,trainer_id:ta});
  const ec=await create(c,third.schoolC,"enrollments",{student_id:sc,course_id:cc,trainer_id:tc});
  assert(Boolean(ec),"Customer C independently creates Academy enrollment");
+ const {error:crossEnrollmentError}=await admin.rpc("saas_qa_phase3e_cross_handoff_attempt",{
+  p_handoff_id:phase3dHandoffId,p_student_id:sc,p_enrollment_id:ec
+ });
+ assert(crossEnrollmentError?.code==="42501",
+  "CRM A cannot confirm foreign Academy C student/enrollment even via privileged DB operation");
+
 
  // Parent uses a verified account to bind consented onboarding to the CRM admission.
  const {data:submission,error:submissionError}=await admin.from("onboarding_submissions")
