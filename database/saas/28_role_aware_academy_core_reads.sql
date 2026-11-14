@@ -60,7 +60,7 @@ BEGIN
  FOR rec IN SELECT * FROM (VALUES
  ('students','students'),('trainers','trainers'),('courses','courses'),('enrollments','enrollments')
  ) AS x(tbl,kind) LOOP
-  p:=format('saas.can_actor_read_academy_core(%L,id)',rec.kind);
+  p:=format('(saas.can_actor_read_academy_core(%L,id) OR (saas.can_administer_selected_academy() AND saas_org_id=saas.selected_academy_organization()))',rec.kind);
   EXECUTE format('DROP POLICY IF EXISTS saas_tenant_boundary_select ON public.%I',rec.tbl);
   EXECUTE format('CREATE POLICY saas_tenant_boundary_select ON public.%I AS RESTRICTIVE FOR SELECT TO authenticated USING (NOT saas.has_organization_membership() OR (%s))',rec.tbl,p);
   EXECUTE format('DROP POLICY IF EXISTS saas_tenant_select ON public.%I',rec.tbl);
