@@ -1,11 +1,14 @@
 name: Database dependency inventory
 on:
   push:
-    branches: ['feature/portal-canonical-db-package']
+    branches: ['feature/education-suite-release1']
     paths:
       - 'scripts/inventory-db-callers.mjs'
       - 'scripts/check-db-catalog-compatibility.mjs'
       - 'scripts/export-db-disposition-register.mjs'
+      - 'scripts/check-release1-db-preflight.mjs'
+      - 'database/packages.json'
+      - 'database/portal/manifest.json'
       - 'database/audit/dev_catalog_snapshot.json'
       - '.github/workflows/db-dependency-inventory.yml'
   workflow_dispatch:
@@ -24,6 +27,9 @@ jobs:
       - name: Export conservative existing-object dispositions
         if: always()
         run: node scripts/export-db-disposition-register.mjs artifacts/db-object-dispositions
+      - name: Release 1 SQL package preflight
+        if: always()
+        run: node scripts/check-release1-db-preflight.mjs artifacts/release1-certification
       - name: Upload audit for architecture review
         if: always()
         uses: actions/upload-artifact@v4
@@ -33,4 +39,5 @@ jobs:
             artifacts/db-call-inventory/
             artifacts/db-compatibility/
             artifacts/db-object-dispositions/
+            artifacts/release1-certification/
           retention-days: 14
