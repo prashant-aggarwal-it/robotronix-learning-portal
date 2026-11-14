@@ -34,6 +34,8 @@ jobs:
         run: npm run check:release
       - name: Source security checks
         run: npm run check:security
+      - name: Generate and validate canonical SQL installers (no database connection)
+        run: npm run db:build-installers
       - name: Database package preflight
         run: node scripts/check-release1-db-preflight.mjs
       - name: Dynamic database contract preflight
