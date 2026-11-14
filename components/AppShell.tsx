@@ -114,18 +114,26 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
   },[pathname]);
   const workspace=role==="admin"||role==="trainer";
   if(workspace){
-    let lastGroup="";
     return <div className={`workspaceShell ${role==="admin"&&sidebarCollapsed?"adminSidebarCollapsed":""}`}>
       <aside className="workspaceSidebar">
         <Link href={`/${role}`} className="sidebarBrand" aria-label="Robotronix Learning Portal"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
         <div className="portalName">Learning Portal <span>{role==="admin"?"Admin":"Trainer"}</span></div>
         {role==="admin"&&<ApplicationSwitcher current="portal"/>}
         {role==="admin"&&<button type="button" className="adminSidebarToggle" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed?"Expand admin navigation":"Collapse admin navigation"} title={sidebarCollapsed?"Expand navigation":"Collapse navigation"}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d={sidebarCollapsed?"m15 10 3 2-3 2":"m17 10-3 2 3 2"}/></svg><span>{sidebarCollapsed?"":"Collapse menu"}</span></button>}
-        <nav className="sidebarNav" ref={sidebarRef}>{navByRole[role].filter(item=>item.href!=="/tasks"||hasTasksAccess).map(item=>{
-          const showGroup=role==="admin"&&item.group&&item.group!==lastGroup;
-          if(showGroup)lastGroup=item.group!;
-          return <div key={item.href} className={showGroup?"adminSidebarGroupStart":undefined}>{showGroup&&<div className="navGroupLabel">{item.group}</div>}<Link className={isActive(pathname,item.href)?"active":""} href={item.href} title={role==="admin"&&sidebarCollapsed?item.label:undefined} aria-label={item.label}>{role==="admin"?<AdminSidebarIcon href={item.href}/>:<span className="navIndicator"/>}<span className="navItemText">{item.label}</span></Link></div>
-        })}</nav>
+        <nav className="sidebarNav suiteGroupedNav" ref={sidebarRef}>
+          {role==="admin"?
+            [...new Set(navByRole.admin.map(item=>item.group||"Other"))].map(group=>{
+              const items=navByRole.admin.filter(item=>(item.group||"Other")===group&&(item.href!=="/tasks"||hasTasksAccess));
+              const includesActive=items.some(item=>isActive(pathname,item.href));
+              return <details key={group} className="suiteNavSection" open={includesActive||group==="Workspace"?true:undefined}>
+                <summary className="navGroupLabel">{group}<span aria-hidden="true">⌄</span></summary>
+                {items.map(item=><Link key={item.href} className={isActive(pathname,item.href)?"active":""} href={item.href} title={sidebarCollapsed?item.label:undefined} aria-label={item.label}>
+                  <AdminSidebarIcon href={item.href}/><span className="navItemText">{item.label}</span>
+                </Link>)}
+              </details>;
+            }):
+            navByRole[role].filter(item=>item.href!=="/tasks"||hasTasksAccess).map(item=><Link key={item.href} className={isActive(pathname,item.href)?"active":""} href={item.href} aria-label={item.label}><span className="navIndicator"/><span className="navItemText">{item.label}</span></Link>)}
+        </nav>
         <div className="sidebarFooter"><div className="roleBadge"><span className="statusDot"/> {role==="admin"?"Administrator":"Trainer account"}</div><SignOutButton className="sidebarSignout" label="Sign out"/></div>
       </aside>
       <div className="workspaceMain"><header className="workspaceTopbar"><div><SuiteContextLink module="portal"/><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main>{role==="admin"&&<AdminRecordHistory/>}<div className="footer">Robotronix™ Learning Portal · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
