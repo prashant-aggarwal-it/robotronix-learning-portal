@@ -39,8 +39,8 @@ async function request(actor,method,path,payload,cookie){
  return {status:res.status,body:await res.json().catch(()=>null),cookie:res.headers.get("set-cookie")};
 }
 async function startServer(){
- server=spawn("npm",["run","dev","--","--hostname","127.0.0.1","--port","3457"],{
-  cwd:process.cwd(),stdio:["ignore","pipe","pipe"],env:{
+ server=spawn(process.execPath,["node_modules/next/dist/bin/next","dev","--webpack","--hostname","127.0.0.1","--port","3457"],{
+  cwd:process.cwd(),detached:true,stdio:["ignore","pipe","pipe"],env:{
    ...process.env,
    NEXT_PUBLIC_APP_ENV:"live",SUPABASE_URL:url,NEXT_PUBLIC_SUPABASE_URL:url,
    NEXT_PUBLIC_SUPABASE_ANON_KEY:anon,SUPABASE_SERVICE_ROLE_KEY:service,
@@ -123,7 +123,18 @@ async function run(){
 let failure;
 try{await run()}catch(error){failure=error;console.error(error instanceof Error?error.message:String(error))}
 finally{
- if(server){server.kill("SIGTERM");await new Promise(resolve=>setTimeout(resolve,1000))}
+ if(server){
+  // Terminate the isolated Next.js process group, not only the npm wrapper.
+  // The previous runner could hang indefinitely because orphaned Next.js workers
+  // kept inherited stdout/stderr handles open after all assertions and cleanup passed.
+  try{process.kill(-server.pid,"SIGTERM")}catch{try{server.kill("SIGTERM")}catch{}}
+  await new Promise(resolve=>{
+   if(server.exitCode!==null){resolve();return}
+   const limit=setTimeout(()=>{try{process.kill(-server.pid,"SIGKILL")}catch{}resolve()},5000);
+   server.once("close",()=>{clearTimeout(limit);resolve()});
+  });
+  server.stdout?.destroy();server.stderr?.destroy();
+ }
  if(schools){
   const {error}=await admin.rpc("saas_qa_fixture_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
   if(error){console.error("Fixture cleanup failed: "+error.message);failure??=error}
