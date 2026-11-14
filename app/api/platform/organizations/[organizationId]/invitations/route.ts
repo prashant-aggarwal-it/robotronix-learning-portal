@@ -50,9 +50,8 @@ export async function GET(request:NextRequest,context:{params:Promise<{organizat
   const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!key)throw new SaaSAccessError(503,"Service unavailable");
   const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
-  const {data,error}=await db.schema("saas").from("organization_invitations")
-   .select("id,email,role_key,status,created_at,expires_at,accepted_at")
-   .eq("organization_id",organizationId).order("created_at",{ascending:false}).limit(100);
+  const {userId:actorId}=await getAuthorizedOrganizations(readBearerToken(request.headers.get("authorization")));
+  const {data,error}=await db.rpc("saas_list_invitations_v1",{p_actor_id:actorId,p_organization_id:organizationId});
   if(error)throw new SaaSAccessError(503,"Invitations unavailable");
   return NextResponse.json({ok:true,invitations:data??[]},{headers});
  }catch(error){
