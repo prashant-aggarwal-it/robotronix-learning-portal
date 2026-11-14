@@ -20,23 +20,17 @@ export async function GET(request:NextRequest){
   const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!key)throw new SaaSAccessError(503,"Organization service unavailable");
   const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
-  const [crm,tasks]=await Promise.all([
-   modules.crm===true?db.schema("saas").from("legacy_tenant_links").select("crm_tenant_id").eq("organization_id",organization.id).limit(2):Promise.resolve(null),
-   modules.tasks===true?db.schema("saas").from("workspace_links").select("workspace_id").eq("organization_id",organization.id).limit(2):Promise.resolve(null)
-  ]);
-  if(crm?.error||tasks?.error)throw new SaaSAccessError(503,"Organization mappings unavailable");
-  const crmRows=crm?.data??[],taskRows=tasks?.data??[];
-  const [crmAccess,taskAccess]=await Promise.all([
-   modules.crm===true&&crmRows.length===1?db.rpc("connect_my_workspaces",{p_actor_id:userId}):Promise.resolve(null),
-   modules.tasks===true&&taskRows.length>0?db.schema("tasks").from("workspace_members").select("workspace_id,role").eq("user_id",userId).in("workspace_id",taskRows.map(row=>row.workspace_id)):Promise.resolve(null)
-  ]);
-  if(crmAccess?.error||taskAccess?.error)throw new SaaSAccessError(503,"Module workspace membership unavailable");
-  const permittedCrm=crmRows.length===1&&(crmAccess?.data??[]).some((row:{tenant_id:string;tenant_status:string})=>row.tenant_id===crmRows[0].crm_tenant_id&&row.tenant_status==="active");
-  const allowedTasks=(taskAccess?.data??[]).filter((row:{workspace_id:string})=>taskRows.some(link=>link.workspace_id===row.workspace_id));
-  const links={
-   crm:{enabled:modules.crm===true,status:modules.crm!==true?"disabled":crmRows.length===0?"unmapped":crmRows.length>1?"ambiguous":permittedCrm?"ready":"access_denied",tenantId:permittedCrm?crmRows[0].crm_tenant_id:null},
-   tasks:{enabled:modules.tasks===true,status:modules.tasks!==true?"disabled":taskRows.length===0?"unmapped":allowedTasks.length>0?"ready":"access_denied",workspaces:allowedTasks.map((row:{workspace_id:string;role:string})=>({id:row.workspace_id,role:row.role}))}
-  };
+  // One privileged service-only RPC avoids exposing private schemas via PostgREST.
+  // It independently validates active SaaS, CRM and Tasks membership.
+  const {data:links,error:linkError}=await db.rpc("saas_resolve_module_links",{
+   p_actor_id:userId,p_organization_id:organization.id
+  });
+  if(linkError||!links||typeof links!=="object")
+   throw new SaaSAccessError(503,"Module workspace mapping unavailable");
+  if(modules.crm!==true&&links.crm?.status!=="disabled")
+   throw new SaaSAccessError(503,"Module entitlement mismatch");
+  if(modules.tasks!==true&&links.tasks?.status!=="disabled")
+   throw new SaaSAccessError(503,"Module entitlement mismatch");
   return NextResponse.json({ok:true,organizationId:organization.id,
    links,
    note:"Links include only mapped module workspaces where this user has module membership. All business operations must independently authorize the selected resource."
