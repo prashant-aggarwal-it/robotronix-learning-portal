@@ -23,6 +23,7 @@ const files=[
  "32_revoked_user_rls_marker.sql",
  "29_zoom_recording_stream_tenant_guard.sql",
  "34_zoom_classroom_tenant_scope.sql",
+ "35_general_zoom_tenant_ownership.sql",
  "30_session_records_role_scoped_rls.sql",
  "33_complete_legacy_data_access_boundaries.sql"
 ];
