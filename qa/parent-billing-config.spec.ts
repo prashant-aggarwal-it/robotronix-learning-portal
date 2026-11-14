@@ -56,8 +56,8 @@ test.describe("Parent billing and flexible fee contracts",()=>{
   expect(()=>validatePackage({...agreement,amount:1.2345},[])).toThrow();
  });
  test("canonical schema enforces parent-linked reads and family payment allocations",()=>{
-  const schema=readFileSync(resolve(root,"database/01_install/modules/schema/03_academic_delivery_finance.sql"),"utf8");
-  const invoices=readFileSync(resolve(root,"database/01_install/modules/schema/04_billing_razorpay.sql"),"utf8");
+  const schema=readFileSync(resolve(root,"database/portal/schema/03_academic_delivery_finance.sql"),"utf8");
+  const invoices=readFileSync(resolve(root,"database/portal/schema/04_billing_razorpay.sql"),"utf8");
   for(const marker of ["fees_parent_read","payments_parent_read","family_receipts_parent_read","record_family_payment_v1","Allocations must equal the received amount","billing_model","charge_absences"])
    expect(schema).toContain(marker);
   expect(invoices).toContain("invoices_parent_read");
