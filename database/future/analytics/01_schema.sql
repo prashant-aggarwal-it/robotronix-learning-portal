@@ -12,7 +12,7 @@ CREATE TABLE analytics.metric_definitions (
 CREATE TABLE analytics.metric_snapshots (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  metric_id uuid NOT NULL REFERENCES analytics.metric_definitions(id),
- organization_id uuid REFERENCES platform.organizations(id),
+ organization_id uuid REFERENCES saas.organizations(id),
  bucket_start timestamptz NOT NULL, metric_value numeric NOT NULL,
  calculated_at timestamptz NOT NULL DEFAULT now()
 );
