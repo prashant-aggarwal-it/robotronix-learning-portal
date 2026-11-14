@@ -1,0 +1,65 @@
+{
+  "status": "future-design-validated-transaction-only",
+  "productionExecutionAllowed": false,
+  "release1InstallerIncluded": false,
+  "modules": [
+    {
+      "name": "platform",
+      "tables": 6,
+      "dependencies": [
+        "Supabase Auth"
+      ]
+    },
+    {
+      "name": "lms",
+      "tables": 6,
+      "dependencies": [
+        "Academy"
+      ]
+    },
+    {
+      "name": "assessment",
+      "tables": 7,
+      "dependencies": [
+        "Academy"
+      ]
+    },
+    {
+      "name": "gamification",
+      "tables": 5,
+      "dependencies": [
+        "Academy"
+      ]
+    },
+    {
+      "name": "certificates",
+      "tables": 3,
+      "dependencies": [
+        "Academy"
+      ]
+    },
+    {
+      "name": "analytics",
+      "tables": 3,
+      "dependencies": [
+        "Platform"
+      ]
+    },
+    {
+      "name": "ai",
+      "tables": 6,
+      "dependencies": [
+        "Platform",
+        "Supabase Auth"
+      ]
+    },
+    {
+      "name": "operations",
+      "tables": 5,
+      "dependencies": [
+        "Platform",
+        "Academy"
+      ]
+    }
+  ]
+}
