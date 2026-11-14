@@ -513,6 +513,17 @@ async function run(){
       label+" original Academy dashboard remains accessible after org context resolution");
      assert((await page.getByText("SaaS E2E Student B",{exact:false}).count())===0,
       label+" original Academy dashboard does not render School B learner");
+     const roleRoutes={
+      Parent:["/parent/billing","/parent/calendar","/parent/learner","/parent/messages"],
+      Student:["/student/course","/student/calendar","/student/portfolio"],
+      Trainer:["/trainer/classes","/trainer/earnings","/trainer/progress","/trainer/schedule"]
+     };
+     for(const destination of roleRoutes[label]??[]){
+      const response=await page.goto(base+destination,{waitUntil:"domcontentloaded"});
+      await page.waitForTimeout(650);
+      assert(response?.status()===200&&new URL(page.url()).pathname===destination,
+       label+" organization-authorized role page mounts: "+destination);
+     }
     }finally{await context.close()}
    }
   }finally{await browser.close()}
