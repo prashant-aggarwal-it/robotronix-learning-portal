@@ -9,7 +9,8 @@ const filenames=[
  "40_phase3c_add_existing_member.sql",
  "41_phase3c_invitations.sql",
  "42_phase3c_invitation_revocation.sql",
- "43_phase3c_private_schema_list_rpcs.sql"
+ "43_phase3c_private_schema_list_rpcs.sql",
+ "44_phase3c_public_function_hardening.sql"
 ];
 const guard=`-- ROBOTRONIX PHASE 3C — ADDITIVE AUTHORIZATION AND MEMBERSHIP UPGRADE.
 -- Existing Education Suite SaaS foundation required. NOT a fresh install.
