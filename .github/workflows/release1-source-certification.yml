@@ -32,6 +32,8 @@ jobs:
         run: npm run typecheck
       - name: Release source regression suite
         run: npm run check:release
+      - name: Targeted offline academic, finance and permission contract specs
+        run: npx playwright test qa/parent-billing-config.spec.ts qa/scheduling-v2-preview.spec.ts qa/phase3-validation.spec.ts --project=desktop-chromium --no-deps
       - name: Source security checks
         run: npm run check:security
       - name: Generate and validate canonical SQL installers (no database connection)
