@@ -1,0 +1,22 @@
+name: Future module source contracts
+on:
+  push:
+    branches: ['feature/education-suite-release1']
+    paths:
+      - 'database/future/**'
+      - 'scripts/check-future-db-packages.mjs'
+      - '.github/workflows/future-db-source-contracts.yml'
+  workflow_dispatch:
+jobs:
+  future-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate and generate future SQL
+        run: node scripts/check-future-db-packages.mjs
+      - name: Confirm Release 1 package exclusion
+        run: |
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('database/packages.json'));if(JSON.stringify(p).includes('database/future/'))process.exit(1);"
