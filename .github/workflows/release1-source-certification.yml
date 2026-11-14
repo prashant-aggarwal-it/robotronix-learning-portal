@@ -15,6 +15,9 @@ on:
       - 'package-lock.json'
       - '.github/workflows/release1-source-certification.yml'
   workflow_dispatch:
+concurrency:
+  group: release1-source-certification-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

@@ -572,7 +572,7 @@ async function run(){
  r=await request(invitedActor,"GET","/api/platform/organizations");
  assert(r.status===200&&r.body?.organizations?.some(o=>o.id===A),"Invited user gains only intended organization");
  r=await request(b,"GET","/api/platform/organizations/"+A+"/members");
- assert(r.status===403,"Other organization cannot list membership roster");
+ assert(r.status===403,"Other organization cannot list membership roster (HTTP "+r.status+")");
  r=await request(a,"GET","/api/platform/organizations/"+A+"/members");
  const invitedMember=r.body?.members?.find(m=>m.user_id===invitedActor.id);
  assert(r.status===200&&invitedMember?.role_key==="member","Owner can see invited member with correct role");

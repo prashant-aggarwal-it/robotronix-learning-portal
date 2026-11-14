@@ -15,6 +15,9 @@ on:
       - components/RoleGuard.tsx
       - .github/workflows/saas-two-tenant-e2e.yml
   workflow_dispatch:
+concurrency:
+  group: dev-saas-authenticated-e2e-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
