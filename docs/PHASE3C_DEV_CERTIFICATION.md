@@ -47,8 +47,8 @@ Read-only 39 contains verification queries; later canonical sources 40–44 exte
 
 ## Current automated verification gates
 
-- Latest source certification on code commit `16ce3c18`: **running as of last review** [run 43602392749](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392749).
-- Latest combined authenticated DEV regression and Phase 3C invitation lifecycle: **queued** [run 43602392753](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392753).
+- Latest source certification on code commit `16ce3c18`: **PASS** [run 43602392749](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392749).
+- Latest combined authenticated DEV regression and Phase 3C invitation lifecycle: **queued/pending as of last inspection** [run 43602392753](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392753).
 - Earlier authenticated run on `39a6aa73` remained in progress at last review [run 43602283223](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602283223).
 - Final certification requires actual results for both latest source and authenticated suites; any further failure must be fixed and retested.
 
@@ -62,3 +62,11 @@ Read-only 39 contains verification queries; later canonical sources 40–44 exte
 ## Operating constraints
 
 No production database modifications, no `main` merge, and no Netlify deployment. CI and automated DEV validation only.
+
+## Final run control update
+- Commit `16ce3c187bcc7887f12ebc22a9d748e476d2f4c7`: same-job sequential Academy/CRM/Tasks regression followed by invitation lifecycle; negative foreign-roster assertion permits only fail-closed 400/403 with no data.
+- Source certification [run 43602392749](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392749) is **SUCCESS** for code commit 16ce3c18.
+- Prior baseline source [run 43602283193](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602283193) **SUCCESS** for commit 39a6aa73.
+- Combined latest authenticated QA run [43602392753](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43602392753) was pending behind prior QA run 43602283223 at last inspection. No complete authenticated invitation PASS is claimed.
+- DEV read-only check confirmed all six sensitive member/invitation RPCs service-only (`anon=false`, `authenticated=false`, `service_role=true`).
+- Status **PARTIAL / NOT CERTIFIED** until last authenticated run passes. No production deployment or main merge.
