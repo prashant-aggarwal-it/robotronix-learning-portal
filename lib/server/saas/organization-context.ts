@@ -14,17 +14,13 @@ export async function getAuthorizedOrganizations(bearer:string):Promise<{userId:
  const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
  const {data:{user},error:authError}=await client.auth.getUser(bearer);
  if(authError||!user||user.is_anonymous)throw new SaaSAccessError(401,"Invalid session");
- const {data:rows,error:membershipError}=await client.schema("saas").from("memberships")
-  .select("organization_id,role_key,organizations!inner(id,slug,display_name,status)")
-  .eq("user_id",user.id).eq("status","active");
+ const {data:rows,error:membershipError}=await client.rpc("saas_authorized_organizations",{p_actor_id:user.id});
  if(membershipError)throw new SaaSAccessError(503,"Organization memberships unavailable");
- const organizations:OrganizationAccess[]=[];
- for(const row of rows??[]){
-  const organization=row.organizations as unknown as {id:string;slug:string;display_name:string;status:string}|null;
-  if(organization?.status==="active")organizations.push({
-   id:organization.id,slug:organization.slug,displayName:organization.display_name,role:row.role_key
-  });
- }
+ const organizations:OrganizationAccess[]=(rows??[]).map(
+  (row:{organization_id:string;slug:string;display_name:string;role_key:string})=>({
+   id:row.organization_id,slug:row.slug,displayName:row.display_name,role:row.role_key
+  })
+ );
  return {userId:user.id,organizations};
 }
 
