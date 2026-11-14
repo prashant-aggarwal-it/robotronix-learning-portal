@@ -21,6 +21,9 @@ BEGIN
  VALUES(p_tenant_id,'SaaS E2E Phase3D Contact') RETURNING id INTO v_person;
  INSERT INTO connect.opportunities(tenant_id,pipeline_id,stage_id,title,contact_id)
  VALUES(p_tenant_id,v_pipeline,v_stage,'SaaS E2E Phase3D Opportunity',v_person) RETURNING id INTO v_opportunity;
+ INSERT INTO connect.portal_demo_integrations(tenant_id,status,installed_by)
+ VALUES(p_tenant_id,'active',p_actor_id)
+ ON CONFLICT(tenant_id) DO UPDATE SET status='active',updated_at=now();
  RETURN jsonb_build_object('opportunityId',v_opportunity,'personId',v_person);
 END $fn$;
 CREATE OR REPLACE FUNCTION public.saas_qa_phase3d_opportunity_cleanup(
@@ -47,6 +50,12 @@ BEGIN
  ) AND title='Follow up: SaaS E2E Phase3D Opportunity';
  DELETE FROM tasks.module_links WHERE module='connect' AND resource='crm_opportunity'
   AND resource_id=p_opportunity_id AND tenant_id=p_tenant_id;
+ DELETE FROM connect.portal_admission_handoffs WHERE tenant_id=p_tenant_id AND opportunity_id=p_opportunity_id;
+ DELETE FROM connect.audit_events WHERE tenant_id=p_tenant_id AND entity_type='opportunity' AND entity_id=p_opportunity_id
+   AND event_type='portal_offer_accepted';
+ DELETE FROM connect.portal_demo_integrations WHERE tenant_id=p_tenant_id
+   AND installed_by IN (SELECT user_id FROM connect.memberships
+      WHERE tenant_id=p_tenant_id AND role='owner' AND status='active');
  DELETE FROM connect.opportunities WHERE id=p_opportunity_id AND tenant_id=p_tenant_id;
  DELETE FROM connect.people WHERE id=v_opportunity.contact_id AND tenant_id=p_tenant_id
   AND full_name='SaaS E2E Phase3D Contact';
