@@ -305,7 +305,7 @@ async function run(){
  const ea=await create(a,A,"enrollments",{student_id:sa,course_id:ca,trainer_id:ta});
  assert(Boolean(ea&&tb),"Authorized enrollment created");
  r=await request(a,"GET","/api/platform/academy/students?organizationId="+A);
- assert(r.status===200&&r.body?.data?.length===1&&r.body.data[0].id===sa,"School A lists only its students");
+ assert(r.status===200&&r.body?.data?.length===2&&r.body.data.some(x=>x.id===sa)&&r.body.data.some(x=>x.id===directCreated.id)&&!r.body.data.some(x=>x.id===sb),"School A lists both authorized students and excludes School B");
  r=await request(b,"GET","/api/platform/academy/students?organizationId="+B);
  assert(r.status===200&&r.body?.data?.length===1&&r.body.data[0].id===sb,"School B lists only its students");
  r=await request(a,"GET","/api/platform/academy/students/"+sb+"?organizationId="+A);
