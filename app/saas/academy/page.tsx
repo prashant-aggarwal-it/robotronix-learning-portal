@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
-import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {getSupabaseBrowserClient,setAcademyBrowserOrganizationContext} from "@/lib/supabase/browser";
 
 type Organization={id:string;slug:string;displayName:string;role:string};
 type Kind="students"|"courses"|"trainers"|"enrollments";
@@ -39,6 +39,7 @@ export default function TenantAcademyPage(){
    if(!current)return;
    setOrganizations(data.organizations||[]);
    setSelected(data.selectedOrganizationId||"");
+   setAcademyBrowserOrganizationContext(data.selectedOrganizationId||null);
    setReady(true);
   }).catch(e=>{if(current){setError(String(e.message));setReady(true);}});
   return ()=>{current=false;};
@@ -59,6 +60,7 @@ export default function TenantAcademyPage(){
   try{
    if(id)await call("/api/platform/organizations",{method:"POST",body:JSON.stringify({organizationId:id})});
    else await call("/api/platform/organizations",{method:"DELETE"});
+   setAcademyBrowserOrganizationContext(id||null);
    setSelected(id);setKind("students");setDraft({});setVersion(n=>n+1);
   }catch(e){setError(e instanceof Error?e.message:"Cannot switch organizations");}
   finally{setBusy(false);}
