@@ -2,7 +2,7 @@ import "server-only";
 import {createClient} from "@supabase/supabase-js";
 import {NextRequest} from "next/server";
 import {getAuthorizedOrganizations,readBearerToken,requireAuthorizedTenantRole,SaaSAccessError} from "./organization-context";
-const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Authorized org for SaaS users; returns null for a genuine standalone legacy Admin.
  * Revoked SaaS accounts cannot fall back to global legacy privileges.
  */
