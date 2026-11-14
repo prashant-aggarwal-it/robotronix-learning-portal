@@ -27,13 +27,16 @@ export default function SuiteHome(){
  const [organizationName,setOrganizationName]=useState("");
  const [hasOrganizations,setHasOrganizations]=useState(false);
  const [organizationUnavailable,setOrganizationUnavailable]=useState(false);
+ const [standalone,setStandalone]=useState(false);
  const [needsSelection,setNeedsSelection]=useState(false);
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
  useEffect(()=>{
   let active=true;
   (async()=>{
-   const p=await request("/api/platform/my-products");
+   const [p,capabilities]=await Promise.all([request("/api/platform/my-products"),request("/api/platform/capabilities")]);
+   const singleModule=capabilities.legacyDefault!==true&&capabilities.products?.length===1;
+   if(active)setStandalone(singleModule);
    if(!active)return;
    const verified=(p.products||[]).filter((x:Product)=>["portal","crm","tasks"].includes(x.id));
    setProducts(verified);
@@ -50,12 +53,12 @@ export default function SuiteHome(){
      const access=await request("/api/platform/organization-modules?organizationId="+encodeURIComponent(selected.id)) as ModulesResponse;
      if(active)setModules(access.modules);
     }
-   }catch{if(active){setHasOrganizations(false);setModules(null);setOrganizationUnavailable(true)}}
+   }catch{if(active){setHasOrganizations(false);setModules(null);setOrganizationUnavailable(!singleModule)}}
   })().catch(e=>{if(active)setError(e instanceof Error?e.message:"Unable to load your applications")})
   .finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
  },[]);
- const visible=products.filter(p=>!organizationUnavailable&&(!hasOrganizations||(!needsSelection&&modules?.[suiteModuleById(p.id).entitlement]===true)));
+ const visible=products.filter(p=>!organizationUnavailable&&(standalone&&!hasOrganizations||!hasOrganizations||(!needsSelection&&modules?.[suiteModuleById(p.id).entitlement]===true)));
  return <main className="suiteHome">
   <header className="suiteHomeHeader">
    <div><span className="suiteEyebrow">Robotronix</span><h1>Education Suite</h1><p>Choose a workspace you are authorized to use.</p></div>
