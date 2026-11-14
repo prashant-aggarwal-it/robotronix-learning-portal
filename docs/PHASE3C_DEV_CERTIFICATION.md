@@ -62,3 +62,15 @@ Status: **PARTIAL**. The capability matrix alone is insufficient to certify auth
 - CRM/Tasks still use their independently maintained auth mechanisms, subject to Phase 3C exhaustive audits.
 - No successful typecheck, CI or Playwright regression has been observed for the new commits.
 - Status: PARTIAL, not Phase 3C certified.
+
+## Continuous implementation / verification follow-up
+- Added typed declaration for role-capabilities.mjs and a read-only Phase 3C security query in commit 87fed6d50dc05ed7c6cadf62098b0ff465ac5fa5.
+- Extended admin membership-management capability without granting the admin the ability to change protected owner/admin roles, and reflected this in the UI/test contract in commit d1bb374ed12520145f89b6839cee4b61c1366492.
+- Fixed a stale Academy API source contract test that expected requireAuthorizedTenantRole instead of the new requireAuthorizedTenantCapability in commit 57469fce62a54031a195de0ea57189956981880a.
+- GitHub Actions source-certification run 43598712986 failed on that stale assertion; its log was examined. Newer runs were in progress at last query. No claim of a successful new source certification run.
+- Previously observed authenticated DEV E2E GitHub Action runs 43596954036 and 43596534335 succeeded on earlier intermediate commits, but this does NOT certify the latest branch.
+- DEV read-only checks verified service-only privilege on public.saas_manage_membership_v1, enabled last-owner guard, and zero active organizations with existing memberships lacking an active owner.
+- A transaction-only DEV fixture exercise was run against last-owner demotion, self-removal, and cross-organization operation, with transaction rollback; connector did not return per-assertion notices, so these are not represented as confirmed individual PASS evidence.
+- DEV Auth user count 1, SaaS membership count 0; full authenticated multi-user RBAC certification still requires the existing E2E fixture workflow and newer passing Actions evidence.
+- Supabase advisor review surfaced RLS-enabled/no-policy findings, including unexposed private schemas; triage is required per table, not blanket policy addition.
+- Phase 3C remains PARTIAL / NOT DEV CERTIFIED. This document supersedes earlier references to the capability model as unwired.
