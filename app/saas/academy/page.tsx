@@ -79,7 +79,8 @@ export default function TenantAcademyPage(){
  async function update(item:Item){
   if(!selected)return;
   const name=kind==="courses"?"title":kind==="enrollments"?"status":"full_name";
-  const value=window.prompt("Enter new "+name,item[name]||"");
+  const currentValue=kind==="courses"?item.title:kind==="enrollments"?item.status:item.full_name;
+  const value=window.prompt("Enter new "+name,currentValue||"");
   if(value===null)return;
   setBusy(true);setError("");
   try{
