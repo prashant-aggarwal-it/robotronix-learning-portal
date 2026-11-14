@@ -27,8 +27,8 @@ export default function MembersPage(){
  useEffect(()=>{let active=true;request("/api/platform/organizations").then(x=>{
   if(!active)return;
   setOrgs((x.organizations as Org[]).filter(o=>(o.role==="owner"||o.role==="admin")));
-  const selected=(x.organizations as Org[]).find(o=>o.id===x.selectedOrganizationId&&o.role==="owner");
-  if(selected)setOrganizationId(selected.id);
+  const selected=(x.organizations as Org[]).find(o=>o.id===x.selectedOrganizationId&&(o.role==="owner"||o.role==="admin"));
+  setOrganizationId(selected?.id||"");
  }).catch(e=>{if(active)setError(String(e))});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;setMembers([]);setDrafts({});
   if(organizationId)request("/api/platform/organizations/"+organizationId+"/members").then(x=>{
@@ -55,7 +55,9 @@ export default function MembersPage(){
    await request("/api/platform/organizations/"+organizationId+"/members/"+m.id,
     {method:"PATCH",body:JSON.stringify({role:draft.role,status:draft.status})});
    const next=await request("/api/platform/organizations/"+organizationId+"/members");
-   setMembers(next.members as Member[]);
+   const rows=next.members as Member[];
+   setMembers(rows);
+   setDrafts(Object.fromEntries(rows.map(row=>[row.id,{role:row.role_key,status:row.status}])));
   }catch(e){setError(e instanceof Error?e.message:"Update failed")}finally{setBusy(false)}
  }
  return <main style={{maxWidth:880,margin:"2rem auto",padding:"1rem"}}>
