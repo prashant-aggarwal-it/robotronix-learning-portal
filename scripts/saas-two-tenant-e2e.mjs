@@ -18,7 +18,7 @@ const adoptedCourseIds=[];
 const syntheticParentIds=[];
 const syntheticScheduleIds=[];
 const syntheticEarningIds=[];
-let schools=null,links=null,server=null;
+let schools=null,links=null,server=null,phase3dOpportunity=null;
 let passed=0;
 const assert=(condition,label)=>{if(!condition)throw new Error("FAILED: "+label);passed++;console.log("PASS: "+label)};
 const name="saas-e2e-"+randomBytes(5).toString("hex");
@@ -223,6 +223,30 @@ async function run(){
   action:"task_create",workspace_id:links.tasksB,task:{title:"SaaS E2E Unauthorized"}
  });
  assert(r.status===403||r.status===400,"Foreign Tasks workspace creation rejected");
+
+ // Phase 3D: real authenticated CRM opportunity → Tasks source linking.
+ const fixture=await admin.rpc("saas_qa_phase3d_opportunity_create",{
+  p_actor_id:a.id,p_tenant_id:links.crmA
+ });
+ if(fixture.error||!fixture.data?.opportunityId)
+  throw new Error("DEV CRM opportunity fixture unavailable: "+(fixture.error?.message||"no opportunity"));
+ phase3dOpportunity=fixture.data.opportunityId;
+ const linkInput={module:"connect",resource:"crm_opportunity",resource_id:phase3dOpportunity,tenant_id:links.crmA};
+ r=await request(b,"POST","/api/tasks/module-links",linkInput);
+ assert(r.status===403,"Foreign CRM user cannot link School A opportunity to Tasks");
+ r=await request(a,"POST","/api/tasks/module-links",linkInput);
+ assert(r.status===201&&r.body?.item?.created===true&&Boolean(r.body.item.task_id),
+  "CRM source creates linked private follow-up task");
+ const linkedTaskId=r.body.item.task_id;
+ r=await request(a,"POST","/api/tasks/module-links",linkInput);
+ assert(r.status===200&&r.body?.item?.created===false&&r.body.item.task_id===linkedTaskId,
+  "Duplicate CRM-to-Tasks link request is idempotent");
+ r=await request(a,"GET","/api/tasks/module-links?module=connect&tenant_id="+links.crmA);
+ assert(r.status===200&&r.body?.items?.some(item=>item.task_id===linkedTaskId),
+  "Owner sees CRM linked task");
+ r=await request(b,"GET","/api/tasks/module-links?module=connect&tenant_id="+links.crmA);
+ assert(r.status===200&&!r.body?.items?.some(item=>item.task_id===linkedTaskId),
+  "Foreign CRM member cannot list linked private Tasks");
  // Personal tasks remain private even when the owner belongs to multiple schools.
  r=await request(a,"POST","/api/tasks",{title:"SaaS E2E Private Task A"});
  assert(r.status===201&&Boolean(r.body?.item?.id),"Create private task for School A user");
@@ -591,6 +615,12 @@ finally{
  if(adoptedCourseIds.length){
   const {error}=await admin.from("courses").delete().in("id",adoptedCourseIds);
   if(error){console.error("Synthetic course cleanup failed: "+error.message);failure??=error}
+ }
+ if(phase3dOpportunity&&links){
+  const {error}=await admin.rpc("saas_qa_phase3d_opportunity_cleanup",{
+   p_tenant_id:links.crmA,p_opportunity_id:phase3dOpportunity
+  });
+  if(error){console.error("Phase 3D fixture cleanup failed: "+error.message);failure??=error}
  }
  if(schools&&links){
   const {error}=await admin.rpc("saas_qa_phase3a_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
