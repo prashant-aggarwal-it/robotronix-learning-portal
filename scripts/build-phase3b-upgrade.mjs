@@ -22,7 +22,8 @@ const files=[
  "31_membership_revocation_legacy_fallback_guard.sql",
  "32_revoked_user_rls_marker.sql",
  "29_zoom_recording_stream_tenant_guard.sql",
- "30_session_records_role_scoped_rls.sql"
+ "30_session_records_role_scoped_rls.sql",
+ "33_complete_legacy_data_access_boundaries.sql"
 ];
 const guard=`-- PHASE 3B: ADDITIVE ACADEMY + SAAS UPGRADE (not a fresh installer)
 -- Requires Academy and the Phase 3A SaaS foundation already installed.
