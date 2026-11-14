@@ -46,3 +46,11 @@ Status: **PARTIAL**. The capability matrix alone is insufficient to certify auth
 - Scope remains incomplete: CRM and Tasks permission integration, broad Academy legacy route inventory, RLS exhaustive review, role-management UI and complete automated regressions.
 - No completed typecheck, browser E2E, Phase 3B regression run or CI evidence from these commits is claimed.
 - Overall Phase 3C status remains PARTIAL / NOT CERTIFIED.
+
+## Continued Pass 1 — membership operations
+- Added database/saas/38_phase3c_membership_management.sql and an authenticated server PATCH endpoint at app/api/platform/organizations/[organizationId]/members/[membershipId]/route.ts in commit 2fe46a0fff969d1626354a90edfa2794516e2aa6.
+- Applied DEV migration phase3c_membership_management successfully.
+- RPC checks current active SaaS owner/admin membership, row belongs to same organization, denies admin privilege escalation, prevents self-revocation, and emits audit events for changes. Existing last-active-owner trigger remains active.
+- Verified RPC is SECURITY DEFINER, callable by service_role, and not callable by anon/authenticated directly.
+- This covers updates to existing membership rows only. Invitation/member creation, SaaS management UI, exhaustive API authorization, CRM/Tasks permission audits, full application typecheck and regression testing remain outstanding.
+- **Pass 1 is NOT fully certified and Phase 3C remains PARTIAL** until remaining coverage and regression evidence are available.
