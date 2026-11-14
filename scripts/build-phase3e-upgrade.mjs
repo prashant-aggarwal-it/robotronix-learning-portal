@@ -5,7 +5,8 @@ const files=[
  "48_phase3e_multi_active_crm_portal.sql",
  "49_phase3e_crm_portal_access_scope.sql",
  "50_phase3e_guard_legacy_portal_installs.sql",
- "51_phase3e_dual_module_entitlements.sql"
+ "51_phase3e_dual_module_entitlements.sql",
+ "52_phase3e_portal_record_ownership.sql"
 ];
 const parts=files.map((file,i)=>{
  const body=fs.readFileSync(path.join("database/saas",file),"utf8").trim();
