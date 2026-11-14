@@ -38,3 +38,25 @@ export async function POST(request:NextRequest,context:{params:Promise<{organiza
   return NextResponse.json({ok:false,error:error instanceof SaaSAccessError?error.message:"Invitation service unavailable"},{status:error instanceof SaaSAccessError?error.status:503,headers});
  }
 }
+
+export async function GET(request:NextRequest,context:{params:Promise<{organizationId:string}>}){
+ try{
+  const {organizationId}=await context.params;
+  if(!uuid.test(organizationId))return NextResponse.json({ok:false,error:"Invalid organization"},{status:400,headers});
+  const {organizations}=await getAuthorizedOrganizations(readBearerToken(request.headers.get("authorization")));
+  const org=resolveAuthorizedOrganization(organizations,organizationId);
+  if(!org||!roleHasCapability(org.role,"saas.members.manage"))throw new SaaSAccessError(403,"Invitation access denied");
+  const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!url||!key)throw new SaaSAccessError(503,"Service unavailable");
+  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+  const {data,error}=await db.schema("saas").from("organization_invitations")
+   .select("id,email,role_key,status,created_at,expires_at,accepted_at")
+   .eq("organization_id",organizationId).order("created_at",{ascending:false}).limit(100);
+  if(error)throw new SaaSAccessError(503,"Invitations unavailable");
+  return NextResponse.json({ok:true,invitations:data??[]},{headers});
+ }catch(error){
+  return NextResponse.json({ok:false,error:error instanceof SaaSAccessError?error.message:"Invitations unavailable"},
+   {status:error instanceof SaaSAccessError?error.status:503,headers});
+ }
+}
