@@ -28,6 +28,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Academy legacy read-only data access inventory
+        run: node scripts/audit-academy-data-access.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Unified suite navigation registry contracts
