@@ -1,33 +1,40 @@
-# Robotronix Education Suite — Phase 3D DEV Engineering Record
+# Robotronix Education Suite — Phase 3D DEV Engineering & Certification
 
-Date: 2026-11-14
-Working branch: `feature/education-suite-phase3d`
-DEV: `uzzuquxeeqonxeqcuohh` | PROD: **untouched**
-Starting baseline: certified Phase 3C feature branch commit `4fbb321169375c40e91dc1e9b5542e133f62b066`.
+**Date:** 2026-11-14
+**Branch:** `feature/education-suite-phase3d`
+**DEV Supabase:** `uzzuquxeeqonxeqcuohh`
+**Certified Phase 3C starting HEAD:** `4fbb321169375c40e91dc1e9b5542e133f62b066`
+**PROD/main/Netlify:** not accessed or changed
 
-## Existing operational integration modules reused
+## Implemented integrations
 
-- CRM ↔ Academy: existing connected demos, admissions acceptance, secure onboarding handoffs, enrollment reconciliation and optional module gates.
-- CRM ↔ Tasks: existing `public.task_module_link` idempotent source linking and mirrored CRM task state trigger.
-- Academy ↔ Tasks: existing optional schedule-event link and Portal notification bridge.
-- Core modules remain independently installed, with explicit integrated deployment capabilities.
+1. **CRM ↔ Academy:** Existing connected demos, admission offer acceptance, one-time hashed parent onboarding invitations, consented guardian identity binding, Portal Admin enrollment activation, CRM Won reconciliation, duplicate-event prevention, cancellation, and disabled-integration behavior. Extended authenticated DEV testing through parent onboarding, active student/enrollment and Won stage.
+2. **CRM ↔ Tasks:** Optional `createFollowupTask` checkbox in CRM acceptance UI. When `crmTasks` is enabled, service invokes idempotent `task_module_link` for CRM opportunity. It creates one private follow-up task; repeated requests reuse same task, and unavailable Tasks never fails the accepted admission. Mismatched admission request/payload is rejected before any task side effect. The existing CRM task synchronization now enforces `tasks.items.owner_user_id=tasks.module_links.owner_user_id`.
+3. **Academy ↔ Tasks:** Existing class-to-task workflow tested for ownership, idempotence, and tenant isolation. New SaaS overlay requires `saas_academy_schedule_scope` on both link creation and historical linked-task listing, without modifying standalone Portal+Tasks package.
+4. **CRM ↔ Academy demo trainer security:** New SaaS-specific service-role RPC scopes trainer roster and booking validation to CRM member + SaaS organization member + Academy entitlement + organization-linked trainer. Legacy CRM+Portal operators without mapped SaaS tenant retain only globally unowned active trainers.
+5. **Organization context:** Verified existing two-organization switching and CRM/Tasks workspace visibility using authenticated DEV users; no unconditional dependency added to standalone core modules.
+6. **Background jobs:** No new worker or cron schedule added; existing optional CRM/Portal jobs preserved. DEV has no `pg_cron` extension. External worker cadence, live Zoom and delivery require deployment-level verification.
 
-## Changes made in Phase 3D
+## Canonical SQL and DEV-only changes
 
-1. Tightened `tasks.sync_imported_from_crm` to require linked task ownership matches link ownership; canonical optional SQL `database/shared/integrations/02_tasks_crm.sql` updated, plus additive upgrade `database/saas/45_phase3d_crm_tasks_owner_sync_guard.sql`.
-2. Applied DEV migration `phase3d_crm_tasks_owner_sync_guard`; confirmed function contains the new owner check and does not grant anonymous execution.
-3. Added a CRM admission handoff option to create an idempotent, explicitly requested follow-up task via `task_module_link` only when `crmTasks` capability is installed; admission succeeds if Tasks is not available. The CRM UI exposes this option and reports its result.
-4. Added source-contract regressions and enabled source and two-tenant DEV workflows on the dedicated Phase 3D branch.
+- `database/shared/integrations/02_tasks_crm.sql`: owner-matched CRM→Tasks sync source
+- `database/saas/45_phase3d_crm_tasks_owner_sync_guard.sql`: additive optional CRM/Tasks migration; applied DEV as `phase3d_crm_tasks_owner_sync_guard`
+- `database/saas/46_phase3d_schedule_task_scope.sql`: SaaS Academy/Tasks access overlay; applied DEV as `phase3d_saas_schedule_tasks_scope_overlay`
+- `database/saas/47_phase3d_crm_portal_trainer_scope.sql`: SaaS CRM/Portal trainer roster RPC; applied DEV as `phase3d_saas_crm_portal_trainer_scope`
+- `scripts/build-phase3d-upgrade.mjs`: independent additive packages for CRM+Tasks, SaaS Academy+Tasks and SaaS CRM+Portal trainer mapping
+- `database/saas/dev_only/08_phase3d_crm_tasks_fixture.sql`: guarded synthetic CRM opportunities, verified guardian, Won stage, linked task/class fixture cleanup; **not included in production packages**.
 
-## Boundaries, tests and certification
+## Automated DEV results — actual executed evidence
 
-- Source contracts inspect owner/tenant joins, optional entitlement gate, stable opportunity task link and failure isolation.
-- Existing authenticated DEV Academy/CRM/Tasks regression was enabled for this branch.
-- Existing CRM admission and demo workflows already support idempotent request IDs and conditional Portal module access.
-- Testing of every Phase 3D acceptance criterion (live admission → onboarding → enrollment, full task sync, background job failure recovery, exhaustive browser UI, all modular deployment permutations) is **not yet complete**.
-- The source workflow passed on code commit `68c1269d`: [source CI run](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43606924347). This predates the UI change and cannot certify it.
-- Authenticated DEV testing was still running or queued at last inspection. Do not claim unobserved passes.
+- Source certification, including TypeScript, security/auth, business suites, deployment profiles and SQL packaging: **PASS** on commit `7f949b87`, [run 43608734741](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43608734741).
+- Authenticated DEV Academy/CRM/Tasks + Phase3D workflows: **PASS** on commit `e769a678`, [run 43608471784](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43608471784). Logs confirm **153 authenticated assertions**, plus **17 Phase3C regression assertions**. Includes parent onboarding, Academy active enrollment→CRM Won, once-only reconciliation, CRM and Academy private task links, cross-tenant denial, and disabled-module behavior.
+- New SaaS CRM demo trainer scope and latest code commit `4721e4bf`: source CI [run 43609152275](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43609152275) and authenticated DEV [run 43609152246](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43609152246) **pending at last check**. These must pass before upgrading the certification decision.
 
-## Decision
+## Outstanding release considerations
 
-**PARTIAL / NOT CERTIFIED** pending actual latest-HEAD source and authenticated DEV E2E results and remaining end-to-end integration tests. Do not merge into main or deploy. PROD database and Netlify untouched.
+- The legacy `connect_portal_single_active_integration` database index enforces a single active global CRM→Portal installation, designed for the original shared Portal. Do not drop this until verified migration to fully tenant-scoped demo/Portal operations is complete. This limits simultaneous active CRM customers and is a genuine broader multi-tenant rollout constraint.
+- Trainer-scoping RPC assumes SaaS overlay is installed; standalone CRM/Portal deployment compatibility must be tested separately before a product release.
+- No live external Zoom scheduling, email/WhatsApp delivery, full background-worker recovery or production readiness is certified by DEV synthetic E2E.
+- No production or main branch changes, no Netlify builds or deployments.
+
+**Certification decision at last update: PARTIAL / pending the latest code SHA's passing CI and resolution of production rollout caveats.** Prior cross-module automation passes are verified evidence but are not a blanket live-production acceptance.
