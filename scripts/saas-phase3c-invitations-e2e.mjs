@@ -58,7 +58,7 @@ async function run(){
  let r=await api(b,"GET","/api/platform/organizations/"+A+"/members");
  check((r.status===403||r.status===400)&&!r.body?.members,"Foreign organization members denied HTTP "+r.status);
  r=await api(a,"GET","/api/platform/organizations/"+A+"/members");
- check(r.status===200&&Array.isArray(r.body?.members),"Authorized roster read HTTP "+r.status);
+ check(r.status===200&&Array.isArray(r.body?.members),"Authorized roster read HTTP "+r.status+" body "+JSON.stringify(r.body));
  r=await api(b,"POST","/api/platform/organizations/"+A+"/invitations",{email:invitee.email,role:"member"});
  check(r.status===403,"Foreign invitation creation denied HTTP "+r.status);
  r=await api(multi,"POST","/api/platform/organizations/"+A+"/invitations",{email:invitee.email,role:"owner"});
