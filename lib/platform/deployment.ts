@@ -90,7 +90,8 @@ export function routeRequirement(pathname: string): RouteRequirement {
       p === "/privacy" || p === "/terms" || p === "/support" ||
       p === "/api/health" || p.startsWith("/api/locations/") ||
       p === "/api/platform/capabilities" || p === "/api/platform/my-products" ||
-      p === "/api/platform/organizations" || p === "/api/platform/organization-modules") return "shared";
+      p === "/api/platform/organizations" || p === "/api/platform/organization-modules" ||
+      p === "/api/platform/organization-links") return "shared";
 
   // Module links are checked per requested source by their API handler.
   // A Portal+Tasks deployment must not require CRM merely to reach the API.
