@@ -10,6 +10,7 @@ import {ThemeSwitcher} from "@/components/ThemeSwitcher";
 type Product={id:SuiteModuleId;label:string;href:string};
 type OrgResponse={ok:boolean;organizations:{id:string;displayName:string;role:string}[];selectedOrganizationId:string|null;requiresSelection:boolean};
 type ModulesResponse={ok:boolean;modules:Record<string,boolean>};
+type LinksResponse={links:{crm:{status:string;tenantId:string|null};tasks:{status:string;workspaces:{id:string;role:string}[]}}};
 async function request(path:string){
  const client=getSupabaseBrowserClient();
  if(!client)throw new Error("Authentication unavailable");
@@ -24,6 +25,7 @@ async function request(path:string){
 export default function SuiteHome(){
  const [products,setProducts]=useState<Product[]>([]);
  const [modules,setModules]=useState<Record<string,boolean>|null>(null);
+ const [links,setLinks]=useState<LinksResponse["links"]|null>(null);
  const [organizationName,setOrganizationName]=useState("");
  const [hasOrganizations,setHasOrganizations]=useState(false);
  const [organizationUnavailable,setOrganizationUnavailable]=useState(false);
@@ -50,8 +52,10 @@ export default function SuiteHome(){
      setOrganizationName(selected.displayName);
      const access=await request("/api/platform/organization-modules?organizationId="+encodeURIComponent(selected.id)) as ModulesResponse;
      if(active)setModules(access.modules);
+     const mapping=await request("/api/platform/organization-links?organizationId="+encodeURIComponent(selected.id)) as LinksResponse;
+     if(active)setLinks(mapping.links);
     }
-   }catch{if(active){setHasOrganizations(false);setModules(null);setOrganizationUnavailable(!singleModule)}}
+   }catch{if(active){setHasOrganizations(false);setModules(null);setLinks(null);setOrganizationUnavailable(!singleModule)}}
   })().catch(e=>{if(active)setError(e instanceof Error?e.message:"Unable to load your applications")})
   .finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
@@ -72,9 +76,12 @@ export default function SuiteHome(){
   <div className="suiteHomeGrid" aria-label="Your enabled applications">
    {!loading&&!error&&visible.map(p=>{
     const module=suiteModuleById(p.id);
-    return <Link className="suiteHomeCard" href={p.href} key={p.id}>
-     <span className="suiteHomeIcon" aria-hidden="true">{module.icon}</span>
-     <strong>{module.label}</strong><span>{module.description}</span><small>Open module →</small>
+    const mappedOrg=hasOrganizations&&Boolean(modules);
+    const unavailable=mappedOrg&&((p.id==="crm"&&links?.crm.status!=="ready")||(p.id==="tasks"&&links?.tasks.status!=="ready"));
+    const href=p.id==="crm"&&mappedOrg&&links?.crm.tenantId?p.href+"?suiteTenant="+encodeURIComponent(links.crm.tenantId):p.href;
+    const body=<><span className="suiteHomeIcon" aria-hidden="true">{module.icon}</span><strong>{module.label}</strong><span>{module.description}</span><small>{unavailable?"Organization workspace unavailable":"Open module →"}</small></>;
+    return unavailable?<div className="suiteHomeCard" aria-disabled="true" key={p.id}>{body}</div>:<Link className="suiteHomeCard" href={href} key={p.id}>
+     {body}
     </Link>;
    })}
   </div>
