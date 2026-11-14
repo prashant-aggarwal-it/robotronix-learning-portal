@@ -7,7 +7,10 @@ CREATE OR REPLACE FUNCTION public.saas_academy_recording_scope(
 DECLARE actor_role text; actor_active boolean;
 BEGIN
  IF p_actor_id IS NULL OR p_recording_id IS NULL THEN RETURN false; END IF;
- IF NOT EXISTS(SELECT 1 FROM saas.memberships WHERE user_id=p_actor_id) THEN RETURN NULL; END IF;
+ IF NOT EXISTS(SELECT 1 FROM saas.memberships WHERE user_id=p_actor_id) THEN
+  IF EXISTS(SELECT 1 FROM saas.user_membership_history WHERE user_id=p_actor_id) THEN RETURN false; END IF;
+  RETURN NULL;
+ END IF;
  SELECT role,active INTO actor_role,actor_active FROM public.profiles WHERE id=p_actor_id;
  IF actor_active IS DISTINCT FROM TRUE THEN RETURN false; END IF;
  RETURN EXISTS(
