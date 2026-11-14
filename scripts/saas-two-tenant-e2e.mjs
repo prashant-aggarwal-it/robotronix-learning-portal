@@ -14,7 +14,7 @@ if(hostname!==EXPECTED_REF+".supabase.co")throw new Error("Refusing to run outsi
 const base="http://127.0.0.1:3457";
 const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
 const users=[];
-let schools=null,server=null;
+let schools=null,links=null,server=null;
 let passed=0;
 const assert=(condition,label)=>{if(!condition)throw new Error("FAILED: "+label);passed++;console.log("PASS: "+label)};
 const name="saas-e2e-"+randomBytes(5).toString("hex");
@@ -69,6 +69,12 @@ async function run(){
   throw new Error("DEV QA fixture setup failed: "+(setup.error?.message||"invalid response"));
  schools=setup.data;
  const A=schools.schoolA,B=schools.schoolB;
+ const setupLinks=await admin.rpc("saas_qa_phase3a_create",{
+  p_school_a:A,p_school_b:B,p_user_a:a.id,p_user_b:b.id,p_user_multi:multi.id
+ });
+ if(setupLinks.error||!setupLinks.data?.crmA||!setupLinks.data?.tasksB)
+  throw new Error("DEV Phase 3A mapping fixtures failed: "+(setupLinks.error?.message||"invalid fixture"));
+ links=setupLinks.data;
  await startServer();
  let r=await request(a,"GET","/api/platform/organizations");
  assert(r.status===200&&r.body?.selectedOrganizationId===A,"School A organization discovery");
@@ -83,15 +89,27 @@ async function run(){
  const cookie=r.cookie?.split(";")[0];
  r=await request(multi,"GET","/api/platform/organizations",null,cookie);
  assert(r.status===200&&r.body?.selectedOrganizationId===B,"Selected organization persists");
- // Phase 3A: verify authenticated linkage discovery for synthetic organizations.
- // These test organizations intentionally have no CRM/Tasks mappings, and must
- // never acquire another user's legacy workspace as an implicit fallback.
+ // Phase 3A: actual CRM and Tasks membership + mapping validation for two schools.
  r=await request(a,"GET","/api/platform/organization-links?organizationId="+A);
- assert(r.status===200&&r.body?.links?.crm?.status==="disabled"&&r.body?.links?.tasks?.status==="disabled",
-  "Unentitled linked workspaces unavailable for School A");
+ assert(r.status===200&&r.body?.links?.crm?.status==="ready"&&r.body.links.crm.tenantId===links.crmA,
+  "School A resolves own CRM workspace");
+ assert(r.body?.links?.tasks?.status==="ready"&&r.body.links.tasks.workspaces.some(w=>w.id===links.tasksA),
+  "School A resolves own Tasks workspace");
+ assert(!r.body.links.tasks.workspaces.some(w=>w.id===links.tasksB),
+  "School A never receives School B Tasks workspace");
  r=await request(b,"GET","/api/platform/organization-links?organizationId="+B);
- assert(r.status===200&&r.body?.links?.crm?.tenantId==null,
-  "School B CRM tenant never inferred without explicit mapping");
+ assert(r.status===200&&r.body?.links?.crm?.tenantId===links.crmB,
+  "School B resolves own CRM workspace");
+ assert(r.body?.links?.tasks?.workspaces.some(w=>w.id===links.tasksB),
+  "School B resolves own Tasks workspace");
+ r=await request(multi,"GET","/api/platform/organization-links?organizationId="+A);
+ assert(r.status===200&&r.body?.links?.crm?.tenantId===links.crmA&&
+  r.body.links.tasks.workspaces.some(w=>w.id===links.tasksA),
+  "Multiple-org user resolves mapped School A");
+ r=await request(multi,"GET","/api/platform/organization-links?organizationId="+B);
+ assert(r.status===200&&r.body?.links?.crm?.tenantId===links.crmB&&
+  r.body.links.tasks.workspaces.some(w=>w.id===links.tasksB),
+  "Multiple-org user resolves mapped School B");
  r=await request(a,"GET","/api/platform/organization-links?organizationId="+B);
  assert(r.status===403,"Foreign organization linkage discovery rejected");
  r=await request(null,"GET","/api/platform/organization-links?organizationId="+A);
@@ -149,6 +167,10 @@ finally{
    server.once("close",()=>{clearTimeout(limit);resolve()});
   });
   server.stdout?.destroy();server.stderr?.destroy();
+ }
+ if(schools&&links){
+  const {error}=await admin.rpc("saas_qa_phase3a_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
+  if(error){console.error("Phase 3A fixture cleanup failed: "+error.message);failure??=error}
  }
  if(schools){
   const {error}=await admin.rpc("saas_qa_fixture_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
