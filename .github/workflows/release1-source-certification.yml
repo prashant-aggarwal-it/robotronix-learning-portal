@@ -30,6 +30,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Typecheck
         run: npm run typecheck
+      - name: SaaS organization and Academy authorization contracts
+        run: node --test lib/server/saas/*.test.mjs
       - name: Release source regression suite
         run: npm run check:release
       - name: Targeted offline academic, finance and permission contract specs
