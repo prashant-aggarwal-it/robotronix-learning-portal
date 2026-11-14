@@ -26,3 +26,15 @@
 .suiteContextLink:hover,.suiteContextLink:focus-visible{text-decoration:underline;text-underline-offset:3px}
 .suiteContextBrand{font-weight:750}
 @media(max-width:540px){.suiteContextBrand{display:none}}
+
+/* Contextual Academy admin sections: retain all routes, collapse less-used groups. */
+.suiteGroupedNav .suiteNavSection{display:block;margin:.3rem 0}
+.suiteGroupedNav .suiteNavSection>summary{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;list-style:none;padding:.55rem .7rem;border-radius:8px}
+.suiteGroupedNav .suiteNavSection>summary::-webkit-details-marker{display:none}
+.suiteGroupedNav .suiteNavSection>summary:hover{background:rgba(123,135,158,.11)}
+.suiteGroupedNav .suiteNavSection>summary span{transition:transform .15s ease}
+.suiteGroupedNav .suiteNavSection[open]>summary span{transform:rotate(180deg)}
+.suiteGroupedNav .suiteNavSection>a{display:flex;align-items:center}
+.suiteGroupedNav .suiteNavSection>summary:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.adminSidebarCollapsed .suiteGroupedNav .suiteNavSection>summary{font-size:0;justify-content:center;padding:.45rem 0}
+.adminSidebarCollapsed .suiteGroupedNav .suiteNavSection>summary span{font-size:.9rem}
