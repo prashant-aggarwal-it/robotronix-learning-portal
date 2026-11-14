@@ -56,3 +56,13 @@ Phase 3E code state (test jobs initiated):
 - DEV lacks pg_cron. Netlify currently defines zoom retention, zoom auto-reconcile, system-log retention, and CRM history drain schedules. Scheduler ownership gates are implemented via `schedulerCapabilityEnabled` and `netlifyJobOwned`.
 - Browser UX across all standalone deployment profiles is covered by source/contracts and selected browser tests, not a complete live deployment matrix.
 - No production, main or Netlify deployment authorized.
+
+## Additional Phase 3E hardening and source verification
+
+- Canonical `database/saas/51_phase3e_dual_module_entitlements.sql` applied to DEV. CRM→Academy integration installation, use and direct database-write guards now require both **CRM and Academy** module entitlements. Verified disabling CRM entitlement immediately denies access/activation.
+- DEV-only Phase 3D CRM fixture canonical source corrected from duplicated malformed definitions, regenerated from actual valid installed functions; Phase 3E B/C admission fixture now supported and no DEV-only source is included in customer upgrade.
+- Authenticated regression extended beyond three active connections to customer C Academy student/course/trainer/enrollment, and independent B/C CRM admission handoffs with tenant isolation.
+- SQL rollback test passed after dual entitlement migration: three active integrations, denied CRM entitlement, rejected forged installer, B deactivation left A/C active; all rows rolled back.
+- Source and strict TypeScript certification [43615868850](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43615868850): **SUCCESS** on `584271f7`.
+- Latest three-customer authenticated run [43615868864](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43615868864) was pending at last inspection. This remains an explicit certification gate.
+- Supabase DEV advisors still report 15 anonymously executable legacy SECURITY DEFINER helpers, 35 authenticated ones, and disabled leaked-password protection. They require release security review. Phase 3E functions themselves are service-role-only.

@@ -20,10 +20,11 @@
 3. Apply canonical Phase 3E source 48: secured SaaS CRM↔Portal installation RPC; **retain global one-active index initially**.
 4. Apply source 49: per-request authorized CRM↔Academy access scope, installer validity.
 5. Apply source 50: database trigger for legacy/direct installation safety, then replace global unique active index with per-tenant index. Keep all changes in one controlled migration window.
-6. Deploy matching application branch only after PROD SQL functions and policy grants are present; do not expose a window where SaaS clients can use an unscoped fallback.
-7. Configure mapped organizations, CRM tenant links, Academy/CRM/Tasks module entitlements and owner/admin memberships. Confirm each tenant mapping is unique.
-8. Activate first test tenant, then second, then third. Verify A/B/C active simultaneously with no data cross-over, then test B disable/re-enable and unchanged A/C behavior.
-9. Verify approved Zoom, onboarding emails/WhatsApp, billing/Razorpay and background jobs separately. Never expose service-role secrets in browser variables.
+6. Apply source 51: require BOTH CRM and Academy module entitlements on activation, access and direct integration writes.
+7. Deploy matching application branch only after PROD SQL functions and policy grants are present; do not expose a window where SaaS clients can use an unscoped fallback.
+8. Configure mapped organizations, CRM tenant links, Academy/CRM/Tasks module entitlements and owner/admin memberships. Confirm each tenant mapping is unique.
+9. Activate first test tenant, then second, then third. Verify A/B/C active simultaneously with no data cross-over, then test B disable/re-enable and unchanged A/C behavior.
+10. Verify approved Zoom, onboarding emails/WhatsApp, billing/Razorpay and background jobs separately. Never expose service-role secrets in browser variables.
 
 ## Rollback and recovery
 
@@ -55,3 +56,9 @@
 **NO-GO** if any critical tenant-isolation test fails, more than one CRM maps to a SaaS organization unexpectedly, a SaaS auth RPC is missing, DEV certification is incomplete, rollback rehearsal fails, or live integration secrets/monitoring are absent.
 
 The production deployment itself requires separate explicit user authorization and is outside Phase 3E DEV assignment.
+
+## DEV advisor and additional go-live controls
+
+- Supabase DEV security advisors currently report 15 anonymous EXECUTE grants on legacy SECURITY DEFINER helper functions, 35 authenticated grants, and leaked-password protection not enabled. Review each legacy helper for RPC exposure; do not blanket-revoke RLS helpers that application policies require. Enable supported authentication password protection before release.
+- Explicitly verify Netlify job configuration and credentials for all scheduled functions; do not enable competing pg_cron or external schedules. Current DEV has no pg_cron extension installed.
+- During production change control, verify migration step 51 and execute a staging three-customer test that disables CRM entitlement for one tenant without impacting the other two.
