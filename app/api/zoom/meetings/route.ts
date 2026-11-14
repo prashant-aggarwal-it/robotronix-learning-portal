@@ -42,6 +42,8 @@ export async function POST(request:NextRequest){
 
 export async function PATCH(request:NextRequest){
  const auth=await requireAdmin(request);if("error" in auth)return auth.error;
+ let orgId:string|null;
+ try{orgId=await requireLegacyAcademyAdminOrg(request)}catch(error){return NextResponse.json({ok:false,error:error instanceof SaaSAccessError?error.message:"Organization unavailable"},{status:error instanceof SaaSAccessError?error.status:503})}
  try{
   const body=await request.json().catch(()=>({})) as {id?:string;action?:"cancel"};
   if(!body.id)return NextResponse.json({ok:false,error:"Meeting id is required."},{status:400});
