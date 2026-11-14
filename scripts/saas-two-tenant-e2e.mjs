@@ -476,6 +476,18 @@ async function run(){
    await page.getByText("SaaS E2E Student B",{exact:false}).first().waitFor({timeout:30000});
    assert((await page.getByText("SaaS E2E Student A",{exact:false}).count())===0,
     "Original Admin Students page excludes School A while School B selected");
+   // Verify representative original Admin modules mount under the selected tenant.
+   // This is a navigation/access smoke, not a substitute for workflow assertions.
+   for(const path of [
+    "/admin/enrollments","/admin/classes","/admin/schedule","/admin/finance",
+    "/admin/trainer-finance","/admin/invoices","/admin/progress",
+    "/admin/messages","/admin/notifications","/admin/trainers"
+   ]){
+    const response=await page.goto(base+path,{waitUntil:"domcontentloaded"});
+    await page.waitForTimeout(750);
+    assert(response?.status()===200&&new URL(page.url()).pathname===path,
+     "Selected School B authorized Admin route mounts: "+path);
+   }
    await context.close();
   }finally{await browser.close()}
  }
