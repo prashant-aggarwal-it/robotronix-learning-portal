@@ -26,6 +26,7 @@ export default function SuiteHome(){
  const [modules,setModules]=useState<Record<string,boolean>|null>(null);
  const [organizationName,setOrganizationName]=useState("");
  const [hasOrganizations,setHasOrganizations]=useState(false);
+ const [organizationUnavailable,setOrganizationUnavailable]=useState(false);
  const [needsSelection,setNeedsSelection]=useState(false);
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
@@ -49,12 +50,12 @@ export default function SuiteHome(){
      const access=await request("/api/platform/organization-modules?organizationId="+encodeURIComponent(selected.id)) as ModulesResponse;
      if(active)setModules(access.modules);
     }
-   }catch{if(active){setHasOrganizations(false);setModules(null)}}
+   }catch{if(active){setHasOrganizations(false);setModules(null);setOrganizationUnavailable(true)}}
   })().catch(e=>{if(active)setError(e instanceof Error?e.message:"Unable to load your applications")})
   .finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
  },[]);
- const visible=products.filter(p=>!hasOrganizations||(!needsSelection&&modules?.[suiteModuleById(p.id).entitlement]===true));
+ const visible=products.filter(p=>!organizationUnavailable&&(!hasOrganizations||(!needsSelection&&modules?.[suiteModuleById(p.id).entitlement]===true)));
  return <main className="suiteHome">
   <header className="suiteHomeHeader">
    <div><span className="suiteEyebrow">Robotronix</span><h1>Education Suite</h1><p>Choose a workspace you are authorized to use.</p></div>
@@ -62,6 +63,7 @@ export default function SuiteHome(){
   </header>
   {loading&&<p role="status">Checking your workspace access…</p>}
   {error&&<p role="alert" className="suiteOrgError">{error}</p>}
+  {!loading&&!error&&organizationUnavailable&&<p role="alert">Organization permissions could not be verified. Use your existing application entry point until this service is configured.</p>}
   {!loading&&!error&&needsSelection&&<p role="status">Select an organization to view its enabled modules.</p>}
   {!loading&&!error&&hasOrganizations&&!needsSelection&&!modules&&<p role="alert">Module permissions could not be verified. Access is unavailable.</p>}
   {!loading&&!error&&organizationName&&<p>Active organization: <strong>{organizationName}</strong></p>}
