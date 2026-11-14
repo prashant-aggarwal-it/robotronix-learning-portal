@@ -8,6 +8,7 @@ SET search_path=pg_catalog AS $fn$
 DECLARE v_actor_role text; v_old saas.memberships%ROWTYPE;
 BEGIN
  IF p_actor_id IS NULL OR p_organization_id IS NULL OR p_membership_id IS NULL
+ OR p_role_key IS NULL OR p_status IS NULL
  OR p_role_key NOT IN ('owner','admin','staff','trainer','member')
  OR p_status NOT IN ('active','suspended','removed') THEN
   RAISE EXCEPTION 'Invalid membership change' USING ERRCODE='22023';
