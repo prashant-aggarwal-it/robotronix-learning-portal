@@ -411,6 +411,8 @@ finally{
   server.stdout?.destroy();server.stderr?.destroy();
  }
  if(syntheticScheduleIds.length){
+  const {error:attendanceCleanupError}=await admin.from("class_attendance").delete().in("schedule_event_id",syntheticScheduleIds);
+  if(attendanceCleanupError){console.error("Synthetic attendance cleanup failed: "+attendanceCleanupError.message);failure??=attendanceCleanupError}
   const {error}=await admin.from("schedule_events").delete().in("id",syntheticScheduleIds);
   if(error){console.error("Synthetic schedule cleanup failed: "+error.message);failure??=error}
  }
