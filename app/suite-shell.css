@@ -5,3 +5,18 @@
 .suiteOrgControl select:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
 .suiteOrgError{flex-basis:100%;font-size:.75rem;color:#b91c1c}
 @media(max-width:700px){.suiteOrgControl{max-width:100%;justify-content:flex-end}.suiteOrgControl label{display:none}.suiteOrgControl select{max-width:150px}}
+
+.suiteHome{max-width:1150px;margin:0 auto;padding:clamp(1rem,4vw,3rem);min-height:100vh;color:var(--text-primary,inherit)}
+.suiteHomeHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;margin-bottom:2.5rem}
+.suiteHomeHeader h1{font-size:clamp(1.7rem,4vw,2.5rem);margin:.25rem 0}
+.suiteHomeHeader p{opacity:.75;margin:.25rem 0}
+.suiteEyebrow{font-size:.75rem;text-transform:uppercase;font-weight:700;letter-spacing:.13em}
+.suiteHomeControls{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+.suiteHomeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1rem}
+.suiteHomeCard{display:flex;min-height:190px;flex-direction:column;gap:.75rem;border:1px solid #94a3b87a;border-radius:16px;padding:1.35rem;background:var(--surface,#fff);color:inherit;text-decoration:none;box-shadow:0 3px 16px #0000000a}
+.suiteHomeCard:hover,.suiteHomeCard:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.suiteHomeCard strong{font-size:1.12rem}
+.suiteHomeCard>span:not(.suiteHomeIcon){font-size:.87rem;opacity:.75}
+.suiteHomeCard small{margin-top:auto;font-weight:650}
+.suiteHomeIcon{font-size:1.6rem}
+.suiteHomeNote{opacity:.65;font-size:.78rem;margin-top:2rem;line-height:1.5}
