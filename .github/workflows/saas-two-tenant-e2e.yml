@@ -41,3 +41,5 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Authenticated DEV Academy and linked CRM/Tasks tenant isolation test
         run: node scripts/saas-two-tenant-e2e.mjs
+      - name: Phase 3C authenticated membership invitation acceptance and revocation
+        run: node scripts/saas-phase3c-invitations-e2e.mjs

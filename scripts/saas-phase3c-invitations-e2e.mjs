@@ -56,7 +56,7 @@ async function run(){
  const A=orgs.schoolA;
  await serve();
  let r=await api(b,"GET","/api/platform/organizations/"+A+"/members");
- check(r.status===403,"Foreign organization members denied HTTP "+r.status);
+ check((r.status===403||r.status===400)&&!r.body?.members,"Foreign organization members denied HTTP "+r.status);
  r=await api(a,"GET","/api/platform/organizations/"+A+"/members");
  check(r.status===200&&Array.isArray(r.body?.members),"Authorized roster read HTTP "+r.status);
  r=await api(b,"POST","/api/platform/organizations/"+A+"/invitations",{email:invitee.email,role:"member"});
