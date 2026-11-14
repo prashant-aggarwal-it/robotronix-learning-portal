@@ -73,7 +73,7 @@ export async function POST(request:NextRequest,{params}:Context){
    p_data:{opportunityId,learnerPersonId}}),
   accessibleTrainers(db,access.session.actorId,tenantId)
  ]);
- if(contextError||trainerError||!context||!(availableTrainers||[]).some(t=>t.id===trainerId))return connectFailure("Verify learner/admission, guardian phone and an authorized trainer.",400);
+ if(contextError||trainerError||!context||!(availableTrainers||[]).some((t:{id:string})=>t.id===trainerId))return connectFailure("Verify learner/admission, guardian phone and an authorized trainer.",400);
  const guardianId=String(opportunityId); // Stable identity for the request fingerprint; guardian lookup is server-authoritative.
  const payload={opportunityId,learnerPersonId,guardianId,trainerId,date:data.date,startTime:data.startTime,timezone:data.timezone,grade:data.grade,
   interest:String(data.interest||context.opportunityTitle).slice(0,160),durationMinutes:Number(data.durationMinutes||45),sessionType:(data.sessionType==="group"?"group":"one_to_one") as "group"|"one_to_one"};
