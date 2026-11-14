@@ -62,3 +62,30 @@ export async function getAuthorizedModuleEntitlements(
  for(const row of data??[])modules[row.module_key]=row.enabled===true;
  return {organization,modules};
 }
+
+/** Strictly accept Bearer authentication; cookies only select a tenant, never authenticate. */
+export function readBearerToken(header:string|null):string {
+ return header?.match(/^Bearer\\s+([^\\s]+)$/i)?.[1]??"";
+}
+
+/** Re-check membership and entitlements before executing tenant-owned operations. */
+export async function requireAuthorizedTenantModule(
+ bearer:string,organizationId:string,moduleKey:string
+):Promise<{userId:string;organization:OrganizationAccess;moduleKey:string}> {
+ if(!/^[a-z][a-z0-9_]{1,39}$/.test(moduleKey))
+  throw new SaaSAccessError(400,"Invalid module");
+ const {userId,organizations}=await getAuthorizedOrganizations(bearer);
+ const organization=resolveAuthorizedOrganization(organizations,organizationId);
+ if(!organization)throw new SaaSAccessError(403,"Select an authorized organization");
+ const url=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
+ const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+ if(!url||!key)throw new SaaSAccessError(503,"Organization service unavailable");
+ const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+ const {data,error}=await client.rpc("saas_authorized_module_entitlements",{
+  p_actor_id:userId,p_organization_id:organization.id
+ });
+ if(error)throw new SaaSAccessError(503,"Module entitlements unavailable");
+ const enabled=(data??[]).some((row:{module_key:string;enabled:boolean})=>row.module_key===moduleKey&&row.enabled===true);
+ requireModuleAccess(enabled,organization);
+ return {userId,organization,moduleKey};
+}
