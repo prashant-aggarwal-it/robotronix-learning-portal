@@ -18,7 +18,7 @@ const adoptedCourseIds=[];
 const syntheticParentIds=[];
 const syntheticScheduleIds=[];
 const syntheticEarningIds=[];
-let schools=null,links=null,server=null,phase3dOpportunity=null;
+let schools=null,links=null,server=null,phase3dOpportunity=null,phase3dActiveToken=null,phase3dHandoffId=null,phase3dOnboardingSubmissionId=null;
 let passed=0;
 const assert=(condition,label)=>{if(!condition)throw new Error("FAILED: "+label);passed++;console.log("PASS: "+label)};
 const name="saas-e2e-"+randomBytes(5).toString("hex");
@@ -231,6 +231,12 @@ async function run(){
  if(fixture.error||!fixture.data?.opportunityId)
   throw new Error("DEV CRM opportunity fixture unavailable: "+(fixture.error?.message||"no opportunity"));
  phase3dOpportunity=fixture.data.opportunityId;
+ const guardianFixture=await admin.rpc("saas_qa_phase3d_guardian_contact",{
+  p_tenant_id:links.crmA,p_opportunity_id:phase3dOpportunity,p_parent_user_id:parent.id
+ });
+ if(guardianFixture.error||guardianFixture.data!==true)
+  throw new Error("DEV verified guardian contact fixture unavailable: "+(guardianFixture.error?.message||"no guardian"));
+
  const linkInput={module:"connect",resource:"crm_opportunity",resource_id:phase3dOpportunity,tenant_id:links.crmA};
  r=await request(b,"POST","/api/tasks/module-links",linkInput);
  assert(r.status===403,"Foreign CRM user cannot link School A opportunity to Tasks");
@@ -281,6 +287,20 @@ async function run(){
   ...acceptance,requestId:randomUUID()
  });
  assert(r.status===409,"Disabled Academy integration fails gracefully without admission conversion");
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/portal-integration",{action:"enable"});
+ assert(r.status===200,"CRM owner can re-enable the optional Academy integration");
+ const activeAcceptance={...acceptance,requestId:randomUUID()};
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",activeAcceptance);
+ assert(r.status===200&&Boolean(r.body?.id)&&Boolean(r.body?.inviteUrl)
+  &&r.body?.followUpTask?.taskId===linkedTaskId,
+  "New admission handoff is issued after revoked offer without duplicate Tasks");
+ phase3dHandoffId=r.body.id;
+ phase3dActiveToken=new URL(r.body.inviteUrl).searchParams.get("handoff");
+ assert(Boolean(phase3dActiveToken),"New Academy parent onboarding invitation includes one-time token");
+ r=await request(null,"GET","/api/admission/handoff/"+phase3dActiveToken);
+ assert(r.status===200&&r.body?.prefill?.childName==="SaaS E2E Student A",
+  "Parent onboarding preview contains the CRM learner and no private financial ledger");
+
  // Personal tasks remain private even when the owner belongs to multiple schools.
  r=await request(a,"POST","/api/tasks",{title:"SaaS E2E Private Task A"});
  assert(r.status===201&&Boolean(r.body?.item?.id),"Create private task for School A user");
@@ -425,6 +445,44 @@ async function run(){
  const {error:parentLinkError}=await admin.from("parent_students").insert({parent_id:parentRecord.id,student_id:sa});
  if(parentLinkError)throw new Error("Synthetic parent student link failed: "+parentLinkError.message);
  const ea=await create(a,A,"enrollments",{student_id:sa,course_id:ca,trainer_id:ta});
+ // Parent uses a verified account to bind consented onboarding to the CRM admission.
+ const {data:submission,error:submissionError}=await admin.from("onboarding_submissions")
+  .insert({user_id:parent.id,login_email:parent.email,child_name:"SaaS E2E Student A",
+   source:"crm_admission",data_consent:true,status:"new"})
+  .select("id").single();
+ if(submissionError||!submission?.id)throw new Error("DEV parent onboarding fixture failed: "+(submissionError?.message||"missing submission"));
+ phase3dOnboardingSubmissionId=submission.id;
+ r=await request(parent,"POST","/api/admission/handoff/"+phase3dActiveToken,{
+  onboardingSubmissionId:phase3dOnboardingSubmissionId
+ });
+ assert(r.status===200&&r.body?.status==="onboarding_pending",
+  "Verified parent binds consented onboarding to the correct CRM handoff");
+ const {error:activationError}=await admin.from("onboarding_submissions")
+  .update({status:"active",activated_student_id:sa,activated_enrollment_id:ea,
+   assigned_course_id:ca,assigned_trainer_id:ta,activated_at:new Date().toISOString()})
+  .eq("id",phase3dOnboardingSubmissionId);
+ if(activationError)throw new Error("DEV synthetic onboarding activation failed: "+activationError.message);
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",{
+  action:"reconcile",handoffId:phase3dHandoffId
+ });
+ assert(r.status===200&&r.body?.status==="enrollment_confirmed"&&r.body?.enrollmentId===ea,
+  "Activated Academy enrollment confirms CRM admission and Won status");
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",{
+  action:"reconcile",handoffId:phase3dHandoffId
+ });
+ assert(r.status===200&&r.body?.status==="enrollment_confirmed",
+  "Enrollment reconciliation is idempotent");
+ const admissionQA=await admin.rpc("saas_qa_phase3d_admission_summary",{
+  p_tenant_id:links.crmA,p_opportunity_id:phase3dOpportunity
+ });
+ assert(!admissionQA.error&&admissionQA.data?.confirmed===1
+  &&admissionQA.data?.wonEvents===1&&admissionQA.data?.linkedTasks===1,
+  "Single confirmed handoff, Won stage event and linked Task after retries");
+ r=await request(a,"POST","/api/connect/workspaces/"+links.crmA+"/admissions",{
+  action:"revoke",handoffId:phase3dHandoffId
+ });
+ assert(r.status===403,"Confirmed Academy enrollment cannot be revoked from CRM");
+
  const scheduleInput={
   trainer_id:ta,course_id:ca,enrollment_id:ea,student_id:sa,
   title:"SaaS E2E Class A",date:"2027-01-15",start_time:"12:00",end_time:"13:00",
@@ -680,6 +738,10 @@ finally{
    p_tenant_id:links.crmA,p_opportunity_id:phase3dOpportunity
   });
   if(error){console.error("Phase 3D fixture cleanup failed: "+error.message);failure??=error}
+ }
+ if(phase3dOnboardingSubmissionId){
+  const {error}=await admin.from("onboarding_submissions").delete().eq("id",phase3dOnboardingSubmissionId);
+  if(error){console.error("Phase 3D synthetic onboarding cleanup failed: "+error.message);failure??=error}
  }
  if(schools&&links){
   const {error}=await admin.rpc("saas_qa_phase3a_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
