@@ -139,7 +139,7 @@ async function run(){
  if(r.body?.courseId)adoptedCourseIds.push(r.body.courseId);
  r=await request(a,"GET","/api/admin/invoices",undefined,undefined,{"x-organization-id":A});
  assert(r.status===200&&r.body?.ok===true&&r.body?.invoices?.length===0&&r.body?.packageSummaries?.length===0,
-  "SaaS Admin finance endpoint returns only mapped organization invoices");
+  "SaaS Admin finance endpoint returns only mapped organization invoices (HTTP "+r.status+", error "+String(r.body?.error||"none")+")");
  r=await request(a,"GET","/api/admin/invoices");
  assert(r.status===403,"SaaS Admin invoice access requires selected organization");
  r=await request(b,"GET","/api/admin/invoices",undefined,undefined,{"x-organization-id":A});
