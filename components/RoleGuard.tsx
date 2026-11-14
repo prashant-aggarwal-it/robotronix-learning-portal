@@ -37,7 +37,11 @@ export function RoleGuard({ allow, children }: { allow: UserRole[]; children: Re
                   setAcademyBrowserOrganizationContext(payload.selectedOrganizationId);
                 }else selection="choose";
               }else setAcademyBrowserOrganizationContext(null);
-            }else if(res.status===403)selection="choose";
+            }else if(res.status===403){
+              await fetch("/api/platform/organizations",{method:"DELETE",headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"}).catch(()=>null);
+              setAcademyBrowserOrganizationContext(null);
+              selection="choose";
+            }
             else if(res.status===401){if(!cancelled)router.replace("/");return}
             else if(res.status===503&&getAcademyBrowserOrganizationContext())selection="unavailable";
             // Standalone Academy installations need not install the SaaS module.
