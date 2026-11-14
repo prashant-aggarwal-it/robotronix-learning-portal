@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 
 type Organization={id:string;slug:string;displayName:string;role:string};
@@ -32,6 +32,7 @@ export default function TenantAcademyPage(){
  const [busy,setBusy]=useState(false);
  const [ready,setReady]=useState(false);
  const [version,setVersion]=useState(0);
+ const generation=useRef(0);
  useEffect(()=>{
   let current=true;
   call("/api/platform/organizations").then(data=>{
@@ -43,19 +44,22 @@ export default function TenantAcademyPage(){
   return ()=>{current=false;};
  },[]);
  useEffect(()=>{
-  if(!selected){setRows(empty);return;}
+  if(!selected){generation.current++;setRows(empty);return;}
   let current=true;
+  const requestedGeneration=++generation.current;
+  setRows(empty);
   Promise.all(kinds.map(k=>call("/api/platform/academy/"+k+"?organizationId="+encodeURIComponent(selected))))
-  .then(result=>{if(current){setRows(Object.fromEntries(kinds.map((k,i)=>[k,Array.isArray(result[i].data)?result[i].data:[]])) as Record<Kind,Item[]>);setError("");}})
-  .catch(e=>{if(current){setRows(empty);setError(String(e.message));}});
+  .then(result=>{if(current&&requestedGeneration===generation.current){setRows(Object.fromEntries(kinds.map((k,i)=>[k,Array.isArray(result[i].data)?result[i].data:[]])) as Record<Kind,Item[]>);setError("");}})
+  .catch(e=>{if(current&&requestedGeneration===generation.current){setRows(empty);setError(String(e.message));}});
   return ()=>{current=false;};
  },[selected,version]);
  async function switchOrg(id:string){
+  generation.current++;
   setBusy(true);setError("");setRows(empty);
   try{
    if(id)await call("/api/platform/organizations",{method:"POST",body:JSON.stringify({organizationId:id})});
    else await call("/api/platform/organizations",{method:"DELETE"});
-   setSelected(id);setDraft({});setVersion(n=>n+1);
+   setSelected(id);setKind("students");setDraft({});setVersion(n=>n+1);
   }catch(e){setError(e instanceof Error?e.message:"Cannot switch organizations");}
   finally{setBusy(false);}
  }
