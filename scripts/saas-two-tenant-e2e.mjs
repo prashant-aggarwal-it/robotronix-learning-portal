@@ -278,7 +278,7 @@ async function run(){
  r=await request(a,"GET","/api/platform/academy/enrollments?organizationId="+A);
  assert(r.status===200&&r.body?.data?.length===1&&r.body.data[0].id===ea,"Authorized enrollment listing");
  r=await request(a,"GET","/api/platform/academy/courses?organizationId="+A);
- assert(r.status===200&&r.body?.data?.length===1&&r.body.data[0].id===ca,"Organization-scoped course listing");
+ assert(r.status===200&&r.body?.data?.length===2&&r.body.data.some(x=>x.id===ca)&&r.body.data.some(x=>x.id===adoptedCourseIds[0])&&!r.body.data.some(x=>x.id===cb),"Organization-scoped course listing includes owned adopted course but excludes foreign courses");
  const ui=await fetch(base+"/saas/academy");
  assert(ui.status===200,"Academy workspace page serves successfully");
  console.log("Verified "+passed+" authenticated HTTP assertions against DEV");
