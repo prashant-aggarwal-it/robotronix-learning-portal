@@ -1,0 +1,7 @@
+/* Shared SaaS organization control: deliberately non-invasive to legacy module layouts. */
+.suiteOrgControl{display:flex;align-items:center;gap:.5rem;max-width:360px;min-width:0;flex-wrap:wrap}
+.suiteOrgControl label{font-size:.72rem;font-weight:650;letter-spacing:.02em;white-space:nowrap}
+.suiteOrgControl select{max-width:230px;min-width:120px;border:1px solid var(--border,#94a3b8);border-radius:8px;background:var(--surface,#fff);color:inherit;padding:.4rem .6rem;font:inherit;font-size:.8rem}
+.suiteOrgControl select:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.suiteOrgError{flex-basis:100%;font-size:.75rem;color:#b91c1c}
+@media(max-width:700px){.suiteOrgControl{max-width:100%;justify-content:flex-end}.suiteOrgControl label{display:none}.suiteOrgControl select{max-width:150px}}
