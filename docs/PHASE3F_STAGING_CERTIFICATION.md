@@ -32,3 +32,10 @@ The certified three-customer tests cover independent integrations, onboarding ad
 - Source run [43620897305](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43620897305): PASS.
 - Authenticated DEV run [43620897318](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43620897318): PASS.
 - Latest additional scheduler hardening revalidation runs [43625449088](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449088) / [43625449064](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449064): pending at writing. Source and DEV evidence is not a full staging clone or external provider certification.
+
+## Additional Phase 3F verification, 14 November 2026
+- Scheduled background functions now enforce exclusive Netlify ownership for Portal reminders, Zoom reconcile/retention, system-log retention and CRM history drain. Existing CRM/Tasks worker ownership checks remain unchanged.
+- Read-only database preflight `database/saas/PHASE3F_READ_ONLY_PREFLIGHT.sql`: **11 of 11 PASS on DEV**, including tenant-scoped installation/access, protected triggers, corrected index and deny grants for public RPC callers.
+- [Source certification 43625449088](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449088): PASS for latest scheduler behavior; [source certification 43625614582](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625614582): PASS with read-only preflight file.
+- [Authenticated DEV regression 43625449064](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/43625449064): running at report update, so no unobserved PASS claim.
+- **Staging certification remains PARTIAL.** No separate staging environment or production backup rehearsal is authorized, and no live Zoom/WhatsApp/Razorpay sandbox evidence exists in this assignment.
