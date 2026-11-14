@@ -288,7 +288,7 @@ export function classJoinWindow(event:any,role:string){
 
 
 export async function createGeneralZoomMeeting(db:SupabaseClient,input:{
- title:string;startAt?:string;durationMinutes?:number;hostId?:string;recording?:boolean;notes?:string;createdBy:string;
+ title:string;startAt?:string;durationMinutes?:number;hostId?:string;recording?:boolean;notes?:string;createdBy:string;saasOrganizationId?:string|null;
 }){
  const start=input.startAt?new Date(input.startAt):new Date(Date.now()+60_000);
  if(Number.isNaN(start.getTime()))throw new Error("Meeting start time is invalid.");
@@ -311,6 +311,7 @@ export async function createGeneralZoomMeeting(db:SupabaseClient,input:{
  const created=await zoomApi(host.id,"/users/me/meetings",{method:"POST",body:JSON.stringify(body)});
  const {data,error}=await db.from("zoom_meetings").insert({
   host_account_id:host.id,schedule_event_id:null,purpose:"general",
+  saas_org_id:input.saasOrganizationId??null,
   zoom_meeting_id:String(created.id),zoom_meeting_uuid:created.uuid?String(created.uuid):null,
   topic:String(created.topic||body.topic),passcode:String(created.password||created.encrypted_password||""),
   join_url:created.join_url?String(created.join_url):null,status:"scheduled",
