@@ -1,0 +1,36 @@
+name: DEV Phase 3C authenticated invitations and memberships
+on:
+  push:
+    branches:
+      - feature/education-suite-release1
+    paths:
+      - 'scripts/saas-phase3c-invitations-e2e.mjs'
+      - 'app/api/platform/organizations/**'
+      - 'app/api/platform/invitations/**'
+      - 'database/saas/4*.sql'
+      - '.github/workflows/saas-phase3c-invitations-e2e.yml'
+  workflow_dispatch:
+concurrency:
+  group: dev-saas-authenticated-e2e-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  invitations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: qa
+    env:
+      SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: DEV Phase 3C invitation and member acceptance verification
+        run: node scripts/saas-phase3c-invitations-e2e.mjs

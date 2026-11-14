@@ -80,7 +80,6 @@ async function startServer(){
 async function run(){
  const a=await account("a"),b=await account("b"),multi=await account("multi");
  const parent=await account("parent"),studentActor=await account("student"),trainerActor=await account("trainer");
- const invitedActor=await account("invited");
  const setup=await admin.rpc("saas_qa_fixture_create",{
   p_user_a:a.id,p_user_b:b.id,p_user_multi:multi.id
  });
@@ -556,39 +555,6 @@ async function run(){
    "Revoked SaaS user cannot fall back to legacy signed recording access");
  }finally{await toggleMembership("active")}
 
- // Phase 3C: complete SaaS invitation and membership lifecycle with real verified Auth identities.
- r=await request(b,"POST","/api/platform/organizations/"+A+"/invitations",{email:invitedActor.email,role:"member"});
- assert(r.status===403,"Unrelated tenant owner cannot invite into another organization");
- r=await request(a,"POST","/api/platform/organizations/"+A+"/invitations",{email:invitedActor.email,role:"member"});
- assert(r.status===201&&typeof r.body?.acceptToken==="string","Owner creates one-time email-scoped organization invitation");
- const inviteToken=r.body.acceptToken;
- const inviteId=r.body.invitationId;
- r=await request(invitedActor,"POST","/api/platform/invitations/accept",{token:randomBytes(32).toString("base64url")});
- assert(r.status===403,"Invalid invitation token cannot grant membership");
- r=await request(invitedActor,"POST","/api/platform/invitations/accept",{token:inviteToken});
- assert(r.status===200&&r.body?.organizationId===A,"Verified invitee accepts organization invitation");
- r=await request(invitedActor,"POST","/api/platform/invitations/accept",{token:inviteToken});
- assert(r.status===403,"One-time invitation token cannot be reused");
- r=await request(invitedActor,"GET","/api/platform/organizations");
- assert(r.status===200&&r.body?.organizations?.some(o=>o.id===A),"Invited user gains only intended organization");
- r=await request(b,"GET","/api/platform/organizations/"+A+"/members");
- assert(r.status===403,"Other organization cannot list membership roster (HTTP "+r.status+")");
- r=await request(a,"GET","/api/platform/organizations/"+A+"/members");
- const invitedMember=r.body?.members?.find(m=>m.user_id===invitedActor.id);
- assert(r.status===200&&invitedMember?.role_key==="member","Owner can see invited member with correct role");
- r=await request(a,"PATCH","/api/platform/organizations/"+A+"/members/"+invitedMember.id,{role:"member",status:"suspended"});
- assert(r.status===200,"Owner suspends invited SaaS member");
- r=await request(invitedActor,"POST","/api/platform/organizations",{organizationId:A});
- assert(r.status===403,"Suspended member cannot select organization");
- r=await request(a,"PATCH","/api/platform/organizations/"+A+"/members/"+invitedMember.id,{role:"member",status:"active"});
- assert(r.status===200,"Owner restores synthetic membership");
- r=await request(a,"POST","/api/platform/organizations/"+A+"/invitations",{email:"unclaimed-"+name+"@example.invalid",role:"member"});
- assert(r.status===201,"Owner creates revocable pending invitation");
- const revokableId=r.body.invitationId;
- r=await request(a,"DELETE","/api/platform/organizations/"+A+"/invitations/"+revokableId);
- assert(r.status===200&&r.body?.revoked===true,"Owner revokes pending invitation");
- r=await request(a,"GET","/api/platform/organizations/"+A+"/invitations");
- assert(r.status===200&&r.body?.invitations?.some(i=>i.id===revokableId&&i.status==="revoked"),"Revoked invitation is visible without token hash");
  console.log("Verified "+passed+" authenticated HTTP assertions against DEV");
 }
 let failure;
@@ -625,14 +591,6 @@ finally{
  if(adoptedCourseIds.length){
   const {error}=await admin.from("courses").delete().in("id",adoptedCourseIds);
   if(error){console.error("Synthetic course cleanup failed: "+error.message);failure??=error}
- }
- if(schools){
-  // DEV-only privileged fixture cleanup checks exact synthetic organization slugs.
-  // Never access the private saas schema via PostgREST: it is intentionally unexposed.
-  const {error:phase3cCleanupError}=await admin.rpc("saas_qa_phase3c_cleanup",{
-   p_school_a:schools.schoolA,p_school_b:schools.schoolB
-  });
-  if(phase3cCleanupError){console.error("Synthetic SaaS invitation/audit cleanup failed: "+phase3cCleanupError.message);failure??=phase3cCleanupError}
  }
  if(schools&&links){
   const {error}=await admin.rpc("saas_qa_phase3a_cleanup",{p_school_a:schools.schoolA,p_school_b:schools.schoolB});
