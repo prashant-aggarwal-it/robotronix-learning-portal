@@ -28,5 +28,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Install browser for authenticated Suite UI switching verification
+        run: npx playwright install --with-deps chromium
       - name: Authenticated DEV Academy and linked CRM/Tasks tenant isolation test
         run: node scripts/saas-two-tenant-e2e.mjs
