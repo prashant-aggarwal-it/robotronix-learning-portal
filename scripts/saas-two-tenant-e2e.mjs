@@ -364,6 +364,35 @@ async function run(){
  assert(r.status===200&&r.body?.data?.length===3&&r.body.data.some(x=>x.id===ca)&&adoptedCourseIds.every(id=>r.body.data.some(x=>x.id===id))&&!r.body.data.some(x=>x.id===cb),"Organization-scoped course listing includes owned adopted course but excludes foreign courses");
  const ui=await fetch(base+"/saas/academy");
  assert(ui.status===200,"Academy workspace page serves successfully");
+ // Exercise actual legacy Admin pages with a real authorized profile and organization context.
+ {
+  const {chromium}=await import("@playwright/test");
+  const browser=await chromium.launch({headless:true});
+  try{
+   const context=await browser.newContext({viewport:{width:1280,height:850}});
+   await context.addInitScript(({key,session})=>{
+    window.localStorage.setItem(key,JSON.stringify(session));
+   },{key:"sb-"+EXPECTED_REF+"-auth-token",session:multi.session});
+   const page=await context.newPage();
+   await page.goto(base+"/suite",{waitUntil:"domcontentloaded"});
+   const picker=page.getByRole("combobox",{name:"Active organization"});
+   await picker.waitFor({timeout:30000});
+   await picker.selectOption(B);
+   await page.waitForFunction(()=>document.body.innerText.includes("Active organization: Synthetic School B"),
+    null,{timeout:30000});
+   await page.goto(base+"/admin/courses",{waitUntil:"domcontentloaded"});
+   await page.getByRole("heading",{name:"Courses",exact:true}).waitFor({timeout:30000});
+   await page.locator("select").filter({hasText:"All statuses"}).selectOption("all");
+   await page.getByText("SaaS E2E Course B",{exact:false}).first().waitFor({timeout:30000});
+   assert((await page.getByText("SaaS E2E Course A",{exact:false}).count())===0,
+    "Original Admin Courses page excludes School A while School B selected");
+   await page.goto(base+"/admin/students",{waitUntil:"domcontentloaded"});
+   await page.getByText("SaaS E2E Student B",{exact:false}).first().waitFor({timeout:30000});
+   assert((await page.getByText("SaaS E2E Student A",{exact:false}).count())===0,
+    "Original Admin Students page excludes School A while School B selected");
+   await context.close();
+  }finally{await browser.close()}
+ }
  console.log("Verified "+passed+" authenticated HTTP assertions against DEV");
 }
 let failure;
