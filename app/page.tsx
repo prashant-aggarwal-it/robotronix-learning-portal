@@ -49,20 +49,20 @@ function SuiteHomePage({products}:{products:readonly string[]}){
  .rxBrand small{border-left:1px solid #d2d9eb;padding-left:18px;font-size:12px;letter-spacing:.15em;font-weight:800;color:#58647d}
  .rxNav{display:flex;align-items:center;gap:33px}
  .rxNav a{text-decoration:none;color:#2c3a54;font-size:15px;font-weight:700}
- .rxPrimary{background:#6d3cc9!important;color:white!important;display:inline-flex;align-items:center;gap:13px;border-radius:10px;padding:16px 23px;text-decoration:none;font-weight:750;font-size:15px;box-shadow:0 9px 20px #6d3cc920;transition:background .2s,transform .2s}
+ .rxPrimary{background:linear-gradient(105deg,#6d3cc9,#cb319e)!important;color:white!important;display:inline-flex;align-items:center;gap:13px;border-radius:10px;padding:16px 23px;text-decoration:none;font-weight:750;font-size:15px;box-shadow:0 9px 20px #6d3cc920;transition:background .2s,transform .2s}
  .rxPrimary:hover{background:#4f27a8!important;transform:translateY(-2px)}
- .rxMainHero{background:radial-gradient(ellipse at 80% 40%,#f0e3fc 0%,transparent 50%),radial-gradient(ellipse at 14% 8%,#f4e7fb 0%,transparent 45%),linear-gradient(180deg,#fbfcff,#f8f4fd);border-top:1px solid #eee4f5;border-bottom:1px solid #eae0f3}
+ .rxMainHero{background:radial-gradient(ellipse at 80% 40%,#eee2fb 0%,transparent 53%),radial-gradient(ellipse at 14% 8%,#f9eaf5 0%,transparent 45%),linear-gradient(180deg,#fffafd,#f8f4fd);border-top:1px solid #eee4f5;border-bottom:1px solid #eae0f3}
  .rxHero{display:grid;grid-template-columns:1.07fr .93fr;align-items:center;gap:60px;padding-top:76px;padding-bottom:82px}
  .rxEyebrow{font-size:12px;letter-spacing:.16em;color:#6d3cc9;font-weight:800;display:inline-flex;gap:12px;align-items:center}
  .rxEyebrow:before{content:"";width:22px;height:2px;background:#e83d8c}
  .rxHero h1{font-size:clamp(49px,4.7vw,73px);line-height:1.075;letter-spacing:-.055em;font-weight:800;margin:24px 0 24px;max-width:710px}
- .rxHero h1 em{font-style:normal;color:#6d3cc9}
+ .rxHero h1 em{font-style:normal;background:linear-gradient(105deg,#693bcc 25%,#c936a1 83%);-webkit-background-clip:text;background-clip:text;color:transparent}
  .rxHero p{max-width:570px;font-size:19px;line-height:1.7;color:#606a82;margin:0 0 31px}
  .rxHeroActions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
  .rxOutline{display:inline-flex;align-items:center;padding:15px 22px;border:1px solid #dfd5ec;border-radius:10px;color:#233451;text-decoration:none;background:#fff9;font-weight:750;font-size:15px}
  .rxBenefit{display:flex;flex-wrap:wrap;gap:22px;margin-top:35px;color:#54657f;font-size:13px;font-weight:650}
  .rxBenefit span:before{content:"✓";font-weight:900;color:#348f93;margin-right:8px}
- .rxShowcase{background:#fff;box-shadow:0 28px 70px #4f27a821,0 0 0 5px #ffffffb5;border:1px solid #e3d9f3;border-radius:22px;overflow:hidden}
+ .rxHeroIllustration{position:relative;border-radius:28px;isolation:isolate}.rxHeroIllustration:before{content:"";position:absolute;inset:-24px;background:radial-gradient(ellipse at 55% 52%,#bba5f385,transparent 72%);filter:blur(22px);z-index:-1}.rxHeroImage{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:22px;z-index:2;box-shadow:0 28px 70px #6d3cc923}.rxShowcase{background:#fff;box-shadow:0 28px 70px #4f27a821,0 0 0 5px #ffffffb5;border:1px solid #e3d9f3;border-radius:22px;overflow:hidden}
  .rxShowTop{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 17px;border-bottom:1px solid #ece9f3;background:#fcfbff}
  .rxShowTop span{font-size:10px;letter-spacing:.08em;font-weight:800;color:#77819c}
  .rxLights{display:flex;gap:6px}.rxLights i{height:8px;width:8px;border-radius:50%;background:#d9ddec}.rxLights i:first-child{background:#8b70e0}.rxLights i:nth-child(2){background:#81c7c9}
@@ -105,7 +105,7 @@ function SuiteHomePage({products}:{products:readonly string[]}){
  .rxCards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
  .rxCard{border:1px solid #e7ddf0;background:linear-gradient(155deg,#fff 70%,#fcf9ff);border-radius:24px;padding:33px 32px;min-height:316px;box-shadow:0 14px 38px #4f27a812;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
  .rxCard:hover{transform:translateY(-4px);box-shadow:0 22px 44px #6d3cc925}
- .rxCard:before{content:"";position:absolute;top:0;left:30px;right:30px;height:3px;border-radius:0 0 5px 5px;background:linear-gradient(90deg,#6d3cc9,#e83d8c,#14b8a6);opacity:.75}.rxCard{position:relative;overflow:hidden}.rxCardTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}
+ .rxCard:before{content:"";position:absolute;top:0;left:30px;right:30px;height:3px;border-radius:0 0 5px 5px;background:linear-gradient(90deg,#6d3cc9,#e83d8c,#14b8a6);opacity:.75}.rxCard{position:relative;overflow:hidden}.rxCard:nth-child(1){background:linear-gradient(145deg,#fff 62%,#effbf9)}.rxCard:nth-child(2){background:linear-gradient(145deg,#fff 62%,#f7f0ff)}.rxCard:nth-child(3){background:linear-gradient(145deg,#fff 62%,#fff2f8)}.rxCardTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}
  .rxCardIcon{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-weight:800;font-size:21px}
  .rxCardNum{color:#a2abc0;font-size:12px;font-weight:800;letter-spacing:.1em}
  .rxCard h3{font-size:27px;letter-spacing:-.03em;margin:0 0 7px}
@@ -120,7 +120,7 @@ function SuiteHomePage({products}:{products:readonly string[]}){
  `}</style>
  <header className="rxWrap rxHead"><Link href="/" className="rxBrand" aria-label="Robotronix Education Suite home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><small>EDUCATION SUITE</small></Link><nav className="rxNav" aria-label="Main navigation"><a href="#products">Products</a><Link href="/login">Sign in</Link><Link href="/signup" className="rxPrimary">Get started <span aria-hidden="true">↗</span></Link></nav></header>
  <div className="rxMainHero"><section className="rxWrap rxHero"><div><span className="rxEyebrow">ROBOTRONIX EDUCATION SUITE</span><h1>One platform.<br/>Every part of your academy, <em>connected.</em></h1><p>Run learning, manage relationships and organize your team with a beautifully simple workspace built for modern education businesses.</p><div className="rxHeroActions"><Link href="/signup" className="rxPrimary">Get started <span aria-hidden="true">↗</span></Link><Link href="/login" className="rxOutline">Sign in to your workspace</Link></div><div className="rxBenefit"><span>Single sign-in</span><span>Secure organizations</span><span>Modular by design</span></div></div>
- <div className="rxShowcase" aria-label="Illustrative dashboard showing academy classes, learner progress, admissions and tasks"><div className="rxShowTop"><div className="rxLights"><i/><i/><i/></div><span>ROBOTRONIX / WORKSPACE</span></div>
+ <div className="rxHeroIllustration"><div className="rxShowcase" aria-label="Illustrative dashboard showing academy classes, learner progress, admissions and tasks"><div className="rxShowTop"><div className="rxLights"><i/><i/><i/></div><span>ROBOTRONIX / WORKSPACE</span></div>
  <div className="rxShowBody"><div className="rxRail" aria-hidden="true"><span>R</span><span>⌂</span><span>◎</span><span>▤</span><span>✓</span></div>
  <div className="rxDash"><div className="rxDashTop"><h3>Workspace overview</h3><span className="rxDemoTag">ILLUSTRATIVE PREVIEW</span></div>
  <div className="rxKpis"><div className="rxKpi"><b>128</b><span>Active learners</span></div><div className="rxKpi"><b>24</b><span>Open enquiries</span></div><div className="rxKpi"><b>7</b><span>Tasks today</span></div></div>
@@ -128,7 +128,7 @@ function SuiteHomePage({products}:{products:readonly string[]}){
  <div className="rxDashCard"><div className="rxDashCardHead"><strong>Learner progress</strong><span style={{fontSize:10,color:"#8862cf"}}>↗</span></div><div className="rxClassSub">Robotics Foundations</div><div className="rxProgressCount">72% <small>complete</small></div><div className="rxProgressTrack"><i/></div><div className="rxProgressMeta"><span>18 of 25 sessions</span><span>On track</span></div><div className="rxClassSub" style={{marginTop:14}}>Next: project showcase</div></div></div>
  <div className="rxDashBottom"><div className="rxDashCard"><div className="rxDashCardHead"><strong>Admissions pipeline</strong><span style={{fontSize:9,color:"#0e8f8b"}}>CRM</span></div><div className="rxFunnel"><div><b>8</b><span>Enquiries</span></div><div><b>5</b><span>Demos</span></div><div><b>3</b><span>Admissions</span></div></div></div>
  <div className="rxDashCard"><div className="rxDashCardHead"><strong>Team priorities</strong><span style={{fontSize:9,color:"#bb478e"}}>TASKS</span></div><div className="rxTaskLine"><i/> Parent follow-up</div><div className="rxTaskLine"><i/> Review class feedback</div></div></div>
- </div></div></div></section></div>
+ </div></div></div><img className="rxHeroImage" src="/brand/robotronix-3d-students-hero.webp" alt="Illustrated students collaborating on robotics and coding, with a connected education dashboard" onError={event=>{event.currentTarget.style.display="none";}}/></div></section></div>
  <section className="rxWrap rxSection" id="products" aria-labelledby="rxProductsTitle"><div className="rxSectionHeading"><div><span className="rxEyebrow">YOUR EDUCATION BUSINESS, CONNECTED</span><h2 id="rxProductsTitle">From the first enquiry to a thriving academy.</h2></div><p>Win new admissions. Deliver excellent learning. Keep your team on track.</p></div><div className="rxCards">{options.map(x=><article className="rxCard" key={x.id}><div className="rxCardTop"><span className="rxCardIcon" style={{color:x.accent,background:x.accent+"13"}}>{x.symbol}</span><span className="rxCardNum">{x.number}</span></div><h3>{x.name}</h3><div className="rxCardCategory">{x.category}</div><p className="rxCardDesc">{x.description}</p><div className="rxCardBottom">{x.features}</div></article>)}</div></section>
  <footer className="rxWrap rxFooter"><span>© Robotronix Education Suite</span><span><Link href="/privacy">Privacy</Link> &nbsp;·&nbsp; <Link href="/terms">Terms</Link> &nbsp;·&nbsp; <Link href="/support">Support</Link></span></footer>
  </main>;
