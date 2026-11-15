@@ -505,7 +505,7 @@ async function run(){
 
  const {error:foreignInsert}=await directA.from("enrollments").insert({
   student_id:sa,course_id:cb,trainer_id:ta,enrollment_type:"one_to_one",
-  started_at:new Date().toISOString().slice(0,10)
+  started_at:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())
  });
  assert(Boolean(foreignInsert)&&foreignInsert.code==="42501",
   "Legacy direct enrollment insert rejects cross-school course relationships"+
