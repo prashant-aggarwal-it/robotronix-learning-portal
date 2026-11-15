@@ -3,8 +3,10 @@ import Link from "next/link";
 import {Suspense,useEffect,useState} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {preserveInvitation,clearInvitation} from "@/lib/platform/pending-invitation";
 function AcceptFamilyInvitation(){
  const router=useRouter(),query=useSearchParams(),token=query.get("token")||"";
+ useEffect(()=>{if(/^[a-f0-9]{64}$/.test(token))preserveInvitation("/invite/family?token="+token);},[token]);
  const [signedIn,setSignedIn]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
  useEffect(()=>{const c=getSupabaseBrowserClient();void c?.auth.getSession().then(({data})=>setSignedIn(Boolean(data.session)));},[]);
  async function accept(){
@@ -18,7 +20,7 @@ function AcceptFamilyInvitation(){
    const family=await client.rpc("saas_my_academy_family");
    const row=(Array.isArray(family.data)?family.data:[]).find((x:{organizationId?:string})=>x.organizationId===data.organizationId);
    setMessage("Invitation accepted. Opening your academy's family portal.");
-   router.replace(row?.slug?"/"+row.slug+"/family":"/workspace");
+   clearInvitation();router.replace(row?.slug?"/"+row.slug+"/family":"/workspace");
   }catch(e){setMessage(e instanceof Error?e.message:"Unable to accept invitation");}
   finally{setBusy(false);}
  }
