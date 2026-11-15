@@ -27,7 +27,7 @@ function InvitationContent(){
  return <main className="authPage"><section className="authCard"><h1>Join your academy</h1>
  <p>This invitation is bound to your verified email address.</p>
  {status&&<p role="status">{status}</p>}
- {!signedIn?<><p>After sign-in, reopen this invitation link.</p><Link className="button" href="/login">Sign in</Link></>:<button className="button" disabled={busy||!/^[a-zA-Z0-9_-]{40,64}$/.test(token)} onClick={accept}>{busy?"Checking…":"Accept invitation"}</button>}
+ {!signedIn?<><p>After signing in, you will return to this invitation automatically.</p><Link className="button" href="/login">Sign in</Link></>:<button className="button" disabled={busy||!/^[a-zA-Z0-9_-]{40,64}$/.test(token)} onClick={accept}>{busy?"Checking…":"Accept invitation"}</button>}
  </section></main>;
 }
 export default function InvitePage(){return <Suspense fallback={<p>Loading invitation…</p>}><InvitationContent/></Suspense>}
