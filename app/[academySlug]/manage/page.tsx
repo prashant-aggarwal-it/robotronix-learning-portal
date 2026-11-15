@@ -41,6 +41,7 @@ export default function AcademyManagement(){
     <ul style={{lineHeight:2.5}}>
      <li><Link href="/workspace/invitations">Invite staff and trainers</Link></li>
      <li><Link href="/workspace/families">Invite parents and students</Link></li>
+     <li><Link href="/workspace/trainers">Link trainer logins to Academy trainer records</Link></li>
      <li><Link href="/onboarding/branding">Academy branding and entry URL</Link></li>
      <li><Link href={"/"+academySlug}>Academy login page</Link></li>
     </ul>
