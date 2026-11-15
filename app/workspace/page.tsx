@@ -53,8 +53,9 @@ export default function WorkspacePage(){
  const org=workspaces.find(x=>x.id===current);
  const singleOrganization=workspaces.length===1;
  const hasFamilyAccess=Boolean(org&&familyOrgs.includes(org.id));
+ const academyDestination=org&&["owner","admin"].includes(org.role)?"/"+org.slug+"/manage":hasFamilyAccess?"/"+org?.slug+"/family":null;
  const cards=[
-  {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:hasFamilyAccess?"/"+org?.slug+"/family":singleOrganization&&academyRole?"/"+academyRole:null,icon:"🎓",detail:hasFamilyAccess?"Open family portal":academyRole?"Open "+academyRole+" dashboard":"Academy role setup is pending"},
+  {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:academyDestination,icon:"🎓",detail:org&&["owner","admin"].includes(org.role)?"Open Academy management":hasFamilyAccess?"Open family portal":"Academy trainer access setup pending"},
   {id:"crm",name:"Connect CRM",description:"Enquiries, admissions and communications.",href:singleOrganization&&org?.crmAccess?"/connect":null,icon:"◈",detail:"Open Connect CRM"},
   {id:"tasks",name:"My Tasks",description:"Workspaces, priorities and team tasks.",href:singleOrganization&&org?.tasksAccess?"/tasks":null,icon:"✓",detail:"Open My Tasks"}
  ].filter(card=>org?.modules.includes(card.id));
