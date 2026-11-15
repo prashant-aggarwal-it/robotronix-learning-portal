@@ -3,14 +3,21 @@
     "**/database/connect": true,
     "**/database/04_existing_db_migrations": true,
     "**/database/legacy": true,
-    "**/database/release_install": true,
-    "**/database/security_qa": true
+    "**/database/security_qa": true,
+    "**/database/audit": true,
+    "**/database/platform": true,
+    "**/database/portal": true,
+    "**/database/crm": true,
+    "**/database/tasks": true,
+    "**/database/saas": true,
+    "**/database/shared": true,
+    "**/database/generated": true
   },
   "search.exclude": {
     "**/database/connect": true,
     "**/database/04_existing_db_migrations": true,
     "**/database/legacy": true,
-    "**/database/release_install": true,
-    "**/database/security_qa": true
+    "**/database/security_qa": true,
+    "**/database/audit": true
   }
 }
