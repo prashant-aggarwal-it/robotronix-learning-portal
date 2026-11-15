@@ -1,37 +1,33 @@
-# Database — START HERE
+# Robotronix Education Suite — Database
 
-This folder contains the canonical SQL for Robotronix Education Suite.
-**Never run every file in this folder.** Individual module SQL and historical SQL are not an installation checklist.
+**START HERE.** Follow the numbered folders in order. The module folders contain internal source files, not additional installation steps.
 
-## Fresh DEV installation (current status: NOT CERTIFIED)
-
-| Stage | What to use | How |
+| Order | Folder | Purpose |
 | --- | --- | --- |
-| 0 — Reset (already done for current DEV) | `shared/DEV_RESET_EDUCATION_SUITE_REVIEW_FIRST.sql` | Only for disposable DEV, explicit guard, destructive |
-| 1 — Build complete installer | `node scripts/build-education-suite-installer.mjs` | Run from repository root; does not touch database |
-| 2 — Install complete suite | `generated/ROBOTRONIX_EDUCATION_SUITE_FRESH_INSTALL_UNCERTIFIED.sql` | **Do not execute yet**: not clean-install certified |
-| 3 — Verify schema | `portal/verify.sql`, `tasks/04_verify.sql`, `crm/04_verify.sql` | Read-only; run separately after successful install |
-| 4 — Verify SaaS security | `../qa/sql/milestone-c-phase12-readiness.sql` and tenant-isolation rollback tests | Read-only/rollback QA after install |
-| 5 — Create Auth test users | `npm run qa:create-users` | Supabase Admin API; set DEV QA passwords privately |
-| 6 — Assign roles and create tenants | Signup → Organization → Applications → Invitations | Do not manually insert into `auth.users` |
-| 7 — Optional sample records | `portal/qa/`, `crm/qa/`, SaaS tenant tests | DEV only; review prerequisites |
-| 8 — External services | OAuth, Zoom, storage, payments, jobs | Configured separately, not by SQL |
+| 01 | [01_reset](01_reset/README.md) | DEV-only reset and safety |
+| 02 | [02_install](02_install/README.md) | Generate the complete Education Suite installer |
+| 03 | [03_reference](03_reference/README.md) | Master and configuration data |
+| 04 | [04_users](04_users/README.md) | Create Auth accounts and assign organization roles |
+| 05 | [05_seed](05_seed/README.md) | Optional DEV sample data |
+| 06 | [06_verify](06_verify/README.md) | Database and multitenant security tests |
+| 07 | [07_operations](07_operations/README.md) | Provider integrations and scheduled jobs |
 
-### Other supported installers
+## Current state
 
-`npm run db:build-installers` builds the older independent Portal / CRM / Tasks packages using `packages.json`. The output `generated/ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql` **does not include complete SaaS organization onboarding**. Do not use that older file as if it were the complete Education Suite installer.
+The DEV application reset has already been performed; Auth users have been removed by the operator. The **complete Education Suite installer is generated but UNTESTED for clean-install compatibility**. Do not run it until certification succeeds.
 
-### How the source is organized
+The installer generator is:
 
-- `portal/`: Academy schema, reference data, DEV QA and verification.
-- `crm/`: Connect CRM canonical SQL and verification.
-- `tasks/`: Tasks canonical SQL and verification.
-- `saas/`: SaaS organization, membership and isolation SQL (currently numbered incremental sources).
-- `shared/`: common checks, bridges and reset scripts.
-- `generated/`: build outputs, **not** hand-maintained SQL.
-- `platform/`: separate additive platform source. Not a standalone fresh installer.
-- `audit/`, `04_existing_db_migrations/`, `legacy/`: historical checks/migrations. Do not execute for a fresh install.
+```powershell
+node scripts/build-education-suite-installer.mjs
+```
 
-**Important:** The new Education Suite installer is presently only an *ordered concatenation* of existing SQL. It is not certified for empty Supabase installation. Further refactoring, real DEV installation and security verification are required before it is marked executable. Do not run on PROD.
+The generated output is `generated/ROBOTRONIX_EDUCATION_SUITE_FRESH_INSTALL_UNCERTIFIED.sql`.
 
-Project safeguards: DEV `uzzuquxeeqonxeqcuohh`; PROD `njyktzenybimykpqaegn`. Never use reset or sample fixtures in PROD.
+## Source code (not instructions to execute)
+
+`portal/`, `crm/`, `tasks/`, `saas/`, `platform/`, `shared/`, `packages.json` and `generated/` remain the current canonical source and generator dependencies. Running them separately would duplicate or conflict with a consolidated install. The newer SaaS builder is an assembled draft, not a certified fresh installation.
+
+`audit/`, `legacy/`, `connect/`, `04_existing_db_migrations/` and `security_qa/` still need reference auditing before removal. Avoid executing those historical sources.
+
+**DEV:** `uzzuquxeeqonxeqcuohh` · **PROD (never reset):** `njyktzenybimykpqaegn`.
