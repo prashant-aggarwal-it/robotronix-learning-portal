@@ -2,7 +2,7 @@
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
-import {loadAuthDeployment,loadSignedInAccess,verifyAcademyMembership,academyFamilyDestination} from "@/lib/platform/auth-client";
+import {loadAuthDeployment,loadSignedInAccess,academyScopedDestination} from "@/lib/platform/auth-client";
 import {resolveAuthDestination} from "@/lib/platform/auth-routing";
 import {consumeInvitation} from "@/lib/platform/pending-invitation";
 
@@ -29,8 +29,8 @@ export default function AuthCallbackPage(){
     sessionStorage.removeItem("robotronix:post-auth-next");
     const academySlug=sessionStorage.getItem("robotronix:post-auth-academy")||"";
     sessionStorage.removeItem("robotronix:post-auth-academy");
-    if(academySlug && !(await verifyAcademyMembership(academySlug))){setMessage("This account is not linked to the selected academy. Contact your academy administrator for an invitation.");return;}
-    if(academySlug){const familyPath=await academyFamilyDestination(academySlug);if(familyPath){router.replace(familyPath);return;}}
+    if(academySlug && !(await academyScopedDestination(academySlug))){setMessage("This account is not linked to the selected academy. Contact your academy administrator for an invitation.");return;}
+    if(academySlug){const scoped=await academyScopedDestination(academySlug);if(scoped){router.replace(scoped);return;}}
     const destination=resolveAuthDestination(deployment,access,next,"callback");
     if(destination.denied){setMessage(destination.denied);return;}
     router.replace(destination.path);
