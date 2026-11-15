@@ -44,7 +44,7 @@ function SuiteHomePage({products}:{products:readonly string[]}){
       <nav aria-label="Main navigation" style={{display:"flex",alignItems:"center",gap:18,flexWrap:"wrap"}}>
         <a href="#products" style={{color:"#374569",fontWeight:600,textDecoration:"none"}}>Products</a>
         <Link href="/login" style={{color:"#374569",fontWeight:600}}>Sign in</Link>
-        <Link href="/login" className="button" style={{textDecoration:"none"}}>Get started</Link>
+        <Link href="/signup" className="button" style={{textDecoration:"none"}}>Get started</Link>
       </nav>
     </header>
     <section style={{maxWidth:1180,margin:"auto",padding:"clamp(56px,8vw,110px) clamp(20px,4vw,48px) 70px",textAlign:"center"}}>
@@ -52,7 +52,7 @@ function SuiteHomePage({products}:{products:readonly string[]}){
       <h1 style={{maxWidth:850,margin:"24px auto",fontSize:"clamp(38px,5.5vw,72px)",lineHeight:1.12,letterSpacing:"-.035em"}}>Run your academy. Connect your team. Grow with confidence.</h1>
       <p style={{maxWidth:660,margin:"0 auto 30px",fontSize:"clamp(17px,2vw,21px)",lineHeight:1.65,color:"#53617e"}}>Bring learning operations, customer relationships and everyday tasks together, with access designed for each organization and role.</p>
       <div style={{display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap"}}>
-        <Link href="/login" className="button" style={{textDecoration:"none"}}>Get started</Link>
+        <Link href="/signup" className="button" style={{textDecoration:"none"}}>Get started</Link>
         <a href="#products" className="button secondary" style={{textDecoration:"none"}}>Explore products</a>
       </div>
     </section>
@@ -73,9 +73,6 @@ function SuiteHomePage({products}:{products:readonly string[]}){
     </footer>
   </main>;
 }
-
-"use client";
-import Link from "next/link";
 
 function AcademyHomePage(){
   return (
