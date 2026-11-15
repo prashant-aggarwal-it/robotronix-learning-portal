@@ -43,12 +43,14 @@ begin
     values(org_a,student_a),(org_b,student_b);
   perform set_config('request.jwt.claim.sub',actor_a::text,true);
   perform public.saas_invite_academy_family(org_a,student_a,'saas-e2e-6a6df0cc54-invited@example.invalid','parent',repeat('a',64));
-  perform set_config('request.jwt.claim.sub',parent_a::text,true);
+  perform set_config('request.jwt.claim.sub',actor_b::text,true);
   rejected:=false;
   begin perform public.saas_accept_academy_family_invite(repeat('a',64));
   exception when insufficient_privilege then rejected:=true; end;
   if not rejected then raise exception 'Wrong email accepted family invite';end if;
-  perform set_config('request.jwt.claim.sub','7cf1882d-4e36-4205-b731-a94769e4655f',true);
+  perform set_config('request.jwt.claim.sub',parent_a::text,true);
+  perform public.saas_accept_academy_family_invite(repeat('a',64));
+  perform set_config('request.jwt.claim.sub',actor_b::text,true);
   -- This user owns B, and must not see A's family data.
   family:=public.saas_my_academy_family();
   if exists(select 1 from jsonb_array_elements(family) f where f->>'organizationId'=org_a::text)
