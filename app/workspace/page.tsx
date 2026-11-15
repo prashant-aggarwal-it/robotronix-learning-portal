@@ -53,9 +53,9 @@ export default function WorkspacePage(){
  const org=workspaces.find(x=>x.id===current);
  const singleOrganization=workspaces.length===1;
  const hasFamilyAccess=Boolean(org&&familyOrgs.includes(org.id));
- const academyDestination=org&&["owner","admin"].includes(org.role)?"/"+org.slug+"/manage":hasFamilyAccess?"/"+org?.slug+"/family":null;
+ const academyDestination=org&&["owner","admin"].includes(org.role)?"/"+org.slug+"/manage":org?.role==="trainer"?"/"+org.slug+"/trainer":hasFamilyAccess?"/"+org?.slug+"/family":null;
  const cards=[
-  {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:academyDestination,icon:"🎓",detail:org&&["owner","admin"].includes(org.role)?"Open Academy management":hasFamilyAccess?"Open family portal":"Academy trainer access setup pending"},
+  {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:academyDestination,icon:"🎓",detail:org&&["owner","admin"].includes(org.role)?"Open Academy management":org?.role==="trainer"?"Open trainer workspace":hasFamilyAccess?"Open family portal":"Academy access setup pending"},
   {id:"crm",name:"Connect CRM",description:"Enquiries, admissions and communications.",href:singleOrganization&&org?.crmAccess?"/connect":null,icon:"◈",detail:"Open Connect CRM"},
   {id:"tasks",name:"My Tasks",description:"Workspaces, priorities and team tasks.",href:singleOrganization&&org?.tasksAccess?"/tasks":null,icon:"✓",detail:"Open My Tasks"}
  ].filter(card=>org?.modules.includes(card.id));
@@ -85,7 +85,7 @@ export default function WorkspacePage(){
      {card.href?<Link href={card.href} style={{fontWeight:700,color:"#4537a5"}}>{card.detail} →</Link>:<p style={{color:"#7a6070"}}>{card.detail}</p>}
     </article>)}
    </div>
-   {org.role==="owner"&&<p style={{marginTop:32}}><Link href="/workspace/invitations">Invite team members</Link> · <Link href="/workspace/families">Invite families</Link> · <Link href="/onboarding/products">Product configuration</Link>{org.modules.includes("academy")&&<> · <Link href="/onboarding/branding">Academy branding</Link> · <Link href={"/"+org.slug}>Academy entry page</Link></>}</p>}
+   {org.role==="owner"&&<p style={{marginTop:32}}><Link href="/workspace/invitations">Invite team members</Link> · <Link href="/workspace/families">Invite families</Link> · <Link href="/workspace/trainers">Link trainers</Link> · <Link href="/onboarding/products">Product configuration</Link>{org.modules.includes("academy")&&<> · <Link href="/onboarding/branding">Academy branding</Link> · <Link href={"/"+org.slug}>Academy entry page</Link></>}</p>}
    <p style={{fontSize:13,color:"#66738c",marginTop:18}}>Organization selection is rechecked on the server and passed to tenant-aware Academy queries. CRM and Tasks retain their own independent membership checks. Cross-organization module launches remain limited until product-specific switching is verified.</p>
    </>}
   </section>
