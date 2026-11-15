@@ -8,7 +8,7 @@ import {resolveAuthDestination} from "@/lib/platform/auth-routing";
 
 export default function OrganizationOnboarding(){
  const router=useRouter();
- const [status,setStatus]=useState<"checking"|"ready"|"done"|"error">("checking");
+ const [status,setStatus]=useState<"checking"|"ready"|"done"|"owned"|"error">("checking");
  const [message,setMessage]=useState("");
  const [name,setName]=useState("");
  const [slug,setSlug]=useState("");
@@ -26,6 +26,10 @@ export default function OrganizationOnboarding(){
     if(!session){router.replace("/login");return;}
     const config=await loadAuthDeployment();
     if(config.mode!=="combined"||config.legacyDefault){router.replace("/");return;}
+    const existing=await client.rpc("saas_my_owned_organization");
+    if(existing.error)throw existing.error;
+    const owned=existing.data as {slug?:string}|null;
+    if(owned?.slug){setCreated(owned.slug);setStatus("owned");return;}
     const access=await loadSignedInAccess(config);
     const next=resolveAuthDestination(config,access,null);
     if(!active)return;
@@ -64,6 +68,7 @@ export default function OrganizationOnboarding(){
    {message&&<div className="errorBanner" role="alert">{message}</div>}
    <button className="button fullButton" disabled={busy||name.trim().length<2||slug.length<3}>{busy?"Creating your academy…":"Create organization"}</button>
   </form>}
+  {status==="owned"&&<div className="infoBanner" role="status"><strong>Your organization already exists.</strong><p>Academy identifier: <strong>{created}</strong>. Product configuration will be available in Milestone A, Phase 4.</p></div>}
   {status==="done"&&<div className="infoBanner" role="status">
    <strong>Organization created successfully.</strong>
    <p>Academy identifier: <strong>{created}</strong>. Your owner membership is active. Product selection and workspace provisioning are next in Milestone A, Phase 4.</p>
