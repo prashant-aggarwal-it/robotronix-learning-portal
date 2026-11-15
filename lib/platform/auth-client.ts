@@ -104,7 +104,7 @@ export async function loadSignedInAccess(deployment:DeploymentConfig):Promise<Au
   deployment.products.includes("tasks")?taskAccess(header,false):Promise.resolve(undefined),
   deployment.products.includes("crm")?crmAccess(header):Promise.resolve(undefined)
  ]);
- return {portal,tasks,crmWorkspace,saasWorkspace};
+ return {portal,tasks,crmWorkspace,saasWorkspace,saasConfigured};
 }
 
 /** A branded URL is a selector, never proof of authorization. */
