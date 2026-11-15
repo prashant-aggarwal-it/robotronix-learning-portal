@@ -12,7 +12,14 @@ function LoginContent(){
  const router=useRouter();
  const query=useSearchParams();
  const requested=query.get("next");
+ const academySlug=query.get("academy");
+ const [academyName,setAcademyName]=useState("");
  const [deployment,setDeployment]=useState<DeploymentConfig|null>(null);
+ useEffect(()=>{let alive=true;if(!academySlug||!/^[a-z0-9][a-z0-9-]{2,62}$/.test(academySlug))return;
+   void import("@/lib/supabase/browser").then(async m=>{const client=m.getSupabaseBrowserClient();if(!client)return;
+    const {data,error}=await client.rpc("saas_public_academy_brand",{p_slug:academySlug});
+    if(alive&&!error&&data?.name)setAcademyName(data.name);
+   }).catch(()=>{});return()=>{alive=false};},[academySlug]);
  useEffect(()=>{let active=true;void loadAuthDeployment().then(config=>{if(active)setDeployment(config);}).catch(()=>{if(active)setError("Application configuration is unavailable.");});return()=>{active=false};},[]);
  const next=deployment?safeAuthNext(requested,deployment):null;
  const productName=deployment?.mode==="crm"?"Connect CRM":deployment?.mode==="tasks"?"My Tasks":deployment?.mode==="combined"&&!deployment.legacyDefault?"Education Suite":deployment?"Learning Portal":"Robotronix";
@@ -69,7 +76,8 @@ function LoginContent(){
  }
  return <main className="authPage"><section className="authCard">
   <Link href="/" className="authBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
-  <div className="formStepHead"><span>{productName.toUpperCase()}</span><h1>Sign in to Robotronix</h1><p>Sign in with your existing email and password, Google, or a one-time email code. Access is determined by your enabled products and account permissions.</p></div>
+  <div className="formStepHead"><span>{productName.toUpperCase()}</span><h1>{academyName?`Sign in to ${academyName}`:"Sign in to Robotronix"}</h1><p>Sign in with your existing email and password, Google, or a one-time email code. Access is determined by your enabled products and account permissions.</p></div>
+  {academyName&&<p className="infoBanner">Academy: <strong>{academyName}</strong>. Access is verified using your account membership and permissions.</p>}
   {error&&<div role="alert" className="errorBanner">{error}</div>}
   <form className="formStack" onSubmit={passwordSignIn}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
