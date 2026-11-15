@@ -7,6 +7,8 @@ on:
       - 'scripts/build-db-installers.mjs'
       - 'scripts/build-education-suite-installer.mjs'
       - 'scripts/check-db-*.mjs'
+      - 'scripts/check-fresh-db-release.mjs'
+      - 'supabase/migrations/**'
       - 'package.json'
       - '.github/workflows/database-workflow-check.yml'
   workflow_dispatch:
