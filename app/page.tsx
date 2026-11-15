@@ -34,9 +34,9 @@ export default function HomePage(){
 
 function SuiteHomePage({products}:{products:readonly string[]}){
   const options=[
-    {id:"portal",name:"Academy",description:"Learning, classes, curriculum, student progress and family engagement.",href:"/login",symbol:"🎓"},
-    {id:"crm",name:"Connect CRM",description:"Manage enquiries, conversations, admissions and relationships.",href:"/login?next=%2Fconnect",symbol:"◈"},
-    {id:"tasks",name:"My Tasks",description:"Plan priorities, delegate work and keep your team moving.",href:"/login?next=%2Ftasks",symbol:"✓"}
+    {id:"portal",name:"Academy",description:"Learning, classes, curriculum, student progress and family engagement.",symbol:"🎓"},
+    {id:"crm",name:"Connect CRM",description:"Manage enquiries, conversations, admissions and relationships.",symbol:"◈"},
+    {id:"tasks",name:"My Tasks",description:"Plan priorities, delegate work and keep your team moving.",symbol:"✓"}
   ].filter(item=>products.includes(item.id));
   return <main style={{minHeight:"100vh",background:"linear-gradient(155deg,#f8faff 0%,#eef2ff 52%,#f9fbff 100%)",color:"#172341"}}>
     <header style={{maxWidth:1180,margin:"auto",padding:"24px clamp(20px,4vw,48px)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
@@ -64,7 +64,7 @@ function SuiteHomePage({products}:{products:readonly string[]}){
           <div aria-hidden="true" style={{fontSize:34,marginBottom:18}}>{item.symbol}</div>
           <h3 style={{fontSize:24,marginBottom:12}}>{item.name}</h3>
           <p style={{color:"#53617e",lineHeight:1.65,minHeight:84}}>{item.description}</p>
-          <Link href={item.href} style={{fontWeight:700,color:"#4537a5"}}>Sign in to {item.name} →</Link>
+          <p style={{fontWeight:700,color:"#4537a5",marginBottom:0}}>Available through your workspace</p>
         </article>)}
       </div>
     </section>
