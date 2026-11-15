@@ -3,7 +3,7 @@ import Link from "next/link";
 import {FormEvent,useEffect,useState} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {Suspense} from "react";
-import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSignIn,googleSignIn,emailSignInCode,verifySignInCode,createProductAccount,verifyAcademyMembership} from "@/lib/platform/auth-client";
+import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSignIn,googleSignIn,emailSignInCode,verifySignInCode,createProductAccount,verifyAcademyMembership,academyFamilyDestination} from "@/lib/platform/auth-client";
 import {resolveAuthDestination,safeAuthNext} from "@/lib/platform/auth-routing";
 import type {DeploymentConfig} from "@/lib/platform/deployment";
 
@@ -33,6 +33,7 @@ function LoginContent(){
    const config=deployment??await loadAuthDeployment();
    const access=await loadSignedInAccess(config);
    if(academySlug && !(await verifyAcademyMembership(academySlug))){setError("This account is not linked to the selected academy. Ask your academy administrator for an invitation.");return;}
+   if(academySlug){const familyPath=await academyFamilyDestination(academySlug);if(familyPath){router.replace(familyPath);return;}}
    const destination=resolveAuthDestination(config,access,requested);
    if(destination.denied){setError(destination.denied);return;}
    router.replace(destination.path);
