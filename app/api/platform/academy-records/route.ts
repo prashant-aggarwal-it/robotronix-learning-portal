@@ -13,9 +13,20 @@ async function operation(request:NextRequest,org:string,kind:string,action:strin
  if((action==="get"||action==="update")&&(!recordId||!uuid.test(recordId)))
    throw new SaaSAccessError(400,"Valid record ID required");
  const user=await requireAuthorizedTenantRole(readBearerToken(request.headers.get("authorization")),org,"academy",["owner","admin"]);
+ const scopedData={...data};
+ if(kind==="courses"&&action==="create"){
+  const slug=typeof data.slug==="string"?data.slug.trim().toLowerCase():"";
+  const code=typeof data.code==="string"?data.code.trim().toUpperCase():"";
+  if(!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)||slug.length>80||!/^[A-Z0-9_]+$/.test(code)||code.length>64)
+   throw new SaaSAccessError(400,"Invalid course slug or code");
+  // The legacy courses table uses globally unique identifiers. Scope new SaaS
+  // identifiers to their authenticated organization without changing the schema.
+  scopedData.slug=user.organization.slug+"-"+slug;
+  scopedData.code=user.organization.slug.toUpperCase().replace(/-/g,"_")+"_"+code;
+ }
  const {data:result,error}=await db().rpc("saas_academy_v1",{
   p_actor_id:user.userId,p_organization_id:user.organization.id,
-  p_kind:kind,p_action:action,p_record_id:recordId,p_data:data
+  p_kind:kind,p_action:action,p_record_id:recordId,p_data:scopedData
  });
  if(error)throw new SaaSAccessError(error.code==="42501"?403:error.code==="23505"?409:error.code==="22023"?400:503,
    error.code==="23505"?"Record conflicts with an existing record":error.code==="42501"?"Not authorized for this Academy":error.code==="22023"?"Invalid record details":"Academy operation failed");
@@ -31,7 +42,8 @@ export async function POST(request:NextRequest){
    throw new SaaSAccessError(415,"JSON required");
   const input=await request.text();
   if(input.length>15000)throw new SaaSAccessError(413,"Request too large");
-  const body=JSON.parse(input) as {organizationId?:unknown;kind?:unknown;action?:unknown;recordId?:unknown;data?:unknown};
+  let body: {organizationId?:unknown;kind?:unknown;action?:unknown;recordId?:unknown;data?:unknown};
+  try{body=JSON.parse(input);}catch{throw new SaaSAccessError(400,"Invalid JSON body");}
   if(!body||typeof body!=="object"||Array.isArray(body)||!["create","update"].includes(String(body.action)))
    throw new SaaSAccessError(400,"Invalid action");
   const data=body.data;
