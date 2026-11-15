@@ -56,24 +56,52 @@ export default function OrganizationOnboarding(){
   finally{setBusy(false);}
  }
  const normalize=(value:string)=>value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,63);
- return <main className="authPage"><section className="authCard">
-  <Link href="/" className="authBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
-  <div className="formStepHead"><span>ORGANIZATION SETUP</span><h1>Set up your academy</h1><p>Choose your academy name and a unique URL identifier. Your account will be its first owner.</p></div>
-  {status==="checking"&&<p role="status">Checking your account access…</p>}
-  {status==="error"&&<div className="errorBanner" role="alert">{message}</div>}
-  {status==="ready"&&<form className="formStack" onSubmit={create}>
-   <label>Academy or organization name<input className="input" required minLength={2} maxLength={160} value={name} disabled={busy} placeholder="Bright Minds Academy" onChange={e=>{setName(e.target.value);if(!changedSlug)setSlug(normalize(e.target.value));}}/></label>
-   <label>Academy URL identifier<input className="input" required minLength={3} maxLength={63} pattern="[a-z0-9]+(-[a-z0-9]+)*" title="Use lowercase letters, digits and single hyphens" value={slug} disabled={busy} placeholder="bright-minds" onChange={e=>{setChangedSlug(true);setSlug(e.target.value.toLowerCase());}}/></label>
-   <p className="fieldHint">Your academy identifier: <strong>{slug||"your-academy"}</strong>. Academy-specific public URLs and branding will be enabled in a later phase.</p>
-   {message&&<div className="errorBanner" role="alert">{message}</div>}
-   <button className="button fullButton" disabled={busy||name.trim().length<2||slug.length<3}>{busy?"Creating your academy…":"Create organization"}</button>
-  </form>}
-  {status==="owned"&&<div className="infoBanner" role="status"><strong>Your organization already exists.</strong><p>Academy identifier: <strong>{created}</strong>. <Link href="/onboarding/products">Continue to product selection →</Link></p></div>}
-  {status==="done"&&<div className="infoBanner" role="status">
-   <strong>Organization created successfully.</strong>
-   <p>Academy identifier: <strong>{created}</strong>. Your owner membership is active. <Link href="/onboarding/products">Continue to product selection →</Link></p>
-   <p>No CRM, Academy or Tasks workspace has been created as part of this step.</p>
-  </div>}
-  <p style={{marginTop:22}}><Link href="/">Return to homepage</Link></p>
- </section></main>;
+ return <main className="orgSetupPage">
+ <style>{`
+ .orgSetupPage{min-height:100dvh;display:grid;place-items:center;padding:20px 24px;background:radial-gradient(ellipse at 12% 17%,#eadfff,transparent 45%),radial-gradient(ellipse at 90% 88%,#ffe0ef,transparent 46%),linear-gradient(135deg,#fffaff,#f7f8ff);color:#211b45;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+ .orgSetupPage *{box-sizing:border-box}
+ .orgSetupShell{width:min(1060px,100%);display:grid;grid-template-columns:minmax(0,.84fr) minmax(0,1.16fr);border:1px solid #e7def3;background:white;border-radius:28px;overflow:hidden;box-shadow:0 28px 80px #51328b20}
+ .orgSetupAside{padding:38px;background:radial-gradient(circle at 90% 5%,#e84fb85e,transparent 37%),radial-gradient(circle at 6% 96%,#23c6cb65,transparent 36%),linear-gradient(145deg,#352060,#703dc4 65%,#aa3c99);color:white;display:flex;flex-direction:column;justify-content:space-between;gap:26px}
+ .orgSetupAside small{color:#aef2ec;font-size:11px;letter-spacing:.16em;font-weight:850}
+ .orgSetupAside h2{font-size:clamp(28px,3vw,39px);letter-spacing:-.04em;line-height:1.17;margin:18px 0}
+ .orgSetupAside p{font-size:14px;color:#f2e9ff;line-height:1.65}
+ .orgSetupPoints{display:grid;gap:12px}.orgSetupPoints span{display:flex;gap:11px;align-items:center;font-size:13px;font-weight:700}
+ .orgSetupPoints b{display:grid;place-items:center;width:32px;height:32px;border:1px solid #ffffff60;border-radius:10px;background:#ffffff1d}
+ .orgSetupForm{padding:34px clamp(26px,4vw,51px);min-width:0}
+ .orgSetupBrand{display:inline-block;margin-bottom:24px}.orgSetupBrand img{display:block;width:245px;max-width:100%;height:auto}
+ .orgSetupSteps{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:25px}.orgSetupSteps span{font-size:11px;font-weight:750;color:#77728f;background:#faf8fd;border:1px solid #e9e1f2;padding:7px 10px;border-radius:999px}.orgSetupSteps span:nth-child(2){color:#6532b6;background:#f1e8ff;border-color:#d7bbf4}
+ .orgSetupForm h1{font-size:clamp(29px,3vw,36px);letter-spacing:-.045em;line-height:1.15;margin:0 0 10px}
+ .orgSetupIntro{font-size:14px;line-height:1.6;color:#6d738b;margin:0 0 25px}
+ .orgSetupFields{display:grid;gap:19px}.orgSetupFields label{display:grid;gap:8px;font-size:13px;color:#303451;font-weight:750}
+ .orgSetupFields input{width:100%;border:1px solid #dcd9ed;border-radius:12px;padding:13px 15px;background:white;color:#252544;font-size:15px;outline-offset:3px}
+ .orgSetupFields input:focus{border-color:#8850d6;outline:2px solid #e9dcfa}
+ .orgSetupHint{font-size:12px;line-height:1.55;color:#78809a;margin:-7px 0 0}.orgSetupHint strong{color:#5d36ab}
+ .orgSetupSubmit,.orgSetupContinue{display:inline-flex;justify-content:center;align-items:center;border:0;border-radius:12px;padding:15px 21px;background:linear-gradient(100deg,#703bd2,#cd349f);color:white;font-size:14px;font-weight:800;text-decoration:none;box-shadow:0 10px 23px #703bd230}
+ .orgSetupSubmit{width:100%;cursor:pointer}.orgSetupSubmit:disabled{opacity:.55;cursor:not-allowed}
+ .orgSetupMessage{background:#f6efff;border:1px solid #d6c4f0;color:#573097;padding:18px;border-radius:14px;font-size:14px;line-height:1.6}.orgSetupMessage p{margin:10px 0}.orgSetupMessage a{color:#5b2dac;font-weight:750}
+ .orgSetupError{background:#fff0f3;border:1px solid #f1c4d2;color:#9c2346;padding:14px;border-radius:12px;margin:12px 0}
+ .orgSetupBottom{font-size:13px;text-align:center;margin:22px 0 0}.orgSetupBottom a{color:#6534ba;text-decoration:none;font-weight:700}
+ @media(max-width:790px){.orgSetupShell{grid-template-columns:1fr;max-width:590px}.orgSetupAside{padding:26px 30px;gap:8px}.orgSetupAside h2{font-size:26px;margin:8px 0}.orgSetupPoints{display:none}.orgSetupForm{padding:27px}.orgSetupPage{padding:16px}}
+ @media(max-width:420px){.orgSetupForm{padding:23px}.orgSetupSteps span{font-size:10px;padding:6px 8px}}
+ `}</style>
+ <div className="orgSetupShell">
+  <aside className="orgSetupAside"><div><small>STEP 2 · YOUR ORGANIZATION</small><h2>Give your learning space its identity.</h2><p>Whether you run an academy, school, training center or upskilling program, start with the name your learners know.</p></div><div className="orgSetupPoints"><span><b>01</b> Choose your organization name</span><span><b>02</b> Create a unique URL identifier</span><span><b>03</b> Choose the tools you need next</span></div></aside>
+  <section className="orgSetupForm">
+   <Link href="/" className="orgSetupBrand" aria-label="Robotronix home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
+   <div className="orgSetupSteps" aria-label="Setup journey"><span>1 · Account</span><span>2 · Organization</span><span>3 · Applications</span><span>4 · Workspace</span></div>
+   <h1>Set up your organization</h1><p className="orgSetupIntro">Add your organization's name and choose its unique link. You'll be its first owner and can configure your applications next.</p>
+   {status==="checking"&&<p role="status">Checking your account access…</p>}
+   {status==="error"&&<div className="orgSetupError" role="alert">{message}</div>}
+   {status==="ready"&&<form className="orgSetupFields" onSubmit={create}>
+    <label htmlFor="org-name">Organization name<input id="org-name" required minLength={2} maxLength={160} value={name} disabled={busy} placeholder="e.g. Bright Minds Learning" onChange={e=>{setName(e.target.value);if(!changedSlug)setSlug(normalize(e.target.value));}}/></label>
+    <label htmlFor="org-slug">Unique URL identifier<input id="org-slug" required minLength={3} maxLength={63} pattern="[a-z0-9]+(-[a-z0-9]+)*" title="Use lowercase letters, digits and single hyphens" value={slug} disabled={busy} placeholder="bright-minds-learning" onChange={e=>{setChangedSlug(true);setSlug(e.target.value.toLowerCase());}}/></label>
+    <p className="orgSetupHint">Your identifier: <strong>{slug||"your-organization"}</strong>. This forms part of your organization-specific URL and can be branded after setup.</p>
+    {message&&<div className="orgSetupError" role="alert">{message}</div>}
+    <button className="orgSetupSubmit" disabled={busy||name.trim().length<2||slug.length<3}>{busy?"Creating organization…":"Create organization & continue →"}</button>
+   </form>}
+   {(status==="owned"||status==="done")&&<div className="orgSetupMessage" role="status"><strong>{status==="owned"?"Your organization already exists.":"Organization created successfully!"}</strong><p>Identifier: <strong>{created}</strong>. {status==="done"?"Your owner access is active. Choose which applications to enable next.":"Continue setting up the applications for your organization."}</p><Link className="orgSetupContinue" href="/onboarding/products">Continue to applications →</Link></div>}
+   <p className="orgSetupBottom"><Link href="/">Back to homepage</Link></p>
+  </section>
+ </div>
+ </main>;
 }
