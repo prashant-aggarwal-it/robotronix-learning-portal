@@ -54,3 +54,5 @@ export default function SignupPage(){
   <p style={{textAlign:"center",marginTop:20}}>Already have an account? <Link href="/login">Sign in</Link></p>
   <p style={{textAlign:"center",fontSize:13,marginTop:16}}><Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link></p>
  </section></main>;
+
+}
