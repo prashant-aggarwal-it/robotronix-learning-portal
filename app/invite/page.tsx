@@ -3,9 +3,11 @@ import Link from "next/link";
 import {Suspense,useEffect,useState} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {preserveInvitation,clearInvitation} from "@/lib/platform/pending-invitation";
 function InvitationContent(){
  const query=useSearchParams(),router=useRouter();
  const token=query.get("token")||"";
+ useEffect(()=>{if(/^[a-f0-9]{64}$/.test(token))preserveInvitation("/invite?token="+token);},[token]);
  const [status,setStatus]=useState("Verify your email and sign in to accept this invitation.");
  const [busy,setBusy]=useState(false);
  const [signedIn,setSignedIn]=useState(false);
@@ -14,11 +16,11 @@ function InvitationContent(){
   if(busy)return;setBusy(true);setStatus("");
   try{
    const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
-   if(!session){setStatus("Sign in, then reopen the invitation link to accept it.");return;}
+   if(!session){setStatus("Sign in to continue with this invitation.");return;}
    const r=await fetch("/api/platform/invitations/accept",{method:"POST",headers:{"content-type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({token})});
    const data=await r.json();if(!r.ok)throw Error(data.error||"Invitation rejected");
    setStatus("Invitation accepted. Opening your organization workspace.");
-   router.replace("/workspace");
+   clearInvitation();router.replace("/workspace");
   }catch(e){setStatus(e instanceof Error?e.message:"Unable to accept this invitation.");}
   finally{setBusy(false);}
  }
