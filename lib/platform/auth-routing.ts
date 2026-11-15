@@ -35,6 +35,14 @@ export function resolveAuthDestination(
  source:"login"|"callback"="login"
 ):AuthDestination {
  const next=safeAuthNext(requested,config);
+ // Combined SaaS customers without any product access start organization setup.
+ // Never interpret a requested module URL as proof of membership.
+ if(!config.legacyDefault && config.mode==="combined" &&
+    access.portal?.state!=="active" && access.crmWorkspace!==true && access.tasks!=="active"){
+   if(access.portal?.state==="disabled" || access.tasks==="suspended")
+     return {path:"",denied:"Your account access is disabled or suspended. Contact your organization administrator."};
+   return {path:"/onboarding/organization"};
+ }
  const portalEnabled=config.products.includes("portal");
  const tasksEnabled=config.products.includes("tasks");
  const crmEnabled=config.products.includes("crm");
