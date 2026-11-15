@@ -76,10 +76,16 @@ export async function loadSignedInAccess(deployment:DeploymentConfig):Promise<Au
  const header={Authorization:"Bearer "+session.access_token};
  // SaaS organization membership comes from an authenticated server-enforced RPC.
  let saasWorkspace=false;
+ let saasConfigured=false;
  if(!deployment.legacyDefault && deployment.mode==="combined"){
   const {data,error}=await supabase.rpc("saas_my_workspaces");
   if(error)throw new Error("Workspace access verification unavailable.");
   saasWorkspace=Array.isArray(data)&&data.length>0;
+  if(saasWorkspace){
+   const {data:setup,error:setupError}=await supabase.rpc("saas_my_module_setup");
+   if(setupError)throw new Error("Organization configuration lookup unavailable.");
+   saasConfigured=Boolean(setup?.configured)||!setup;
+  }
  }
 
  const portal=deployment.products.includes("portal")?
@@ -91,7 +97,7 @@ export async function loadSignedInAccess(deployment:DeploymentConfig):Promise<Au
   if(portal?.state==="active"||portal?.state==="disabled")return {portal};
   const tasks=await taskAccess(header,true).catch(()=>"unlinked" as TaskAccess);
   const crmWorkspace=tasks==="active"?false:await crmAccess(header).catch(()=>false);
-  return {portal,tasks,crmWorkspace,saasWorkspace};
+  return {portal,tasks,crmWorkspace,saasWorkspace,saasConfigured};
  }
 
  const [tasks,crmWorkspace]=await Promise.all([
