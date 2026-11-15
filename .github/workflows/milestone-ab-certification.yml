@@ -1,0 +1,42 @@
+name: Milestone A-B development certification
+on:
+  push:
+    branches:
+      - feature/education-suite-phase3g
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: milestone-ab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile-and-regress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Next.js build (no deployment)
+        run: npm run build
+      - name: Pure-code security and release checks
+        run: |
+          npm run check:structure
+          npm run check:security
+          npm run check:connect-hardening
+      - name: Core application unit tests
+        run: |
+          npm run test:tasks
+          npm run test:connect-business
