@@ -10,8 +10,7 @@
     "**/database/crm": true,
     "**/database/tasks": true,
     "**/database/saas": true,
-    "**/database/shared": true,
-    "**/database/generated": true
+    "**/database/shared": true
   },
   "search.exclude": {
     "**/database/connect": true,
