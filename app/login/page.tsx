@@ -6,6 +6,7 @@ import {Suspense} from "react";
 import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSignIn,googleSignIn,emailSignInCode,verifySignInCode,createProductAccount,verifyAcademyMembership,academyFamilyDestination} from "@/lib/platform/auth-client";
 import {resolveAuthDestination,safeAuthNext} from "@/lib/platform/auth-routing";
 import type {DeploymentConfig} from "@/lib/platform/deployment";
+import {consumeInvitation} from "@/lib/platform/pending-invitation";
 
 export default function Login(){return <Suspense fallback={<main className="authPage"><section className="authCard">Loading sign in…</section></main>}><LoginContent/></Suspense>}
 function LoginContent(){
@@ -32,6 +33,7 @@ function LoginContent(){
   try{
    const config=deployment??await loadAuthDeployment();
    const access=await loadSignedInAccess(config);
+   const pending=consumeInvitation();if(pending){router.replace(pending);return;}
    if(academySlug && !(await verifyAcademyMembership(academySlug))){setError("This account is not linked to the selected academy. Ask your academy administrator for an invitation.");return;}
    if(academySlug){const familyPath=await academyFamilyDestination(academySlug);if(familyPath){router.replace(familyPath);return;}}
    const destination=resolveAuthDestination(config,access,requested);
