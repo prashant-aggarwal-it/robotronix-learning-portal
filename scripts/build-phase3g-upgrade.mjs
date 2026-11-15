@@ -5,7 +5,8 @@ const files=[
  "53_phase3g_family_payment_tenant_scope.sql",
  "54_phase3g_privileged_schedule_tenant_scope.sql",
  "55_phase3g_cohort_schedule_tenant_scope.sql",
- "56_phase3g_class_enrollment_rpc_tenant_scope.sql"
+ "56_phase3g_class_enrollment_rpc_tenant_scope.sql",
+ "57_phase3g_trainer_finance_communication_scope.sql"
 ];
 const parts=files.map((file,i)=>{
  const body=fs.readFileSync(path.join("database/saas",file),"utf8").trim();
