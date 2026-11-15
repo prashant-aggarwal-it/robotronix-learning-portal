@@ -54,7 +54,7 @@ export default function WorkspacePage(){
      {card.href?<Link href={card.href} style={{fontWeight:700,color:"#4537a5"}}>{card.detail} →</Link>:<p style={{color:"#7a6070"}}>{card.detail}</p>}
     </article>)}
    </div>
-   {org.role==="owner"&&<p style={{marginTop:32}}><Link href="/workspace/invitations">Invite team members</Link> · <Link href="/onboarding/products">Product configuration</Link>{org.modules.includes("academy")&&<> · <Link href="/onboarding/branding">Academy branding</Link> · <Link href={"/"+org.slug}>Academy entry page</Link></>}</p>}
+   {org.role==="owner"&&<p style={{marginTop:32}}><Link href="/workspace/invitations">Invite team members</Link> · <Link href="/workspace/families">Invite families</Link> · <Link href="/onboarding/products">Product configuration</Link>{org.modules.includes("academy")&&<> · <Link href="/onboarding/branding">Academy branding</Link> · <Link href={"/"+org.slug}>Academy entry page</Link></>}</p>}
    <p style={{fontSize:13,color:"#66738c",marginTop:18}}>Choosing an organization here filters this launcher; linked application routes must enforce tenant membership independently. For accounts in multiple organizations, module links are disabled until each application can receive and verify the selected organization.</p>
    </>}
   </section>
