@@ -115,3 +115,12 @@ export async function verifyAcademyMembership(slug:string):Promise<boolean>{
  return data.some((org:{slug?:string;modules?:string[]})=>
   org.slug===slug && Array.isArray(org.modules) && org.modules.includes("academy"));
 }
+
+/** Existing tenant-linked families enter their academy-specific view after sign-in. */
+export async function academyFamilyDestination(slug:string):Promise<string|null>{
+ if(!/^[a-z0-9][a-z0-9-]{2,62}$/.test(slug))return null;
+ const {data,error}=await client().rpc("saas_my_academy_family");
+ if(error||!Array.isArray(data))return null;
+ return data.some((row:{slug?:string})=>row.slug===slug)
+  ?"/"+slug+"/family":null;
+}
