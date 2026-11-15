@@ -1,4 +1,6 @@
--- Phase 3G: restrict privileged scheduling and trainer reassignment to the selected SaaS Academy tenant.\nBEGIN;\nCREATE OR REPLACE FUNCTION public.generate_enrollment_schedule_v2(p_enrollment_id uuid, p_horizon text DEFAULT 'full'::text, p_weeks integer DEFAULT NULL::integer)
+-- Phase 3G: restrict privileged scheduling and trainer reassignment to the selected SaaS Academy tenant.
+BEGIN;
+CREATE OR REPLACE FUNCTION public.generate_enrollment_schedule_v2(p_enrollment_id uuid, p_horizon text DEFAULT 'full'::text, p_weeks integer DEFAULT NULL::integer)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
