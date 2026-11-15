@@ -61,11 +61,11 @@ if(JSON.stringify(qaSql)!==JSON.stringify(expectedQaSql))throw new Error('Unexpe
 for(const file of ['database/portal/verify.sql','database/portal/qa/01_profiles.sql','database/portal/qa/02_data.sql','database/portal/qa/03_verify.sql']){
   if(!fs.existsSync(path.join(root,file)))throw new Error(`Missing required release database file: ${file}`);
 }
-// Consolidated releases must never require separate post-install SQL patches.
+// Consolidated releases must never require separate post-install SQL patches.\n// Supabase milestone SQL is an explicit source for the combined Education Suite builder,\n// not an operator-run patch directory. Keep exact inventory validation in that builder.
 const verificationFiles=fs.readdirSync(path.join(root,'database/portal'));
 const unexpectedVerificationSql=verificationFiles.filter(name=>name.endsWith('.sql') && !['verify.sql','first_admin_example.sql'].includes(name));
 if(unexpectedVerificationSql.length)throw new Error('Unexpected SQL at portal root: '+unexpectedVerificationSql.join(', '));
-for(const directory of ['database/04_hotfixes','database/04_migrations','database/05_features','database/migrations','supabase/migrations']){
+for(const directory of ['database/04_hotfixes','database/04_migrations','database/05_features','database/migrations']){
  if(fs.existsSync(path.join(root,directory)))throw new Error('Unexpected active incremental patch folder: '+directory);
 }
 for(const name of fs.readdirSync(path.join(root,'database/portal'))){
