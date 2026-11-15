@@ -20,11 +20,12 @@ export default function AuthCallbackPage(){
     for(let i=0;!session&&i<12;i++){await sleep(250);session=(await supabase.auth.getSession()).data.session;}
     if(cancelled)return;
     if(!session?.user){setMessage("Google sign-in completed, but your session could not be restored. Please try again.");await sleep(1400);router.replace("/login");return;}
-    const deployment=await loadAuthDeployment();
-    const access=await loadSignedInAccess(deployment);
     if(cancelled)return;
     const invitation=consumeInvitation();
     if(invitation){sessionStorage.removeItem("robotronix:post-auth-next");sessionStorage.removeItem("robotronix:post-auth-academy");router.replace(invitation);return;}
+    const deployment=await loadAuthDeployment();
+    const access=await loadSignedInAccess(deployment);
+    if(cancelled)return;
     const next=sessionStorage.getItem("robotronix:post-auth-next")||"";
     sessionStorage.removeItem("robotronix:post-auth-next");
     const academySlug=sessionStorage.getItem("robotronix:post-auth-academy")||"";
