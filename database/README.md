@@ -30,7 +30,6 @@ This folder contains the canonical SQL for Robotronix Education Suite.
 - `shared/`: common checks, bridges and reset scripts.
 - `generated/`: build outputs, **not** hand-maintained SQL.
 - `platform/`: separate additive platform source. Not a standalone fresh installer.
-- `future/`: proposed independent modules, **not** part of the current install.
 - `audit/`, `04_existing_db_migrations/`, `legacy/`: historical checks/migrations. Do not execute for a fresh install.
 
 **Important:** The new Education Suite installer is presently only an *ordered concatenation* of existing SQL. It is not certified for empty Supabase installation. Further refactoring, real DEV installation and security verification are required before it is marked executable. Do not run on PROD.
