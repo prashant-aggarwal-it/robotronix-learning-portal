@@ -10,6 +10,7 @@ export type AuthAccess = {
   tasks?:TaskAccess;
   crmWorkspace?:boolean;
   saasWorkspace?:boolean;
+  saasConfigured?:boolean;
 };
 export type AuthDestination = {path:string;denied?:string};
 
@@ -36,10 +37,13 @@ export function resolveAuthDestination(
  source:"login"|"callback"="login"
 ):AuthDestination {
  const next=safeAuthNext(requested,config);
- if(!config.legacyDefault && config.mode==="combined" && access.saasWorkspace && !next)return {path:"/workspace"};
+ if(!config.legacyDefault && config.mode==="combined" && access.saasWorkspace){
+   if(!access.saasConfigured)return {path:"/onboarding/products"};
+   if(!next)return {path:"/workspace"};
+ }
  // Combined SaaS customers without any product access start organization setup.
  // Never interpret a requested module URL as proof of membership.
- if(!config.legacyDefault && config.mode==="combined" &&
+ if(!config.legacyDefault && config.mode==="combined" && !access.saasWorkspace &&
     access.portal?.state!=="active" && access.crmWorkspace!==true && access.tasks!=="active"){
    if(access.portal?.state==="disabled" || access.tasks==="suspended")
      return {path:"",denied:"Your account access is disabled or suspended. Contact your organization administrator."};
