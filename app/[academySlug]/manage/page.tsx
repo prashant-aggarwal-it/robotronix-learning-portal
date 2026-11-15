@@ -39,6 +39,7 @@ export default function AcademyManagement(){
    <section style={{background:"#fff",padding:26,borderRadius:14,marginTop:25}}>
     <h2>Manage your academy</h2>
     <ul style={{lineHeight:2.5}}>
+     <li><Link href={"/"+academySlug+"/manage/records"}>Manage students, trainers, courses and enrollments</Link></li>
      <li><Link href="/workspace/invitations">Invite staff and trainers</Link></li>
      <li><Link href="/workspace/families">Invite parents and students</Link></li>
      <li><Link href="/workspace/trainers">Link trainer logins to Academy trainer records</Link></li>
