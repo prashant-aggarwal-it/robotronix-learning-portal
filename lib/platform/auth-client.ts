@@ -124,3 +124,16 @@ export async function academyFamilyDestination(slug:string):Promise<string|null>
  return data.some((row:{slug?:string})=>row.slug===slug)
   ?"/"+slug+"/family":null;
 }
+
+/** Route a branded login into its verified tenant, not a legacy global role page. */
+export async function academyScopedDestination(slug:string):Promise<string|null>{
+ if(!/^[a-z0-9][a-z0-9-]{2,62}$/.test(slug))return null;
+ const {data,error}=await client().rpc("saas_my_workspaces");
+ if(error||!Array.isArray(data))throw new Error("Academy authorization unavailable");
+ const org=data.find((x:{slug?:string;modules?:string[]})=>
+   x.slug===slug&&Array.isArray(x.modules)&&x.modules.includes("academy"));
+ if(!org)return null;
+ if(org.role==="owner"||org.role==="admin")return "/"+slug+"/manage";
+ if(org.role==="trainer")return "/"+slug+"/trainer";
+ return academyFamilyDestination(slug);
+}
