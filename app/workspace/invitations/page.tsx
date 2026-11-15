@@ -79,6 +79,7 @@ export default function TeamInvitations(){
  <ul>{members.map(m=><li key={m.id} style={{marginBottom:16}}>
  <strong>{m.email||m.id}</strong> · {m.role_key} · {m.status}
  {m.role_key!=="owner"&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>
+ <label>Role <select className="input" disabled={busy} value={m.role_key} onChange={e=>void manage(m,e.target.value,m.status)}><option value="admin">Administrator</option><option value="staff">Staff</option><option value="trainer">Trainer</option><option value="member">Member</option>{orgs.find(o=>o.id===orgId)?.role==="owner"&&<option value="owner">Owner</option>}</select></label>
  <button type="button" className="button ghost" disabled={busy||m.status==="suspended"} onClick={()=>void manage(m,m.role_key,"suspended")}>Suspend</button>
  <button type="button" className="button ghost" disabled={busy||m.status==="active"} onClick={()=>void manage(m,m.role_key,"active")}>Activate</button>
  <button type="button" className="button ghost" disabled={busy||m.status==="removed"} onClick={()=>void manage(m,m.role_key,"removed")}>Remove</button>
