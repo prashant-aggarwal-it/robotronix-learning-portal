@@ -106,3 +106,12 @@ export async function loadSignedInAccess(deployment:DeploymentConfig):Promise<Au
  ]);
  return {portal,tasks,crmWorkspace,saasWorkspace};
 }
+
+/** A branded URL is a selector, never proof of authorization. */
+export async function verifyAcademyMembership(slug:string):Promise<boolean>{
+ if(!/^[a-z0-9][a-z0-9-]{2,62}$/.test(slug))return false;
+ const {data,error}=await client().rpc("saas_my_workspaces");
+ if(error||!Array.isArray(data))return false;
+ return data.some((org:{slug?:string;modules?:string[]})=>
+  org.slug===slug && Array.isArray(org.modules) && org.modules.includes("academy"));
+}
