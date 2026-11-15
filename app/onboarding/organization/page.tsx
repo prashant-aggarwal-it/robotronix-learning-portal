@@ -68,10 +68,10 @@ export default function OrganizationOnboarding(){
    {message&&<div className="errorBanner" role="alert">{message}</div>}
    <button className="button fullButton" disabled={busy||name.trim().length<2||slug.length<3}>{busy?"Creating your academy…":"Create organization"}</button>
   </form>}
-  {status==="owned"&&<div className="infoBanner" role="status"><strong>Your organization already exists.</strong><p>Academy identifier: <strong>{created}</strong>. Product configuration will be available in Milestone A, Phase 4.</p></div>}
+  {status==="owned"&&<div className="infoBanner" role="status"><strong>Your organization already exists.</strong><p>Academy identifier: <strong>{created}</strong>. <Link href="/onboarding/products">Continue to product selection →</Link></p></div>}
   {status==="done"&&<div className="infoBanner" role="status">
    <strong>Organization created successfully.</strong>
-   <p>Academy identifier: <strong>{created}</strong>. Your owner membership is active. Product selection and workspace provisioning are next in Milestone A, Phase 4.</p>
+   <p>Academy identifier: <strong>{created}</strong>. Your owner membership is active. <Link href="/onboarding/products">Continue to product selection →</Link></p>
    <p>No CRM, Academy or Tasks workspace has been created as part of this step.</p>
   </div>}
   <p style={{marginTop:22}}><Link href="/">Return to homepage</Link></p>
