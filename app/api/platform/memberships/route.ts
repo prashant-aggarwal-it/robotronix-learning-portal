@@ -13,12 +13,11 @@ async function authorize(request:NextRequest,orgId:string){
 }
 export async function GET(request:NextRequest){
  try{
-  const {org}=await authorize(request,request.nextUrl.searchParams.get("organizationId")||"");
+  const {org,userId}=await authorize(request,request.nextUrl.searchParams.get("organizationId")||"");
   const db=admin();
-  const {data,error}=await db.schema("saas").from("memberships")
-   .select("id,user_id,role_key,status,created_at").eq("organization_id",org.id).order("created_at",{ascending:true});
+  const {data,error}=await db.rpc("saas_list_members_v1",{p_actor_id:userId,p_organization_id:org.id});
   if(error)throw new SaaSAccessError(503,"Members unavailable");
-  const members=await Promise.all((data??[]).map(async m=>{
+  const members=await Promise.all((data??[]).map(async (m:{id:string;user_id:string;role_key:string;status:string;created_at:string})=>{
    const {data:user}=await db.auth.admin.getUserById(m.user_id);
    return {...m,email:user?.user?.email||null};
   }));
