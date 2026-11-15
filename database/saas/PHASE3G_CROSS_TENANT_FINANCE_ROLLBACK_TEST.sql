@@ -1,7 +1,7 @@
 -- Phase 3G rollback-only cross-tenant family payment regression. DEV/staging only.
 BEGIN;
 INSERT INTO public.student_fee_packages(id,enrollment_id,name,scheme,currency,amount,start_date,end_date,installments)
-SELECT gen_random_uuid(),enrollment_id,'PHASE3G-ROLLBACK-TEST','one_time','INR',100,current_date,current_date+30,
+SELECT gen_random_uuid(),enrollment_id,'PHASE3G-ROLLBACK-TEST','Full Course','INR',100,current_date,current_date+30,
  jsonb_build_array(jsonb_build_object('amount',100,'due',current_date::text))
 FROM saas.academy_enrollments LIMIT 2;
 SELECT set_config('phase3g.actor',m.user_id::text,true),set_config('phase3g.organization',m.organization_id::text,true),
