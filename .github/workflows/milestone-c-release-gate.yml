@@ -27,6 +27,8 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci --no-audit --no-fund
+      - name: SaaS route syntax regression
+        run: node --test scripts/test-milestone-abc-syntax.test.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Build (never deploy)
