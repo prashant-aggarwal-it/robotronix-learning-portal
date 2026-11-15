@@ -27,9 +27,6 @@ begin
   raise exception 'Selected Academy organization admin access required' using errcode='42501';
  end if;
  if p_horizon not in ('full','weeks','manual') then raise exception 'Invalid scheduling horizon'; end if;
- if p_horizon='manual' then return jsonb_build_object('created',0,'mode','manual'); end if;
- if p_horizon='weeks' and (p_weeks is null or p_weeks<1 or p_weeks>104)
- then raise exception 'Weeks must be between 1 and 104'; end if;
  select * into v_en from public.enrollments where id=p_enrollment_id for update;
  if not found then raise exception 'Enrollment not found'; end if;
  if saas.has_organization_membership() and
@@ -39,6 +36,10 @@ begin
     or not saas.can_access_academy_record('trainers',v_en.trainer_id)) then
   raise exception 'Cross-organization enrollment operation denied' using errcode='42501';
  end if;
+
+ if p_horizon='manual' then return jsonb_build_object('created',0,'mode','manual'); end if;
+ if p_horizon='weeks' and (p_weeks is null or p_weeks<1 or p_weeks>104)
+ then raise exception 'Weeks must be between 1 and 104'; end if;
  if v_en.status <> 'active' then raise exception 'Only active enrollments can be scheduled'; end if;
  if v_en.enrollment_type <> 'one_to_one' then
    raise exception 'Group sessions must be generated at cohort level, not once per learner';
