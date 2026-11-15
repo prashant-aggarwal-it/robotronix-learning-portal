@@ -25,7 +25,11 @@ BEGIN
  BEGIN
  PERFORM public.record_family_payment_v1(current_setting('phase3g.foreign_parent')::uuid,'INR',100,current_date,'Cash','PHASE3G-TEST',
  jsonb_build_array(jsonb_build_object('package_id',current_setting('phase3g.foreign_package'),'amount',100)),'QA','DEV');
- EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true;
+ WHEN raise_exception THEN
+  IF SQLERRM = 'Package is not in the chosen family and currency' THEN denied:=true;
+  ELSE RAISE; END IF;
+ END;
  IF NOT denied THEN RAISE EXCEPTION 'Unauthorized cross-organization payment allocation was permitted'; END IF;
  SELECT count(*) INTO v_after FROM public.student_family_receipts;
  IF v_before<>v_after THEN RAISE EXCEPTION 'Receipt changed despite denied payment'; END IF;
