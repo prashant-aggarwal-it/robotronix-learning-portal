@@ -2,7 +2,7 @@
 import Link from "next/link";
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
-import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {getSupabaseBrowserClient,setAcademyBrowserOrganizationContext} from "@/lib/supabase/browser";
 import {loadAuthDeployment,loadSignedInAccess} from "@/lib/platform/auth-client";
 type Workspace={id:string;slug:string;name:string;role:string;modules:string[];crmAccess:boolean;tasksAccess:boolean};
 export default function WorkspacePage(){
@@ -13,6 +13,20 @@ export default function WorkspacePage(){
  const [familyOrgs,setFamilyOrgs]=useState<string[]>([]);
  const [status,setStatus]=useState<"loading"|"ready"|"error">("loading");
  const [message,setMessage]=useState("");
+ const [switching,setSwitching]=useState(false);
+ async function persistSelection(id:string,token:string){
+  const response=await fetch("/api/platform/organizations",{method:"POST",headers:{"content-type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({organizationId:id}),cache:"no-store"});
+  if(!response.ok)throw Error("Organization selection was rejected.");
+  setAcademyBrowserOrganizationContext(id);
+ }
+ async function selectOrganization(id:string){
+  if(!id)return;setSwitching(true);setMessage("");
+  try{const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+   if(!session)throw Error("Sign in first.");
+   await persistSelection(id,session.access_token);setCurrent(id);
+  }catch(e){setMessage(e instanceof Error?e.message:"Unable to select organization.");}
+  finally{setSwitching(false);}
+ }
  useEffect(()=>{let live=true;(async()=>{try{
   const client=getSupabaseBrowserClient();if(!client)throw Error("Authentication unavailable.");
   const {data:{session}}=await client.auth.getSession();
@@ -23,11 +37,17 @@ export default function WorkspacePage(){
   if(error)throw error;
   const rows=Array.isArray(data)?data as Workspace[]:[];
   if(!rows.length){router.replace("/onboarding/organization");return;}
+  const response=await fetch("/api/platform/organizations",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
+  if(!response.ok)throw Error("Organization selection unavailable.");
+  const selection=await response.json();
+  const suggested=rows.find(x=>x.id===selection.selectedOrganizationId)?.id|| (rows.length===1?rows[0].id:"");
+  if(suggested)await persistSelection(suggested,session.access_token);
+  else setAcademyBrowserOrganizationContext(null);
   const access=await loadSignedInAccess(config);
   const family=await client.rpc("saas_my_academy_family");
   if(family.error)throw family.error;
   const permittedFamilyOrgIds=Array.isArray(family.data)?family.data.map((x:{organizationId?:string})=>x.organizationId).filter(Boolean) as string[]:[];
-  if(live){setWorkspaces(rows);setCurrent(rows[0].id);setAcademyRole(access.portal?.state==="active"?(access.portal.role||""):"");setFamilyOrgs(permittedFamilyOrgIds);setStatus("ready");}
+  if(live){setWorkspaces(rows);setCurrent(suggested);setAcademyRole(access.portal?.state==="active"?(access.portal.role||""):"");setFamilyOrgs(permittedFamilyOrgIds);setStatus("ready");}
  }catch{if(live){setMessage("Your workspace could not be loaded. Please refresh or sign in again.");setStatus("error");}}})();
  return()=>{live=false};},[router]);
  const org=workspaces.find(x=>x.id===current);
@@ -48,10 +68,15 @@ export default function WorkspacePage(){
    <h1 style={{fontSize:"clamp(30px,4vw,44px)",margin:"12px 0"}}>Your workspace</h1>
    {status==="loading"&&<p role="status">Loading authorized organizations…</p>}
    {status==="error"&&<p role="alert">{message}</p>}
-   {org&&<><label htmlFor="saas-org-switch" style={{display:"block",margin:"24px 0 8px",fontWeight:700}}>Organization</label>
-   <select id="saas-org-switch" value={current} onChange={e=>setCurrent(e.target.value)} style={{padding:13,borderRadius:10,border:"1px solid #cdd5e6",maxWidth:420,width:"100%"}}>
+   {workspaces.length>0&&<><label htmlFor="saas-org-switch" style={{display:"block",margin:"24px 0 8px",fontWeight:700}}>Organization</label>
+   <select id="saas-org-switch" value={current} disabled={switching} onChange={e=>void selectOrganization(e.target.value)} style={{padding:13,borderRadius:10,border:"1px solid #cdd5e6",maxWidth:420,width:"100%"}}>
+    <option value="">Choose an organization</option>
     {workspaces.map(w=><option key={w.id} value={w.id}>{w.name}</option>)}
    </select>
+   {message&&<p role="alert">{message}</p>}
+   {!org&&<p>Select an organization to continue.</p>}
+   </>}
+   {org&&<>
    <p style={{color:"#586581",marginTop:10}}>You are a {org.role} of {org.name}. Only enabled products and verified workspace access are shown.</p>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))",gap:18,marginTop:30}}>
     {cards.map(card=><article key={card.id} style={{background:"#fff",border:"1px solid #dce3f1",borderRadius:18,padding:26}}>
@@ -60,7 +85,7 @@ export default function WorkspacePage(){
     </article>)}
    </div>
    {org.role==="owner"&&<p style={{marginTop:32}}><Link href="/workspace/invitations">Invite team members</Link> · <Link href="/workspace/families">Invite families</Link> · <Link href="/onboarding/products">Product configuration</Link>{org.modules.includes("academy")&&<> · <Link href="/onboarding/branding">Academy branding</Link> · <Link href={"/"+org.slug}>Academy entry page</Link></>}</p>}
-   <p style={{fontSize:13,color:"#66738c",marginTop:18}}>Choosing an organization here filters this launcher; linked application routes must enforce tenant membership independently. For accounts in multiple organizations, module links are disabled until each application can receive and verify the selected organization.</p>
+   <p style={{fontSize:13,color:"#66738c",marginTop:18}}>Organization selection is rechecked on the server and passed to tenant-aware Academy queries. CRM and Tasks retain their own independent membership checks. Cross-organization module launches remain limited until product-specific switching is verified.</p>
    </>}
   </section>
  </main>;
