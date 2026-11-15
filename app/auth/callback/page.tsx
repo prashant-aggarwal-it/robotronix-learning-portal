@@ -4,6 +4,7 @@ import {useRouter} from "next/navigation";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {loadAuthDeployment,loadSignedInAccess,verifyAcademyMembership,academyFamilyDestination} from "@/lib/platform/auth-client";
 import {resolveAuthDestination} from "@/lib/platform/auth-routing";
+import {consumeInvitation} from "@/lib/platform/pending-invitation";
 
 const sleep=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
 export default function AuthCallbackPage(){
@@ -22,6 +23,8 @@ export default function AuthCallbackPage(){
     const deployment=await loadAuthDeployment();
     const access=await loadSignedInAccess(deployment);
     if(cancelled)return;
+    const invitation=consumeInvitation();
+    if(invitation){sessionStorage.removeItem("robotronix:post-auth-next");sessionStorage.removeItem("robotronix:post-auth-academy");router.replace(invitation);return;}
     const next=sessionStorage.getItem("robotronix:post-auth-next")||"";
     sessionStorage.removeItem("robotronix:post-auth-next");
     const academySlug=sessionStorage.getItem("robotronix:post-auth-academy")||"";
