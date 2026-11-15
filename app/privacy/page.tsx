@@ -10,7 +10,7 @@ export const metadata:Metadata={
 
 export default function PrivacyPolicyPage(){
  return <main className={styles.page}>
-  <header className={styles.header}><Link href="/" aria-label="Robotronix Learning Portal home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix™"/></Link><Link href="/login">Portal sign in →</Link></header>
+  <header className={styles.header}><Link href="/" aria-label="Robotronix Learning Portal home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix™"/></Link><Link href="/login">Sign in →</Link></header>
   <div className={styles.container}>
    <div className={styles.hero}><p className={styles.eyebrow}>ROBOTRONIX CLASSROOM · LEGAL & PRIVACY</p><h1>Privacy Policy</h1><p>How Robotronix™ Tech Lab handles information when families, learners and trainers use our Learning Portal and Zoom-powered classes.</p><small>Last updated: 22 October 2026</small></div>
    <div className={styles.content}>
@@ -28,6 +28,6 @@ export default function PrivacyPolicyPage(){
      <section id="contact"><h2>10. Contact</h2><p>For privacy, access, correction, deletion or Zoom Classroom data enquiries, email <a href="mailto:info@robotronixstemlab.com">info@robotronixstemlab.com</a>.</p><p>Robotronix™ Tech Lab · Delhi, India</p></section>
     </article>
    </div>
-  </div><footer className={styles.footer}><span>© Robotronix™ Tech Lab</span><Link href="/terms">Terms of Use</Link><Link href="/support">Support</Link><Link href="/zoom-guide">Zoom Guide</Link><Link href="/">Learning Portal</Link></footer>
+  </div><footer className={styles.footer}><span>© Robotronix™ Tech Lab</span><Link href="/terms">Terms of Use</Link><Link href="/support">Support</Link><Link href="/zoom-guide">Zoom Guide</Link><Link href="/">Home</Link></footer>
  </main>;
 }
