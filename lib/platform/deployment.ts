@@ -87,6 +87,7 @@ export type RouteRequirement = ProductId | IntegrationId | "taskIntegrations" | 
 export function routeRequirement(pathname: string): RouteRequirement {
   const p = pathname.replace(/\/$/, "") || "/";
   if (p === "/" || p === "/suite" || p === "/login" || p === "/auth/callback" || p === "/join" ||
+      p === "/workspace" || p === "/signup" || p.startsWith("/onboarding/") ||
       p === "/privacy" || p === "/terms" || p === "/support" ||
       p === "/api/health" || p.startsWith("/api/locations/") ||
       p === "/api/platform/capabilities" || p === "/api/platform/my-products" ||
