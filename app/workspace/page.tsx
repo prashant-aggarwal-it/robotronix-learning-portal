@@ -10,6 +10,7 @@ export default function WorkspacePage(){
  const [workspaces,setWorkspaces]=useState<Workspace[]>([]);
  const [current,setCurrent]=useState("");
  const [academyRole,setAcademyRole]=useState("");
+ const [familyOrgs,setFamilyOrgs]=useState<string[]>([]);
  const [status,setStatus]=useState<"loading"|"ready"|"error">("loading");
  const [message,setMessage]=useState("");
  useEffect(()=>{let live=true;(async()=>{try{
@@ -23,13 +24,17 @@ export default function WorkspacePage(){
   const rows=Array.isArray(data)?data as Workspace[]:[];
   if(!rows.length){router.replace("/onboarding/organization");return;}
   const access=await loadSignedInAccess(config);
-  if(live){setWorkspaces(rows);setCurrent(rows[0].id);setAcademyRole(access.portal?.state==="active"?(access.portal.role||""):"");setStatus("ready");}
+  const family=await client.rpc("saas_my_academy_family");
+  if(family.error)throw family.error;
+  const permittedFamilyOrgIds=Array.isArray(family.data)?family.data.map((x:{organizationId?:string})=>x.organizationId).filter(Boolean) as string[]:[];
+  if(live){setWorkspaces(rows);setCurrent(rows[0].id);setAcademyRole(access.portal?.state==="active"?(access.portal.role||""):"");setFamilyOrgs(permittedFamilyOrgIds);setStatus("ready");}
  }catch{if(live){setMessage("Your workspace could not be loaded. Please refresh or sign in again.");setStatus("error");}}})();
  return()=>{live=false};},[router]);
  const org=workspaces.find(x=>x.id===current);
  const singleOrganization=workspaces.length===1;
+ const hasFamilyAccess=Boolean(org&&familyOrgs.includes(org.id));
  const cards=[
-  {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:singleOrganization&&academyRole?"/"+academyRole:null,icon:"🎓",detail:academyRole?"Open "+academyRole+" dashboard":"Academy role setup is pending"},
+  {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:hasFamilyAccess?"/"+org?.slug+"/family":singleOrganization&&academyRole?"/"+academyRole:null,icon:"🎓",detail:hasFamilyAccess?"Open family portal":academyRole?"Open "+academyRole+" dashboard":"Academy role setup is pending"},
   {id:"crm",name:"Connect CRM",description:"Enquiries, admissions and communications.",href:singleOrganization&&org?.crmAccess?"/connect":null,icon:"◈",detail:"Open Connect CRM"},
   {id:"tasks",name:"My Tasks",description:"Workspaces, priorities and team tasks.",href:singleOrganization&&org?.tasksAccess?"/tasks":null,icon:"✓",detail:"Open My Tasks"}
  ].filter(card=>org?.modules.includes(card.id));
