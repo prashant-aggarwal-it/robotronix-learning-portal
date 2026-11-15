@@ -65,8 +65,9 @@ export default function ProductSetup(){
   {setup?.configured&&<div className="infoBanner" role="status">
    <strong>{done?"Applications enabled successfully.":"Applications are already configured."}</strong>
    <p>Enabled: {setup.modules.join(", ")||"none"}.</p>
-   <p>Your organization record and supported CRM/Tasks workspaces are linked. Academy role activation and the unified app launcher are part of subsequent work; this does not grant unrelated global permissions.</p>
-   {setup.modules.includes("academy")&&<p><Link href="/onboarding/branding">Continue to academy branding →</Link></p>}
+   <p>Your organization record and supported CRM/Tasks workspaces are linked. Academy role activation remains separate; this does not grant unrelated global permissions.</p>
+   <p><Link href="/workspace">Open your workspace →</Link></p>
+   {setup.modules.includes("academy")&&<p><Link href="/onboarding/branding">Customize academy branding →</Link></p>}
   </div>}
   {error&&<div role="alert" className="errorBanner">{error}</div>}
   <p style={{marginTop:20}}><Link href="/">Return to homepage</Link></p>
