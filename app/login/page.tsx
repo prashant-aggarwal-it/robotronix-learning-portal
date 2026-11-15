@@ -32,8 +32,8 @@ function LoginContent(){
  async function finish(){
   try{
    const config=deployment??await loadAuthDeployment();
-   const access=await loadSignedInAccess(config);
    const pending=consumeInvitation();if(pending){router.replace(pending);return;}
+   const access=await loadSignedInAccess(config);
    if(academySlug && !(await academyScopedDestination(academySlug))){setError("This account is not linked to the selected academy. Ask your academy administrator for an invitation.");return;}
    if(academySlug){const scoped=await academyScopedDestination(academySlug);if(scoped){router.replace(scoped);return;}}
    const destination=resolveAuthDestination(config,access,requested);
