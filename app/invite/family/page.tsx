@@ -28,7 +28,7 @@ function AcceptFamilyInvitation(){
   <h1>Join your academy family portal</h1>
   <p>The invitation can only be accepted from its intended verified email account.</p>
   {signedIn?<button className="button" disabled={busy||!/^[a-f0-9]{64}$/.test(token)} onClick={accept}>{busy?"Checking invitation…":"Accept family invitation"}</button>:
-  <><p>Sign in, then reopen this invitation link to accept it.</p><Link className="button" href="/login">Sign in</Link></>}
+  <><p>Sign in to continue with this invitation automatically.</p><Link className="button" href="/login">Sign in</Link></>}
   {message&&<p role="status">{message}</p>}
  </section></main>;
 }
