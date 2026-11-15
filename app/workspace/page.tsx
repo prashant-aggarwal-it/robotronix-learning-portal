@@ -38,8 +38,13 @@ export default function WorkspacePage(){
   const rows=Array.isArray(data)?data as Workspace[]:[];
   if(!rows.length){router.replace("/onboarding/organization");return;}
   const response=await fetch("/api/platform/organizations",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
-  if(!response.ok)throw Error("Organization selection unavailable.");
-  const selection=await response.json();
+  // A stale selected-organization cookie must not lock a valid user out.
+  // The server independently checks membership before accepting the new selection.
+  if(response.status===403){
+   const reset=await fetch("/api/platform/organizations",{method:"DELETE",headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
+   if(!reset.ok)throw Error("Unable to clear an unavailable organization selection.");
+  }else if(!response.ok)throw Error("Organization selection unavailable.");
+  const selection=response.ok?await response.json():{selectedOrganizationId:null};
   const suggested=rows.find(x=>x.id===selection.selectedOrganizationId)?.id|| (rows.length===1?rows[0].id:"");
   if(suggested)await persistSelection(suggested,session.access_token);
   else setAcademyBrowserOrganizationContext(null);
