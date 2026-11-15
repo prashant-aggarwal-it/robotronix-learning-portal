@@ -508,7 +508,8 @@ async function run(){
   started_at:new Date().toISOString().slice(0,10)
  });
  assert(Boolean(foreignInsert)&&foreignInsert.code==="42501",
-  "Legacy direct enrollment insert rejects cross-school course relationships");
+  "Legacy direct enrollment insert rejects cross-school course relationships"+
+  " (actual code: "+(foreignInsert?.code??"none")+", message: "+(foreignInsert?.message??"no error")+")");
  const {error:studentLinkError}=await admin.from("students").update({profile_id:studentActor.id}).eq("id",sa);
  if(studentLinkError)throw new Error("Synthetic student user link failed: "+studentLinkError.message);
  const {error:trainerLinkError}=await admin.from("trainers").update({profile_id:trainerActor.id}).eq("id",ta);
