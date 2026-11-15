@@ -98,5 +98,5 @@ export async function loadSignedInAccess(deployment:DeploymentConfig):Promise<Au
   deployment.products.includes("tasks")?taskAccess(header,false):Promise.resolve(undefined),
   deployment.products.includes("crm")?crmAccess(header):Promise.resolve(undefined)
  ]);
- return {portal,tasks,crmWorkspace};
+ return {portal,tasks,crmWorkspace,saasWorkspace};
 }
