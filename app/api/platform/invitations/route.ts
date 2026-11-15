@@ -29,3 +29,27 @@ export async function POST(request:NextRequest){
   return NextResponse.json({ok:true,invitationUrl,delivery:"Copy and securely share this invitation link with the intended recipient. Automatic email delivery is not configured."},{status:201,headers});
  }catch(e){return failure(e);}
 }
+export async function GET(request:NextRequest){
+ try{
+  const bearer=readBearerToken(request.headers.get("authorization"));
+  const {userId,organizations}=await getAuthorizedOrganizations(bearer);
+  const org=resolveAuthorizedOrganization(organizations,request.nextUrl.searchParams.get("organizationId"));
+  if(!org||!["owner","admin"].includes(org.role))throw new SaaSAccessError(403,"Invitation management requires an administrator");
+  const {data,error}=await adminClient().rpc("saas_list_invitations_v1",{p_actor_id:userId,p_organization_id:org.id});
+  if(error)throw new SaaSAccessError(503,"Invitations unavailable");
+  return NextResponse.json({ok:true,invitations:data??[]},{headers});
+ }catch(e){return failure(e);}
+}
+export async function DELETE(request:NextRequest){
+ try{
+  const bearer=readBearerToken(request.headers.get("authorization"));
+  const {userId,organizations}=await getAuthorizedOrganizations(bearer);
+  const body=await request.json().catch(()=>null);
+  const org=resolveAuthorizedOrganization(organizations,body?.organizationId??null);
+  if(!org||!["owner","admin"].includes(org.role))throw new SaaSAccessError(403,"Invitation management requires an administrator");
+  if(typeof body?.invitationId!=="string")throw new SaaSAccessError(400,"Invalid invitation");
+  const {data,error}=await adminClient().rpc("saas_revoke_invitation_v1",{p_actor_id:userId,p_organization_id:org.id,p_invitation_id:body.invitationId});
+  if(error||data!==true)throw new SaaSAccessError(error?.code==="42501"?403:400,"Unable to revoke invitation");
+  return NextResponse.json({ok:true},{headers});
+ }catch(e){return failure(e);}
+}
