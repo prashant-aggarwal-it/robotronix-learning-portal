@@ -34,13 +34,13 @@ export default function HomePage(){
 
 function SuiteHomePage({products}:{products:readonly string[]}){
  const options=[
-  {id:"portal",number:"01",name:"Academy",category:"Learning management",description:"Deliver outstanding learning experiences with classes, student records, schedules and progress together.",symbol:"A",accent:"#6254d9",features:"Students · Classes · Progress"},
-  {id:"crm",number:"02",name:"Connect CRM",category:"Relationships & growth",description:"Keep every enquiry, conversation and admission journey organized from first contact onward.",symbol:"C",accent:"#087c89",features:"Leads · Conversations · Admissions"},
-  {id:"tasks",number:"03",name:"My Tasks",category:"Work & productivity",description:"Give your team clarity on priorities, assignments and the work that matters today.",symbol:"T",accent:"#b87945",features:"Priorities · Planning · Teams"}
+  {id:"portal",number:"01",name:"Academy",category:"Learning management",description:"Deliver outstanding learning experiences with classes, student records, schedules and progress together.",symbol:"A",accent:"#6d3cc9",features:"Students · Classes · Progress"},
+  {id:"crm",number:"02",name:"Connect CRM",category:"Relationships & growth",description:"Keep every enquiry, conversation and admission journey organized from first contact onward.",symbol:"C",accent:"#14b8a6",features:"Leads · Conversations · Admissions"},
+  {id:"tasks",number:"03",name:"My Tasks",category:"Work & productivity",description:"Give your team clarity on priorities, assignments and the work that matters today.",symbol:"T",accent:"#e83d8c",features:"Priorities · Planning · Teams"}
  ].filter(x=>products.includes(x.id));
  return <main className="rxLanding">
  <style>{`
- .rxLanding{font-family:Arial,"Helvetica Neue",sans-serif;color:#182541;min-height:100vh;background:#fafbff;overflow:hidden}
+ .rxLanding{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182541;min-height:100vh;background:#fbf9fe;overflow:hidden}
  .rxLanding *{box-sizing:border-box}
  .rxWrap{width:min(1320px,calc(100% - 80px));margin:0 auto}
  .rxHead{height:104px;display:flex;align-items:center;justify-content:space-between;gap:24px}
@@ -49,47 +49,47 @@ function SuiteHomePage({products}:{products:readonly string[]}){
  .rxBrand small{border-left:1px solid #d2d9eb;padding-left:18px;font-size:12px;letter-spacing:.15em;font-weight:800;color:#58647d}
  .rxNav{display:flex;align-items:center;gap:33px}
  .rxNav a{text-decoration:none;color:#2c3a54;font-size:15px;font-weight:700}
- .rxPrimary{background:#5147bf!important;color:white!important;display:inline-flex;align-items:center;gap:13px;border-radius:10px;padding:16px 23px;text-decoration:none;font-weight:750;font-size:15px;box-shadow:0 9px 20px #5147bf20;transition:background .2s,transform .2s}
- .rxPrimary:hover{background:#3e379e!important;transform:translateY(-2px)}
- .rxMainHero{background:radial-gradient(ellipse at 80% 40%,#dce8ff 0%,transparent 50%),radial-gradient(ellipse at 14% 8%,#f0eafa 0%,transparent 45%),linear-gradient(180deg,#fbfcff,#f5f8ff);border-top:1px solid #edf0f7;border-bottom:1px solid #e5eaf4}
+ .rxPrimary{background:#6d3cc9!important;color:white!important;display:inline-flex;align-items:center;gap:13px;border-radius:10px;padding:16px 23px;text-decoration:none;font-weight:750;font-size:15px;box-shadow:0 9px 20px #6d3cc920;transition:background .2s,transform .2s}
+ .rxPrimary:hover{background:#4f27a8!important;transform:translateY(-2px)}
+ .rxMainHero{background:radial-gradient(ellipse at 80% 40%,#f0e3fc 0%,transparent 50%),radial-gradient(ellipse at 14% 8%,#f4e7fb 0%,transparent 45%),linear-gradient(180deg,#fbfcff,#f8f4fd);border-top:1px solid #eee4f5;border-bottom:1px solid #eae0f3}
  .rxHero{display:grid;grid-template-columns:1.07fr .93fr;align-items:center;gap:60px;padding-top:76px;padding-bottom:82px}
- .rxEyebrow{font-size:12px;letter-spacing:.16em;color:#5147bf;font-weight:800;display:inline-flex;gap:12px;align-items:center}
- .rxEyebrow:before{content:"";width:22px;height:2px;background:#6257db}
+ .rxEyebrow{font-size:12px;letter-spacing:.16em;color:#6d3cc9;font-weight:800;display:inline-flex;gap:12px;align-items:center}
+ .rxEyebrow:before{content:"";width:22px;height:2px;background:#e83d8c}
  .rxHero h1{font-size:clamp(49px,4.7vw,73px);line-height:1.075;letter-spacing:-.055em;font-weight:800;margin:24px 0 24px;max-width:710px}
- .rxHero h1 em{font-style:normal;color:#5a4fd0}
- .rxHero p{max-width:570px;font-size:19px;line-height:1.7;color:#60708b;margin:0 0 31px}
+ .rxHero h1 em{font-style:normal;color:#6d3cc9}
+ .rxHero p{max-width:570px;font-size:19px;line-height:1.7;color:#606a82;margin:0 0 31px}
  .rxHeroActions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
- .rxOutline{display:inline-flex;align-items:center;padding:15px 22px;border:1px solid #cdd5e6;border-radius:10px;color:#233451;text-decoration:none;background:#fff9;font-weight:750;font-size:15px}
+ .rxOutline{display:inline-flex;align-items:center;padding:15px 22px;border:1px solid #dfd5ec;border-radius:10px;color:#233451;text-decoration:none;background:#fff9;font-weight:750;font-size:15px}
  .rxBenefit{display:flex;flex-wrap:wrap;gap:22px;margin-top:35px;color:#54657f;font-size:13px;font-weight:650}
  .rxBenefit span:before{content:"✓";font-weight:900;color:#348f93;margin-right:8px}
- .rxShowcase{background:#fff;box-shadow:0 34px 80px #30466b1f;border:1px solid #dce3f3;border-radius:20px;overflow:hidden;min-height:400px}
+ .rxShowcase{background:#fff;box-shadow:0 32px 78px #4f27a82a,0 0 0 6px #ffffff9e;border:1px solid #e3d9f3;border-radius:24px;overflow:hidden;min-height:400px}
  .rxShowTop{height:59px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid #edf0f6}
  .rxShowTop span{font-size:11px;letter-spacing:.13em;font-weight:800;color:#71809b}
  .rxLights{display:flex;gap:7px}.rxLights i{height:9px;width:9px;border-radius:50%;background:#d9ddec}.rxLights i:first-child{background:#8981df}.rxLights i:nth-child(2){background:#96cbd4}
  .rxShowBody{display:grid;grid-template-columns:77px 1fr;min-height:338px}
- .rxRail{background:#242c52;display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:28px}
- .rxRail i{height:29px;width:29px;border-radius:9px;background:#ffffff24}.rxRail i:first-child{background:#7568db}
+ .rxRail{background:#35205e;display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:28px}
+ .rxRail i{height:29px;width:29px;border-radius:9px;background:#ffffff24}.rxRail i:first-child{background:#6d3cc9}
  .rxShowContent{padding:30px}
  .rxShowContent h3{font-size:23px;letter-spacing:-.03em;margin:0 0 6px}
  .rxShowContent>p{font-size:12px;color:#74819a;margin:0 0 24px}
  .rxFeatureGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
- .rxFeature{border:1px solid #e8ecf5;border-radius:13px;padding:16px 13px;background:#f9faff}
+ .rxFeature{border:1px solid #e8ecf5;border-radius:13px;padding:16px 13px;background:#fbf8ff}
  .rxFeature b{font-size:24px;display:block;margin-bottom:14px}.rxFeature strong{display:block;font-size:12px;color:#293655;margin-bottom:5px}.rxFeature small{font-size:11px;color:#7d89a0}
  .rxWorkflow{margin-top:17px;border-radius:12px;border:1px solid #e8ecf5;padding:16px;background:white}
  .rxWorkflow strong{font-size:12px}.rxWorkflow div{height:9px;margin-top:13px;border-radius:20px;background:#edf0f8;overflow:hidden}
- .rxWorkflow i{display:block;background:#756bdc;width:72%;height:100%;border-radius:20px}.rxWorkflow div:last-child i{width:48%;background:#69b7c6}
+ .rxWorkflow i{display:block;background:#8655d6;width:72%;height:100%;border-radius:20px}.rxWorkflow div:last-child i{width:48%;background:#69b7c6}
  .rxSection{padding-top:88px;padding-bottom:100px}
  .rxSectionHeading{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:32px}
  .rxSectionHeading h2{font-size:clamp(33px,3vw,46px);letter-spacing:-.045em;line-height:1.1;max-width:600px;margin:14px 0 0}
  .rxSectionHeading p{max-width:370px;color:#687791;line-height:1.65;font-size:16px;margin:0}
  .rxCards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
- .rxCard{border:1px solid #e2e7f0;background:white;border-radius:18px;padding:29px 30px;min-height:294px;box-shadow:0 10px 27px #1d315008;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
- .rxCard:hover{transform:translateY(-4px);box-shadow:0 18px 34px #20345818}
- .rxCardTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}
- .rxCardIcon{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:21px}
+ .rxCard{border:1px solid #e7ddf0;background:linear-gradient(155deg,#fff 70%,#fcf9ff);border-radius:24px;padding:33px 32px;min-height:316px;box-shadow:0 14px 38px #4f27a812;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+ .rxCard:hover{transform:translateY(-4px);box-shadow:0 22px 44px #6d3cc925}
+ .rxCard:before{content:"";position:absolute;top:0;left:30px;right:30px;height:3px;border-radius:0 0 5px 5px;background:linear-gradient(90deg,#6d3cc9,#e83d8c,#14b8a6);opacity:.75}.rxCard{position:relative;overflow:hidden}.rxCardTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}
+ .rxCardIcon{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-weight:800;font-size:21px}
  .rxCardNum{color:#a2abc0;font-size:12px;font-weight:800;letter-spacing:.1em}
- .rxCard h3{font-size:24px;letter-spacing:-.03em;margin:0 0 7px}
- .rxCardCategory{font-size:12px;color:#6254c1;font-weight:800;letter-spacing:.04em;margin:0 0 14px}
+ .rxCard h3{font-size:27px;letter-spacing:-.03em;margin:0 0 7px}
+ .rxCardCategory{font-size:12px;color:#6d3cc9;font-weight:800;letter-spacing:.04em;margin:0 0 14px}
  .rxCardDesc{color:#697892;line-height:1.6;font-size:14px;margin:0 0 22px}
  .rxCardBottom{margin-top:auto;border-top:1px solid #eef0f5;padding-top:17px;color:#4d5b78;font-size:12px;font-weight:750}
  .rxFooter{padding:25px 0;border-top:1px solid #e6eaf3;display:flex;justify-content:space-between;gap:18px;color:#7b879b;font-size:13px}
@@ -100,7 +100,7 @@ function SuiteHomePage({products}:{products:readonly string[]}){
  `}</style>
  <header className="rxWrap rxHead"><Link href="/" className="rxBrand" aria-label="Robotronix Education Suite home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><small>EDUCATION SUITE</small></Link><nav className="rxNav" aria-label="Main navigation"><a href="#products">Products</a><Link href="/login">Sign in</Link><Link href="/signup" className="rxPrimary">Get started <span aria-hidden="true">↗</span></Link></nav></header>
  <div className="rxMainHero"><section className="rxWrap rxHero"><div><span className="rxEyebrow">ROBOTRONIX EDUCATION SUITE</span><h1>One platform.<br/>Every part of your academy, <em>connected.</em></h1><p>Run learning, manage relationships and organize your team with a beautifully simple workspace built for modern education businesses.</p><div className="rxHeroActions"><Link href="/signup" className="rxPrimary">Get started <span aria-hidden="true">↗</span></Link><Link href="/login" className="rxOutline">Sign in to your workspace</Link></div><div className="rxBenefit"><span>Single sign-in</span><span>Secure organizations</span><span>Modular by design</span></div></div>
- <div className="rxShowcase" aria-label="Illustrative product workspace preview"><div className="rxShowTop"><div className="rxLights"><i/><i/><i/></div><span>WORKSPACE PREVIEW</span></div><div className="rxShowBody"><div className="rxRail"><i/><i/><i/><i/></div><div className="rxShowContent"><h3>Your workspace</h3><p>Everything you need, in one place</p><div className="rxFeatureGrid"><div className="rxFeature"><b style={{color:"#6254d9"}}>✦</b><strong>Academy</strong><small>Learning & progress</small></div><div className="rxFeature"><b style={{color:"#087c89"}}>◎</b><strong>Connect CRM</strong><small>Leads & admissions</small></div><div className="rxFeature"><b style={{color:"#b87945"}}>✓</b><strong>My Tasks</strong><small>Team priorities</small></div></div><div className="rxWorkflow"><strong>Working better, together</strong><div><i/></div><div><i/></div></div></div></div></div></section></div>
+ <div className="rxShowcase" aria-label="Illustrative product workspace preview"><div className="rxShowTop"><div className="rxLights"><i/><i/><i/></div><span>WORKSPACE PREVIEW</span></div><div className="rxShowBody"><div className="rxRail"><i/><i/><i/><i/></div><div className="rxShowContent"><h3>Your workspace</h3><p>Everything you need, in one place</p><div className="rxFeatureGrid"><div className="rxFeature"><b style={{color:"#6d3cc9"}}>✦</b><strong>Academy</strong><small>Learning & progress</small></div><div className="rxFeature"><b style={{color:"#14a597"}}>◎</b><strong>Connect CRM</strong><small>Leads & admissions</small></div><div className="rxFeature"><b style={{color:"#e83d8c"}}>✓</b><strong>My Tasks</strong><small>Team priorities</small></div></div><div className="rxWorkflow"><strong>Working better, together</strong><div><i/></div><div><i/></div></div></div></div></div></section></div>
  <section className="rxWrap rxSection" id="products" aria-labelledby="rxProductsTitle"><div className="rxSectionHeading"><div><span className="rxEyebrow">THE PLATFORM</span><h2 id="rxProductsTitle">Three powerful tools.<br/>One connected experience.</h2></div><p>Choose what your organization needs. Every application has its own purpose, with one account and a shared workspace.</p></div><div className="rxCards">{options.map(x=><article className="rxCard" key={x.id}><div className="rxCardTop"><span className="rxCardIcon" style={{color:x.accent,background:x.accent+"13"}}>{x.symbol}</span><span className="rxCardNum">{x.number}</span></div><h3>{x.name}</h3><div className="rxCardCategory">{x.category}</div><p className="rxCardDesc">{x.description}</p><div className="rxCardBottom">{x.features}</div></article>)}</div></section>
  <footer className="rxWrap rxFooter"><span>© Robotronix Education Suite</span><span><Link href="/privacy">Privacy</Link> &nbsp;·&nbsp; <Link href="/terms">Terms</Link> &nbsp;·&nbsp; <Link href="/support">Support</Link></span></footer>
  </main>;
