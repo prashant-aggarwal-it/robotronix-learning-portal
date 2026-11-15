@@ -3,7 +3,9 @@ import Link from "next/link";
 import {useParams} from "next/navigation";
 import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
-type Learner={organizationId:string;academy:string;slug:string;studentId:string;studentName:string;grade:string;accessRole:"parent"|"student"};
+type Course={enrollmentId:string;courseTitle:string;status:string;sessionsCompleted:number;progressPercent:number};
+type ClassEvent={title:string;date:string;startTime:string;timezone:string;status:string};
+type Learner={organizationId:string;academy:string;slug:string;studentId:string;studentName:string;grade:string;accessRole:"parent"|"student";courses:Course[];upcomingClasses:ClassEvent[]};
 export default function AcademyFamily(){
  const {academySlug}=useParams<{academySlug:string}>();
  const [students,setStudents]=useState<Learner[]>([]),[status,setStatus]=useState<"loading"|"ready"|"denied">("loading");
@@ -29,7 +31,10 @@ export default function AcademyFamily(){
      {students.map(s=><article key={s.studentId+"-"+s.accessRole} style={{padding:24,borderRadius:14,background:"white",border:"1px solid #dde4f1"}}>
       <p style={{textTransform:"capitalize",fontSize:13,fontWeight:700,color:"#5443a1"}}>{s.accessRole} access</p>
       <h2>{s.studentName}</h2><p>Grade: {s.grade||"Not specified"}</p>
-      <p style={{fontSize:13,color:"#617088"}}>Course progress and class scheduling will appear after the legacy Academy experience is fully integrated with tenant-specific family authorization.</p>
+      <h3 style={{marginTop:20}}>Courses and progress</h3>
+      {s.courses?.length?s.courses.map(course=><div key={course.enrollmentId} style={{padding:"12px 0",borderTop:"1px solid #eef0f4"}}><strong>{course.courseTitle}</strong><p>Status: {course.status} · Sessions completed: {course.sessionsCompleted||0} · Progress: {Math.round(course.progressPercent||0)}%</p></div>):<p>No active course details have been linked yet.</p>}
+      <h3 style={{marginTop:20}}>Upcoming classes</h3>
+      {s.upcomingClasses?.length?<ul>{s.upcomingClasses.map((event,i)=><li key={event.date+"-"+event.startTime+"-"+i} style={{margin:"8px 0"}}>{event.title} · {event.date} · {event.startTime} ({event.timezone})</li>)}</ul>:<p>No upcoming classes listed.</p>}
      </article>)}
     </div>
    </>}
