@@ -1,0 +1,29 @@
+name: Database workflow and installer static validation
+on:
+  push:
+    branches: [feature/education-suite-phase3g]
+    paths:
+      - 'database/**'
+      - 'scripts/build-db-installers.mjs'
+      - 'scripts/build-education-suite-installer.mjs'
+      - 'scripts/check-db-*.mjs'
+      - 'package.json'
+      - '.github/workflows/database-workflow-check.yml'
+  workflow_dispatch:
+jobs:
+  validate-database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate canonical SQL source
+        run: npm run db:build-installers
+      - name: Generate Education Suite draft
+        run: node scripts/build-education-suite-installer.mjs
+      - name: Verify bundle has no transactional QA
+        run: |
+          node --input-type=module -e "import fs from 'node:fs';const s=fs.readFileSync('database/generated/ROBOTRONIX_EDUCATION_SUITE_FRESH_INSTALL_UNCERTIFIED.sql','utf8');if(!s.includes('Fresh install guard')||s.includes('STAGE 4: SaaS 03_tenant_isolation_rollback'))process.exit(1);console.log('PASS draft installer stage presence')"
