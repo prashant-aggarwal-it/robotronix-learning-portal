@@ -30,7 +30,7 @@ export default function ProductSetup(){
    const result=await client.rpc("saas_my_module_setup");
    if(result.error)throw result.error;
    if(!result.data){router.replace("/onboarding/organization");return;}
-   if(active){setSetup(result.data as Setup);setSelected((result.data as Setup).modules||["academy"]);}
+   if(active){setSetup(result.data as Setup);setSelected((result.data as Setup).configured?(result.data as Setup).modules:["academy","crm","tasks"]);}
   }catch{if(active)setError("Unable to load organization setup. Sign in again or refresh.");}
   finally{if(active)setLoading(false);}
  })();return()=>{active=false};},[router]);
