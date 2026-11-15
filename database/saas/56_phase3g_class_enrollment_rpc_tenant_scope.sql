@@ -9,7 +9,12 @@ AS $function$
 declare e public.schedule_events%rowtype;
 begin
  select * into e from public.schedule_events where id=p_event_id for update;
- if saas.has_organization_membership() and not saas.can_access_academy_record('schedule_events',e.id) then
+ if saas.has_organization_membership() and NOT (
+    (e.enrollment_id IS NOT NULL AND saas.can_access_academy_record('enrollments',e.enrollment_id))
+    OR (e.cohort_id IS NOT NULL
+      AND saas.can_access_academy_record('courses',e.course_id)
+      AND saas.can_access_academy_record('trainers',e.trainer_id))
+   ) then
   raise exception 'Cross-organization class operation denied' using errcode='42501';
  end if;
  if not found or e.event_type<>'class' then raise exception 'Class not found'; end if;
@@ -59,7 +64,12 @@ declare original public.schedule_events%rowtype; v_id uuid;
  v_start_at timestamptz;v_end_at timestamptz;
 begin
  select * into original from public.schedule_events where id=p_original_id for update;
- if saas.has_organization_membership() and not saas.can_access_academy_record('schedule_events',original.id) then
+ if saas.has_organization_membership() and NOT (
+    (original.enrollment_id IS NOT NULL AND saas.can_access_academy_record('enrollments',original.enrollment_id))
+    OR (original.cohort_id IS NOT NULL
+      AND saas.can_access_academy_record('courses',original.course_id)
+      AND saas.can_access_academy_record('trainers',original.trainer_id))
+   ) then
   raise exception 'Cross-organization class operation denied' using errcode='42501';
  end if;
  if not found or original.event_type<>'class' or original.enrollment_id is null
@@ -258,7 +268,12 @@ AS $function$
 declare e public.schedule_events%rowtype; new_id uuid; v_start timestamptz; v_end timestamptz;
 begin
  select * into e from public.schedule_events where id=p_event_id for update;
- if saas.has_organization_membership() and not saas.can_access_academy_record('schedule_events',e.id) then
+ if saas.has_organization_membership() and NOT (
+    (e.enrollment_id IS NOT NULL AND saas.can_access_academy_record('enrollments',e.enrollment_id))
+    OR (e.cohort_id IS NOT NULL
+      AND saas.can_access_academy_record('courses',e.course_id)
+      AND saas.can_access_academy_record('trainers',e.trainer_id))
+   ) then
   raise exception 'Cross-organization class operation denied' using errcode='42501';
  end if;
  if not found or e.event_type<>'class' then raise exception 'Class not found'; end if;
@@ -345,7 +360,12 @@ begin
  if p_decision not in ('approved','rejected') or nullif(trim(coalesce(p_reason,'')),'') is null
  then raise exception 'Choose approve/reject and record the reason'; end if;
  select * into e from public.schedule_events where id=p_event_id for update;
- if saas.has_organization_membership() and not saas.can_access_academy_record('schedule_events',e.id) then
+ if saas.has_organization_membership() and NOT (
+    (e.enrollment_id IS NOT NULL AND saas.can_access_academy_record('enrollments',e.enrollment_id))
+    OR (e.cohort_id IS NOT NULL
+      AND saas.can_access_academy_record('courses',e.course_id)
+      AND saas.can_access_academy_record('trainers',e.trainer_id))
+   ) then
   raise exception 'Cross-organization class operation denied' using errcode='42501';
  end if;
  if not found or e.status<>'cancelled' or e.finance_exception_status<>'review'
