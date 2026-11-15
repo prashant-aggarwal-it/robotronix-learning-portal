@@ -3,7 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 const files=[
  "53_phase3g_family_payment_tenant_scope.sql",
- "54_phase3g_privileged_schedule_tenant_scope.sql"
+ "54_phase3g_privileged_schedule_tenant_scope.sql",
+ "55_phase3g_cohort_schedule_tenant_scope.sql"
 ];
 const parts=files.map((file,i)=>{
  const body=fs.readFileSync(path.join("database/saas",file),"utf8").trim();
