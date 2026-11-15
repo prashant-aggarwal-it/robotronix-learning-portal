@@ -23,7 +23,7 @@ export async function passwordSignIn(email:string,password:string){
 }
 /** New standalone CRM/Tasks accounts only. Portal onboarding remains invite/role controlled. */
 export async function createProductAccount(email:string,password:string){
- if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.trim()))
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
   return {ok:false,error:"Enter a valid email address.",signedIn:false};
  if(password.length<8)return {ok:false,error:"Use a password of at least 8 characters.",signedIn:false};
  const redirectTo=typeof window!=="undefined"?window.location.origin+"/auth/callback":undefined;
