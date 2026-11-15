@@ -33,111 +33,77 @@ export default function HomePage(){
 }
 
 function SuiteHomePage({products}:{products:readonly string[]}){
-  const options=[
-    {id:"portal",name:"Academy",description:"Bring classes, curriculum, learners and family progress into one clear view.",symbol:"✦",tag:"LEARNING OPERATIONS",color:"#6958d9",features:["Learner journeys","Classes & progress"]},
-    {id:"crm",name:"Connect CRM",description:"Turn conversations into stronger relationships, from first enquiry to admission.",symbol:"◎",tag:"GROWTH & RELATIONSHIPS",color:"#138f9b",features:["Enquiries & admissions","Connected conversations"]},
-    {id:"tasks",name:"My Tasks",description:"Bring focus to the work that moves your education business forward.",symbol:"✓",tag:"TEAM PRODUCTIVITY",color:"#c0783b",features:["Daily priorities","Team coordination"]}
-  ].filter(item=>products.includes(item.id));
-  return <main className="suitePremium">
-    <style>{`
-      .suitePremium{min-height:100vh;overflow:hidden;position:relative;color:#172444;background:radial-gradient(ellipse 700px 470px at 89% 12%,rgba(145,212,237,.33),transparent 74%),radial-gradient(ellipse 750px 530px at 8% 21%,rgba(179,161,245,.25),transparent 72%),linear-gradient(155deg,#fcfdff 0%,#f4f6ff 54%,#f8fbfd 100%)}
-      .suitePremium *{box-sizing:border-box}
-      .suiteShell{max-width:1250px;margin:auto;padding-left:clamp(22px,4vw,56px);padding-right:clamp(22px,4vw,56px)}
-      .suiteHeader{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-top:25px;padding-bottom:24px;flex-wrap:wrap}
-      .suiteLogo{display:flex;align-items:center;gap:14px;text-decoration:none;color:#263657}
-      .suiteLogo img{width:clamp(205px,20vw,265px);height:auto;display:block}
-      .suiteLogo small{font-size:11px;letter-spacing:.13em;font-weight:800;color:#6b7290;border-left:1px solid #cfd6e8;padding-left:14px}
-      .suiteNav{display:flex;align-items:center;flex-wrap:wrap;gap:26px}
-      .suiteNav a{font-size:14px;font-weight:700;text-decoration:none;color:#344467}
-      .suiteNav a:last-child,.suitePrimary{background:linear-gradient(110deg,#5e45d4,#258de5);color:white!important;border-radius:12px;padding:14px 22px;box-shadow:0 9px 26px rgba(65,75,194,.19);text-decoration:none;font-weight:750;display:inline-flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s}
-      .suiteNav a:last-child:hover,.suitePrimary:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(65,75,194,.26)}
-      .suiteHero{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);align-items:center;gap:clamp(35px,5vw,72px);padding-top:clamp(70px,8vw,118px);padding-bottom:clamp(70px,9vw,120px)}
-      .suiteEyebrow{display:inline-flex;align-items:center;gap:9px;border:1px solid #d6dafa;background:#fffafcbb;padding:9px 14px;border-radius:30px;font-size:11px;font-weight:850;letter-spacing:.13em;color:#5846b6}
-      .suiteEyebrow:before{content:"";width:8px;height:8px;border-radius:50%;background:#57b7d6;box-shadow:0 0 0 4px #57b7d628}
-      .suiteHero h1{font-size:clamp(43px,4.8vw,69px);letter-spacing:-.055em;line-height:1.08;margin:26px 0 23px;font-weight:800;max-width:650px}
-      .suiteHero h1 span{color:#6351cd}
-      .suiteLead{font-size:clamp(16px,1.55vw,19px);line-height:1.8;color:#61708b;max-width:530px;margin:0 0 31px}
-      .suiteActions{display:flex;flex-wrap:wrap;align-items:center;gap:13px}
-      .suiteSecondary{border:1px solid #d4d9e8;padding:13px 21px;border-radius:12px;background:#ffffffbd;text-decoration:none;color:#314369;font-weight:750}
-      .suiteProof{margin-top:31px;display:flex;align-items:center;gap:9px;color:#697892;font-size:13px}
-      .suiteProof strong{color:#35446f}
-      .suiteVisual{position:relative;padding:20px 10px 25px;isolation:isolate}
-      .suiteVisual:before{content:"";position:absolute;inset:4% -4%;z-index:-1;background:radial-gradient(ellipse at center,rgba(100,97,220,.25),transparent 67%);filter:blur(28px)}
-      .suitePreview{border-radius:23px;border:1px solid #e1e5f5;box-shadow:0 30px 80px rgba(29,46,91,.15),0 3px 12px rgba(29,46,91,.06);background:#fff;overflow:hidden;transform:rotate(-1.5deg)}
-      .suitePreviewTop{display:flex;align-items:center;justify-content:space-between;padding:19px 22px;background:#f8f9ff;border-bottom:1px solid #e9ecf6}
-      .suiteDots{display:flex;gap:6px}.suiteDots i{width:8px;height:8px;border-radius:100%;background:#d4d9ed}.suiteDots i:first-child{background:#8a7bf0}.suiteDots i:nth-child(2){background:#85c9df}
-      .suitePreviewTop span{font-size:11px;font-weight:750;letter-spacing:.09em;color:#64708c}
-      .suitePreviewBody{display:grid;grid-template-columns:75px 1fr;min-height:360px}
-      .suitePreviewRail{background:#24234e;padding:23px 20px;display:flex;align-items:center;flex-direction:column;gap:19px}
-      .suitePreviewRail i{width:27px;height:27px;border-radius:9px;background:#ffffff25;border:1px solid #ffffff29}
-      .suitePreviewRail i:first-child{background:linear-gradient(140deg,#846efa,#45b7d1)}
-      .suitePreviewMain{padding:26px 25px}
-      .suitePreviewLabel{color:#817b9d;font-size:11px;font-weight:800;letter-spacing:.12em}
-      .suitePreviewMain h3{margin:8px 0 22px;font-size:23px;letter-spacing:-.04em}
-      .suiteMiniGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-      .suiteMini{background:#f5f6fc;border:1px solid #e9eaf7;border-radius:13px;padding:14px 11px;min-height:104px}
-      .suiteMini b{display:block;font-size:20px;margin-bottom:8px}.suiteMini span{font-size:11px;color:#6d7894;line-height:1.45}
-      .suitePreviewFlow{margin-top:18px;padding:16px;border:1px solid #e9ecf7;border-radius:14px;background:#fff}
-      .suitePreviewFlow p{font-size:12px;color:#54607d;font-weight:800;margin:0 0 13px}
-      .suiteFlowLine{height:9px;border-radius:20px;background:#edf0f7;overflow:hidden;margin-bottom:11px}.suiteFlowLine i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7968df,#6ac6d5);width:73%}
-      .suiteFlowLine:nth-of-type(2) i{width:49%;background:linear-gradient(90deg,#69b8d1,#b0d7e3)}
-      .suiteFlowLine:nth-of-type(3) i{width:86%;background:linear-gradient(90deg,#ac9af0,#d8cffa)}
-      .suiteFloat{position:absolute;z-index:2;right:-4%;bottom:-8px;padding:14px 19px;background:#fff;box-shadow:0 16px 38px #283c7e22;border:1px solid #e4e8f3;border-radius:14px;font-size:12px;color:#586784;transform:rotate(3deg)}
-      .suiteFloat strong{display:block;font-size:14px;color:#27365d;margin-bottom:3px}
-      .suiteProducts{padding-top:30px;padding-bottom:90px}
-      .suiteSectionIntro{text-align:center;margin:auto auto 35px;max-width:680px}
-      .suiteSectionIntro .suiteEyebrow{font-size:10px}
-      .suiteSectionIntro h2{font-size:clamp(31px,3.3vw,46px);letter-spacing:-.045em;margin:18px 0 13px}
-      .suiteSectionIntro p{color:#697790;line-height:1.7;margin:0}
-      .suiteCards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:19px}
-      .suiteCard{padding:29px;border-radius:22px;background:#ffffffdf;border:1px solid #e0e6f3;box-shadow:0 14px 40px rgba(38,51,111,.05);transition:transform .2s,box-shadow .2s}
-      .suiteCard:hover{transform:translateY(-5px);box-shadow:0 20px 48px rgba(38,51,111,.1)}
-      .suiteCardIcon{width:54px;height:54px;display:grid;place-items:center;font-size:27px;border-radius:16px;margin-bottom:26px}
-      .suiteTag{font-size:10px;font-weight:850;letter-spacing:.13em;color:#7d849b}
-      .suiteCard h3{font-size:25px;letter-spacing:-.035em;margin:9px 0 11px}
-      .suiteCard p{line-height:1.65;color:#697790;font-size:14px;min-height:70px}
-      .suiteFeatures{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
-      .suiteFeatures span{border:1px solid #e4e8f3;border-radius:8px;background:#f8f9fd;padding:8px 10px;color:#596582;font-weight:650;font-size:11px}
-      .suitePromise{text-align:center;padding:24px 0 72px;color:#6b7893;font-size:13px}
-      .suiteFooter{border-top:1px solid #e3e7f1;padding:26px 0;color:#64728e;font-size:13px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:15px}
-      .suiteFooter a{color:inherit;text-decoration:none}
-      @media(max-width:900px){.suiteHero{grid-template-columns:1fr;padding-top:55px}.suiteVisual{max-width:600px;width:100%;margin:0 auto}.suiteHeroCopy{text-align:center}.suiteHero h1,.suiteLead{margin-left:auto;margin-right:auto}.suiteActions,.suiteProof{justify-content:center}.suiteCards{grid-template-columns:repeat(2,minmax(0,1fr))}}
-      @media(max-width:590px){.suiteLogo img{width:200px}.suiteLogo small{display:none}.suiteNav{gap:15px}.suiteNav a{font-size:12px}.suiteHero h1{font-size:42px}.suiteCards{grid-template-columns:1fr}.suitePreviewBody{grid-template-columns:50px 1fr}.suitePreviewRail{padding:20px 12px}.suitePreviewMain{padding:18px 13px}.suiteMini{padding:10px 7px}.suiteMini b{font-size:16px}.suiteMini span{font-size:9px}.suiteFloat{right:0}.suiteProducts{padding-bottom:45px}}
-      @media(prefers-reduced-motion:reduce){.suiteCard,.suitePrimary,.suiteNav a:last-child{transition:none}.suiteCard:hover,.suitePrimary:hover,.suiteNav a:last-child:hover{transform:none}}
-    `}</style>
-    <header className="suiteShell suiteHeader">
-      <Link className="suiteLogo" href="/" aria-label="Robotronix Education Suite home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><small>EDUCATION SUITE</small></Link>
-      <nav className="suiteNav" aria-label="Main navigation"><a href="#products">Platform</a><Link href="/login">Sign in</Link><Link href="/signup">Get started <span aria-hidden="true"> ↗</span></Link></nav>
-    </header>
-    <section className="suiteShell suiteHero">
-      <div className="suiteHeroCopy">
-        <span className="suiteEyebrow">ONE CONNECTED EDUCATION WORKSPACE</span>
-        <h1>Everything your academy needs. <span>Beautifully connected.</span></h1>
-        <p className="suiteLead">From learning and admissions to everyday teamwork, manage your education business in one thoughtfully designed workspace.</p>
-        <div className="suiteActions"><Link className="suitePrimary" href="/signup">Get started <span aria-hidden="true"> &nbsp;↗</span></Link><Link className="suiteSecondary" href="/login">Sign in to your workspace</Link></div>
-        <div className="suiteProof"><span aria-hidden="true">✧</span><strong>One sign-in</strong><span>·</span> Secure organizations <span>·</span> Flexible products</div>
-      </div>
-      <div className="suiteVisual" aria-label="Illustrative preview of a unified education workspace">
-        <div className="suitePreview"><div className="suitePreviewTop"><div className="suiteDots"><i/><i/><i/></div><span>EDUCATION SUITE / WORKSPACE</span></div>
-          <div className="suitePreviewBody"><div className="suitePreviewRail"><i/><i/><i/><i/></div><div className="suitePreviewMain">
-            <span className="suitePreviewLabel">WORKSPACE PREVIEW</span><h3>Your academy, in sync.</h3>
-            <div className="suiteMiniGrid"><div className="suiteMini"><b style={{color:"#6455c6"}}>✦</b><span>Academy<br/>Learning & progress</span></div><div className="suiteMini"><b style={{color:"#138f9b"}}>◎</b><span>Connect CRM<br/>Enquiries & growth</span></div><div className="suiteMini"><b style={{color:"#c0783b"}}>✓</b><span>My Tasks<br/>Focus & teamwork</span></div></div>
-            <div className="suitePreviewFlow"><p>Connected workflows</p><div className="suiteFlowLine"><i/></div><div className="suiteFlowLine"><i/></div><div className="suiteFlowLine"><i/></div></div>
-          </div></div>
-        </div><div className="suiteFloat"><strong>✦ Designed to work together</strong>One account · Your selected tools</div>
-      </div>
-    </section>
-    <section className="suiteShell suiteProducts" id="products" aria-labelledby="suite-products-heading">
-      <div className="suiteSectionIntro"><span className="suiteEyebrow">BUILT AROUND YOUR BUSINESS</span><h2 id="suite-products-heading">One platform. Your way of working.</h2><p>Start with the tools you need. Keep the clarity of one workspace while each application stays focused on its purpose.</p></div>
-      <div className="suiteCards">{options.map(item=><article className="suiteCard" key={item.id}>
-        <div className="suiteCardIcon" style={{background:item.color+"12",color:item.color}} aria-hidden="true">{item.symbol}</div>
-        <span className="suiteTag">{item.tag}</span><h3>{item.name}</h3><p>{item.description}</p>
-        <div className="suiteFeatures">{item.features.map(feature=><span key={feature}>{feature}</span>)}</div>
-      </article>)}</div>
-    </section>
-    <div className="suiteShell suitePromise">One secure sign-in &nbsp; • &nbsp; Organization-based access &nbsp; • &nbsp; Products that grow with you</div>
-    <footer className="suiteShell suiteFooter"><span>© Robotronix Education Suite</span><div><Link href="/privacy">Privacy</Link> &nbsp; · &nbsp; <Link href="/terms">Terms</Link> &nbsp; · &nbsp; <Link href="/support">Support</Link></div></footer>
-  </main>;
+ const options=[
+  {id:"portal",number:"01",name:"Academy",category:"Learning management",description:"Deliver outstanding learning experiences with classes, student records, schedules and progress together.",symbol:"A",accent:"#6254d9",features:"Students · Classes · Progress"},
+  {id:"crm",number:"02",name:"Connect CRM",category:"Relationships & growth",description:"Keep every enquiry, conversation and admission journey organized from first contact onward.",symbol:"C",accent:"#087c89",features:"Leads · Conversations · Admissions"},
+  {id:"tasks",number:"03",name:"My Tasks",category:"Work & productivity",description:"Give your team clarity on priorities, assignments and the work that matters today.",symbol:"T",accent:"#b87945",features:"Priorities · Planning · Teams"}
+ ].filter(x=>products.includes(x.id));
+ return <main className="rxLanding">
+ <style>{`
+ .rxLanding{font-family:Arial,"Helvetica Neue",sans-serif;color:#182541;min-height:100vh;background:#fafbff;overflow:hidden}
+ .rxLanding *{box-sizing:border-box}
+ .rxWrap{width:min(1320px,calc(100% - 80px));margin:0 auto}
+ .rxHead{height:104px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+ .rxBrand{display:flex;align-items:center;gap:22px;text-decoration:none}
+ .rxBrand img{display:block;width:265px;height:auto}
+ .rxBrand small{border-left:1px solid #d2d9eb;padding-left:18px;font-size:12px;letter-spacing:.15em;font-weight:800;color:#58647d}
+ .rxNav{display:flex;align-items:center;gap:33px}
+ .rxNav a{text-decoration:none;color:#2c3a54;font-size:15px;font-weight:700}
+ .rxPrimary{background:#5147bf!important;color:white!important;display:inline-flex;align-items:center;gap:13px;border-radius:10px;padding:16px 23px;text-decoration:none;font-weight:750;font-size:15px;box-shadow:0 9px 20px #5147bf20;transition:background .2s,transform .2s}
+ .rxPrimary:hover{background:#3e379e!important;transform:translateY(-2px)}
+ .rxMainHero{background:radial-gradient(ellipse at 80% 40%,#dce8ff 0%,transparent 50%),radial-gradient(ellipse at 14% 8%,#f0eafa 0%,transparent 45%),linear-gradient(180deg,#fbfcff,#f5f8ff);border-top:1px solid #edf0f7;border-bottom:1px solid #e5eaf4}
+ .rxHero{display:grid;grid-template-columns:1.07fr .93fr;align-items:center;gap:60px;padding-top:76px;padding-bottom:82px}
+ .rxEyebrow{font-size:12px;letter-spacing:.16em;color:#5147bf;font-weight:800;display:inline-flex;gap:12px;align-items:center}
+ .rxEyebrow:before{content:"";width:22px;height:2px;background:#6257db}
+ .rxHero h1{font-size:clamp(49px,4.7vw,73px);line-height:1.075;letter-spacing:-.055em;font-weight:800;margin:24px 0 24px;max-width:710px}
+ .rxHero h1 em{font-style:normal;color:#5a4fd0}
+ .rxHero p{max-width:570px;font-size:19px;line-height:1.7;color:#60708b;margin:0 0 31px}
+ .rxHeroActions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+ .rxOutline{display:inline-flex;align-items:center;padding:15px 22px;border:1px solid #cdd5e6;border-radius:10px;color:#233451;text-decoration:none;background:#fff9;font-weight:750;font-size:15px}
+ .rxBenefit{display:flex;flex-wrap:wrap;gap:22px;margin-top:35px;color:#54657f;font-size:13px;font-weight:650}
+ .rxBenefit span:before{content:"✓";font-weight:900;color:#348f93;margin-right:8px}
+ .rxShowcase{background:#fff;box-shadow:0 34px 80px #30466b1f;border:1px solid #dce3f3;border-radius:20px;overflow:hidden;min-height:400px}
+ .rxShowTop{height:59px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid #edf0f6}
+ .rxShowTop span{font-size:11px;letter-spacing:.13em;font-weight:800;color:#71809b}
+ .rxLights{display:flex;gap:7px}.rxLights i{height:9px;width:9px;border-radius:50%;background:#d9ddec}.rxLights i:first-child{background:#8981df}.rxLights i:nth-child(2){background:#96cbd4}
+ .rxShowBody{display:grid;grid-template-columns:77px 1fr;min-height:338px}
+ .rxRail{background:#242c52;display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:28px}
+ .rxRail i{height:29px;width:29px;border-radius:9px;background:#ffffff24}.rxRail i:first-child{background:#7568db}
+ .rxShowContent{padding:30px}
+ .rxShowContent h3{font-size:23px;letter-spacing:-.03em;margin:0 0 6px}
+ .rxShowContent>p{font-size:12px;color:#74819a;margin:0 0 24px}
+ .rxFeatureGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+ .rxFeature{border:1px solid #e8ecf5;border-radius:13px;padding:16px 13px;background:#f9faff}
+ .rxFeature b{font-size:24px;display:block;margin-bottom:14px}.rxFeature strong{display:block;font-size:12px;color:#293655;margin-bottom:5px}.rxFeature small{font-size:11px;color:#7d89a0}
+ .rxWorkflow{margin-top:17px;border-radius:12px;border:1px solid #e8ecf5;padding:16px;background:white}
+ .rxWorkflow strong{font-size:12px}.rxWorkflow div{height:9px;margin-top:13px;border-radius:20px;background:#edf0f8;overflow:hidden}
+ .rxWorkflow i{display:block;background:#756bdc;width:72%;height:100%;border-radius:20px}.rxWorkflow div:last-child i{width:48%;background:#69b7c6}
+ .rxSection{padding-top:88px;padding-bottom:100px}
+ .rxSectionHeading{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:32px}
+ .rxSectionHeading h2{font-size:clamp(33px,3vw,46px);letter-spacing:-.045em;line-height:1.1;max-width:600px;margin:14px 0 0}
+ .rxSectionHeading p{max-width:370px;color:#687791;line-height:1.65;font-size:16px;margin:0}
+ .rxCards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+ .rxCard{border:1px solid #e2e7f0;background:white;border-radius:18px;padding:29px 30px;min-height:294px;box-shadow:0 10px 27px #1d315008;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+ .rxCard:hover{transform:translateY(-4px);box-shadow:0 18px 34px #20345818}
+ .rxCardTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}
+ .rxCardIcon{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:21px}
+ .rxCardNum{color:#a2abc0;font-size:12px;font-weight:800;letter-spacing:.1em}
+ .rxCard h3{font-size:24px;letter-spacing:-.03em;margin:0 0 7px}
+ .rxCardCategory{font-size:12px;color:#6254c1;font-weight:800;letter-spacing:.04em;margin:0 0 14px}
+ .rxCardDesc{color:#697892;line-height:1.6;font-size:14px;margin:0 0 22px}
+ .rxCardBottom{margin-top:auto;border-top:1px solid #eef0f5;padding-top:17px;color:#4d5b78;font-size:12px;font-weight:750}
+ .rxFooter{padding:25px 0;border-top:1px solid #e6eaf3;display:flex;justify-content:space-between;gap:18px;color:#7b879b;font-size:13px}
+ .rxFooter a{color:inherit;text-decoration:none}
+ @media(max-width:980px){.rxWrap{width:min(100% - 48px,800px)}.rxHero{grid-template-columns:1fr;gap:45px;padding-top:54px}.rxShowcase{max-width:660px}.rxSectionHeading{align-items:start;flex-direction:column}.rxCards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ @media(max-width:640px){.rxWrap{width:calc(100% - 36px)}.rxHead{height:auto;padding-top:20px;padding-bottom:20px;align-items:start;flex-direction:column;gap:19px}.rxBrand img{width:210px}.rxBrand small{font-size:9px;padding-left:10px}.rxNav{gap:20px}.rxNav a{font-size:13px}.rxNav .rxPrimary{padding:11px 15px}.rxHero h1{font-size:44px}.rxHero p{font-size:16px}.rxHero{padding-top:44px;padding-bottom:56px}.rxShowBody{grid-template-columns:49px 1fr}.rxRail{padding-top:22px}.rxRail i{width:21px;height:21px}.rxShowContent{padding:20px 12px}.rxFeature{padding:11px 7px}.rxFeature b{font-size:19px}.rxFeature strong{font-size:10px}.rxFeature small{font-size:9px}.rxSection{padding:64px 0}.rxCards{grid-template-columns:1fr}.rxCard{min-height:260px}.rxFooter{flex-wrap:wrap}}
+ @media(prefers-reduced-motion:reduce){.rxCard,.rxPrimary{transition:none}.rxCard:hover,.rxPrimary:hover{transform:none}}
+ `}</style>
+ <header className="rxWrap rxHead"><Link href="/" className="rxBrand" aria-label="Robotronix Education Suite home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/><small>EDUCATION SUITE</small></Link><nav className="rxNav" aria-label="Main navigation"><a href="#products">Products</a><Link href="/login">Sign in</Link><Link href="/signup" className="rxPrimary">Get started <span aria-hidden="true">↗</span></Link></nav></header>
+ <div className="rxMainHero"><section className="rxWrap rxHero"><div><span className="rxEyebrow">ROBOTRONIX EDUCATION SUITE</span><h1>One platform.<br/>Every part of your academy, <em>connected.</em></h1><p>Run learning, manage relationships and organize your team with a beautifully simple workspace built for modern education businesses.</p><div className="rxHeroActions"><Link href="/signup" className="rxPrimary">Get started <span aria-hidden="true">↗</span></Link><Link href="/login" className="rxOutline">Sign in to your workspace</Link></div><div className="rxBenefit"><span>Single sign-in</span><span>Secure organizations</span><span>Modular by design</span></div></div>
+ <div className="rxShowcase" aria-label="Illustrative product workspace preview"><div className="rxShowTop"><div className="rxLights"><i/><i/><i/></div><span>WORKSPACE PREVIEW</span></div><div className="rxShowBody"><div className="rxRail"><i/><i/><i/><i/></div><div className="rxShowContent"><h3>Your workspace</h3><p>Everything you need, in one place</p><div className="rxFeatureGrid"><div className="rxFeature"><b style={{color:"#6254d9"}}>✦</b><strong>Academy</strong><small>Learning & progress</small></div><div className="rxFeature"><b style={{color:"#087c89"}}>◎</b><strong>Connect CRM</strong><small>Leads & admissions</small></div><div className="rxFeature"><b style={{color:"#b87945"}}>✓</b><strong>My Tasks</strong><small>Team priorities</small></div></div><div className="rxWorkflow"><strong>Working better, together</strong><div><i/></div><div><i/></div></div></div></div></div></section></div>
+ <section className="rxWrap rxSection" id="products" aria-labelledby="rxProductsTitle"><div className="rxSectionHeading"><div><span className="rxEyebrow">THE PLATFORM</span><h2 id="rxProductsTitle">Three powerful tools.<br/>One connected experience.</h2></div><p>Choose what your organization needs. Every application has its own purpose, with one account and a shared workspace.</p></div><div className="rxCards">{options.map(x=><article className="rxCard" key={x.id}><div className="rxCardTop"><span className="rxCardIcon" style={{color:x.accent,background:x.accent+"13"}}>{x.symbol}</span><span className="rxCardNum">{x.number}</span></div><h3>{x.name}</h3><div className="rxCardCategory">{x.category}</div><p className="rxCardDesc">{x.description}</p><div className="rxCardBottom">{x.features}</div></article>)}</div></section>
+ <footer className="rxWrap rxFooter"><span>© Robotronix Education Suite</span><span><Link href="/privacy">Privacy</Link> &nbsp;·&nbsp; <Link href="/terms">Terms</Link> &nbsp;·&nbsp; <Link href="/support">Support</Link></span></footer>
+ </main>;
 }
 
 function AcademyHomePage(){
