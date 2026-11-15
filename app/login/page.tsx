@@ -15,9 +15,10 @@ function LoginContent(){
  const [deployment,setDeployment]=useState<DeploymentConfig|null>(null);
  useEffect(()=>{let active=true;void loadAuthDeployment().then(config=>{if(active)setDeployment(config);}).catch(()=>{if(active)setError("Application configuration is unavailable.");});return()=>{active=false};},[]);
  const next=deployment?safeAuthNext(requested,deployment):null;
- const productName=deployment?.mode==="crm"?"Connect CRM":deployment?.mode==="tasks"?"My Tasks":deployment?"Learning Portal":"Robotronix";
+ const productName=deployment?.mode==="crm"?"Connect CRM":deployment?.mode==="tasks"?"My Tasks":deployment?.mode==="combined"&&!deployment.legacyDefault?"Education Suite":deployment?"Learning Portal":"Robotronix";
  const hasPortal=deployment?.products.includes("portal")??false;
- const canRegister=Boolean(deployment&&!deployment.legacyDefault&&(deployment.products.includes("tasks")||deployment.products.includes("crm")));
+ const isSuite=Boolean(deployment?.mode==="combined"&&!deployment.legacyDefault);
+ const canRegister=Boolean(deployment&&!deployment.legacyDefault&&!isSuite&&(deployment.products.includes("tasks")||deployment.products.includes("crm")));
  const[email,setEmail]=useState(""),[password,setPassword]=useState(""),[code,setCode]=useState("");
  const[codeSent,setCodeSent]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(false);
  async function finish(){
@@ -77,6 +78,7 @@ function LoginContent(){
    {canRegister&&<button type="button" className="button secondary fullButton" disabled={loading||!email||password.length<8} onClick={register}>Create a new account</button>}
    {notice&&<p role="status" className="infoBanner">{notice}</p>}
   </form>
+  {isSuite&&<p style={{textAlign:"center",margin:"14px 0"}}>New academy? <Link href="/signup">Create an organization owner account</Link></p>}
   <div className="authDivider"><span>or</span></div>
   <button className="button secondary fullButton" disabled={loading||!deployment} onClick={google}>Continue with Google</button>
   <details className="topGap"><summary>Sign in with a one-time email code</summary>
