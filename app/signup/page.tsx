@@ -79,8 +79,8 @@ export default function SignupPage(){
  @media(max-width:420px){.signupFormSide{padding:22px}.signupSteps span{font-size:10px;padding:6px 8px}}
  `}</style>
  <div className="signupShell">
-  <aside className="signupStory"><div><span className="signupStoryLabel">WELCOME TO ROBOTRONIX</span><h2>Your academy.<br/>Your workspace.<br/>Your way.</h2><p>Set up an organization that reflects how you teach, manage and grow.</p></div>
-   <div className="signupBenefits"><span><b>01</b> Name your organization</span><span><b>02</b> Activate your applications</span><span><b>03</b> Invite your team</span></div></aside>
+  <aside className="signupStory"><div><span className="signupStoryLabel">YOUR JOURNEY STARTS HERE</span><h2>Your learning organization.<br/>One connected workspace.</h2><p>Create your digital workspace in a few simple steps, then bring your learning programs, people and operations together.</p></div>
+   <div className="signupBenefits"><span><b>01</b> Set up your organization</span><span><b>02</b> Choose your applications</span><span><b>03</b> Start managing your workspace</span></div></aside>
   <section className="signupFormSide" aria-labelledby="signup-title">
    <Link href="/" className="signupBrand" aria-label="Robotronix home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
    <div className="signupSteps" aria-label="Setup journey"><span>1 · Account</span><span>2 · Organization</span><span>3 · Applications</span><span>4 · Workspace</span></div>
