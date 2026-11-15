@@ -9,6 +9,7 @@ export type AuthAccess = {
   portal?:PortalAccess;
   tasks?:TaskAccess;
   crmWorkspace?:boolean;
+  saasWorkspace?:boolean;
 };
 export type AuthDestination = {path:string;denied?:string};
 
@@ -35,6 +36,7 @@ export function resolveAuthDestination(
  source:"login"|"callback"="login"
 ):AuthDestination {
  const next=safeAuthNext(requested,config);
+ if(!config.legacyDefault && config.mode==="combined" && access.saasWorkspace && !next)return {path:"/workspace"};
  // Combined SaaS customers without any product access start organization setup.
  // Never interpret a requested module URL as proof of membership.
  if(!config.legacyDefault && config.mode==="combined" &&
