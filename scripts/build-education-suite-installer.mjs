@@ -7,8 +7,8 @@ const root=process.cwd();
 const db=path.join(root,"database");
 execFileSync(process.execPath,[path.join(root,"scripts/build-db-installers.mjs")],{cwd:root,stdio:"inherit"});
 const original=fs.readFileSync(path.join(db,"generated/ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql"),"utf8");
-const saas=fs.readdirSync(path.join(db,"saas")).filter(f=>/^\d{2}_[\w-]+\.sql$/.test(f)).sort((a,b)=>Number(a.slice(0,2))-Number(b.slice(0,2)));
-if(saas.length<58||saas[0].slice(0,2)!=="01"||saas.at(-1).slice(0,2)!=="58")throw Error("SaaS source inventory incomplete: expected 01..58");
+const allSaas=fs.readdirSync(path.join(db,"saas")).filter(f=>/^\d{2}_[\w-]+\.sql$/.test(f)).sort((a,b)=>Number(a.slice(0,2))-Number(b.slice(0,2)));\nconst saas=allSaas.filter(f=>!/(?:verify|readiness|preflight|rollback|test|audit)/i.test(f));
+if(allSaas.length!==58||allSaas[0].slice(0,2)!=="01"||allSaas.at(-1).slice(0,2)!=="58")throw Error("SaaS source inventory changed: expected 01..58; review before building");\nif(saas.length<40)throw Error("Unexpected number of installable SaaS files");
 const migrations=fs.readdirSync(path.join(root,"supabase/migrations")).filter(f=>/^20261115_milestone_[ab]_.*\.sql$/.test(f)).sort();
 const ordered=[
  "20261115_milestone_a_phase3_organization_signup.sql",
@@ -26,7 +26,7 @@ const ordered=[
  "20261115_milestone_b_membership_module_sync.sql"
 ];
 if(JSON.stringify([...migrations].sort())!==JSON.stringify([...ordered].sort()))throw Error("Milestone migration list changed; review ordering and update builder before generating");
-const parts=[["Existing canonical Academy / CRM / Tasks fresh install",original]];
+const preflight = `DO $suite_guard$ BEGIN IF to_regclass('public.profiles') IS NOT NULL OR to_regnamespace('saas') IS NOT NULL OR to_regnamespace('tasks') IS NOT NULL OR to_regnamespace('connect') IS NOT NULL THEN RAISE EXCEPTION 'Fresh-install requires empty app schemas'; END IF; END $suite_guard$;`;\nconst parts=[["Fresh install guard",preflight],["Existing canonical Academy / CRM / Tasks fresh install",original]];
 for(const name of saas)parts.push(["SaaS "+name,fs.readFileSync(path.join(db,"saas",name),"utf8")]);
 for(const name of ordered)parts.push(["Milestone "+name,fs.readFileSync(path.join(root,"supabase/migrations",name),"utf8")]);
 const output=parts.map(([label,sql],i)=>"\n-- ==================== STAGE "+(i+1)+": "+label+" ====================\n"+sql.trim()+"\n").join("\n");
