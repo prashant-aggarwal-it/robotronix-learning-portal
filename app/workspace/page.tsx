@@ -27,10 +27,11 @@ export default function WorkspacePage(){
  }catch{if(live){setMessage("Your workspace could not be loaded. Please refresh or sign in again.");setStatus("error");}}})();
  return()=>{live=false};},[router]);
  const org=workspaces.find(x=>x.id===current);
+ const singleOrganization=workspaces.length===1;
  const cards=[
-  {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:academyRole?"/"+academyRole:null,icon:"🎓",detail:academyRole?"Open "+academyRole+" dashboard":"Academy role setup is pending"},
-  {id:"crm",name:"Connect CRM",description:"Enquiries, admissions and communications.",href:org?.crmAccess?"/connect":null,icon:"◈",detail:"Open Connect CRM"},
-  {id:"tasks",name:"My Tasks",description:"Workspaces, priorities and team tasks.",href:org?.tasksAccess?"/tasks":null,icon:"✓",detail:"Open My Tasks"}
+  {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:singleOrganization&&academyRole?"/"+academyRole:null,icon:"🎓",detail:academyRole?"Open "+academyRole+" dashboard":"Academy role setup is pending"},
+  {id:"crm",name:"Connect CRM",description:"Enquiries, admissions and communications.",href:singleOrganization&&org?.crmAccess?"/connect":null,icon:"◈",detail:"Open Connect CRM"},
+  {id:"tasks",name:"My Tasks",description:"Workspaces, priorities and team tasks.",href:singleOrganization&&org?.tasksAccess?"/tasks":null,icon:"✓",detail:"Open My Tasks"}
  ].filter(card=>org?.modules.includes(card.id));
  return <main style={{minHeight:"100vh",background:"#f5f7fd",color:"#182440"}}>
   <header style={{maxWidth:1120,margin:"auto",padding:"28px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
@@ -54,7 +55,7 @@ export default function WorkspacePage(){
     </article>)}
    </div>
    {org.role==="owner"&&<p style={{marginTop:32}}><Link href="/onboarding/products">Product configuration</Link>{org.modules.includes("academy")&&<> · <Link href="/onboarding/branding">Academy branding</Link> · <Link href={"/"+org.slug}>Academy entry page</Link></>}</p>}
-   <p style={{fontSize:13,color:"#66738c",marginTop:18}}>Choosing an organization here filters this launcher; linked application routes must enforce tenant membership independently. Cross-organization switching inside the applications is not enabled yet.</p>
+   <p style={{fontSize:13,color:"#66738c",marginTop:18}}>Choosing an organization here filters this launcher; linked application routes must enforce tenant membership independently. For accounts in multiple organizations, module links are disabled until each application can receive and verify the selected organization.</p>
    </>}
   </section>
  </main>;
