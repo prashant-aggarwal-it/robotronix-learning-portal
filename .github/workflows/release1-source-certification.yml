@@ -65,6 +65,8 @@ jobs:
         run: node scripts/build-phase3d-upgrade.mjs
       - name: Generate additive Phase 3E multi-customer upgrade
         run: node scripts/build-phase3e-upgrade.mjs
+      - name: Generate additive Phase 3G security upgrade
+        run: node scripts/build-phase3g-upgrade.mjs
       - name: Database package preflight
         run: node scripts/check-release1-db-preflight.mjs
       - name: Dynamic database contract preflight
