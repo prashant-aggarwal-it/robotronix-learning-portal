@@ -1,0 +1,49 @@
+name: Milestone C release gate
+on:
+  push:
+    branches:
+      - feature/education-suite-phase3g
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: milestone-c-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certify-application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build (never deploy)
+        run: npm run build
+      - name: SaaS auth and deployment contracts
+        run: |
+          npm run check:modules
+          npm run check:auth
+          npm run check:backend-modules
+          npm run check:product-ui
+          npm run check:deployment-profiles
+      - name: Security and module regression
+        run: |
+          npm run check:security
+          npm run check:connect-hardening
+          npm run test:connect-business
+          npm run test:tasks
+
+  # DEV-only DB suites are explicitly manual. This workflow intentionally
+  # does not store service credentials, access DEV DB, or touch production.
