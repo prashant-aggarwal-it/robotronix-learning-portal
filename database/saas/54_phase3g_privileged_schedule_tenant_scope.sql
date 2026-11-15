@@ -222,6 +222,14 @@ begin
  select * into v_en from public.enrollments where id=p_enrollment_id for update;
  if not found or v_en.status not in ('active','on_hold') or v_en.enrollment_type<>'one_to_one'
  then raise exception 'Only active or paused 1-to-1 enrollments may be reassigned'; end if;
+ if saas.has_organization_membership() and
+  (not saas.can_access_academy_record('enrollments',v_en.id)
+    or not saas.can_access_academy_record('students',v_en.student_id)
+    or not saas.can_access_academy_record('courses',v_en.course_id)
+    or not saas.can_access_academy_record('trainers',v_en.trainer_id)
+    or not saas.can_access_academy_record('trainers',p_new_trainer_id)) then
+  raise exception 'Cross-organization enrollment trainer reassignment denied' using errcode='42501';
+ end if;
  if v_en.trainer_id=p_new_trainer_id then return jsonb_build_object('updated',0,'unchanged',true); end if;
  if not exists(select 1 from public.trainers where id=p_new_trainer_id and record_status='active') then
   raise exception 'Replacement trainer is not active';
