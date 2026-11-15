@@ -29,7 +29,7 @@ on:
   workflow_dispatch:
 concurrency:
   group: dev-saas-authenticated-e2e-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
