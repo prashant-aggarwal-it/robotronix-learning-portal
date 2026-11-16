@@ -61,8 +61,8 @@ export default function WorkspacePage(){
  const academyDestination=org&&["owner","admin"].includes(org.role)?"/"+org.slug+"/manage":org?.role==="trainer"?"/"+org.slug+"/trainer":hasFamilyAccess?"/"+org?.slug+"/family":null;
  const cards=[
   {id:"academy",name:"Academy",description:"Classes, students, trainers and family learning.",href:academyDestination,icon:"🎓",detail:org&&["owner","admin"].includes(org.role)?"Open Academy management":org?.role==="trainer"?"Open trainer workspace":hasFamilyAccess?"Open family portal":"Academy access setup pending"},
-  {id:"crm",name:"Connect CRM",description:"Enquiries, admissions and communications.",href:singleOrganization&&org?.crmAccess?"/connect":null,icon:"◈",detail:"Open Connect CRM"},
-  {id:"tasks",name:"My Tasks",description:"Workspaces, priorities and team tasks.",href:singleOrganization&&org?.tasksAccess?"/tasks":null,icon:"✓",detail:"Open My Tasks"}
+  {id:"crm",name:"Connect CRM",description:"Enquiries, admissions and communications.",href:singleOrganization&&org?.crmAccess?"/connect":null,icon:"📈",detail:"Open Connect CRM"},
+  {id:"tasks",name:"My Tasks",description:"Workspaces, priorities and team tasks.",href:singleOrganization&&org?.tasksAccess?"/tasks":null,icon:"✅",detail:"Open My Tasks"}
  ].filter(card=>org?.modules.includes(card.id));
  return <main style={{minHeight:"100vh",background:"#f5f7fd",color:"#182440"}}>
   <header style={{maxWidth:1120,margin:"auto",padding:"28px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
@@ -83,15 +83,15 @@ export default function WorkspacePage(){
    {!org&&<p>Select an organization to continue.</p>}
    </>}
    {org&&<>
-   <p style={{color:"#586581",marginTop:10}}>You are a {org.role} of {org.name}. Only enabled products and verified workspace access are shown.</p>
+   <p style={{color:"#586581",marginTop:10}}>Welcome to {org.name}. <strong style={{textTransform:"capitalize"}}>{org.role}</strong> access · Choose an application to get started.</p>
    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))",gap:18,marginTop:30}}>
-    {cards.map(card=><article key={card.id} style={{background:"#fff",border:"1px solid #dce3f1",borderRadius:18,padding:26}}>
+    {cards.map(card=><article key={card.id} style={{background:"#fff",border:"1px solid #dce3f1",borderRadius:18,padding:26,boxShadow:"0 8px 28px #283b6c0b"}}>
      <span aria-hidden="true" style={{fontSize:34}}>{card.icon}</span><h2 style={{margin:"16px 0 8px"}}>{card.name}</h2><p style={{minHeight:65,color:"#5d6a83"}}>{card.description}</p>
      {card.href?<Link href={card.href} style={{fontWeight:700,color:"#4537a5"}}>{card.detail} →</Link>:<p style={{color:"#7a6070"}}>{card.detail}</p>}
     </article>)}
    </div>
-   {org.role==="owner"&&<p style={{marginTop:32}}><Link href="/workspace/invitations">Invite team members</Link> · <Link href="/workspace/families">Invite families</Link> · <Link href="/workspace/trainers">Link trainers</Link> · <Link href="/onboarding/products">Product configuration</Link>{org.modules.includes("academy")&&<> · <Link href="/onboarding/branding">Academy branding</Link> · <Link href={"/"+org.slug}>Academy entry page</Link></>}</p>}
-   <p style={{fontSize:13,color:"#66738c",marginTop:18}}>Organization selection is rechecked on the server and passed to tenant-aware Academy queries. CRM and Tasks retain their own independent membership checks. Cross-organization module launches remain limited until product-specific switching is verified.</p>
+   {org.role==="owner"&&<section style={{marginTop:36,background:"#fff",padding:24,border:"1px solid #dce3f1",borderRadius:18}}><h2 style={{margin:"0 0 14px",fontSize:21}}>Organization settings</h2><nav aria-label="Organization settings" style={{display:"flex",gap:14,flexWrap:"wrap",lineHeight:1.9}}><Link href="/workspace/invitations">Invite team members</Link> · <Link href="/workspace/families">Invite families</Link> · <Link href="/workspace/trainers">Link trainers</Link> · <Link href="/onboarding/products">Product configuration</Link>{org.modules.includes("academy")&&<> · <Link href="/onboarding/branding">Academy branding</Link> · <Link href={"/"+org.slug}>Academy entry page</Link></>}</nav></section>}
+
    </>}
   </section>
  </main>;
