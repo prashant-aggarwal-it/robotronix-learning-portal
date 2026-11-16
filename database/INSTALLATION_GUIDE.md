@@ -77,7 +77,7 @@ If the check fails or any script is absent, stop and investigate rather than ass
 
 ## 04A — Platform Super Admin bootstrap (DEV only)
 
-The canonical installer now includes `database/saas/59_platform_admin_foundation.sql`. For an already-installed DEV database, apply this additive migration once; it was applied to DEV on 16 November 2026.
+The canonical installer now includes `database/saas/59_platform_admin_foundation.sql` and `database/saas/60_platform_overview_rpc.sql`. For an already-installed DEV database, apply this additive migration once; both were applied to DEV on 16 November 2026.
 
 1. Create or sign in to an existing **verified** non-anonymous Supabase Auth account. Do not insert into `auth.users` manually.
 2. Obtain its exact Auth user UUID from the DEV Auth dashboard.
@@ -137,3 +137,9 @@ The script refuses non-DEV URLs and unknown/unverified identities. It calls a se
 - `database/07_operations/README.md` — external services
 
 **Current status:** This is a documented operator procedure. A complete reset → six-chunk install → users → data → QA execution still requires live DEV certification.
+
+## Platform Admin implementation status (16 November 2026)
+
+The branch contains the protected `/platform-admin` organization overview UI and `/api/platform-admin/overview` API. Both require a verified Supabase bearer token and service-only `saas_is_platform_admin_v1` authorization; the data RPC `saas_platform_overview_v1` independently checks the administrator identity. The overview is read-only, not the full customer-management control plane. It has **not** been browser E2E certified. No platform administrator has yet been bootstrapped in DEV.
+
+Hybrid automatic trials, assisted onboarding, plan changes, platform-admin recovery, and billing lifecycle are still outstanding. Do not advertise these as implemented or production-ready.
