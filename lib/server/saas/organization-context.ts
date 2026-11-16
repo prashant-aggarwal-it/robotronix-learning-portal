@@ -14,7 +14,7 @@ export async function getAuthorizedOrganizations(bearer:string):Promise<{userId:
  if(!url||!key)throw new SaaSAccessError(503,"Organization service unavailable");
  const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
  const {data:{user},error:authError}=await client.auth.getUser(bearer);
- if(authError||!user||user.is_anonymous)throw new SaaSAccessError(401,"Invalid session");
+ if(authError||!user||user.is_anonymous||!user.email_confirmed_at)throw new SaaSAccessError(401,"Verified session required");
  const {data:rows,error:membershipError}=await client.rpc("saas_authorized_organizations",{p_actor_id:user.id});
  if(membershipError)throw new SaaSAccessError(503,"Organization memberships unavailable");
  const organizations:OrganizationAccess[]=(rows??[]).map(
