@@ -3,6 +3,7 @@ import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import PlatformCustomerActions from "./PlatformCustomerActions";
 import PlatformSubscriptions from "./PlatformSubscriptions";
+import PlatformTenantBranding from "./PlatformTenantBranding";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
 type Overview={organizations:Org[];page:number;total:number;metrics:{organizations:number;trials:number;activeSubscriptions:number}};
 export default function PlatformAdminPage(){
@@ -49,6 +50,7 @@ export default function PlatformAdminPage(){
    </div>
    <PlatformCustomerActions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/>
    <PlatformSubscriptions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/>
+   <PlatformTenantBranding organizations={overview.organizations}/>
    <section style={{border:"1px solid #ddd5eb",borderRadius:16,padding:20,marginBottom:24}}><h2>Assisted onboarding</h2><p>Create a trial for an existing, verified customer Auth user. This does not send an email invitation.</p><div style={{display:"grid",gap:12,maxWidth:520}}><label>Owner Auth UUID<input value={assisted.ownerId} onChange={e=>setAssisted(s=>({...s,ownerId:e.target.value}))} style={{display:"block",width:"100%"}}/></label><label>Organization name<input value={assisted.name} onChange={e=>setAssisted(s=>({...s,name:e.target.value}))} style={{display:"block",width:"100%"}}/></label><label>URL slug<input value={assisted.slug} onChange={e=>setAssisted(s=>({...s,slug:e.target.value}))} style={{display:"block",width:"100%"}}/></label><label>Type<select value={assisted.kind} onChange={e=>setAssisted(s=>({...s,kind:e.target.value}))}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Tutor</option></select></label><button disabled={assistedBusy||!assisted.ownerId||!assisted.name||!assisted.slug} onClick={()=>void createAssisted()}>Create assisted trial</button>{assistedMessage&&<p role="status">{assistedMessage}</p>}</div></section>
    <section style={{border:"1px solid #ddd5eb",borderRadius:16,padding:20}}>
     <h2>Customer organizations</h2>
