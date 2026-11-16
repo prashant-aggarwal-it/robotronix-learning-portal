@@ -204,6 +204,6 @@ Do not make a trainer work in CRM, nor give a salesperson unrestricted Portal ac
 
 ## 12. Audit traceability
 
-Source reviewed: `docs/connect/SAAS_ARCHITECTURE_DECISION.md`; `docs/connect/CANONICAL_DATA_MODEL.md` (marked superseded design); `docs/connect/ARCHITECTURE_AUDIT.md` (historical); `docs/connect/ROBOTRONIX_PRODUCTION_GO_LIVE_GATE.md`; `app/admin/demos/page.tsx`; `app/api/admin/demos/route.ts`; `features/connect/components/ConnectCalendar.tsx`; `database/connect/saas/39_calendar_management.sql`; Portal scheduling and enrollment schema modules.
+Source reviewed: `docs/connect/SAAS_ARCHITECTURE_DECISION.md`; `docs/connect/CANONICAL_DATA_MODEL.md` (marked superseded design); `docs/connect/ARCHITECTURE_AUDIT.md` (historical); `docs/connect/ROBOTRONIX_PRODUCTION_GO_LIVE_GATE.md`; `app/admin/demos/page.tsx`; `app/api/admin/demos/route.ts`; `features/connect/components/ConnectCalendar.tsx`; `database/src/connect/saas/39_calendar_management.sql`; Portal scheduling and enrollment schema modules.
 
 **Evidence boundary:** this is a source-based architecture blueprint. It is not an audited ERD of the deployed DEV/Production databases, not an implementation, and not a statement that existing integration is already live. Exact schema migrations, API payload fields and operational ownership of edge cases require Gate 0 verification and owner sign-off.
