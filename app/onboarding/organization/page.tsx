@@ -60,7 +60,7 @@ export default function OrganizationOnboarding(){
   }catch{setMessage("Could not create the organization. Please try again.");}
   finally{setBusy(false);}
  }
- const normalize=(value:string)=>value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,63);
+ const reservedSlugs=new Set(["admin","api","auth","app","apps","connect","login","signup","tasks","portal","student","parent","trainer","onboarding","workspace","www","support","settings","robotronix","platform-admin"]);\n const slugReserved=reservedSlugs.has(slug.trim().toLowerCase());\n const normalize=(value:string)=>value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,63);
  return <main className="orgSetupPage">
  <style>{`
  .orgSetupPage{min-height:100dvh;display:grid;place-items:center;padding:20px 24px;background:radial-gradient(ellipse at 12% 17%,#eadfff,transparent 45%),radial-gradient(ellipse at 90% 88%,#ffe0ef,transparent 46%),linear-gradient(135deg,#fffaff,#f7f8ff);color:#211b45;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -102,9 +102,9 @@ export default function OrganizationOnboarding(){
     <label htmlFor="org-slug">Unique URL identifier<input id="org-slug" required minLength={3} maxLength={63} pattern="[a-z0-9]+(-[a-z0-9]+)*" title="Use lowercase letters, digits and single hyphens" value={slug} disabled={busy} placeholder="bright-minds-learning" onChange={e=>{setChangedSlug(true);setSlug(e.target.value.toLowerCase());}}/></label>
     <label htmlFor="org-kind">Organization type<select id="org-kind" value={kind} onChange={e=>setKind(e.target.value)}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Individual tutor</option></select></label>
     <fieldset><legend>Applications</legend>{(["academy","crm","tasks"] as const).map(m=><label key={m} style={{display:"flex",gap:8,alignItems:"center"}}><input type="checkbox" style={{width:"auto"}} checked={modules.includes(m)} onChange={e=>setModules(old=>e.target.checked?[...old,m]:old.filter(x=>x!==m))}/>{m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks"}</label>)}</fieldset>
-    <p className="orgSetupHint">Your identifier: <strong>{slug||"your-organization"}</strong>. This forms part of your organization-specific URL and can be branded after setup.</p>
+    {slugReserved&&<div className="orgSetupError" role="alert">This URL identifier is reserved. Try <strong>robotronix-academy</strong> or another unique identifier.</div>}\n    <p className="orgSetupHint">Your identifier: <strong>{slug||"your-organization"}</strong>. This forms part of your organization-specific URL and can be branded after setup.</p>
     {message&&<div className="orgSetupError" role="alert">{message}</div>}
-    <button className="orgSetupSubmit" disabled={busy||name.trim().length<2||slug.length<3||modules.length===0}>{busy?"Creating organization…":"Create organization & continue →"}</button>
+    <button className="orgSetupSubmit" disabled={busy||name.trim().length<2||slug.length<3||slugReserved||modules.length===0}>{busy?"Creating organization…":"Create organization & continue →"}</button>
    </form>}
    {(status==="owned"||status==="done")&&<div className="orgSetupMessage" role="status"><strong>{status==="owned"?"Your organization already exists.":"Organization created successfully!"}</strong><p>Identifier: <strong>{created}</strong>. {status==="done"?"Your owner access is active. Your selected applications have been provisioned.":"Continue to your organization workspace."}</p><Link className="orgSetupContinue" href="/workspace">Open workspace →</Link></div>}
    <p className="orgSetupBottom"><Link href="/">Back to homepage</Link></p>
