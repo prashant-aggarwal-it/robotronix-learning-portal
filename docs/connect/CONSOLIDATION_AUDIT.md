@@ -10,8 +10,8 @@ Branch: `feature/robotronix-connect-crm`. Do not merge to `main`, deploy, or mod
 - Canonicalized Connect browser API client and contracts at `features/connect/api/client.ts`; deleted unused `lib/connect-client.ts` after checking all Connect branch TS/TSX paths for imports.
 - Added shared `components/ApplicationSwitcher.tsx`, used by Portal admin and Connect (when Portal admin access is available). Portal admins can open Connect before their first workspace exists.
 - Added Connect route-level metadata and CSS import. Kept `cx-` CSS scoping, leaving Portal styling unaffected.
-- Moved seven read-only/rollback-only database verification scripts from `database/connect/saas/` to `database/connect/tests/`; source SQL files retain their original names and order.
-- Updated Connect documentation paths. Added `database/connect/README.md` and SQL/code structure checks to GitHub branch workflow.
+- Moved seven read-only/rollback-only database verification scripts from `database/src/connect/saas/` to `database/src/connect/tests/`; source SQL files retain their original names and order.
+- Updated Connect documentation paths. Added `database/src/connect/README.md` and SQL/code structure checks to GitHub branch workflow.
 
 ## Deliberately NOT changed
 
@@ -73,7 +73,7 @@ Validation still needed: npm typecheck/build, mobile-width visual review, zero-d
 - Added `features/connect/components/contact/ContactTimeline.tsx`: merged newest-first event feed, event-type filter, page-by-page loading, responsive entry styling, refresh/retry, zero-state, and protection against stale asynchronous responses on contact/workspace changes.
 - Replaced the old opportunity-only timeline in `app/connect/page.tsx`. Notes remain writable with existing permission checks; conversations now display as message events within the unified feed.
 - Added `GET /api/connect/workspaces/[tenantId]/contacts/[personId]/timeline`. Requires a valid authenticated session, validates UUIDs and cursors, sets no-store, and calls a service-role-only RPC.
-- Added **NOT APPLIED** `database/connect/saas/24_contact_360_timeline_PENDING.sql`. The function explicitly verifies active workspace membership and contact tenant ownership; its rows include enquiries, notes/activities, admissions created, real stage history, task creation/completion, appointment scheduling, and recorded inbound/outbound messages.
+- Added **NOT APPLIED** `database/src/connect/saas/24_contact_360_timeline_PENDING.sql`. The function explicitly verifies active workspace membership and contact tenant ownership; its rows include enquiries, notes/activities, admissions created, real stage history, task creation/completion, appointment scheduling, and recorded inbound/outbound messages.
 - Cursor pagination is ordered by (record timestamp, deterministic prefixed ID), avoiding offsets on heavily mixed event streams. Historical record changes without timestamps cannot be reconstructed; do not invent past calls or appointment completions.
 - Corrected the pre-existing ContactProfile TypeScript mismatch (`opportunities` and `canWrite` missing from its Props type).
 - **Operational status:** No Supabase SQL has been executed, no deploy, no merge. DEV inspection on 2026-11-06 confirmed the new RPC is absent; the API returns 503 "Contact timeline is not yet enabled in this environment" until a separately approved DEV activation. GitHub build and real UI tests are still outstanding.
@@ -96,7 +96,7 @@ The user explicitly approved DEV database changes. Migration `connect_contact_36
 
 - Added `features/connect/components/contact/ContactIntelligence.tsx`: Contact 360 Insights tab plus prioritized workspace attention list. UI surfaces factual contact health, lead ageing, next action suggestions and a digest composed from recorded CRM counters. This is **not** a model-generated or predictive AI summary; no contact PII is transmitted to an external AI provider.
 - Added authenticated `GET /api/connect/workspaces/[tenantId]/intelligence` with strict UUID/limit validation and server-only `connect_contact_insights` RPC.
-- Added `database/connect/saas/27_contact_intelligence.sql`; applied migration `connect_contact_intelligence_phase4` to DEV `fflejkqcspivnhsmkdtn` successfully. Aggregate data includes linked enquiries, open/overdue tasks, upcoming appointments, active/won opportunities, contact owner presence and latest recorded interaction from enquiries, notes, messages and stage changes.
+- Added `database/src/connect/saas/27_contact_intelligence.sql`; applied migration `connect_contact_intelligence_phase4` to DEV `fflejkqcspivnhsmkdtn` successfully. Aggregate data includes linked enquiries, open/overdue tasks, upcoming appointments, active/won opportunities, contact owner presence and latest recorded interaction from enquiries, notes, messages and stage changes.
 - Indicators are transparent operational heuristics, not AI lead scores. Workspace preview is limited to 50 top-priority contacts; never label that a comprehensive historical report.
 - Added safe click-through to contacts beyond the first 100 initially loaded people records, using tenant-scoped single-contact retrieval and stale response checks.
 - Rollback-only DEV test with an 11-day-old enquiry and two-day-overdue task verified expected counts and priority 4. Forged actor rejected; no fixture data persisted. No Production changes, deployment or merge.
