@@ -3,7 +3,7 @@
 This directory contains **implementation and historical migration SQL**, not a separate installation workflow.
 
 - `migrations/`: historical standalone migrations retained for review and release compatibility. **Do not run on a freshly installed Education Suite database.**
-- The canonical, actively referenced module sources currently remain in sibling directories `../portal/`, `../crm/`, `../tasks/`, `../saas/`, `../shared/`, `../connect/` and `../platform/`.
+- The canonical, actively referenced module sources currently remain in sibling directories `../portal/`, `../crm/`, `../tasks/`, `../saas/`, `../shared/`, `connect/` and `../platform/`.
 
 ## Why not move everything at once?
 
