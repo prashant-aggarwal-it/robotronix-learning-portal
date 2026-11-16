@@ -41,9 +41,9 @@ This stage enables **text replies to one Meta test sender**, only to explicitly 
 
 - `lib/server/connect-meta-test.ts`: server-only Graph API v26 text send adapter, test phone/recipient allowlist and timeout/error classification.
 - `app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/send/route.ts`: eligibility GET and idempotent authenticated send POST.
-- `database/connect/saas/32_whatsapp_meta_test_sending.sql`: reservation/completion RPCs, send ledger, 23h45m window.
-- `database/connect/saas/33_whatsapp_meta_reply_eligibility.sql`: read-only reply context.
-- `database/connect/saas/34_whatsapp_meta_test_send_limits.sql`: database test-rate guard.
+- `database/src/connect/saas/32_whatsapp_meta_test_sending.sql`: reservation/completion RPCs, send ledger, 23h45m window.
+- `database/src/connect/saas/33_whatsapp_meta_reply_eligibility.sql`: read-only reply context.
+- `database/src/connect/saas/34_whatsapp_meta_test_send_limits.sql`: database test-rate guard.
 - Existing signed `/api/connect/webhooks/meta` receives inbound messages and statuses. Phase 1 stores messages separately from enquiries; Phase 2 provides inbox.
 
 ## Checks completed and checks remaining
