@@ -23,7 +23,7 @@ Robotronix Connect is a **standalone multi-institute CRM and admissions SaaS**, 
 3. Confirmed existing **80 Portal public tables remain**, old CRM prototype tables 0, and no Connect FK references Portal tables.
 4. All 34 Connect tables have RLS enabled, with no `anon`/`authenticated` direct schema/table access. Server service-role access only. Full tenant membership policies and server authorization still need implementation/test.
 5. Two-tenant rollback test verified cross-tenant contact relationships rejected by composite foreign keys; invalid stage FK rejected. No test records retained.
-6. Removed standalone CRM module from Portal's canonical fresh-install sequence. Standalone installation source: `database/connect/saas/01_connect_independent_schema.sql`.
+6. Removed standalone CRM module from Portal's canonical fresh-install sequence. Standalone installation source: `database/src/connect/saas/01_connect_independent_schema.sql`.
 
 ## Design decisions / deliberate tradeoffs
 - Use **shared-schema, tenant-keyed multi-tenancy** rather than one PostgreSQL schema per customer. Every related record includes tenant scope and composite tenant-aware keys where relationships are tenant-owned.
