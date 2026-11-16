@@ -39,11 +39,11 @@ All responses include `Cache-Control: no-store`.
 Invite creation currently returns the one-time bearer token to the authorized issuer. Delivery is **manual secure sharing**; SMTP/email delivery and public acceptance UI are not yet implemented. Never log, store in analytics, or expose invitation tokens in URLs. For commercial deployment, implement a vetted transactional email service, rate limiting and abuse protection before enabling this endpoint publicly.
 
 ## Database files
-- `database/connect/saas/01_connect_independent_schema.sql` — 35 initial Connect tables.
-- `database/connect/saas/05_workspace_security.sql` — canonical new-install security module (invitation table and 6 RPCs). Run in that order for a fresh standalone Connect schema.
-- `database/connect/saas/07_member_management.sql` — canonical membership management RPC.
-- `database/connect/saas/06_auth_user_permission_fix_dev.sql` — history-only correction to existing Development database (already folded into 05).
-- `database/connect/tests/verify_workspace_security_dev.sql` — transactional rollback-only verification requiring two existing test Auth users.
+- `database/src/connect/saas/01_connect_independent_schema.sql` — 35 initial Connect tables.
+- `database/src/connect/saas/05_workspace_security.sql` — canonical new-install security module (invitation table and 6 RPCs). Run in that order for a fresh standalone Connect schema.
+- `database/src/connect/saas/07_member_management.sql` — canonical membership management RPC.
+- `database/src/connect/saas/06_auth_user_permission_fix_dev.sql` — history-only correction to existing Development database (already folded into 05).
+- `database/src/connect/tests/verify_workspace_security_dev.sql` — transactional rollback-only verification requiring two existing test Auth users.
 
 ## Tests actually run in Development
 1. Schema contains 36 Connect tables, all with RLS, and 80 existing Portal tables.
