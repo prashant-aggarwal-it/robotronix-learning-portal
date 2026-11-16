@@ -18,7 +18,7 @@
 
 `generated/` contains build outputs. Different packages are for different deployments; **do not run them all**.
 
-Older folders (`connect/`, `legacy/`, `audit/`, `security_qa/`, `04_existing_db_migrations/`) still contain referenced functionality or release checks. They should not be manually executed as part of the numbered fresh-install flow. They have not been deleted because dependency auditing found references.
+Historical standalone migrations are under `src/migrations/` and are not fresh-install steps.\n\nOlder folders (`connect/`, `legacy/`, `audit/`, `security_qa/`, `src/migrations/`) still contain referenced functionality or release checks. They should not be manually executed as part of the numbered fresh-install flow. They have not been deleted because dependency auditing found references.
 
 ## Current DEV state
 
