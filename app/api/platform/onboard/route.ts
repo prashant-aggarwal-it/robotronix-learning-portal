@@ -4,6 +4,10 @@ import {readBearerToken,SaaSAccessError} from "@/lib/server/saas/organization-co
 import {platformService,requirePlatformAdmin} from "@/lib/server/saas/platform-admin";
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store","Vary":"Authorization"};
+const supportedModules=new Set(["academy","crm","tasks"]);
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const validSlug=(slug:string)=>slug.length>=3&&slug.length<=63&&/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug);
+const reservedSlugs=new Set(["admin","api","auth","app","apps","connect","login","signup","tasks","portal","student","parent","trainer","onboarding","workspace","www","support","settings","robotronix","platform-admin"]);
 function fail(e:unknown){return NextResponse.json({ok:false,error:e instanceof SaaSAccessError?e.message:"Onboarding unavailable"},{status:e instanceof SaaSAccessError?e.status:503,headers});}
 export async function POST(request:NextRequest){
  try{
@@ -13,8 +17,11 @@ export async function POST(request:NextRequest){
   if(!body||typeof body.name!=="string"||typeof body.slug!=="string"||
    !["academy","institute","tutor"].includes(body.kind)||
    !Array.isArray(body.modules)||body.modules.length<1||body.modules.length>3||
-   !body.modules.every((m:unknown)=>["academy","crm","tasks"].includes(String(m)))||
-   typeof body.requestKey!=="string"||!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(body.requestKey))
+   !body.modules.every((m:unknown)=>typeof m==="string"&&supportedModules.has(m))||
+   new Set(body.modules).size!==body.modules.length||
+   body.name.trim().length<2||body.name.trim().length>160||
+   !validSlug(body.slug)||reservedSlugs.has(body.slug)||
+   typeof body.requestKey!=="string"||!uuid.test(body.requestKey))
    throw new SaaSAccessError(400,"Invalid onboarding details");
   const assisted=body.assisted===true;
   const db=platformService();
@@ -24,7 +31,7 @@ export async function POST(request:NextRequest){
   let ownerId=user.id;
   if(assisted){
    await requirePlatformAdmin(request.headers.get("authorization"));
-   if(typeof body.ownerId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.ownerId))throw new SaaSAccessError(400,"Existing verified owner ID required");
+   if(typeof body.ownerId!=="string"||!uuid.test(body.ownerId))throw new SaaSAccessError(400,"Existing verified owner ID required");
    ownerId=body.ownerId;
    rpcClient=db;
   }else{
