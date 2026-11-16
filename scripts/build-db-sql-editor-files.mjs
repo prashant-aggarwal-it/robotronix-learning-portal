@@ -35,7 +35,7 @@ function statements(input){
  return result;
 }
 const stmts=statements(sql);
-const stripPrefix=s=>s.replace(/^(?:\s|--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*?/,'').trim();
+const stripPrefix=s=>s.replace(/^(?:\s|--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*/,'').trim();
 const chunks=[];
 let current=[],bytes=0,stage='Academy',counter=0;
 const flush=()=>{if(!current.length)return;chunks.push({stage,content:current.join('')});current=[];bytes=0};
