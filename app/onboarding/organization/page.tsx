@@ -93,7 +93,7 @@ export default function OrganizationOnboarding(){
   <aside className="orgSetupAside"><div><small>STEP 2 · YOUR ORGANIZATION</small><h2>Give your learning space its identity.</h2><p>Whether you run an academy, school, training center or upskilling program, start with the name your learners know.</p></div><div className="orgSetupPoints"><span><b>01</b> Choose your organization name</span><span><b>02</b> Create a unique URL identifier</span><span><b>03</b> Choose the tools you need next</span></div></aside>
   <section className="orgSetupForm">
    <Link href="/" className="orgSetupBrand" aria-label="Robotronix home"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
-   <div className="orgSetupSteps" aria-label="Setup journey"><span>1 · Account</span><span>2 · Organization</span><span>3 · Applications</span><span>4 · Workspace</span></div>
+   <div className="orgSetupSteps" aria-label="Setup journey"><span>1 · Account</span><span>2 · Organization</span><span>3 · Workspace</span><span>4 · Branding</span></div>
    <h1>Set up your organization</h1><p className="orgSetupIntro">Add your organization's name and choose its unique link. You'll be its first owner and can configure your applications next.</p>
    {status==="checking"&&<p role="status">Checking your account access…</p>}
    {status==="error"&&<div className="orgSetupError" role="alert">{message}</div>}
@@ -106,7 +106,7 @@ export default function OrganizationOnboarding(){
     {message&&<div className="orgSetupError" role="alert">{message}</div>}
     <button className="orgSetupSubmit" disabled={busy||name.trim().length<2||slug.length<3||modules.length===0}>{busy?"Creating organization…":"Create organization & continue →"}</button>
    </form>}
-   {(status==="owned"||status==="done")&&<div className="orgSetupMessage" role="status"><strong>{status==="owned"?"Your organization already exists.":"Organization created successfully!"}</strong><p>Identifier: <strong>{created}</strong>. {status==="done"?"Your owner access is active. Your selected applications have been provisioned.":"Continue to your organization workspace."}</p><Link className="orgSetupContinue" href="/onboarding/products">Continue to applications →</Link></div>}
+   {(status==="owned"||status==="done")&&<div className="orgSetupMessage" role="status"><strong>{status==="owned"?"Your organization already exists.":"Organization created successfully!"}</strong><p>Identifier: <strong>{created}</strong>. {status==="done"?"Your owner access is active. Your selected applications have been provisioned.":"Continue to your organization workspace."}</p><Link className="orgSetupContinue" href="/workspace">Open workspace →</Link></div>}
    <p className="orgSetupBottom"><Link href="/">Back to homepage</Link></p>
   </section>
  </div>
