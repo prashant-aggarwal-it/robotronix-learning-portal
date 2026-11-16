@@ -2,7 +2,7 @@
 // Offline signature audit: argument NAME existence only, not runtime/type/permission semantics.
 import fs from 'node:fs';
 import path from 'node:path';
-const snap=JSON.parse(fs.readFileSync('database/audit/dev_catalog_snapshot.json','utf8'));
+const snap=JSON.parse(fs.readFileSync('database/src/src/audit/dev_catalog_snapshot.json','utf8'));
 const root=process.cwd(),target=path.resolve(process.argv[2]||'artifacts/release1-rpc-signatures');
 fs.mkdirSync(target,{recursive:true});
 const functionArgs=new Map();
