@@ -2,7 +2,7 @@
 // Deterministic review of allowed dynamic RPC targets. No network or database writes.
 import fs from 'node:fs';
 import path from 'node:path';
-const snapshot=JSON.parse(fs.readFileSync('database/src/src/audit/dev_catalog_snapshot.json','utf8'));
+const snapshot=JSON.parse(fs.readFileSync('database/src/audit/dev_catalog_snapshot.json','utf8'));
 const known=new Set(snapshot.functions.map(x=>x.name));
 const out=path.resolve(process.argv[2]||'artifacts/release1-dynamic-contracts');
 fs.mkdirSync(out,{recursive:true});
