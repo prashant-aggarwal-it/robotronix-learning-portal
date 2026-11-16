@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root=process.cwd();
-const dir=path.join(root,"database/connect");
+const dir=path.join(root,"database/src/connect");
 const source=path.join(dir,"saas");
 const tests=path.join(dir,"tests");
 const requiredTests=[
