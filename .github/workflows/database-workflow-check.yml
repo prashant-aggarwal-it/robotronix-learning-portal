@@ -8,6 +8,7 @@ on:
       - 'scripts/audit-db-cleanup.mjs'
       - 'scripts/check-db-operator-layout.mjs'
       - 'scripts/build-education-suite-installer.mjs'
+      - 'scripts/build-db-sql-editor-files.mjs'
       - 'scripts/check-db-*.mjs'
       - 'scripts/check-fresh-db-release.mjs'
       - 'supabase/migrations/**'
@@ -32,6 +33,8 @@ jobs:
         run: node scripts/check-db-operator-layout.mjs
       - name: Audit legacy SQL references
         run: node scripts/audit-db-cleanup.mjs
+      - name: Generate bounded SQL Editor install files
+        run: node scripts/build-db-sql-editor-files.mjs
       - name: Verify bundle has no transactional QA
         run: |
           node --input-type=module -e "import fs from 'node:fs';const s=fs.readFileSync('database/generated/ROBOTRONIX_EDUCATION_SUITE_FRESH_INSTALL_UNCERTIFIED.sql','utf8');if(!s.includes('Fresh install guard')||s.includes('STAGE 4: SaaS 03_tenant_isolation_rollback'))process.exit(1);console.log('PASS draft installer stage presence')"
