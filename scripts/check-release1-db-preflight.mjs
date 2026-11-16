@@ -8,7 +8,7 @@ const out=path.resolve(process.argv[2]||'artifacts/release1-certification');
 fs.mkdirSync(out,{recursive:true});
 const packages=JSON.parse(fs.readFileSync('database/packages.json','utf8'));
 const manifest=JSON.parse(fs.readFileSync('database/portal/manifest.json','utf8'));
-const snapshot=JSON.parse(fs.readFileSync('database/src/src/audit/dev_catalog_snapshot.json','utf8'));
+const snapshot=JSON.parse(fs.readFileSync('database/src/audit/dev_catalog_snapshot.json','utf8'));
 const checked=[];
 function checkPath(relative){
  const safe=!path.isAbsolute(relative)&&!relative.split(/[\\/]/).includes('..');
