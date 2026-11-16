@@ -13,7 +13,7 @@ export async function requirePlatformAdmin(authorization:string|null){
  if(!bearer)throw new SaaSAccessError(401,"Sign in first");
  const db=platformService();
  const {data:{user},error}=await db.auth.getUser(bearer);
- if(error||!user||user.is_anonymous)throw new SaaSAccessError(401,"Invalid session");
+ if(error||!user||user.is_anonymous||!user.email_confirmed_at)throw new SaaSAccessError(401,"Verified session required");
  const {data:allowed,error:permissionError}=await db.rpc("saas_is_platform_admin_v1",{p_actor_id:user.id});
  if(permissionError)throw new SaaSAccessError(503,"Platform authorization unavailable");
  if(allowed!==true)throw new SaaSAccessError(403,"Platform administrator required");
