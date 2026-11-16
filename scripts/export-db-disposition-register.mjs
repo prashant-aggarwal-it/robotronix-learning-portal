@@ -2,7 +2,7 @@
 // Generates a complete conservative disposition register; never authorizes destructive DDL.
 import fs from 'node:fs';
 import path from 'node:path';
-const source=JSON.parse(fs.readFileSync('database/audit/dev_catalog_snapshot.json','utf8'));
+const source=JSON.parse(fs.readFileSync('database/src/src/audit/dev_catalog_snapshot.json','utf8'));
 const folder=path.resolve(process.argv[2]||'artifacts/db-object-dispositions');
 fs.mkdirSync(folder,{recursive:true});
 const academy=/^(students|parents|parent_|student_guardians|courses|course_|trainer|cohorts|enrollments|enrollment_|schedule_events|class_attendance|session_records|demo_|onboarding_|learning_|learner_|project_|quiz|xp_)/;
