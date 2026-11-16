@@ -82,7 +82,7 @@ export default function OrganizationOnboarding(){
  .orgSetupFields input:focus{border-color:#8850d6;outline:2px solid #e9dcfa}
  .orgSetupHint{font-size:12px;line-height:1.55;color:#78809a;margin:-7px 0 0}.orgSetupHint strong{color:#5d36ab}
  .orgSetupSubmit,.orgSetupContinue{display:inline-flex;justify-content:center;align-items:center;border:0;border-radius:12px;padding:15px 21px;background:linear-gradient(100deg,#703bd2,#cd349f);color:white;font-size:14px;font-weight:800;text-decoration:none;box-shadow:0 10px 23px #703bd230}
- .orgSetupSubmit{width:100%;cursor:pointer}.orgSetupSubmit:disabled{opacity:.55;cursor:not-allowed}
+ .orgSetupContinue,.orgSetupContinue:link,.orgSetupContinue:visited{color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800;text-decoration:none}.orgSetupContinue:hover,.orgSetupContinue:focus-visible{color:#fff!important;-webkit-text-fill-color:#fff!important;filter:brightness(1.07);box-shadow:0 12px 26px #703bd244}.orgSetupContinue:focus-visible{outline:3px solid #4935a8;outline-offset:3px}.orgSetupSubmit{width:100%;cursor:pointer}.orgSetupSubmit:disabled{opacity:.55;cursor:not-allowed}
  .orgSetupMessage{background:#f6efff;border:1px solid #d6c4f0;color:#573097;padding:18px;border-radius:14px;font-size:14px;line-height:1.6}.orgSetupMessage p{margin:10px 0}.orgSetupMessage a{color:#5b2dac;font-weight:750}
  .orgSetupError{background:#fff0f3;border:1px solid #f1c4d2;color:#9c2346;padding:14px;border-radius:12px;margin:12px 0}
  .orgSetupBottom{font-size:13px;text-align:center;margin:22px 0 0}.orgSetupBottom a{color:#6534ba;text-decoration:none;font-weight:700}
