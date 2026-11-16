@@ -11,7 +11,7 @@ on:
       - 'scripts/check-release1-rpc-arguments.mjs'
       - 'database/packages.json'
       - 'database/portal/manifest.json'
-      - 'database/audit/dev_catalog_snapshot.json'
+      - 'database/src/src/audit/dev_catalog_snapshot.json'
       - '.github/workflows/db-dependency-inventory.yml'
   workflow_dispatch:
 permissions:
