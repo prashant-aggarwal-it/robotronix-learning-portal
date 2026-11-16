@@ -20,6 +20,9 @@ BEGIN
  (b,'saas-e2e-b-'||left(replace(b::text,'-',''),12),'Synthetic School B');
  INSERT INTO saas.memberships(organization_id,user_id,role_key) VALUES
  (a,p_user_a,'admin'),(b,p_user_b,'admin'),(a,p_user_multi,'admin'),(b,p_user_multi,'admin');
+ INSERT INTO saas.platform_subscriptions(organization_id,plan_code,status,started_at,ends_at) VALUES
+ (a,'qa_trial','trial',now(),now()+interval '1 day'),
+ (b,'qa_trial','trial',now(),now()+interval '1 day');
  INSERT INTO saas.module_entitlements(organization_id,module_key,enabled) VALUES
  (a,'academy',true),(b,'academy',true);
  RETURN jsonb_build_object('schoolA',a,'schoolB',b);
@@ -53,6 +56,7 @@ BEGIN
   WHERE c.id=l.course_id AND l.organization_id=ANY(ids);
  DELETE FROM saas.module_entitlements WHERE organization_id=ANY(ids);
  DELETE FROM saas.memberships WHERE organization_id=ANY(ids);
+ DELETE FROM saas.platform_subscriptions WHERE organization_id=ANY(ids) AND plan_code='qa_trial';
  DELETE FROM saas.organizations WHERE id=ANY(ids);
 END $fn$;
 REVOKE ALL ON FUNCTION public.saas_qa_fixture_cleanup(uuid,uuid) FROM PUBLIC,anon,authenticated;
