@@ -9,7 +9,7 @@ execFileSync(process.execPath,[path.join(root,"scripts/build-db-installers.mjs")
 const original=fs.readFileSync(path.join(db,"generated/ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql"),"utf8");
 const allSaas=fs.readdirSync(path.join(db,"saas")).filter(f=>/^\d{2}_[\w-]+\.sql$/.test(f)).sort((a,b)=>Number(a.slice(0,2))-Number(b.slice(0,2)));
 const saas=allSaas.filter(f=>!/(?:verify|readiness|preflight|rollback|test|audit)/i.test(f));
-if(allSaas.length!==63||allSaas[0].slice(0,2)!=="01"||allSaas.at(-1).slice(0,2)!=="63")throw Error("SaaS source inventory changed: expected 01..63; review before building");
+if(allSaas.length!==64||allSaas[0].slice(0,2)!=="01"||allSaas.at(-1).slice(0,2)!=="64")throw Error("SaaS source inventory changed: expected 01..64; review before building");
 if(saas.length<40)throw Error("Unexpected number of installable SaaS files");
 const migrations=fs.readdirSync(path.join(root,"supabase/migrations")).filter(f=>/^20261115_milestone_[ab]_.*\.sql$/.test(f)).sort();
 const ordered=[
