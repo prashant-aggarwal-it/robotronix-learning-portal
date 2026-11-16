@@ -17,6 +17,12 @@ function client(){
  if(!result)throw new Error("Authentication is unavailable.");
  return result;
 }
+export async function requestPasswordReset(email:string){
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))return {ok:false,error:"Enter a valid email address."};
+ const redirectTo=typeof window!=="undefined"?window.location.origin+"/auth/reset-password":undefined;
+ const {error}=await client().auth.resetPasswordForEmail(email.trim(),{redirectTo});
+ return error?{ok:false,error:"Unable to request a reset. Please try again later."}:{ok:true};
+}
 export async function passwordSignIn(email:string,password:string){
  const {error}=await client().auth.signInWithPassword({email,password});
  return error?{ok:false,error:error.message}:{ok:true};
@@ -75,9 +81,13 @@ export async function loadSignedInAccess(deployment:DeploymentConfig):Promise<Au
  if(!session)throw new Error("Sign in again.");
  const header={Authorization:"Bearer "+session.access_token};
  // SaaS organization membership comes from an authenticated server-enforced RPC.
+ let platformAdmin=false;
  let saasWorkspace=false;
  let saasConfigured=false;
  if(!deployment.legacyDefault && deployment.mode==="combined"){
+  const adminResponse=await fetch("/api/platform-admin/access",{headers:header,cache:"no-store"});
+  if(adminResponse.ok)platformAdmin=(await adminResponse.json()).platformAdmin===true;
+  else if(adminResponse.status!==403)throw new Error("Platform access verification unavailable.");
   const {data,error}=await supabase.rpc("saas_my_workspaces");
   if(error)throw new Error("Workspace access verification unavailable.");
   saasWorkspace=Array.isArray(data)&&data.length>0;
@@ -104,7 +114,7 @@ export async function loadSignedInAccess(deployment:DeploymentConfig):Promise<Au
   deployment.products.includes("tasks")?taskAccess(header,false):Promise.resolve(undefined),
   deployment.products.includes("crm")?crmAccess(header):Promise.resolve(undefined)
  ]);
- return {portal,tasks,crmWorkspace,saasWorkspace,saasConfigured};
+ return {portal,tasks,crmWorkspace,saasWorkspace,saasConfigured,platformAdmin};
 }
 
 /** A branded URL is a selector, never proof of authorization. */
