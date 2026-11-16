@@ -11,6 +11,7 @@ export type AuthAccess = {
   crmWorkspace?:boolean;
   saasWorkspace?:boolean;
   saasConfigured?:boolean;
+  platformAdmin?:boolean;
 };
 export type AuthDestination = {path:string;denied?:string};
 
@@ -37,6 +38,8 @@ export function resolveAuthDestination(
  source:"login"|"callback"="login"
 ):AuthDestination {
  const next=safeAuthNext(requested,config);
+ // Platform access is a separate, verified role; never infer tenant membership.
+ if(!config.legacyDefault && config.mode==="combined" && access.platformAdmin && !next)return {path:"/platform-admin"};
  if(!config.legacyDefault && config.mode==="combined" && config.products.includes("portal") && access.saasWorkspace){
    if(!access.saasConfigured)return {path:"/onboarding/products"};
    if(!next)return {path:"/workspace"};
