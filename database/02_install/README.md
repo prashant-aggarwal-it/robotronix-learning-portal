@@ -1,17 +1,19 @@
 # 02 — Install the complete Education Suite
 
-**Your DEV project has already been installed. Do not rerun the installer.**
+**Your current DEV project is already installed. Do not rerun any installer on it.**
 
-For a **new, disposable Supabase project**, generate the canonical fresh installer from the repository root:
+For a new and deliberately empty DEV Supabase database, generate the ordered SQL Editor files from the repository root:
 
 ```powershell
-node scripts/build-education-suite-installer.mjs
+npm run db:build-editor
 ```
 
-Output: `../generated/ROBOTRONIX_EDUCATION_SUITE_FRESH_INSTALL_UNCERTIFIED.sql`.
+The generated SQL files appear under `database/02_install/sql_editor/`. Open `sql_editor/ORDER.md` for the **exact sequence**; the generator currently produces six files, each below 185 KB. Use Supabase SQL Editor to execute each file individually and in order. Stop at the first error.
 
-To execute this oversized installer, use PostgreSQL `psql` with `-v ON_ERROR_STOP=1` rather than the Supabase browser SQL Editor.
+**Important:** These are a *new alternative* to the original combined file. The SQL parser checks statement boundaries and CI confirms generation, but changing transaction boundaries still requires **live clean-install certification**. Do not use in production or on a populated database. A partial installation must not be resumed blindly.
 
-The generated bundle is an integration snapshot, **not a production migration**. Although it executed on the current DEV project, full multi-tenant role and isolation certification is still outstanding. Never run it on PROD or a populated environment. Internal schema sources stay under `../portal`, `../crm`, `../tasks`, `../saas` and `../shared` until their generator and application dependencies can safely be relocated.
+For direct `psql` installation, the original monolithic `../generated/ROBOTRONIX_EDUCATION_SUITE_FRESH_INSTALL_UNCERTIFIED.sql` remains available.
 
-After installation, proceed to `../06_verify/README.md`.
+Reference data is included in the Academy installer. Auth users are created separately through the Supabase Admin API. After installation, follow `../06_verify/README.md`.
+
+Internal canonical SQL sources remain under `../portal/`, `../tasks/`, `../crm/`, `../saas/`, `../shared/`; do not run these individually in addition to the generated installer.
