@@ -15,6 +15,7 @@ export default function OrganizationOnboarding(){
  const [changedSlug,setChangedSlug]=useState(false);
  const [busy,setBusy]=useState(false);
  const [created,setCreated]=useState("");
+ const [provisionedModules,setProvisionedModules]=useState<string[]>([]);
  const [kind,setKind]=useState("academy");
  const [modules,setModules]=useState<string[]>(["academy","crm","tasks"]);
  const [requestKey]=useState(()=>crypto.randomUUID());
@@ -56,6 +57,7 @@ export default function OrganizationOnboarding(){
    const result=await response.json() as {ok?:boolean;slug?:string;error?:string};
    if(!response.ok||!result.ok){setMessage(result.error||"Unable to create organization");return;}
    setCreated(result?.slug??slug);
+   setProvisionedModules(modules);
    setStatus("done");
   }catch{setMessage("Could not create the organization. Please try again.");}
   finally{setBusy(false);}
@@ -108,7 +110,7 @@ export default function OrganizationOnboarding(){
     {message&&<div className="orgSetupError" role="alert">{message}</div>}
     <button className="orgSetupSubmit" disabled={busy||name.trim().length<2||slug.length<3||slugReserved||modules.length===0}>{busy?"Creating organization…":"Create organization & continue →"}</button>
    </form>}
-   {(status==="owned"||status==="done")&&<div className="orgSetupMessage" role="status"><strong>{status==="owned"?"Your organization already exists.":"Organization created successfully!"}</strong><p>Identifier: <strong>{created}</strong>. {status==="done"?"Your owner access is active. Your selected applications have been provisioned.":"Continue to your organization workspace."}</p><Link className="orgSetupContinue" href="/workspace">Open workspace →</Link></div>}
+   {(status==="owned"||status==="done")&&<div className="orgSetupMessage" role="status"><strong>{status==="owned"?"Your organization already exists.":"Organization created successfully!"}</strong><p>Identifier: <strong>{created}</strong>. {status==="done"?"Your owner membership and selected application workspaces were created together." :"Continue to your organization workspace."}</p>{status==="done"&&<p>Selected applications: <strong>{provisionedModules.join(", ")}</strong>. Your organization starts with a standard trial; any complimentary internal subscription is assigned separately through Platform Administration.</p>}<Link className="orgSetupContinue" href="/workspace">Open workspace →</Link></div>}
    <p className="orgSetupBottom"><Link href="/">Back to homepage</Link></p>
   </section>
  </div>
