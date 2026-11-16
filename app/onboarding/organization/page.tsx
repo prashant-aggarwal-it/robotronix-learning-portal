@@ -15,6 +15,9 @@ export default function OrganizationOnboarding(){
  const [changedSlug,setChangedSlug]=useState(false);
  const [busy,setBusy]=useState(false);
  const [created,setCreated]=useState("");
+ const [kind,setKind]=useState("academy");
+ const [modules,setModules]=useState<string[]>(["academy","crm","tasks"]);
+ const [requestKey]=useState(()=>crypto.randomUUID());
  useEffect(()=>{
   let active=true;
   async function check(){
@@ -47,9 +50,11 @@ export default function OrganizationOnboarding(){
   try{
    const client=getSupabaseBrowserClient();
    if(!client)throw Error("Authentication unavailable.");
-   const {data,error}=await client.rpc("saas_create_owned_organization",{p_name:name.trim(),p_slug:slug.trim().toLowerCase()});
-   if(error){setMessage(error.message);return;}
-   const result=data as {slug?:string;name?:string}|null;
+   const {data:{session}}=await client.auth.getSession();
+   if(!session)throw Error("Sign in first");
+   const response=await fetch("/api/platform/onboard",{method:"POST",headers:{"Authorization":"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({name:name.trim(),slug:slug.trim().toLowerCase(),kind,modules,requestKey})});
+   const result=await response.json() as {ok?:boolean;slug?:string;error?:string};
+   if(!response.ok||!result.ok){setMessage(result.error||"Unable to create organization");return;}
    setCreated(result?.slug??slug);
    setStatus("done");
   }catch{setMessage("Could not create the organization. Please try again.");}
@@ -95,11 +100,13 @@ export default function OrganizationOnboarding(){
    {status==="ready"&&<form className="orgSetupFields" onSubmit={create}>
     <label htmlFor="org-name">Organization name<input id="org-name" required minLength={2} maxLength={160} value={name} disabled={busy} placeholder="e.g. Bright Minds Learning" onChange={e=>{setName(e.target.value);if(!changedSlug)setSlug(normalize(e.target.value));}}/></label>
     <label htmlFor="org-slug">Unique URL identifier<input id="org-slug" required minLength={3} maxLength={63} pattern="[a-z0-9]+(-[a-z0-9]+)*" title="Use lowercase letters, digits and single hyphens" value={slug} disabled={busy} placeholder="bright-minds-learning" onChange={e=>{setChangedSlug(true);setSlug(e.target.value.toLowerCase());}}/></label>
+    <label htmlFor="org-kind">Organization type<select id="org-kind" value={kind} onChange={e=>setKind(e.target.value)}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Individual tutor</option></select></label>
+    <fieldset><legend>Applications</legend>{(["academy","crm","tasks"] as const).map(m=><label key={m} style={{display:"flex",gap:8,alignItems:"center"}}><input type="checkbox" style={{width:"auto"}} checked={modules.includes(m)} onChange={e=>setModules(old=>e.target.checked?[...old,m]:old.filter(x=>x!==m))}/>{m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks"}</label>)}</fieldset>
     <p className="orgSetupHint">Your identifier: <strong>{slug||"your-organization"}</strong>. This forms part of your organization-specific URL and can be branded after setup.</p>
     {message&&<div className="orgSetupError" role="alert">{message}</div>}
-    <button className="orgSetupSubmit" disabled={busy||name.trim().length<2||slug.length<3}>{busy?"Creating organization…":"Create organization & continue →"}</button>
+    <button className="orgSetupSubmit" disabled={busy||name.trim().length<2||slug.length<3||modules.length===0}>{busy?"Creating organization…":"Create organization & continue →"}</button>
    </form>}
-   {(status==="owned"||status==="done")&&<div className="orgSetupMessage" role="status"><strong>{status==="owned"?"Your organization already exists.":"Organization created successfully!"}</strong><p>Identifier: <strong>{created}</strong>. {status==="done"?"Your owner access is active. Choose which applications to enable next.":"Continue setting up the applications for your organization."}</p><Link className="orgSetupContinue" href="/onboarding/products">Continue to applications →</Link></div>}
+   {(status==="owned"||status==="done")&&<div className="orgSetupMessage" role="status"><strong>{status==="owned"?"Your organization already exists.":"Organization created successfully!"}</strong><p>Identifier: <strong>{created}</strong>. {status==="done"?"Your owner access is active. Your selected applications have been provisioned.":"Continue to your organization workspace."}</p><Link className="orgSetupContinue" href="/onboarding/products">Continue to applications →</Link></div>}
    <p className="orgSetupBottom"><Link href="/">Back to homepage</Link></p>
   </section>
  </div>
