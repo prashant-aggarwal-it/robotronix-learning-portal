@@ -3,7 +3,7 @@ import Link from "next/link";
 import {FormEvent,useEffect,useState} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {Suspense} from "react";
-import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSignIn,googleSignIn,emailSignInCode,verifySignInCode,createProductAccount,academyScopedDestination} from "@/lib/platform/auth-client";
+import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSignIn,requestPasswordReset,googleSignIn,emailSignInCode,verifySignInCode,createProductAccount,academyScopedDestination} from "@/lib/platform/auth-client";
 import {resolveAuthDestination,safeAuthNext} from "@/lib/platform/auth-routing";
 import type {DeploymentConfig} from "@/lib/platform/deployment";
 import {consumeInvitation} from "@/lib/platform/pending-invitation";
@@ -47,6 +47,17 @@ function LoginContent(){
   e.preventDefault();setLoading(true);setError("");
   try{const r=await passwordAuthSignIn(email,password);if(!r.ok)setError(r.error??"Unable to sign in");else await finish();}
   finally{setLoading(false);}
+ }
+ async function forgotPassword(){
+  if(loading)return;
+  setError("");setNotice("");
+  if(!email.trim()){setError("Enter your email above before requesting a reset.");return;}
+  setLoading(true);
+  try{
+   const result=await requestPasswordReset(email);
+   if(!result.ok){setError(result.error??"Unable to request reset.");return;}
+   setNotice("If the account exists, a password reset email will arrive shortly.");
+  }finally{setLoading(false);}
  }
  async function register(){
   if(!canRegister||loading)return;
@@ -119,6 +130,7 @@ return <main className={isSuite?"loginSuite":"authPage"}>{isSuite&&suiteTheme}<d
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
    <label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/></label>
    <button className="button fullButton" disabled={loading||!deployment}>{loading?"Signing in…":"Sign in with password"}</button>
+   <button type="button" className="button ghost" disabled={loading} onClick={()=>void forgotPassword()}>Forgot password?</button>
    {canRegister&&<button type="button" className="button secondary fullButton" disabled={loading||!email||password.length<8} onClick={register}>Create a new account</button>}
    {notice&&<p role="status" className="infoBanner">{notice}</p>}
   </form>
