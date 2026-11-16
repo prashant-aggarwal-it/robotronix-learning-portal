@@ -14,7 +14,7 @@ Thumbs.db
 tsconfig.tsbuildinfo
 
 # Generated production QA seed with test email addresses
-database/security_qa/generated/
+database/src/security_qa/generated/
 database/generated/
 
 # Generated SQL Editor chunks; regenerate locally with npm run db:build-editor
