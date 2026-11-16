@@ -5,7 +5,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 export default function OrganizationTrialPage(){
  const [name,setName]=useState("");const [slug,setSlug]=useState("");
  const [kind,setKind]=useState("academy");const [modules,setModules]=useState(["academy"]);
- const [requestKey,setRequestKey]=useState(()=>crypto.randomUUID());
+ const [requestKey]=useState(()=>crypto.randomUUID());
  const [busy,setBusy]=useState(false);const [error,setError]=useState("");
  const [created,setCreated]=useState<{organizationId:string;slug:string}|null>(null);
  async function submit(e:FormEvent){
@@ -22,7 +22,7 @@ export default function OrganizationTrialPage(){
  <p style={{color:"#6742a1",fontWeight:700}}>ROBOTRONIX EDUCATION SUITE</p>
  <h1>Start your academy or tutor workspace</h1>
  <p>Sign in with a verified account before creating your organization. Your 14-day trial begins when you create it.</p>
- {created?<section role="status"><h2>Trial organization created</h2><p>{created.slug} has been registered. Complete module workspace setup before using CRM or Tasks.</p><Link href="/saas/academy">Continue to your workspace</Link></section>:
+ {created?<section role="status"><h2>Trial organization created</h2><p>{created.slug} has been registered. Your selected module workspaces were created.</p><Link href="/workspace">Continue to your workspace</Link></section>:
  <form onSubmit={submit} style={{display:"grid",gap:18}}>
  <label>Organization name<input required minLength={2} maxLength={160} value={name} onChange={e=>{setName(e.target.value);setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""))}} style={{display:"block",width:"100%",padding:12}}/></label>
  <label>Workspace URL slug<input required minLength={3} maxLength={63} pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={e=>setSlug(e.target.value)} style={{display:"block",width:"100%",padding:12}}/></label>
