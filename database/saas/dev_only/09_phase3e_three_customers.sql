@@ -9,6 +9,8 @@ BEGIN
  INSERT INTO saas.organizations(id,slug,display_name)
  VALUES(o,'saas-e2e-c-'||left(replace(o::text,'-',''),12),'Synthetic School C');
  INSERT INTO saas.memberships(organization_id,user_id,role_key,status) VALUES(o,p_user_c,'admin','active');
+ INSERT INTO saas.platform_subscriptions(organization_id,plan_code,status,started_at,ends_at)
+ VALUES(o,'qa_trial','trial',now(),now()+interval '1 day');
  INSERT INTO saas.module_entitlements(organization_id,module_key,enabled)
  VALUES(o,'academy',true),(o,'crm',true),(o,'tasks',true);
  INSERT INTO connect.tenants(id,slug,name)
@@ -70,6 +72,7 @@ BEGIN
   WHERE co.id=l.course_id AND l.organization_id=p_school_c;
  DELETE FROM saas.module_entitlements WHERE organization_id=p_school_c;
  DELETE FROM saas.memberships WHERE organization_id=p_school_c;
+ DELETE FROM saas.platform_subscriptions WHERE organization_id=p_school_c AND plan_code='qa_trial';
  DELETE FROM saas.organizations WHERE id=p_school_c;
  RETURN true;
 END $fn$;
