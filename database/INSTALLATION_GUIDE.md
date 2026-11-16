@@ -75,6 +75,27 @@ If the check fails or any script is absent, stop and investigate rather than ass
 - For **optional DEV QA identities only**, use `npm run qa:create-users` after checking required private environment variables and the target DEV URL. Do not commit passwords or service-role credentials. This command does not assign tenant membership.
 - Do not insert into `auth.users` directly.
 
+## 04A — Platform Super Admin bootstrap (DEV only)
+
+The canonical installer now includes `database/saas/59_platform_admin_foundation.sql`. For an already-installed DEV database, apply this additive migration once; it was applied to DEV on 16 November 2026.
+
+1. Create or sign in to an existing **verified** non-anonymous Supabase Auth account. Do not insert into `auth.users` manually.
+2. Obtain its exact Auth user UUID from the DEV Auth dashboard.
+3. Set `SUPABASE_URL=https://uzzuquxeeqonxeqcuohh.supabase.co` and `SUPABASE_SERVICE_ROLE_KEY` in your local **private environment**, never source control.
+4. Preview (no mutation):
+
+   ```powershell
+   node scripts/bootstrap-platform-admin.mjs --user-id YOUR_VERIFIED_AUTH_UUID
+   ```
+
+5. After reviewing the target and user, explicitly apply:
+
+   ```powershell
+   node scripts/bootstrap-platform-admin.mjs --user-id YOUR_VERIFIED_AUTH_UUID --apply --confirm uzzuquxeeqonxeqcuohh
+   ```
+
+The script refuses non-DEV URLs and unknown/unverified identities. It calls a service-only RPC, audits the first bootstrap and verifies the resulting authorization. A different second identity cannot be bootstrapped using this method. Administrator recovery and platform dashboard are **not yet implemented**; do not claim those features are operational.
+
 ## 05 — Optional DEV sample/test data
 
 - Read `database/05_seed/README.md`.
