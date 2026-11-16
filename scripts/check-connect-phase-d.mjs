@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const read=path=>fs.readFileSync(new URL(`../${path}`,import.meta.url),"utf8");
-const sql=read("database/connect/saas/58_portal_lifecycle_renewals.sql");
+const sql=read("database/src/connect/saas/58_portal_lifecycle_renewals.sql");
 const route=read("app/api/connect/workspaces/[tenantId]/lifecycle/route.ts");
 const ui=read("features/connect/components/ConnectLifecycleDashboard.tsx");
 const nav=read("features/connect/model.ts");
