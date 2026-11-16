@@ -8,7 +8,7 @@ The product is **one integrated Education Suite**, not separately marketed CRM/A
 
 Verified baseline: 167 tables in `public` (80), `connect` (66), `tasks` (21); 302 FKs; 143 RLS policies; 92 custom triggers; 9 scheduled jobs. The repository's `database/packages.json` explicitly marks the current installers **static-validation-only-not-clean-install-certified**. The existing Portal manifest has 13 schema components and 4 reference components.
 
-`database/audit/dev_catalog_snapshot.json` is a **read-only** DEV snapshot of table columns, non-extension function signatures/privileges, RLS policy definitions and trigger names. The CI compatibility gate replays the source inventory against that snapshot. A successful name-match gate does not certify SQL installation, permissions, argument compatibility or runtime behavior.
+`database/src/src/audit/dev_catalog_snapshot.json` is a **read-only** DEV snapshot of table columns, non-extension function signatures/privileges, RLS policy definitions and trigger names. The CI compatibility gate replays the source inventory against that snapshot. A successful name-match gate does not certify SQL installation, permissions, argument compatibility or runtime behavior.
 
 ## 1. Recommended logical data model
 
