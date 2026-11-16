@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 const root=process.cwd(),out=path.resolve(process.argv[2]||'artifacts/db-compatibility');
 fs.mkdirSync(out,{recursive:true});
-const snap=JSON.parse(fs.readFileSync('database/src/src/audit/dev_catalog_snapshot.json','utf8'));
+const snap=JSON.parse(fs.readFileSync('database/src/audit/dev_catalog_snapshot.json','utf8'));
 const inventory='artifacts/db-call-inventory';
 function parseCsv(str){
  const lines=str.trimEnd().split(/\r?\n/);return lines.slice(1).map(line=>{
