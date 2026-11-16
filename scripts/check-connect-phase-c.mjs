@@ -6,11 +6,11 @@ const admissions=read("app/api/connect/workspaces/[tenantId]/admissions/route.ts
 const invitation=read("app/api/admission/handoff/[token]/route.ts");
 const onb=read("app/onboarding/page.tsx");
 const crm=read("features/connect/components/ConnectAdmissionHandoffs.tsx");
-const sql=read("database/connect/saas/53_portal_admissions_rpc.sql");
-const tokenSql=read("database/connect/saas/54_portal_admission_token_rpc.sql");
-const guard=read("database/connect/saas/52_portal_admissions_handoffs.sql");
-const followup=read("database/connect/saas/55_portal_demo_followup_sync.sql");
-const reconcile=read("database/connect/saas/57_auto_reconcile_portal_enrollments_dev.sql");
+const sql=read("database/src/connect/saas/53_portal_admissions_rpc.sql");
+const tokenSql=read("database/src/connect/saas/54_portal_admission_token_rpc.sql");
+const guard=read("database/src/connect/saas/52_portal_admissions_handoffs.sql");
+const followup=read("database/src/connect/saas/55_portal_demo_followup_sync.sql");
+const reconcile=read("database/src/connect/saas/57_auto_reconcile_portal_enrollments_dev.sql");
 const jobs=read("app/api/connect/jobs/reminders/route.ts");
 
 assert.match(admissions,/crypto\.randomBytes\(32\)/);
