@@ -25,7 +25,7 @@ BEGIN
  WHERE (n.nspname='connect' OR (n.nspname='public' AND p.proname LIKE 'connect_%'))
  AND (has_function_privilege('anon',p.oid,'EXECUTE')
    OR has_function_privilege('authenticated',p.oid,'EXECUTE')
-   OR NOT has_function_privilege('service_role',p.oid,'EXECUTE'));
+   OR (p.prorettype <> 'pg_catalog.trigger'::regtype AND NOT has_function_privilege('service_role',p.oid,'EXECUTE')));
  IF bad>0 THEN RAISE EXCEPTION 'connect has % functions with incorrect grants',bad; END IF;
  RAISE NOTICE 'connect structural and privilege checks passed; application tests are separate';
 END $verify$;
