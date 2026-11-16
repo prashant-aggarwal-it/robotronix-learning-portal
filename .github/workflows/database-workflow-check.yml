@@ -6,6 +6,7 @@ on:
       - 'database/**'
       - 'scripts/build-db-installers.mjs'
       - 'scripts/audit-db-cleanup.mjs'
+      - 'scripts/check-db-operator-layout.mjs'
       - 'scripts/build-education-suite-installer.mjs'
       - 'scripts/check-db-*.mjs'
       - 'scripts/check-fresh-db-release.mjs'
@@ -27,6 +28,8 @@ jobs:
         run: npm run db:build-installers
       - name: Generate Education Suite draft
         run: node scripts/build-education-suite-installer.mjs
+      - name: Verify operator-facing SQL matches canonical sources
+        run: node scripts/check-db-operator-layout.mjs
       - name: Audit legacy SQL references
         run: node scripts/audit-db-cleanup.mjs
       - name: Verify bundle has no transactional QA
