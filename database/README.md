@@ -1,33 +1,29 @@
 # Robotronix Education Suite — Database
 
-**START HERE.** Follow the numbered folders in order. The module folders contain internal source files, not additional installation steps.
+**Start with these numbered stages.** Only the numbered folders are operator workflows; the remaining folders hold canonical SQL sources needed by code, generators and tests.
 
 | Order | Folder | Purpose |
 | --- | --- | --- |
-| 01 | [01_reset](01_reset/README.md) | DEV-only reset and safety |
-| 02 | [02_install](02_install/README.md) | Generate the complete Education Suite installer |
-| 03 | [03_reference](03_reference/README.md) | Master and configuration data |
-| 04 | [04_users](04_users/README.md) | Create Auth accounts and assign organization roles |
-| 05 | [05_seed](05_seed/README.md) | Optional DEV sample data |
-| 06 | [06_verify](06_verify/README.md) | Database and multitenant security tests |
-| 07 | [07_operations](07_operations/README.md) | Provider integrations and scheduled jobs |
+| 01 | [Reset](01_reset/README.md) | DEV-only reset; already completed for current DEV |
+| 02 | [Install](02_install/README.md) | Generate and run one complete installer; already completed for current DEV |
+| 03 | [Reference](03_reference/README.md) | Master data (included in installer) |
+| 04 | [Users](04_users/README.md) | Auth users and organization roles |
+| 05 | [Seed](05_seed/README.md) | Optional DEV test data |
+| 06 | [Verify](06_verify/README.md) | **Actual runnable SQL: Academy, Tasks, CRM, SaaS membership** |
+| 07 | [Operations](07_operations/README.md) | OAuth, Zoom, payments, scheduled tasks |
 
-## Current state
+## What is a source folder?
 
-The DEV application reset has already been performed; Auth users have been removed by the operator. The **complete Education Suite installer is generated but UNTESTED for clean-install compatibility**. Do not run it until certification succeeds.
+`portal/`, `crm/`, `tasks/`, `saas/`, `shared/`, `platform/`, and `packages.json` are **implementation sources**, not separate installation steps. Do not run them blindly or delete them: application tests and installers refer to them by path.
 
-The installer generator is:
+`generated/` contains build outputs. Different packages are for different deployments; **do not run them all**.
 
-```powershell
-node scripts/build-education-suite-installer.mjs
-```
+Older folders (`connect/`, `legacy/`, `audit/`, `security_qa/`, `04_existing_db_migrations/`) still contain referenced functionality or release checks. They should not be manually executed as part of the numbered fresh-install flow. They have not been deleted because dependency auditing found references.
 
-The generated output is `generated/ROBOTRONIX_EDUCATION_SUITE_FRESH_INSTALL_UNCERTIFIED.sql`.
+## Current DEV state
 
-## Source code (not instructions to execute)
+The consolidated Education Suite installer was executed on DEV, and Academy, Tasks and CRM module verification completed. SaaS tenant isolation and role-based onboarding tests are still outstanding. No additional reset or installer execution is required.
 
-`portal/`, `crm/`, `tasks/`, `saas/`, `platform/`, `shared/`, `packages.json` and `generated/` remain the current canonical source and generator dependencies. Running them separately would duplicate or conflict with a consolidated install. The newer SaaS builder is an assembled draft, not a certified fresh installation.
+**DEV:** `uzzuquxeeqonxeqcuohh` · **PROD — never reset:** `njyktzenybimykpqaegn`.
 
-`audit/`, `legacy/`, `connect/`, `04_existing_db_migrations/` and `security_qa/` still need reference auditing before removal. Avoid executing those historical sources.
-
-**DEV:** `uzzuquxeeqonxeqcuohh` · **PROD (never reset):** `njyktzenybimykpqaegn`.
+Run `node scripts/check-db-operator-layout.mjs` to validate that the operator-facing verification SQL matches canonical source SQL.
