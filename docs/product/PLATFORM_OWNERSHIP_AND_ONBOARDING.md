@@ -1,6 +1,6 @@
 # Robotronix Education Suite — Platform Ownership, Tenancy & Onboarding
 
-**Status:** Approved product/architecture direction (16 November 2026); **not** a claim that all flows are implemented or tested.  
+**Status:** Approved product/architecture direction (16 November 2026), including **hybrid customer onboarding**; **not** a claim that all flows are implemented or tested.  
 **Repository:** `prashant-aggarwal-it/robotronix-learning-portal`  
 **Working branch:** `feature/education-suite-phase3g`  
 **DEV Supabase:** `uzzuquxeeqonxeqcuohh` · **PROD Supabase:** `njyktzenybimykpqaegn` (do not modify as part of DEV work).
@@ -70,6 +70,44 @@ Sign in, select the appropriate organization if a member of several, and see onl
 
 Do **not** expose “Register as Platform Super Admin.” Platform administration lives behind a separate protected route/interface and server-side authorization.
 
+## 4A. Confirmed onboarding operating model — Hybrid SaaS
+
+**Decision confirmed 16 November 2026:** Customers can self-register and start a trial automatically; Robotronix can also assist customers with setup. Manual approval is **not** required for every ordinary trial registration.
+
+### Self-service trial
+
+1. Customer signs in or signs up with verified identity.
+2. Customer selects Academy / Institute or Individual Tutor.
+3. A single server-side provisioning transaction creates the organization, owner membership, trial/subscription state and initial module entitlements.
+4. The customer enters a guided first-run setup and can invite team members.
+5. Trial expiry, usage limits and conversion to paid must be enforced server-side; no access is granted merely because UI claims a plan.
+6. Handle retries, duplicate signups, partially completed provisioning and slug conflicts safely.
+
+**Initial product recommendation (not yet approved as a fixed policy):** a configurable 14-day trial. Trial module scope, usage limits, payment requirement, renewal and grace period remain to be decided.
+
+### Assisted onboarding
+
+1. A verified Platform Admin starts a customer organization in the protected platform control plane.
+2. The same provisioning service creates the tenant and initializes plan/entitlements; it must not duplicate the self-service implementation.
+3. The platform invites the designated customer Owner via a verified, expiring invitation.
+4. The customer accepts, completes account setup and takes control of their own tenant.
+5. The platform operator may help with configuration, import and training only through explicit, scoped permissions and auditable operations.
+
+### Platform administration responsibilities
+
+Manage customer organization lifecycle, trial/plan/entitlement status, subscription billing, invitations and onboarding failures, aggregate usage and support. Platform administration **does not** imply unrestricted access to student records, tenant financial data or private messages.
+
+### Required implementation gates
+
+- Protected Platform Super Admin authorization and a restricted bootstrap mechanism.
+- One idempotent, transaction-safe tenant provisioning service used by self-service and assisted onboarding.
+- Secure owner invitation/acceptance, including recovery for unaccepted invitations.
+- Trial/subscription lifecycle, entitlements and limits enforced in APIs and database.
+- Platform Admin organization management UI and audit logging.
+- E2E coverage for both onboarding paths, retries, expiries, privilege escalation and cross-tenant isolation.
+
+**Implementation status:** Decision approved; code completion and DEV certification remain unverified. Do not claim production readiness until audited and tested.
+
 ## 5. SaaS product/modules
 
 - **Academy:** courses, cohorts, trainers, learners, classes, attendance, progress, messaging, fees and finance features according to deployment.
@@ -122,7 +160,7 @@ Entitlements determine which modules an organization can use. **Entitlements do 
 
 ## 9. What is confirmed vs. pending
 
-**Confirmed product decisions:** Robotronix is the platform provider **and** first tenant; external academies and individual tutors get separate tenants; Platform Super Admin and Organization Owner are separate roles/scopes; Academy, CRM and Tasks are the intended tenant modules; shared multi-tenant app/database is the initial architecture.
+**Confirmed product decisions:** Hybrid onboarding (automatic customer trials plus optional assisted onboarding); Robotronix is the platform provider **and** first tenant; external academies and individual tutors get separate tenants; Platform Super Admin and Organization Owner are separate roles/scopes; Academy, CRM and Tasks are the intended tenant modules; shared multi-tenant app/database is the initial architecture.
 
 **Not yet established by this document:** exact current implementation completeness, schema/table names, actual admin bootstrap command, working customer onboarding, subscription billing, and full tenant isolation certification. These require a repository/DEV audit and executable tests.
 
