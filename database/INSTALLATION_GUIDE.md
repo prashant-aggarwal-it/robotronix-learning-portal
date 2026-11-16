@@ -151,3 +151,16 @@ Hybrid automatic trials, assisted onboarding, plan changes, platform-admin recov
 Self-service entry: `/saas/start-trial` calls `POST /api/platform/onboard` with a verified signed-in user. Assisted entry: `/platform-admin` creates an organization for an **existing verified** Auth owner UUID using the same RPC, after independent Platform Admin authorization. Assisted invitations for users without an account, module-specific CRM/Tasks workspace linking, trial-expiry API enforcement and paid conversion are **not implemented**. Do not mistake entitlement rows for completed module workspace provisioning.
 
 The new API and pages have not passed local TypeScript/build or live authenticated E2E testing. No platform administrator or tenant has been created in DEV by this change. Do not deploy before testing these prerequisites.
+
+## Phase 4A — atomic tenant/module onboarding (16 November 2026)
+
+For an **existing DEV** installation, apply the bounded additive migrations in order:
+
+1. `database/saas/62_phase4a_atomic_modules.sql` — updates `saas_onboard_organization_v1` so the initial owner, trial, entitlements, CRM tenant/membership/link and Tasks account/workspace/membership/link are committed together. Adds an idempotency request fingerprint.
+2. `database/saas/63_phase4a_close_legacy_signup.sql` — revokes the old unaudited two-step organization-creation RPC from authenticated users. The existing onboarding organization page now calls `POST /api/platform/onboard` instead.
+
+Both migrations were applied successfully to the verified DEV project `uzzuquxeeqonxeqcuohh`. The fresh-install generator inventory now expects 63 numbered SaaS source files. Do not run the fresh-install bundle against populated DEV.
+
+**Verified negative checks:** anonymous onboarding execute denied; authenticated legacy signup execute denied; authenticated unified onboarding execute granted; a no-session invocation raised insufficient privilege; no organization or onboarding request was created. **Live positive-path testing is blocked:** DEV currently has zero verified Auth accounts, and this procedure intentionally does not create fake Auth rows directly in PostgreSQL. To complete Phase 4A acceptance, register two verified DEV test users via Supabase Auth, sign in through the application, run academy and tutor onboarding with all modules, retry the same request key, test duplicate slugs, organization switching and cross-tenant denial. Record evidence and fix any failures before certifying. Build/typecheck and UI tests have not been executed through the connected tools.
+
+**Boundary:** Phase 4A provisions linked workspaces and entitlements. Subscription-expiry enforcement and plan conversion belong to Phase 4C; this is not authorization to deploy the trial to customers before Phase 4C.
