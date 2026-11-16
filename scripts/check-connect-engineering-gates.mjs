@@ -6,8 +6,8 @@ const branch=read(".github/workflows/connect-branch-validation.yml");
 const integration=read(".github/workflows/integrated-e2e.yml");
 const security=read("lib/server/connect-auth.ts");
 const access=read("lib/server/connect-portal-access.ts");
-const lifecycle=read("database/connect/saas/58_portal_lifecycle_renewals.sql");
-const admissions=read("database/connect/saas/53_portal_admissions_rpc.sql");
+const lifecycle=read("database/src/connect/saas/58_portal_lifecycle_renewals.sql");
+const admissions=read("database/src/connect/saas/53_portal_admissions_rpc.sql");
 const health=read("app/api/connect/jobs/reminders/route.ts");
 const triggerGrants=read("database/src/migrations/20261109_restrict_privileged_trigger_function_execute.sql");
 
