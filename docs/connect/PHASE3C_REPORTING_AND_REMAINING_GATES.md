@@ -30,7 +30,7 @@ Main, Production Supabase and Netlify live deployment: **unchanged**.
 - TypeScript-sensitive issue in Phase 3B automation route corrected (`Number.isInteger` unknown value).
 - Branch-specific GitHub Actions workflow `.github/workflows/connect-branch-validation.yml` added to request `npm ci`, `npm run typecheck`, demo `npm run build`, structure and communication-security checks on Connect branch pushes. **Run result not accessible/confirmed through currently available GitHub connection.**
 - Date-range reporting, currency-safeguards, duplicate payment reference rejection, campaign attribution checks, pipeline-only ROI suppression and early empty-state reports all regression-tested.
-- Added repeatable rollback-only analytics suite `database/connect/tests/verify_analytics_dev.sql`.
+- Added repeatable rollback-only analytics suite `database/src/connect/tests/verify_analytics_dev.sql`.
 
 ## Tests executed in Development
 
