@@ -30,7 +30,7 @@ function statements(input){
   i++;
  }
  if(mode==='block'||mode==='single'||mode==='double'||mode==='dollar')throw Error('Unclosed SQL literal/comment: '+mode);
- if(input.slice(start).trim())result.push(input.slice(start));
+ if(start<input.length)result.push(input.slice(start));
  if(result.join('')!==input)throw Error('Statement splitting changed source bytes');
  return result;
 }
