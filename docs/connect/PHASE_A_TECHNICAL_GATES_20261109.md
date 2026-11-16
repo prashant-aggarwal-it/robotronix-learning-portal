@@ -13,7 +13,7 @@ Status: **partially cleared; not a live integration release gate**.
 ## Gate 1: migration ledger and schema parity
 
 - Existing Development ledger baseline: 51 migrations, latest original `connect_calendar_management_fields`.
-- Recorded seven previously untracked contact-management scripts from `database/connect/saas/40_...sql` through `46_...sql` as new Development migrations. They were already represented in the working schema; reconciliation was non-destructive.
+- Recorded seven previously untracked contact-management scripts from `database/src/connect/saas/40_...sql` through `46_...sql` as new Development migrations. They were already represented in the working schema; reconciliation was non-destructive.
 - `47_contact_import_profile_sync.sql` is **not recorded**: Supabase migration confirmation expired. The corresponding `connect.contact_import_enrich_profile` trigger was queried and found **enabled** in Development, so the working behavior exists; ledger completeness is still blocked.
 - The Development and Production schemas intentionally differ: CRM `connect` schema exists in Development, not Production. No rollout is authorised by this phase.
 - Required closure: apply/record script 47 with a fresh explicit approval; then verify migration ledger consistency and fresh-install replay in a disposable database.
