@@ -60,7 +60,9 @@ export default function OrganizationOnboarding(){
   }catch{setMessage("Could not create the organization. Please try again.");}
   finally{setBusy(false);}
  }
- const reservedSlugs=new Set(["admin","api","auth","app","apps","connect","login","signup","tasks","portal","student","parent","trainer","onboarding","workspace","www","support","settings","robotronix","platform-admin"]);\n const slugReserved=reservedSlugs.has(slug.trim().toLowerCase());\n const normalize=(value:string)=>value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,63);
+ const reservedSlugs=new Set(["admin","api","auth","app","apps","connect","login","signup","tasks","portal","student","parent","trainer","onboarding","workspace","www","support","settings","robotronix","platform-admin"]);
+ const slugReserved=reservedSlugs.has(slug.trim().toLowerCase());
+ const normalize=(value:string)=>value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,63);
  return <main className="orgSetupPage">
  <style>{`
  .orgSetupPage{min-height:100dvh;display:grid;place-items:center;padding:20px 24px;background:radial-gradient(ellipse at 12% 17%,#eadfff,transparent 45%),radial-gradient(ellipse at 90% 88%,#ffe0ef,transparent 46%),linear-gradient(135deg,#fffaff,#f7f8ff);color:#211b45;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
