@@ -20,7 +20,7 @@ Baseline GitHub: `main` at `47b48e839fade7458990d753a2fd208bfd97cf6b`; `feature/
 | Local branch | Local commits differ in SHA from GitHub commits created through the connected GitHub integration, although previous changes were published with matching file content; reconcile branch refs before future conventional pushes/cherry-picks. |
 | Connect product architecture | `docs/connect/SAAS_ARCHITECTURE_DECISION.md`: standalone multi-institute SaaS, optional Portal adapter, private `connect` schema in DEV as interim implementation. |
 | Portal demo | `app/admin/demos/page.tsx`, `app/api/admin/demos/route.ts`, `app/api/demos/trainer/route.ts`, `app/api/demo/[token]/route.ts` are active source paths. |
-| Connect calendar | `features/connect/components/ConnectCalendar.tsx`, `app/api/connect/workspaces/[tenantId]/calendar/route.ts`, `database/connect/saas/39_calendar_management.sql`: CRM appointments, including kind `demo`, are separate from Portal `demo_sessions`. |
+| Connect calendar | `features/connect/components/ConnectCalendar.tsx`, `app/api/connect/workspaces/[tenantId]/calendar/route.ts`, `database/src/connect/saas/39_calendar_management.sql`: CRM appointments, including kind `demo`, are separate from Portal `demo_sessions`. |
 | Integration placeholders | `connect.integration_connections` and `connect.external_links` exist; no Portal adapter API or event contract found in current route inventory. |
 
 This is a source inventory, not evidence that every route has been exercised with live credentials.
