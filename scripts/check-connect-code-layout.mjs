@@ -66,14 +66,14 @@ if(!page.includes("onSubmit={saveTask}")||!page.includes("onSubmit={saveAppointm
 
 const timeline=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactTimeline.tsx"),"utf8");
 const timelineApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/[personId]/timeline/route.ts"),"utf8");
-const migration=fs.readFileSync(path.join(root,"database/connect/saas/24_contact_360_timeline_PENDING.sql"),"utf8");
+const migration=fs.readFileSync(path.join(root,"database/src/connect/saas/24_contact_360_timeline_PENDING.sql"),"utf8");
 if(!page.includes("<ContactTimeline")||!timeline.includes("Load older activity")||!timeline.includes("generation.current"))throw Error("Unified Contact 360 timeline or stale response handling missing.");
 if(!timelineApi.includes("connect_contact_timeline")||!timelineApi.includes("isConnectSession")||!migration.includes("m.tenant_id=p_tenant_id")||!migration.includes("c.person_id=p_person_id"))throw Error("Tenant-authorized contact timeline query missing.");
 if(!migration.includes("revoke all on function public.connect_contact_timeline"))throw Error("Contact timeline RPC must not be callable by public roles.");
 
 const relationships=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactRelationships.tsx"),"utf8");
 const relationApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/[personId]/relations/route.ts"),"utf8");
-const relationMigration=fs.readFileSync(path.join(root,"database/connect/saas/25_contact_relationships.sql"),"utf8");
+const relationMigration=fs.readFileSync(path.join(root,"database/src/connect/saas/25_contact_relationships.sql"),"utf8");
 const contactProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
 if(!page.includes("<ContactRelationships")||!contactProfile.includes('tab==="relations"')||!relationships.includes('assign_owner'))
  throw Error("Contact 360 relationship tab and owner assignment are required.");
@@ -84,15 +84,15 @@ if(!relationApi.includes("connect_contact_relations")||!relationApi.includes("co
 
 const intelligence=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactIntelligence.tsx"),"utf8");
 const intelligenceApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/intelligence/route.ts"),"utf8");
-const intelligenceMigration=fs.readFileSync(path.join(root,"database/connect/saas/27_contact_intelligence.sql"),"utf8");
+const intelligenceMigration=fs.readFileSync(path.join(root,"database/src/connect/saas/27_contact_intelligence.sql"),"utf8");
 if(!page.includes("<WorkspaceIntelligence")||!contactProfile.includes('tab==="insights"')||!intelligence.includes("ContactIntelligence"))throw Error("Contact intelligence UI and dashboard attention board must be present.");
 if(!intelligenceApi.includes("connect_contact_insights")||!intelligenceApi.includes("isConnectSession")||!intelligenceMigration.includes("m.user_id=p_actor_id")||!intelligenceMigration.includes("revoke all on function public.connect_contact_insights"))throw Error("Contact intelligence authorization and private RPC missing.");
 if(intelligence.includes("AI-powered")||intelligence.includes("predictive score"))throw Error("Do not claim unimplemented AI predictions.");
 
 const waWebhook=fs.readFileSync(path.join(root,"app/api/connect/webhooks/meta/route.ts"),"utf8");
 const waIngestion=fs.readFileSync(path.join(root,"lib/server/connect-ingestion.ts"),"utf8");
-const waMigration=fs.readFileSync(path.join(root,"database/connect/saas/28_whatsapp_messaging_foundation.sql"),"utf8");
-const waReadMigration=fs.readFileSync(path.join(root,"database/connect/saas/29_whatsapp_inbox_read_apis.sql"),"utf8");
+const waMigration=fs.readFileSync(path.join(root,"database/src/connect/saas/28_whatsapp_messaging_foundation.sql"),"utf8");
+const waReadMigration=fs.readFileSync(path.join(root,"database/src/connect/saas/29_whatsapp_inbox_read_apis.sql"),"utf8");
 const waThreads=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/threads/route.ts"),"utf8");
 const waMessages=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/messages/route.ts"),"utf8");
 if(!waWebhook.includes('connect_ingest_whatsapp_message')||!waWebhook.includes('connect_ingest_whatsapp_status')
@@ -109,8 +109,8 @@ if(!waReadMigration.includes('connect_whatsapp_threads')||
 
 const inbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectWhatsAppInbox.tsx"),"utf8");
 const unifiedInbox=fs.readFileSync(path.join(root,"features/connect/components/ConnectUnifiedInbox.tsx"),"utf8");
-const inboxWorkflow=fs.readFileSync(path.join(root,"database/connect/saas/30_whatsapp_inbox_workflow.sql"),"utf8");
-const identityFix=fs.readFileSync(path.join(root,"database/connect/saas/31_whatsapp_preserve_contact_links.sql"),"utf8");
+const inboxWorkflow=fs.readFileSync(path.join(root,"database/src/connect/saas/30_whatsapp_inbox_workflow.sql"),"utf8");
+const identityFix=fs.readFileSync(path.join(root,"database/src/connect/saas/31_whatsapp_preserve_contact_links.sql"),"utf8");
 const inboxApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/route.ts"),"utf8");
 const contactSearchApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/contacts/route.ts"),"utf8");
 if(!page.includes("<ConnectUnifiedInbox")||!unifiedInbox.includes("<ConnectWhatsAppInbox")||!inbox.includes("Load older messages")||
@@ -124,9 +124,9 @@ if(!inboxApi.includes("connectSession")||!inboxApi.includes("connect_whatsapp_ma
 
 const metaTestAdapter=fs.readFileSync(path.join(root,"lib/server/connect-meta-test.ts"),"utf8");
 const metaTestApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/whatsapp/conversations/[conversationId]/send/route.ts"),"utf8");
-const metaTestSql=fs.readFileSync(path.join(root,"database/connect/saas/32_whatsapp_meta_test_sending.sql"),"utf8");
-const metaEligibilitySql=fs.readFileSync(path.join(root,"database/connect/saas/33_whatsapp_meta_reply_eligibility.sql"),"utf8");
-const metaLimitSql=fs.readFileSync(path.join(root,"database/connect/saas/34_whatsapp_meta_test_send_limits.sql"),"utf8");
+const metaTestSql=fs.readFileSync(path.join(root,"database/src/connect/saas/32_whatsapp_meta_test_sending.sql"),"utf8");
+const metaEligibilitySql=fs.readFileSync(path.join(root,"database/src/connect/saas/33_whatsapp_meta_reply_eligibility.sql"),"utf8");
+const metaLimitSql=fs.readFileSync(path.join(root,"database/src/connect/saas/34_whatsapp_meta_test_send_limits.sql"),"utf8");
 if(!metaTestAdapter.includes("CONNECT_META_TEST_SEND_ENABLED")||
  !metaTestAdapter.includes("CONNECT_META_TEST_RECIPIENTS")||
  !metaTestAdapter.includes("CONNECT_META_TEST_ACCESS_TOKEN")||
@@ -248,7 +248,7 @@ if(!masonryView.includes("cx-overview-left-column")||
 /* Bulk contact imports must be explicitly mapped, audited, and never grant marketing permission. */
 const importer=fs.readFileSync(path.join(root,"features/connect/components/ContactImportWizard.tsx"),"utf8");
 const importApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/import/route.ts"),"utf8");
-const importMigration=fs.readFileSync(path.join(root,"database/connect/saas/40_bulk_contacts_import.sql"),"utf8");
+const importMigration=fs.readFileSync(path.join(root,"database/src/connect/saas/40_bulk_contacts_import.sql"),"utf8");
 if(!importer.includes("parseCSV")||!importer.includes("Review import")||
  !importer.includes("sourceType")||!importer.includes("contact-import-template.csv")||
  !importApi.includes("connect_contacts_import")||
@@ -259,7 +259,7 @@ if(!importer.includes("parseCSV")||!importer.includes("Review import")||
 
 const provenanceView=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactImportProvenance.tsx"),"utf8");
 const importedContactProfile=fs.readFileSync(path.join(root,"features/connect/components/contact/ContactProfile.tsx"),"utf8");
-const profileRpc=fs.readFileSync(path.join(root,"database/connect/saas/41_contact_import_provenance.sql"),"utf8");
+const profileRpc=fs.readFileSync(path.join(root,"database/src/connect/saas/41_contact_import_provenance.sql"),"utf8");
 if(!page.includes("loadMoreContacts()")||!page.includes("peopleHasMore")||
  !importedContactProfile.includes("ContactImportProvenance")||!provenanceView.includes("WhatsApp marketing:")||
  !profileRpc.includes("connect_contact_import_profile"))
@@ -268,11 +268,11 @@ if(!page.includes("loadMoreContacts()")||!page.includes("peopleHasMore")||
 /* Imported phone-only records must be searchable across the entire tenant. */
 const directoryUi=fs.readFileSync(path.join(root,"app/connect/page.tsx"),"utf8");
 const directoryApi=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/directory/route.ts"),"utf8");
-const directorySql=fs.readFileSync(path.join(root,"database/connect/saas/42_contact_directory_search.sql"),"utf8");
+const directorySql=fs.readFileSync(path.join(root,"database/src/connect/saas/42_contact_directory_search.sql"),"utf8");
 if(!directoryUi.includes("searchingDirectory")||!directoryUi.includes("directoryResults")||!directoryApi.includes("connect_contact_directory")||!directorySql.includes("cm.display_value ilike"))
  throw Error("Tenant-wide name/phone/email contact search is required after bulk import.");
 
-const importIssueSql=fs.readFileSync(path.join(root,"database/connect/saas/43_contact_import_issue_review.sql"),"utf8");
+const importIssueSql=fs.readFileSync(path.join(root,"database/src/connect/saas/43_contact_import_issue_review.sql"),"utf8");
 const importIssueUi=fs.readFileSync(path.join(root,"features/connect/components/ContactImportWizard.tsx"),"utf8");
 if(!importIssueSql.includes("connect_contact_import_issues")||!importIssueUi.includes("Review skipped rows")||!importIssueUi.includes("downloadIssueReport"))
  throw Error("Bulk contact import skipped-row review must remain available.");
@@ -280,8 +280,8 @@ if(!importIssueSql.includes("connect_contact_import_issues")||!importIssueUi.inc
 /* Phase 6: end-to-end contact administration regression checks. */
 const managerUI=fs.readFileSync(path.join(root,"features/connect/components/ContactManagementWorkspace.tsx"),"utf8");
 const managerAPI=fs.readFileSync(path.join(root,"app/api/connect/workspaces/[tenantId]/contacts/manage/route.ts"),"utf8");
-const managerSQL=fs.readFileSync(path.join(root,"database/connect/saas/44_contact_management.sql"),"utf8");
-const mergeSQL=fs.readFileSync(path.join(root,"database/connect/saas/45_contact_safe_merge.sql"),"utf8");
+const managerSQL=fs.readFileSync(path.join(root,"database/src/connect/saas/44_contact_management.sql"),"utf8");
+const mergeSQL=fs.readFileSync(path.join(root,"database/src/connect/saas/45_contact_safe_merge.sql"),"utf8");
 if(!managerUI.includes("saveConsent")||!managerUI.includes("saveSegment")||!managerUI.includes("exportCsv")||
  !managerUI.includes("bulkApply")||!managerUI.includes("Duplicate review")||
  !managerAPI.includes("connect_manage_contacts")||!managerAPI.includes("connect_merge_contacts")||
@@ -290,7 +290,7 @@ if(!managerUI.includes("saveConsent")||!managerUI.includes("saveSegment")||!mana
  !page.includes("<ContactManagementWorkspace"))
  throw Error("Contact administration, consent, segments, export, safe merge or routing missing.");
 
-const contactEnrichmentTrigger=fs.readFileSync(path.join(root,"database/connect/saas/47_contact_import_profile_sync.sql"),"utf8");
+const contactEnrichmentTrigger=fs.readFileSync(path.join(root,"database/src/connect/saas/47_contact_import_profile_sync.sql"),"utf8");
 const phase6Checklist=fs.readFileSync(path.join(root,"qa/connect-phase6-contact-management.md"),"utf8");
 if(!contactEnrichmentTrigger.includes("after insert on connect.contact_import_details")||
  !phase6Checklist.includes("Merge contact with linked enquiry")||
