@@ -76,7 +76,7 @@ Create/authorize a **cost-confirmed disposable Supabase project** or connect an 
 2. Snapshot its SHA, manifest hash and the generated `database/generated/ROBOTRONIX_FULL_SUITE_FRESH_INSTALL.sql`.
 3. Confirm the target is disposable, correctly configured Supabase, with no existing application tables.
 4. Execute the installer once, in its generated order, only in that disposable database.
-5. Run `database/portal/verify.sql`, `database/tasks/04_verify.sql`, `database/crm/04_verify.sql`, plus `database/audit/verify_release1_contracts_readonly.sql`.
+5. Run `database/portal/verify.sql`, `database/tasks/04_verify.sql`, `database/crm/04_verify.sql`, plus `database/src/audit/verify_release1_contracts_readonly.sql`.
 6. Record every failure and fix the canonical source, regenerate, reinstall from a **new clean isolated database** or controlled disposal/rebuild.
 7. Run role-negative tests, integration replay tests, full application E2E and data invariant tests.
 8. Present actual pass/fail evidence and a tested recovery strategy before requesting DEV installation approval.
