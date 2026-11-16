@@ -9,9 +9,9 @@ const access=read("lib/server/connect-portal-access.ts");
 const domain=read("lib/server/portal-demo-booking.ts");
 const admin=read("app/api/admin/demos/route.ts");
 const calendar=read("features/connect/components/ConnectCalendar.tsx");
-const bridge=read("database/connect/saas/51_portal_demo_private_rpc.sql");
-const reserve=read("database/connect/saas/48_portal_demo_bridge.sql");
-const move=read("database/connect/saas/49_portal_demo_move_slot.sql");
+const bridge=read("database/src/connect/saas/51_portal_demo_private_rpc.sql");
+const reserve=read("database/src/connect/saas/48_portal_demo_bridge.sql");
+const move=read("database/src/connect/saas/49_portal_demo_move_slot.sql");
 
 for(const action of ['"booking_context"','"begin"','"complete"','"fail"','"detail"','"change"']){
  assert.ok(bridge.includes(`'${action.slice(1,-1)}'`)||route.includes(action),`missing bridge action ${action}`);
