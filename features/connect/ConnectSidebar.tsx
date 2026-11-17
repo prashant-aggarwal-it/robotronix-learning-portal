@@ -1,5 +1,7 @@
 "use client";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
+import {TenantIdentity} from "@/components/TenantIdentity";
+import {useTenantBranding} from "@/components/TenantBrandingProvider";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import type {ConnectWorkspace} from "@/features/connect/api/client";
 import {initials,shortLabel,type Section} from "@/features/connect/model";
@@ -8,10 +10,11 @@ type NavItem={id:Section;label:string;icon:string};
 type Props={showMobileNav:boolean;onToggleMobile:()=>void;canOpenPortal:boolean;tenantId:string;tenantRole:string;workspaces:ConnectWorkspace[];accountEmail:string;section:Section;visibleNavigation:NavItem[];onWorkspaceChange:(value:string)=>void;onSectionChange:(value:Section)=>void};
 
 export function ConnectSidebar({showMobileNav,onToggleMobile,canOpenPortal,tenantId,tenantRole,workspaces,accountEmail,section,visibleNavigation,onWorkspaceChange,onSectionChange}:Props){
+ const {branding}=useTenantBranding();
  return <>
   <button className="cx-mobile-menu" onClick={onToggleMobile} aria-label="Toggle navigation">☰</button>
   <aside className={"cx-sidebar "+(showMobileNav?"cx-mobile-open":"")}>
-   <div className="cx-sidebar-brand"><button type="button" className="sidebarBrand cx-brand-home" aria-label="Connect CRM overview" onClick={()=>onSectionChange("overview")}><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></button><div className="portalName">Connect CRM <span>Workspace</span></div></div>
+   <div className="cx-sidebar-brand"><button type="button" className="sidebarBrand cx-brand-home" aria-label={branding?.name||"Connect CRM overview"} onClick={()=>onSectionChange("overview")}><TenantIdentity/></button><div className="portalName">Connect CRM <span>Workspace</span></div></div>
    <ApplicationSwitcher current="connect"/>
    {workspaces.length>1&&<div className="cx-workspace-picker">
     <span>ORGANIZATION</span>
