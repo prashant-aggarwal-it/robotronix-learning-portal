@@ -1,4 +1,4 @@
-import {contrastRatio,normalizeHexColor,resolveTenantTheme,type TenantTheme} from "./tokens";
+import {contrastRatio,normalizeHexColor,resolveTenantTheme,type TenantTheme} from "./tokens.ts";
 export type SuggestedPalette=Pick<TenantTheme,"primary"|"secondary"|"accent"|"primaryHover"|"primarySoft"|"onPrimary">;
 type Sample={r:number;g:number;b:number;a?:number};
 const hex=(r:number,g:number,b:number)=>"#"+[r,g,b].map(x=>Math.min(255,Math.max(0,Math.round(x))).toString(16).padStart(2,"0")).join("");
