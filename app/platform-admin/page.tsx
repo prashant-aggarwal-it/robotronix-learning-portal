@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
+import {SignOutButton} from "@/components/SignOutButton";
 import "./platform-admin.css";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import PlatformCustomerActions from "./PlatformCustomerActions";
@@ -60,7 +61,7 @@ export default function PlatformAdminPage(){
  return <main className="platformConsole">
   <div className="platformLayout">
    <aside className="platformSidebar" aria-label="Platform navigation">
-    <Link href="/" className="platformBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix" /></Link>
+    <Link href="/platform-admin#overview" className="platformBrand" aria-label="Platform Administration home" onClick={e=>{e.preventDefault();navigate("overview")}}><img src="/brand/robotronix-horizontal.png" alt="Robotronix" /></Link>
     <span className="platformWorkspaceLabel">EDUCATION SUITE</span>
     <div className="platformWorkspaceName"><span className="platformWorkspaceIcon">✦</span><span>Control Centre<small>Platform administration</small></span></div>
     <nav className="platformNav">
@@ -71,7 +72,7 @@ export default function PlatformAdminPage(){
      <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
      <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
     </nav>
-    <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link></div>
+    <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link><SignOutButton className="platformSignout" label="Sign out"/></div>
    </aside>
    <div className="platformMain">
     <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory"} as Record<string,string>)[activeSection]}</h1><p>Manage your customers, access and subscriptions in one place.</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
