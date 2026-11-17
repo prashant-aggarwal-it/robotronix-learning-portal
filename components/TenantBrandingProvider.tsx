@@ -6,50 +6,101 @@ import {tenantStyle,type TenantBranding} from "@/lib/theme/tenant-runtime";
 import "@/app/tenant-branding.css";
 
 type TenantContext={branding:TenantBranding|null;loading:boolean;reload:()=>void};
+type Snapshot={branding:TenantBranding;linkedCrmTenant:string|null};
 const Context=createContext<TenantContext>({branding:null,loading:false,reload:()=>{}});
 export const useTenantBranding=()=>useContext(Context);
-const corporatePath=(p:string)=>p.startsWith("/platform-admin")||p.startsWith("/login")||p.startsWith("/signup")||p.startsWith("/qa-")||(p.startsWith("/tasks")&&!p.startsWith("/tasks/connected"));
+
+const corporatePath=(p:string)=>p.startsWith("/platform-admin")||
+ p.startsWith("/login")||p.startsWith("/signup")||p.startsWith("/qa-")||
+ (p.startsWith("/tasks")&&!p.startsWith("/tasks/connected"));
+const isCrmPath=(p:string)=>p==="/connect"||p.startsWith("/connect/");
+const isSharedTasksPath=(p:string)=>p==="/tasks/connected"||p.startsWith("/tasks/connected/");
+
+/** Tenant identity is a presentation concern, never a grant of module access. */
 export function TenantBrandingProvider({children}:{children:ReactNode}){
  const path=usePathname()||"/";
  const corporate=corporatePath(path);
- const [branding,setBranding]=useState<TenantBranding|null>(null);
+ const crm=isCrmPath(path);
+ const sharedTasks=isSharedTasksPath(path);
+ const [snapshot,setSnapshot]=useState<Snapshot|null>(null);
+ const [activeCrmTenant,setActiveCrmTenant]=useState("");
  const [loading,setLoading]=useState(true);
+ const [revision,setRevision]=useState(0);
  const generation=useRef(0);
- const [reloadCount,setReloadCount]=useState(0);
+
+ useEffect(()=>{
+  const onRefresh=()=>setRevision(x=>x+1);
+  const onCrmTenant=(event:Event)=>{
+   const id=(event as CustomEvent<{tenantId?:string}>).detail?.tenantId;
+   setActiveCrmTenant(typeof id==="string"?id:"");
+  };
+  window.addEventListener("robotronix:branding-saved",onRefresh);
+  window.addEventListener("robotronix:organization-changed",onRefresh);
+  window.addEventListener("robotronix:crm-tenant-selected",onCrmTenant);
+  return ()=>{
+   window.removeEventListener("robotronix:branding-saved",onRefresh);
+   window.removeEventListener("robotronix:organization-changed",onRefresh);
+   window.removeEventListener("robotronix:crm-tenant-selected",onCrmTenant);
+  };
+ },[]);
+
  useEffect(()=>{
   const client=getSupabaseBrowserClient();
-  let live=true;
-  const run=async()=>{
-   const current=++generation.current;
-   setBranding(null);
-   if(!client){setLoading(false);return}
-   setLoading(true);
+  const controller=new AbortController();
+  const current=++generation.current;
+  setSnapshot(null);
+  if(corporate||sharedTasks||!client){setLoading(false);return ()=>controller.abort();}
+  setLoading(true);
+  const load=async()=>{
    try{
     const {data:{session}}=await client.auth.getSession();
-    if(!session)throw Error("No session");
-    const authorization={Authorization:"Bearer "+session.access_token};
-    const discovery=await fetch("/api/platform/organizations",{headers:authorization,cache:"no-store"});
+    if(!session?.access_token)throw Error("Session unavailable");
+    const headers={Authorization:"Bearer "+session.access_token};
+    const discovery=await fetch("/api/platform/organizations",{headers,cache:"no-store",signal:controller.signal});
     const selected=await discovery.json();
-    if(!discovery.ok||!selected.ok||!selected.selectedOrganizationId)throw Error("No authorized selected organization");
-    const response=await fetch("/api/tenant-branding?organizationId="+encodeURIComponent(selected.selectedOrganizationId),{headers:authorization,cache:"no-store"});
-    const result=await response.json();
-    if(!response.ok||!result.ok)throw Error("Branding unavailable");
-    if(live&&current===generation.current)setBranding(result.branding as TenantBranding);
-   }catch{if(live&&current===generation.current)setBranding(null)}
-   finally{if(live&&current===generation.current)setLoading(false)}
+    const orgId=selected?.selectedOrganizationId;
+    if(!discovery.ok||!selected.ok||typeof orgId!=="string"||!orgId)throw Error("No active authorized organization");
+    const suffix="?organizationId="+encodeURIComponent(orgId);
+    const calls=[
+     fetch("/api/tenant-branding"+suffix,{headers,cache:"no-store",signal:controller.signal}),
+     fetch("/api/platform/organization-modules"+suffix,{headers,cache:"no-store",signal:controller.signal}),
+     ...(crm?[fetch("/api/platform/organization-links"+suffix,{headers,cache:"no-store",signal:controller.signal})]:[])
+    ];
+    const responses=await Promise.all(calls);
+    const [theme,access,links]=await Promise.all(responses.map(async response=>{
+     const data=await response.json();
+     if(!response.ok||!data?.ok)throw Error("Organization presentation context unavailable");
+     return data;
+    }));
+    if(theme.branding?.organizationId!==orgId)throw Error("Mismatched organization");
+    // Members may see approved branding only for an enabled module.
+    if(crm ? access.modules?.crm!==true : path.startsWith("/suite")?false:access.modules?.academy!==true)
+     throw Error("Module not enabled");
+    const mapped=crm&&links?.links?.crm?.status==="ready"&&typeof links.links.crm.tenantId==="string"
+     ?links.links.crm.tenantId:null;
+    if(!controller.signal.aborted&&current===generation.current)
+     setSnapshot({branding:theme.branding as TenantBranding,linkedCrmTenant:mapped});
+   }catch{
+    if(!controller.signal.aborted&&current===generation.current)setSnapshot(null);
+   }finally{
+    if(!controller.signal.aborted&&current===generation.current)setLoading(false);
+   }
   };
-  void run();
-  const {data:{subscription}}=client?.auth.onAuthStateChange((event)=>{if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED")setReloadCount(n=>n+1)})||{data:{subscription:null}};
-  return ()=>{live=false;generation.current++;subscription?.unsubscribe()};
- },[reloadCount]);
- useEffect(()=>{
-  const refresh=()=>setReloadCount(n=>n+1);
-  window.addEventListener("robotronix:branding-saved",refresh);
-  window.addEventListener("robotronix:organization-changed",refresh);
-  return ()=>{window.removeEventListener("robotronix:branding-saved",refresh);window.removeEventListener("robotronix:organization-changed",refresh)};
- },[]);
- const shown=corporate?null:branding;
- return <Context.Provider value={{branding:shown,loading,reload:()=>setReloadCount(n=>n+1)}}>
-  <div className={shown?"tenantThemeScope":"tenantThemeDefault"} data-tenant-id={shown?.organizationId||undefined} style={shown?tenantStyle(shown) as CSSProperties:undefined}>{children}</div>
+  void load();
+  const {data:{subscription}}=client.auth.onAuthStateChange(event=>{
+   if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED")setRevision(x=>x+1);
+  });
+  return ()=>{controller.abort();generation.current++;subscription.unsubscribe()};
+ },[revision,corporate,crm,sharedTasks,path]);
+
+ // CRM branding must correspond to the actual CRM-authorized workspace, not
+ // just the last Suite organization selected in a cookie.
+ const shown=corporate||sharedTasks||!snapshot ? null :
+  crm && (!snapshot.linkedCrmTenant||snapshot.linkedCrmTenant!==activeCrmTenant)
+   ?null:snapshot.branding;
+ return <Context.Provider value={{branding:shown,loading,reload:()=>setRevision(x=>x+1)}}>
+  <div className={shown?"tenantThemeScope":"tenantThemeDefault"}
+   data-tenant-id={shown?.organizationId||undefined}
+   style={shown?tenantStyle(shown) as CSSProperties:undefined}>{children}</div>
  </Context.Provider>;
 }

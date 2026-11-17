@@ -34,3 +34,6 @@
 - Branding changes do not alter RLS, organization membership, module entitlements or finance data.
 - Tenant-branded login uses the existing public `saas_public_academy_brand` RPC scoped to a known Academy slug, not the private member branding API.
 - This branch is for DEV development only. Do **not** promote to production until the remaining acceptance gates are closed.
+
+## Tenant linkage safety improvement
+The CRM theme now requires the Suite organization's CRM entitlement, a membership-checked `organization-links` mapping, and an active CRM tenant ID emitted by the CRM page. A mismatch deliberately shows corporate branding rather than attributing one tenant's data to another tenant's identity. Connected Tasks remains corporate for now because its aggregated list can include tasks from more than one workspace. Branding that aggregated view as one organization would be misleading. The existing full reload on organization change is deliberately retained until underlying module caches and record subscriptions are proven safe to reuse without a reload.

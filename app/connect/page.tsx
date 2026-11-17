@@ -40,6 +40,12 @@ export default function ConnectPage(){
  const [workspaces,setWorkspaces]=useState<ConnectWorkspace[]>([]);
  const [workspacesReady,setWorkspacesReady]=useState(false);
  const [tenantId,setTenantId]=useState("");
+ // Parent Suite styling must be gated by the CRM workspace actually selected.
+ useEffect(()=>{
+  const event=new CustomEvent("robotronix:crm-tenant-selected",{detail:{tenantId}});
+  window.dispatchEvent(event);
+  return ()=>window.dispatchEvent(new CustomEvent("robotronix:crm-tenant-selected",{detail:{tenantId:""}}));
+ },[tenantId]);
  const [section,setSection]=useState<Section>("overview");
  // Section changes are client-side state transitions, so the browser does not reset scroll automatically.
  // Reset before paint for sidebar, overview shortcut and workflow navigation alike.

@@ -28,3 +28,16 @@ test("Academy identity and Suite Home both use shared runtime",()=>{
  assert.match(read("app/suite/page.tsx"),/useTenantBranding/);
  assert.match(read("features/branding/BrandingStudio.tsx"),/robotronix:branding-saved/);
 });
+
+test("CRM theme fails closed for mismatched mapped workspace",()=>{
+ const provider=read("components/TenantBrandingProvider.tsx");
+ const page=read("app/connect/page.tsx");
+ assert.match(provider,/\/api\/platform\/organization-links/);
+ assert.match(provider,/linkedCrmTenant!==activeCrmTenant/);
+ assert.match(provider,/access\.modules\?\.crm!==true/);
+ assert.match(page,/robotronix:crm-tenant-selected/);
+});
+test("shared Tasks stays corporate until a workspace-specific branding contract exists",()=>{
+ const provider=read("components/TenantBrandingProvider.tsx");
+ assert.match(provider,/corporate\|\|sharedTasks\|\|!snapshot/);
+});
