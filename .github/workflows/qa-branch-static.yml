@@ -4,6 +4,7 @@ on:
     branches:
       - fix/qa-onboarding-save-feedback-20261025
       - feature/education-suite-phase4d
+      - feature/education-suite-phase5a-theme-foundation
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,6 +21,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Shared typography contract
         run: node scripts/check-typography.mjs
+      - name: Phase 5A theme architecture tests
+        run: npm run test:theme-foundation
       - name: Typecheck
         run: npm run typecheck
       - name: Billing and finance regression tests
