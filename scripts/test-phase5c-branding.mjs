@@ -41,10 +41,10 @@ test("unscoped Tasks stays corporate; scoped Tasks matches trusted workspace",()
  const provider=read("components/TenantBrandingProvider.tsx");
  const page=read("features/tasks/v2/TasksV2Connected.tsx");
  const teams=read("features/tasks/TaskCollaboration.tsx");
- assert.match(provider,/linkedTaskWorkspaces\\.includes\\(activeTasksWorkspace\\)/);
- assert.match(provider,/access\\.modules\\?\\.tasks!==true/);
+ assert.match(provider,/linkedTaskWorkspaces\.includes\(activeTasksWorkspace\)/);
+ assert.match(provider,/access\.modules\?\.tasks!==true/);
  assert.match(page,/robotronix:tasks-workspace-selected/);
- assert.match(page,/distinct\\.filter\\(t=>t\\.workspace_id===verified\\.id\\)/);
+ assert.match(page,/distinct\.filter\(t=>t\.workspace_id===verified\.id\)/);
  assert.match(teams,/scopeWorkspaceId/);
 });
 
