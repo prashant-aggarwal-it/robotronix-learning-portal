@@ -11,9 +11,7 @@ export async function authorizeBranding(authorization:string|null,organizationId
  if(error||!user||user.is_anonymous||!user.email_confirmed_at)throw new SaaSAccessError(401,"Verified session required");
  const {data:isPlatformAdmin,error:roleError}=await db.rpc("saas_is_platform_admin_v1",{p_actor_id:user.id});
  if(roleError)throw new SaaSAccessError(503,"Authorization unavailable");
- const {data:org,error:orgError}=await db.from("organizations").select("id,slug,status").eq("id",organizationId).maybeSingle();
- // The organizations table lives in the private saas schema.
- const {data:organization,error:lookupError}=orgError?await db.schema("saas").from("organizations").select("id,slug,status").eq("id",organizationId).maybeSingle():{data:org,error:null};
+ const {data:organization,error:lookupError}=await db.schema("saas").from("organizations").select("id,slug,status").eq("id",organizationId).maybeSingle();
  if(lookupError||!organization||organization.status!=="active")throw new SaaSAccessError(404,"Active organization not found");
  if(isPlatformAdmin===true)return {db,userId:user.id,platformAdmin:true,organization};
  const {data:membership,error:membershipError}=await db.schema("saas").from("memberships")
