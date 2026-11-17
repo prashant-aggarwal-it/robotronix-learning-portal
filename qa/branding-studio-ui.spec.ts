@@ -71,8 +71,7 @@ async function mockApi(page:Page,opts:{rejectSave?:boolean;rejectUpload?:boolean
 test.beforeEach(async({page})=>{await page.goto("about:blank");});
 test("loads tenant-specific branding, previews changes and persists after refresh",async({page})=>{
  const api=await mockApi(page);
- const response=await page.goto("/qa-branding-preview");
- console.log("BRANDING QA diagnostic",JSON.stringify({status:response?.status(),url:page.url(),body:(await page.locator("body").innerText()).slice(0,1000)}));
+ await page.goto("/qa-branding-preview");
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await expect(page.locator(".brandingPreviewTop strong")).toHaveText("QA Academy Alpha");
  await page.getByLabel("Tagline").fill("Alpha rebranded");
@@ -120,7 +119,7 @@ test("invalid image cannot be saved as an uploaded file",async({page})=>{
  await page.getByLabel("Upload organization logo").setInputFiles({
   name:"broken.png",mimeType:"image/png",buffer:Buffer.from("this is not an image")
  });
- await expect(page.getByRole("alert")).toBeVisible();
+ await expect(page.locator(".brandingError")).toBeVisible();
  await expect(page.getByRole("button",{name:"Save branding"})).toBeDisabled();
  expect(api.counts().uploads).toBe(0);
 });
@@ -130,7 +129,7 @@ test("API denial is shown without pretending branding is saved",async({page})=>{
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await page.getByLabel("Tagline").fill("Rejected branding");
  await page.getByRole("button",{name:"Save branding"}).click();
- await expect(page.getByRole("alert")).toContainText("Not authorized");
+ await expect(page.locator(".brandingError")).toContainText("Not authorized");
  await expect(page.getByText(/Branding saved for/)).toHaveCount(0);
  expect(api.records[A].tagline).toBe("Alpha learning");
 });
@@ -142,4 +141,29 @@ test("mobile viewport keeps all editor controls and live preview accessible",asy
  await expect(page.locator(".brandingPreview")).toBeVisible();
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
  expect(overflow).toBeLessThanOrEqual(2);
+});
+
+test("failed upload never changes persisted branding or invokes save",async({page})=>{
+ const api=await mockApi(page,{rejectUpload:true});
+ await page.goto("/qa-branding-preview");
+ await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
+ await page.getByLabel("Upload organization logo").setInputFiles({
+  name:"qa-logo.png",mimeType:"image/png",buffer:png(30,120,210)
+ });
+ await expect(page.getByText(/Brand colors detected/)).toBeVisible();
+ await page.getByRole("button",{name:"Save branding"}).click();
+ await expect(page.locator(".brandingError")).toContainText("Upload denied");
+ expect(api.counts()).toEqual({uploads:1,saves:0});
+ expect(api.records[A].logoUrl).toBe("");
+ await page.getByRole("button",{name:"Reset changes"}).click();
+ await expect(page.getByRole("button",{name:"Save branding"})).toBeDisabled();
+});
+test("reset discards unsaved identity changes",async({page})=>{
+ await mockApi(page);
+ await page.goto("/qa-branding-preview");
+ await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
+ await page.getByLabel("Tagline").fill("Scratch Academy");
+ await page.getByRole("button",{name:"Reset changes"}).click();
+ await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
+ await expect(page.getByRole("button",{name:"Save branding"})).toBeDisabled();
 });
