@@ -36,7 +36,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
  },[file]);
  useEffect(()=>{
   if(!organizationId)return;
-  let live=true;setLoading(true);setError("");setMessage("");setFile(null);
+  let live=true;setLoading(true);setError("");setMessage("");setFile(null);setSaved(initial);setTagline("");setLogoUrl("");setPalette(generatePalette("#4537a5"));
   (async()=>{try{
    const response=await fetch("/api/branding-studio?organizationId="+encodeURIComponent(organizationId),
     {headers:await authHeaders(),cache:"no-store"});
@@ -44,8 +44,8 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
    if(!response.ok||!body.ok)throw new Error(body.error||"Could not load branding");
    if(!live)return;
    const brand=body.branding as BrandData;
-   const existing=brand.palette||generatePalette(brand.accentColor||"#4537a5");
-   setSaved(brand);setTagline(brand.tagline||"");setLogoUrl(brand.logoUrl||"");
+   const existing=brand.palette?generatePalette(brand.palette.primary,brand.palette.secondary,brand.palette.accent):generatePalette(brand.accentColor||"#4537a5");
+   setSaved({...brand,palette:existing});setTagline(brand.tagline||"");setLogoUrl(brand.logoUrl||"");
    setPalette(existing);setRecommended(existing);
   }catch(e){if(live)setError(e instanceof Error?e.message:"Branding unavailable");}
    finally{if(live)setLoading(false);}
