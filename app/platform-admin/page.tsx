@@ -51,34 +51,47 @@ export default function PlatformAdminPage(){
     <span className="platformWorkspaceLabel">EDUCATION SUITE</span>
     <div className="platformWorkspaceName"><span className="platformWorkspaceIcon">✦</span><span>Control Centre<small>Platform administration</small></span></div>
     <nav className="platformNav">
-     <a href="#overview" className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
-     <a href="#customers" className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
-     <a href="#subscriptions" className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
-     <a href="#branding" className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
-     <a href="#onboarding" className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
-     <a href="#directory" className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
+     <a href="#overview" onClick={()=>setActiveSection("overview")} className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
+     <a href="#customers" onClick={()=>setActiveSection("customers")} className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
+     <a href="#subscriptions" onClick={()=>setActiveSection("subscriptions")} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
+     <a href="#branding" onClick={()=>setActiveSection("branding")} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
+     <a href="#onboarding" onClick={()=>setActiveSection("onboarding")} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
+     <a href="#directory" onClick={()=>setActiveSection("directory")} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
     </nav>
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link></div>
    </aside>
    <div className="platformMain">
-    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>Control Centre</h1><p>Manage your customers, access and subscriptions in one place.</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
+    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory"} as Record<string,string>)[activeSection]}</h1><p>Manage your customers, access and subscriptions in one place.</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
     <div className="platformContent">
      {loading&&<div className="platformFeedback" role="status">Loading platform overview…</div>}
      {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
      {overview&&!loading&&<>
-      <section id="overview" className="platformOverview" aria-label="Platform overview">
-       <div className="platformSectionIntro"><div><span className="platformEyebrow">YOUR PLATFORM AT A GLANCE</span><h2>Overview</h2></div><span className="platformReadOnlyHint">Live DEV workspace</span></div>
+      <section id="overview" hidden={activeSection!=="overview"} className="platformOverview" aria-label="Platform overview">
+       <div className="platformSectionIntro"><div><span className="platformEyebrow">YOUR PLATFORM AT A GLANCE</span><h2>Overview</h2></div><span className="platformReadOnlyHint">Platform data · live</span></div>
        <div className="platformMetricGrid">
         {([{label:"Customer organizations",value:overview.metrics.organizations,icon:"▣",note:"Registered workspaces"},{label:"Active subscriptions",value:overview.metrics.activeSubscriptions,icon:"◉",note:"Current paid plans"},{label:"Trial subscriptions",value:overview.metrics.trials,icon:"◷",note:"Evaluation workspaces"}] as const).map(metric=><article className="platformMetric" key={metric.label}><div className="platformMetricTop"><span>{metric.label}</span><span className="platformMetricIcon" aria-hidden="true">{metric.icon}</span></div><strong>{metric.value}</strong><small>{metric.note}</small></article>)}
        </div>
       </section>
-      <div className="platformColumns">
-       <div id="customers" className="platformPanel"><PlatformCustomerActions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
-       <div id="subscriptions" className="platformPanel"><PlatformSubscriptions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+      {activeSection==="overview"&&<div className="platformOverviewBody">
+       <div className="platformWelcomeCard">
+        <div><span className="platformEyebrow">QUICK START</span><h2>What would you like to manage?</h2><p>Jump straight to the action you need. All customer changes remain permission-checked and audited.</p></div>
+        <a href="#onboarding" className="platformPrimaryLink">+ Add customer</a>
+       </div>
+       <div className="platformQuickGrid">
+        <a href="#customers"><span className="platformQuickIcon">♧</span><strong>Customer access</strong><small>Owner invitations, customer status and administrators</small><span aria-hidden="true">↗</span></a>
+        <a href="#subscriptions"><span className="platformQuickIcon">◉</span><strong>Subscriptions & modules</strong><small>Plans, expiry dates and enabled applications</small><span aria-hidden="true">↗</span></a>
+        <a href="#branding"><span className="platformQuickIcon">◈</span><strong>Academy branding</strong><small>Identity, colors and logo settings</small><span aria-hidden="true">↗</span></a>
+       </div>
+       <div className="platformRecentCard"><div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Recently created organizations</h2><p>Showing available records from the current directory page, not platform-wide activity.</p></div><a href="#directory">View directory →</a></div>
+       <div className="platformCompactList">{overview.organizations.slice(0,4).map(o=><div key={o.id}><span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span><span><strong>{o.display_name}</strong><small>{o.slug}</small></span><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></div>)}{overview.organizations.length===0&&<p>No customer records on this page.</p>}</div>
+      </div>}
+      <div className="platformColumns platformTabSections">
+       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+       <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel"><PlatformSubscriptions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
       </div>
-      <div className="platformColumns">
-       <div id="branding" className="platformPanel"><PlatformTenantBranding organizations={overview.organizations}/></div>
-       <section id="onboarding" className="platformPanel platformOnboarding">
+      <div className="platformColumns platformTabSections">
+       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations}/></div>
+       <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
         <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Create a trial for an existing, verified customer account. No email invitation is sent automatically.</p>
         <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
          <label>Owner Auth UUID<input required value={assisted.ownerId} onChange={e=>setAssisted(s=>({...s,ownerId:e.target.value}))} placeholder="Verified customer's user ID"/></label>
@@ -90,7 +103,7 @@ export default function PlatformAdminPage(){
         </form>
        </section>
       </div>
-      <section id="directory" className="platformDirectory platformPanel">
+      <section id="directory" hidden={activeSection!=="directory"} className="platformDirectory platformPanel">
        <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Organization directory</h2><p>Find and review registered organizations.</p></div><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
        {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Workspace slug</th><th>Status</th><th>Created</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><code>{o.slug}</code></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td></tr>)}</tbody></table></div>}
        <div className="platformPagination"><span>{overview.total} matching organizations · Page {page}</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><button disabled={page*20>=overview.total} onClick={()=>setPage(p=>p+1)}>Next</button></div></div>
