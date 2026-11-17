@@ -44,3 +44,18 @@ test("existing themes and module-level baselines remain available",()=>{
  assert.match(read("app/platform-admin/platform-admin.css"),/var\(--nav-background/);
  assert.match(read("app/suite-shell.css"),/var\(--input-focus-ring/);
 });
+
+test("major workspace tokens retain equivalent existing paint values",()=>{
+ const css=read("app/design-tokens.css");
+ const checks=[
+ ["--product-focus-ring","#62bed7"],
+ ["--product-nav-active-start","#e6f5fc"],
+ ["--product-nav-active-end","#eff6fc"],
+ ["--platform-focus-ring","#bb9aef"],
+ ["--platform-action-start","#7142d2"]
+ ];
+ for(const [token,value] of checks)assert.ok(css.includes(token+":"+value),token);
+ assert.match(read("app/tasks/product-experience.css"),/var\(--product-nav-active-start\)/);
+ assert.match(read("app/connect/connect.css"),/var\(--product-focus-ring\)/);
+ assert.match(read("app/platform-admin/platform-admin.css"),/var\(--platform-action-start\)/);
+});
