@@ -1,0 +1,23 @@
+name: Phase 5B Next.js build smoke
+on:
+  push:
+    branches:
+      - feature/education-suite-phase5b-branding-studio
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Compile Next.js application
+        run: npm run build
