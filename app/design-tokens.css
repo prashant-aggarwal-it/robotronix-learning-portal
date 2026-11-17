@@ -37,11 +37,13 @@
 .cx-app,.cx-gate {
  --product-primary:#235ce2;
  --product-accent:#078db3;
+ --product-success:#128764;
  --product-surface:var(--app-surface,#fff);
  --product-focus-ring:#62bed7;
 }
 .mt2-shell {
- --product-primary:#237cb5;
+ --product-primary:#147cad;
+ --product-navigation-primary:#237cb5;
  --product-accent:#20a3ab;
  --product-nav-active-start:#e6f5fc;
  --product-nav-active-end:#eff6fc;
@@ -51,6 +53,8 @@
 }
 .platformConsole {
  --platform-brand-primary:#7542bc;
+ --platform-nav-border:#eee9f5;
+ --platform-nav-hover:#f6f1ff;
  --platform-brand-accent:#d33d9a;
  --platform-focus-ring:#bb9aef;
  --platform-button-focus:#8146db;
