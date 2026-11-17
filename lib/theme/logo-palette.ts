@@ -47,5 +47,5 @@ export async function detectLogoPalette(file:Blob):Promise<SuggestedPalette>{
 }
 export function validatePublicLogoUrl(value:string):boolean{
  if(!value)return true;
- try{const url=new URL(value);return url.protocol==="https:"&&!!url.hostname&&!url.username&&!url.password&&value.length<=600;}catch{return false;}
+ return value.length<=600&&/^https:\/\/[a-zA-Z0-9.-]+(?:\/[a-zA-Z0-9_./%~-]*)?$/.test(value);
 }
