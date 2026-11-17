@@ -22,8 +22,8 @@ export default function PlatformAdminPage(){
    setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory"].includes(id)?id:"overview");
    window.scrollTo({top:0,behavior:"instant"});
   };
-  sync();window.addEventListener("hashchange",sync);
-  return()=>window.removeEventListener("hashchange",sync);
+  sync();window.addEventListener("hashchange",sync);window.addEventListener("popstate",sync);
+  return()=>{window.removeEventListener("hashchange",sync);window.removeEventListener("popstate",sync)};
  },[]);
  function navigate(section:string){
   setActiveSection(section);
