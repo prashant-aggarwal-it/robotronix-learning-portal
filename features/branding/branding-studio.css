@@ -28,20 +28,20 @@
 .brandingError{color:#a01f35;font-size:12px;background:#fff1f3;padding:11px;border-radius:9px}
 .brandingSuccess{color:#16683d;font-size:12px;background:#eaf8ee;padding:11px;border-radius:9px}
 .brandingPreviewCol{position:sticky;top:22px;min-width:0;display:grid;gap:12px}
-.brandingPreview{--preview-primary:#6637b9;--preview-secondary:#de358b;--preview-soft:#f1e9fb;--preview-accent:#0eaabb;--preview-on-primary:#fff;background:#fff;border:1px solid #e5deed;border-radius:15px;min-height:390px;overflow:hidden;display:grid;grid-template-columns:125px minmax(0,1fr);box-shadow:0 16px 34px rgba(61,43,90,.06)}
+.brandingPreview{--brand-primary:#6637b9;--brand-secondary:#de358b;--brand-primary-soft:#f1e9fb;--brand-accent:#0eaabb;--brand-on-primary:#fff;background:#fff;border:1px solid #e5deed;border-radius:15px;min-height:390px;overflow:hidden;display:grid;grid-template-columns:125px minmax(0,1fr);box-shadow:0 16px 34px rgba(61,43,90,.06)}
 .brandingPreviewSidebar{background:#fff;border-right:1px solid #e6e0eb;padding:15px 9px;display:flex;flex-direction:column;gap:9px;min-width:0}
-.brandingPreviewSidebar>strong{font-size:12px;line-height:1.4;color:var(--preview-primary)}
+.brandingPreviewSidebar>strong{font-size:12px;line-height:1.4;color:var(--brand-primary)}
 .brandingPreviewLogo{width:100%;height:50px;object-fit:contain;object-position:left}
 .brandingPreviewNav{font-size:10px;font-weight:700;padding:9px 6px;border-radius:7px;color:#696178}
-.brandingPreviewNav.active{color:var(--preview-primary);background:var(--preview-soft)}
+.brandingPreviewNav.active{color:var(--brand-primary);background:var(--brand-primary-soft)}
 .brandingPreviewMain{padding:16px;display:grid;align-content:start;gap:15px;min-width:0;background:#faf9fc}
 .brandingPreviewTop{display:grid;gap:4px}.brandingPreviewTop strong{font-size:15px}.brandingPreviewTop small{color:#736c7d;font-size:10px}
-.brandingPreviewKpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.brandingPreviewKpis div{display:grid;gap:6px;background:#fff;border:1px solid #eae5ee;border-radius:9px;padding:11px}.brandingPreviewKpis span{font-size:10px;color:#7f7788}.brandingPreviewKpis strong{font-size:20px;color:var(--preview-primary)}
+.brandingPreviewKpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.brandingPreviewKpis div{display:grid;gap:6px;background:#fff;border:1px solid #eae5ee;border-radius:9px;padding:11px}.brandingPreviewKpis span{font-size:10px;color:#7f7788}.brandingPreviewKpis strong{font-size:20px;color:var(--brand-primary)}
 .brandingPreviewCourse{padding:13px;background:#fff;border:1px solid #eae5ee;border-radius:9px;display:grid;gap:7px}
-.brandingPreviewCourse span{font-size:9px;letter-spacing:.08em;color:var(--preview-secondary);font-weight:800}
+.brandingPreviewCourse span{font-size:9px;letter-spacing:.08em;color:var(--brand-secondary);font-weight:800}
 .brandingPreviewCourse strong{font-size:12px}.brandingPreviewCourse p{margin:0;color:#716b7e;font-size:10px}
-.brandingPreviewCourse button,.brandingPreviewActions button:first-child{border:0;padding:8px 10px;border-radius:7px;background:var(--preview-primary);color:var(--preview-on-primary);font-size:10px;font-weight:750;cursor:default}
-.brandingPreviewActions{display:flex;gap:7px;flex-wrap:wrap}.brandingPreviewActions button:last-child{border:1px solid var(--preview-accent);background:#fff;color:#2b3650;border-radius:7px;padding:8px 10px;font-size:10px;cursor:default}
-.brandingPreviewInput{display:grid;gap:5px;font-size:10px;font-weight:750}.brandingPreviewInput input{width:100%;min-width:0;border:1px solid var(--preview-primary);border-radius:7px;padding:8px;background:#fff;color:#4d455c;font-size:10px}
+.brandingPreviewCourse button,.brandingPreviewActions button:first-child{border:0;padding:8px 10px;border-radius:7px;background:var(--brand-primary);color:var(--brand-on-primary);font-size:10px;font-weight:750;cursor:default}
+.brandingPreviewActions{display:flex;gap:7px;flex-wrap:wrap}.brandingPreviewActions button:last-child{border:1px solid var(--brand-accent);background:#fff;color:#2b3650;border-radius:7px;padding:8px 10px;font-size:10px;cursor:default}
+.brandingPreviewInput{display:grid;gap:5px;font-size:10px;font-weight:750}.brandingPreviewInput input{width:100%;min-width:0;border:1px solid var(--brand-primary);border-radius:7px;padding:8px;background:#fff;color:#4d455c;font-size:10px}
 @media(max-width:1100px){.brandingStudioGrid{grid-template-columns:1fr}.brandingPreviewCol{position:static}}
 @media(max-width:500px){.brandingPreview{grid-template-columns:95px minmax(0,1fr)}.brandingPreviewMain{padding:10px}.brandingStudioHeader{flex-wrap:wrap}}
