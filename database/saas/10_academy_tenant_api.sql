@@ -115,7 +115,7 @@ BEGIN
     RAISE EXCEPTION 'Cross-tenant enrollment denied' USING ERRCODE='42501';
    END IF;
    INSERT INTO public.enrollments(student_id,course_id,trainer_id,enrollment_type,started_at)
-   VALUES(v_student,v_course,v_trainer,'one_to_one',current_date) RETURNING id INTO v_id;
+   VALUES(v_student,v_course,v_trainer,'one_to_one',(now() at time zone 'Asia/Kolkata')::date) RETURNING id INTO v_id;
    INSERT INTO saas.academy_enrollments(enrollment_id,organization_id) VALUES(v_id,p_organization_id);
    v_result=jsonb_build_object('id',v_id,'student_id',v_student,'course_id',v_course,'trainer_id',v_trainer);
   ELSE
