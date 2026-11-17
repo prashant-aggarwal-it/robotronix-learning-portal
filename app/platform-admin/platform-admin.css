@@ -20,3 +20,5 @@
 .platformTabSections>.platformPanel:not([hidden]) button{margin-bottom:5px}
 @media(max-width:950px){.platformQuickGrid{grid-template-columns:1fr}.platformQuickGrid a{min-height:110px}.platformWelcomeCard{align-items:start}}
 @media(max-width:620px){.platformWelcomeCard{flex-direction:column;align-items:stretch;padding:22px}.platformPrimaryLink{text-align:center}.platformRecentCard{align-items:start;flex-direction:column}.platformCompactList>div{padding:13px}.platformTabSections>.platformPanel:not([hidden])>section{padding:20px!important}}
+
+.platformSignout{display:block;width:100%;padding:10px 12px;border:1px solid #e5d9f6;border-radius:10px;background:#fff;color:#7542bc;font:inherit;font-size:12px;font-weight:750;text-align:left;cursor:pointer}.platformSignout:hover{background:#efe8fd}.platformSignout:disabled{opacity:.55;cursor:wait}
