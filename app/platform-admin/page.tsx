@@ -16,7 +16,20 @@ export default function PlatformAdminPage(){
  const [loading,setLoading]=useState(true);
  const [refresh,setRefresh]=useState(0);
  const [activeSection,setActiveSection]=useState("overview");
- useEffect(()=>{const sync=()=>{const id=window.location.hash.slice(1);setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory"].includes(id)?id:"overview");};sync();window.addEventListener("hashchange",sync);return()=>window.removeEventListener("hashchange",sync);},[]);
+ useEffect(()=>{
+  const sync=()=>{
+   const id=window.location.hash.slice(1);
+   setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory"].includes(id)?id:"overview");
+   window.scrollTo({top:0,behavior:"instant"});
+  };
+  sync();window.addEventListener("hashchange",sync);
+  return()=>window.removeEventListener("hashchange",sync);
+ },[]);
+ function navigate(section:string){
+  setActiveSection(section);
+  window.history.pushState(null,"","#"+section);
+  window.scrollTo({top:0,behavior:"instant"});
+ }
  const [assisted,setAssisted]=useState({name:"",slug:"",kind:"academy",ownerId:""});
  const [assistedMessage,setAssistedMessage]=useState("");const [assistedBusy,setAssistedBusy]=useState(false);
  useEffect(()=>{
@@ -51,12 +64,12 @@ export default function PlatformAdminPage(){
     <span className="platformWorkspaceLabel">EDUCATION SUITE</span>
     <div className="platformWorkspaceName"><span className="platformWorkspaceIcon">✦</span><span>Control Centre<small>Platform administration</small></span></div>
     <nav className="platformNav">
-     <a href="#overview" onClick={()=>setActiveSection("overview")} className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
-     <a href="#customers" onClick={()=>setActiveSection("customers")} className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
-     <a href="#subscriptions" onClick={()=>setActiveSection("subscriptions")} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
-     <a href="#branding" onClick={()=>setActiveSection("branding")} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
-     <a href="#onboarding" onClick={()=>setActiveSection("onboarding")} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
-     <a href="#directory" onClick={()=>setActiveSection("directory")} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
+     <a href="#overview" onClick={e=>{e.preventDefault();navigate("overview")}} className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
+     <a href="#customers" onClick={e=>{e.preventDefault();navigate("customers")}} className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
+     <a href="#subscriptions" onClick={e=>{e.preventDefault();navigate("subscriptions")}} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
+     <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
+     <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
+     <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
     </nav>
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link></div>
    </aside>
@@ -75,14 +88,14 @@ export default function PlatformAdminPage(){
       {activeSection==="overview"&&<div className="platformOverviewBody">
        <div className="platformWelcomeCard">
         <div><span className="platformEyebrow">QUICK START</span><h2>What would you like to manage?</h2><p>Jump straight to the action you need. All customer changes remain permission-checked and audited.</p></div>
-        <a href="#onboarding" className="platformPrimaryLink">+ Add customer</a>
+        <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className="platformPrimaryLink">+ Add customer</a>
        </div>
        <div className="platformQuickGrid">
-        <a href="#customers"><span className="platformQuickIcon">♧</span><strong>Customer access</strong><small>Owner invitations, customer status and administrators</small><span aria-hidden="true">↗</span></a>
-        <a href="#subscriptions"><span className="platformQuickIcon">◉</span><strong>Subscriptions & modules</strong><small>Plans, expiry dates and enabled applications</small><span aria-hidden="true">↗</span></a>
-        <a href="#branding"><span className="platformQuickIcon">◈</span><strong>Academy branding</strong><small>Identity, colors and logo settings</small><span aria-hidden="true">↗</span></a>
+        <a href="#customers" onClick={e=>{e.preventDefault();navigate("customers")}}><span className="platformQuickIcon">♧</span><strong>Customer access</strong><small>Owner invitations, customer status and administrators</small><span aria-hidden="true">↗</span></a>
+        <a href="#subscriptions" onClick={e=>{e.preventDefault();navigate("subscriptions")}}><span className="platformQuickIcon">◉</span><strong>Subscriptions & modules</strong><small>Plans, expiry dates and enabled applications</small><span aria-hidden="true">↗</span></a>
+        <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}}><span className="platformQuickIcon">◈</span><strong>Academy branding</strong><small>Identity, colors and logo settings</small><span aria-hidden="true">↗</span></a>
        </div>
-       <div className="platformRecentCard"><div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Recently created organizations</h2><p>Showing available records from the current directory page, not platform-wide activity.</p></div><a href="#directory">View directory →</a></div>
+       <div className="platformRecentCard"><div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Recently created organizations</h2><p>Showing available records from the current directory page, not platform-wide activity.</p></div><a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}}>View directory →</a></div>
        <div className="platformCompactList">{overview.organizations.slice(0,4).map(o=><div key={o.id}><span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span><span><strong>{o.display_name}</strong><small>{o.slug}</small></span><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></div>)}{overview.organizations.length===0&&<p>No customer records on this page.</p>}</div>
       </div>}
       <div className="platformColumns platformTabSections">
