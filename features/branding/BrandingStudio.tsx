@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useRef,useState,type CSSProperties,type DragEvent} from "react";
+import {themeToCssVariables} from "@/lib/theme/tokens";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {detectLogoPalette,generatePalette,validatePublicLogoUrl,type SuggestedPalette} from "@/lib/theme/logo-palette";
 import "./branding-studio.css";
@@ -107,8 +108,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
   finally{setBusy(false);}
  }
  const previewLogo=localPreview||logoUrl;
- const previewStyle={"--preview-primary":palette.primary,"--preview-soft":palette.primarySoft,
-  "--preview-secondary":palette.secondary,"--preview-accent":palette.accent,"--preview-on-primary":palette.onPrimary} as CSSProperties;
+ const previewStyle=themeToCssVariables(palette) as CSSProperties;
  return <section className="brandingStudio">
   <div className="brandingStudioHeader"><div><span>ORGANIZATION IDENTITY</span><h2>Branding Studio</h2><p>Upload your logo, automatically detect brand colors, and preview your Academy theme.</p></div>
    {isDirty&&<span className="brandingUnsaved" role="status">Unsaved changes</span>}
