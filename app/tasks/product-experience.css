@@ -1,5 +1,5 @@
 /* My Tasks product experience — workflow-driven, data-backed widgets. */
-.mt2-shell{--mt2-brand:#147cad;--mt2-dark:#173450;--mt2-accent:#20a3ab}
+.mt2-shell{--mt2-brand:var(--product-primary,#147cad);--mt2-dark:#173450;--mt2-accent:var(--product-accent,#20a3ab)}
 .mt2-sidebar .mt2-primary-nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:thin;padding-bottom:10px;flex-shrink:1}
 .mt2-primary-nav .mt2-nav-stage{display:block;font-size:10px;letter-spacing:.13em;font-weight:830;color:#8198aa;margin:15px 10px 5px}
 .mt2-primary-nav>a:first-child,.mt2-primary-nav>button:first-child{margin-top:3px}
