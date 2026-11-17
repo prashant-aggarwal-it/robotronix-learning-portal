@@ -6,7 +6,7 @@
 .mt2-primary-nav a,.mt2-primary-nav button{width:100%;min-height:38px;display:flex;align-items:center;gap:10px}
 .mt2-primary-nav .mt2-nav-emoji{font-size:17px;width:20px;min-width:20px;display:inline-flex;align-items:center;justify-content:center;opacity:.85}
 .mt2-primary-nav .mt2-nav-count{margin-left:auto;border-radius:9px;background:#eaf0f6;color:#608098;padding:2px 8px;font-size:11px}
-.mt2-primary-nav .is-active{background:linear-gradient(95deg,#e6f5fc,#eff6fc)!important;border-color:#d4eaf3!important;color:#136e9c!important}
+.mt2-primary-nav .is-active{background:linear-gradient(95deg,var(--product-nav-active-start),var(--product-nav-active-end))!important;border-color:var(--product-nav-active-border)!important;color:var(--product-nav-active-text)!important}
 .mt2-primary-nav .mt2-nav-secondary{margin-top:15px;padding-top:12px;border-top:1px solid #e5edf3}
 .mt2-primary-nav .mt2-nav-capture{background:linear-gradient(110deg,#147cad,#1b9ca8);color:#fff;border-radius:9px;margin:3px 0 12px;font-weight:800}
 .mt2-primary-nav .mt2-nav-capture:hover{background:#126c99;color:#fff}
