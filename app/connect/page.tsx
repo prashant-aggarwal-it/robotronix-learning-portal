@@ -44,7 +44,7 @@ export default function ConnectPage(){
  useEffect(()=>{
   const event=new CustomEvent("robotronix:crm-tenant-selected",{detail:{tenantId}});
   window.dispatchEvent(event);
-  return ()=>window.dispatchEvent(new CustomEvent("robotronix:crm-tenant-selected",{detail:{tenantId:""}}));
+  return ()=>{window.dispatchEvent(new CustomEvent("robotronix:crm-tenant-selected",{detail:{tenantId:""}}));};
  },[tenantId]);
  const [section,setSection]=useState<Section>("overview");
  // Section changes are client-side state transitions, so the browser does not reset scroll automatically.
