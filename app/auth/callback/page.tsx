@@ -15,9 +15,10 @@ export default function AuthCallbackPage(){
   let cancelled=false;
   async function finish(){
    try{
-    const supabase=getSupabaseBrowserClient();if(!supabase)throw new Error("Supabase is not configured.");
+    // Capture confirmation parameters before Supabase processes and clears URL fragments.
     const params=new URLSearchParams(window.location.search);
     const fragment=new URLSearchParams(window.location.hash.slice(1));
+    const supabase=getSupabaseBrowserClient();if(!supabase)throw new Error("Supabase is not configured.");
     const code=params.get("code");
     const signupConfirmation=fragment.get("type")==="signup"||params.get("type")==="signup";
     const authError=params.get("error_code")||params.get("error")||fragment.get("error_code")||fragment.get("error");
