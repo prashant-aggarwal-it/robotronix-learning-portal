@@ -35,13 +35,13 @@
 /* Product-local visual baselines. Future tenant themes may supply these semantic
  * values at a scoped workspace root without changing layout or structure. */
 .cx-app,.cx-gate {
- --product-primary:var(--brand-primary,#235ce2);
- --product-accent:var(--brand-accent,#078db3);
+ --product-primary:#235ce2;
+ --product-accent:#078db3;
  --product-surface:var(--app-surface,#fff);
 }
 .mt2-shell {
- --product-primary:var(--brand-primary,#237cb5);
- --product-accent:var(--brand-accent,#20a3ab);
+ --product-primary:#237cb5;
+ --product-accent:#20a3ab;
  --product-surface:var(--app-surface,#fff);
 }
 .platformConsole {
