@@ -37,9 +37,15 @@ test("CRM theme fails closed for mismatched mapped workspace",()=>{
  assert.match(provider,/access\.modules\?\.crm!==true/);
  assert.match(page,/robotronix:crm-tenant-selected/);
 });
-test("shared Tasks stays corporate until a workspace-specific branding contract exists",()=>{
+test("unscoped Tasks stays corporate; scoped Tasks matches trusted workspace",()=>{
  const provider=read("components/TenantBrandingProvider.tsx");
- assert.match(provider,/corporate\|\|sharedTasks\|\|!snapshot/);
+ const page=read("features/tasks/v2/TasksV2Connected.tsx");
+ const teams=read("features/tasks/TaskCollaboration.tsx");
+ assert.match(provider,/linkedTaskWorkspaces\\.includes\\(activeTasksWorkspace\\)/);
+ assert.match(provider,/access\\.modules\\?\\.tasks!==true/);
+ assert.match(page,/robotronix:tasks-workspace-selected/);
+ assert.match(page,/distinct\\.filter\\(t=>t\\.workspace_id===verified\\.id\\)/);
+ assert.match(teams,/scopeWorkspaceId/);
 });
 
 test("Suite Home switches without retaining stale module context",()=>{

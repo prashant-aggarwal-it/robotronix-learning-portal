@@ -6,7 +6,7 @@ import {tenantStyle,type TenantBranding} from "@/lib/theme/tenant-runtime";
 import "@/app/tenant-branding.css";
 
 type TenantContext={branding:TenantBranding|null;loading:boolean;reload:()=>void};
-type Snapshot={branding:TenantBranding;linkedCrmTenant:string|null;context:"crm"|"suite"|"academy"};
+type Snapshot={branding:TenantBranding;linkedCrmTenant:string|null;linkedTaskWorkspaces:string[];context:"crm"|"tasks"|"suite"|"academy"};
 const Context=createContext<TenantContext>({branding:null,loading:false,reload:()=>{}});
 export const useTenantBranding=()=>useContext(Context);
 
@@ -24,6 +24,7 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
  const sharedTasks=isSharedTasksPath(path);
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null);
  const [activeCrmTenant,setActiveCrmTenant]=useState("");
+ const [activeTasksWorkspace,setActiveTasksWorkspace]=useState("");
  const [loading,setLoading]=useState(true);
  const [revision,setRevision]=useState(0);
  const generation=useRef(0);
@@ -36,11 +37,17 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
   };
   window.addEventListener("robotronix:branding-saved",onRefresh);
   window.addEventListener("robotronix:organization-changed",onRefresh);
+  const onTasksWorkspace=(event:Event)=>{
+   const id=(event as CustomEvent<{workspaceId?:string}>).detail?.workspaceId;
+   setActiveTasksWorkspace(typeof id==="string"?id:"");
+  };
   window.addEventListener("robotronix:crm-tenant-selected",onCrmTenant);
+  window.addEventListener("robotronix:tasks-workspace-selected",onTasksWorkspace);
   return ()=>{
    window.removeEventListener("robotronix:branding-saved",onRefresh);
    window.removeEventListener("robotronix:organization-changed",onRefresh);
    window.removeEventListener("robotronix:crm-tenant-selected",onCrmTenant);
+   window.removeEventListener("robotronix:tasks-workspace-selected",onTasksWorkspace);
   };
  },[]);
 
@@ -49,7 +56,7 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
   const controller=new AbortController();
   const current=++generation.current;
   setSnapshot(null);
-  if(corporate||sharedTasks||!client){setLoading(false);return ()=>controller.abort();}
+  if(corporate||!client){setLoading(false);return ()=>controller.abort();}
   setLoading(true);
   const load=async()=>{
    try{
@@ -64,7 +71,7 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
     const calls=[
      fetch("/api/tenant-branding"+suffix,{headers,cache:"no-store",signal:controller.signal}),
      fetch("/api/platform/organization-modules"+suffix,{headers,cache:"no-store",signal:controller.signal}),
-     ...(crm?[fetch("/api/platform/organization-links"+suffix,{headers,cache:"no-store",signal:controller.signal})]:[])
+     ...((crm||sharedTasks)?[fetch("/api/platform/organization-links"+suffix,{headers,cache:"no-store",signal:controller.signal})]:[])
     ];
     const responses=await Promise.all(calls);
     const [theme,access,links]=await Promise.all(responses.map(async response=>{
@@ -74,12 +81,15 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
     }));
     if(theme.branding?.organizationId!==orgId)throw Error("Mismatched organization");
     // Members may see approved branding only for an enabled module.
-    if(crm ? access.modules?.crm!==true : path.startsWith("/suite")?false:access.modules?.academy!==true)
+    if(crm ? access.modules?.crm!==true : sharedTasks ? access.modules?.tasks!==true : path.startsWith("/suite")?false:access.modules?.academy!==true)
      throw Error("Module not enabled");
     const mapped=crm&&links?.links?.crm?.status==="ready"&&typeof links.links.crm.tenantId==="string"
      ?links.links.crm.tenantId:null;
+    const linkedTaskWorkspaces=sharedTasks&&links?.links?.tasks?.status==="ready"&&Array.isArray(links.links.tasks.workspaces)
+     ?links.links.tasks.workspaces.filter((w:{id?:unknown})=>typeof w?.id==="string").map((w:{id:string})=>w.id):[];
     if(!controller.signal.aborted&&current===generation.current)
-     setSnapshot({branding:theme.branding as TenantBranding,linkedCrmTenant:mapped,context:crm?"crm":path.startsWith("/suite")?"suite":"academy"});
+     setSnapshot({branding:theme.branding as TenantBranding,linkedCrmTenant:mapped,linkedTaskWorkspaces,
+      context:crm?"crm":sharedTasks?"tasks":path.startsWith("/suite")?"suite":"academy"});
    }catch{
     if(!controller.signal.aborted&&current===generation.current)setSnapshot(null);
    }finally{
@@ -95,10 +105,11 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
 
  // CRM branding must correspond to the actual CRM-authorized workspace, not
  // just the last Suite organization selected in a cookie.
- const currentContext=crm?"crm":path.startsWith("/suite")?"suite":"academy";
- const shown=corporate||sharedTasks||!snapshot||snapshot.context!==currentContext ? null :
-  crm && (!snapshot.linkedCrmTenant||snapshot.linkedCrmTenant!==activeCrmTenant)
-   ?null:snapshot.branding;
+ const currentContext=crm?"crm":sharedTasks?"tasks":path.startsWith("/suite")?"suite":"academy";
+ const shown=corporate||!snapshot||snapshot.context!==currentContext ? null :
+  crm && (!snapshot.linkedCrmTenant||snapshot.linkedCrmTenant!==activeCrmTenant) ? null :
+  sharedTasks && (!activeTasksWorkspace||!snapshot.linkedTaskWorkspaces.includes(activeTasksWorkspace)) ? null :
+  snapshot.branding;
  return <Context.Provider value={{branding:shown,loading,reload:()=>setRevision(x=>x+1)}}>
   <div className={shown?"tenantThemeScope":"tenantThemeDefault"}
    data-tenant-id={shown?.organizationId||undefined}

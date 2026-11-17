@@ -6,21 +6,22 @@ type Workspace={id:string;name:string;role:"owner"|"admin"|"member"};
 type Member={user_id:string;role:string;full_name:string};
 type Invitation={id:string;workspace_id:string;workspace_name:string;role:string;expires_at:string};
 type Request=<T>(url:string,options?:RequestInit)=>Promise<T>;
-type Props={request:Request;tasks:SharedTask[];userId:string|null;onUpdated:()=>Promise<void>;onOpenTask:(task:SharedTask)=>void};
+type Props={request:Request;tasks:SharedTask[];userId:string|null;onUpdated:()=>Promise<void>;onOpenTask:(task:SharedTask)=>void;scopeWorkspaceId?:string};
 const post=(action:string,data:Record<string,unknown>)=>JSON.stringify({action,...data});
 
-export function TeamSpaces({request,tasks,userId,onUpdated,onOpenTask}:Props){
+export function TeamSpaces({request,tasks,userId,onUpdated,onOpenTask,scopeWorkspaceId}:Props){
  const [workspaces,setWorkspaces]=useState<Workspace[]>([]),[invitations,setInvitations]=useState<Invitation[]>([]),[members,setMembers]=useState<Member[]>([]);
  const [selected,setSelected]=useState(""),[name,setName]=useState(""),[inviteEmail,setInviteEmail]=useState(""),[inviteRole,setInviteRole]=useState("member");
  const [taskTitle,setTaskTitle]=useState(""),[taskAssignee,setTaskAssignee]=useState(""),[visible,setVisible]=useState(false);
  const [message,setMessage]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false);
  const load=useCallback(async()=>{
-  try{const [a,b]=await Promise.all([request<{items:Workspace[]}>("/api/tasks/collaboration?scope=workspaces"),request<{items:Invitation[]}>("/api/tasks/collaboration?scope=invitations").catch(()=>({items:[] as Invitation[]}))]);setWorkspaces(a.items||[]);setInvitations(b.items||[]);setSelected(current=>{
-   const suiteWorkspace=new URLSearchParams(window.location.search).get("suiteWorkspace");
-   if(suiteWorkspace)return a.items?.some(w=>w.id===suiteWorkspace)?suiteWorkspace:"";
-   return a.items?.some(w=>w.id===current)?current:a.items?.[0]?.id||"";
+  try{const [a,b]=await Promise.all([request<{items:Workspace[]}>("/api/tasks/collaboration?scope=workspaces"),request<{items:Invitation[]}>("/api/tasks/collaboration?scope=invitations").catch(()=>({items:[] as Invitation[]}))]);const visible=scopeWorkspaceId?(a.items||[]).filter(w=>w.id===scopeWorkspaceId):a.items||[];
+  setWorkspaces(visible);setInvitations(scopeWorkspaceId?[]:b.items||[]);
+  setSelected(current=>{
+   if(scopeWorkspaceId)return visible.some(w=>w.id===scopeWorkspaceId)?scopeWorkspaceId:"";
+   return visible.some(w=>w.id===current)?current:visible[0]?.id||"";
   });if(selected){const people=await request<{items:Member[]}>(`/api/tasks/collaboration?scope=members&workspace_id=${selected}`);setMembers(people.items||[])}}catch(e){setError(e instanceof Error?e.message:"Cannot load workspaces.")}
- },[request,selected]);
+ },[request,selected,scopeWorkspaceId]);
  useEffect(()=>{void load()},[load]);
  useEffect(()=>{if(!selected){setMembers([]);return}void request<{items:Member[]}>(`/api/tasks/collaboration?scope=members&workspace_id=${selected}`).then(x=>setMembers(x.items||[])).catch(()=>setMembers([]))},[request,selected]);
  const act=async(action:string,data:Record<string,unknown>,success:string)=>{
@@ -33,7 +34,7 @@ export function TeamSpaces({request,tasks,userId,onUpdated,onOpenTask}:Props){
  const wsTasks=tasks.filter(t=>t.workspace_id===selected);
  return <div className="tw-team-grid"><section className="tw-panel tw-team-spaces"><span className="tw-overline">PEOPLE & PURPOSE</span><h2>Team spaces</h2><p>Bring a team together around a project while keeping personal tasks private.</p>{error&&<div className="tw-alert" role="alert">{error}</div>}{message&&<div className="tw-toast">✓ {message}</div>}
   <div className="tw-space-list">{workspaces.map(w=><button key={w.id} className={selected===w.id?"active":""} onClick={()=>setSelected(w.id)}><span className="tw-space-symbol">✧</span><b>{w.name}</b><small>{w.role}</small></button>)}</div>
-  <form onSubmit={createWorkspace} className="tw-team-form"><label>New workspace</label><div><input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Operations Team" maxLength={100}/><button disabled={busy||name.trim().length<2}>Create</button></div></form>
+  {!scopeWorkspaceId&&<form onSubmit={createWorkspace} className="tw-team-form"><label>New workspace</label><div><input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Operations Team" maxLength={100}/><button disabled={busy||name.trim().length<2}>Create</button></div></form>}
   {invitations.length>0&&<div className="tw-invitations"><h3>Invitations for you</h3>{invitations.map(i=><div key={i.id}><span><b>{i.workspace_name}</b><small>{i.role} access</small></span><button onClick={()=>void act("invite_accept",{invitation_id:i.id},"Invitation accepted")}>Join</button></div>)}</div>}
  </section>
  <section className="tw-panel tw-team-detail">{!selectedWorkspace?<div className="tw-empty"><div className="tw-empty-art">✧</div><h3>Collaboration starts here</h3><p>Create your first team space to invite people and delegate work.</p></div>:<><span className="tw-overline">SHARED WORKSPACE</span><h2>{selectedWorkspace.name}</h2><p>{members.length} members · {wsTasks.length} tasks</p>

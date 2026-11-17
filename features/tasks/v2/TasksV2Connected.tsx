@@ -25,6 +25,7 @@ export function TasksV2Connected(){
  const [projects,setProjects]=useState<V2Project[]>([]);
  const [links,setLinks]=useState<V2ModuleLink[]>([]);
  const [workspaces,setWorkspaces]=useState<Workspace[]>([]);
+ const [scopedWorkspace,setScopedWorkspace]=useState<string|null>(null);
  const [userId,setUserId]=useState<string|null>(null);
  const [learningRoute,setLearningRoute]=useState("/");
  const [connectedProducts,setConnectedProducts]=useState({crm:false,portal:false});
@@ -64,14 +65,29 @@ export function TasksV2Connected(){
     const batch=page.items||[];items.push(...batch);if(batch.length<250)break;
    }
    const distinct=[...new Map(items.map(t=>[t.id,t])).values()];
-   setTasks(distinct);setAreas(ar.items||[]);setProjects(pr.items||[]);
-   setLinks(ml.items||[]);setWorkspaces(wr.items||[]);
-   setSelected(t=>t?distinct.find(item=>item.id===t.id)||null:null);
+   const requested=new URLSearchParams(window.location.search).get("suiteWorkspace");
+   const verified=requested?(wr.items||[]).find(w=>w.id===requested):null;
+   if(requested&&!verified){
+    setTasks([]);setLinks([]);setWorkspaces([]);setScopedWorkspace(null);setSelected(null);
+    window.dispatchEvent(new CustomEvent("robotronix:tasks-workspace-selected",{detail:{workspaceId:""}}));
+    setError("The selected team space is not available to this account.");
+    return;
+   }
+   const visibleTasks=verified?distinct.filter(t=>t.workspace_id===verified.id):distinct;
+   const ids=new Set(visibleTasks.map(t=>t.id));
+   setTasks(visibleTasks);setAreas(ar.items||[]);setProjects(pr.items||[]);
+   setLinks(verified?(ml.items||[]).filter(l=>ids.has(l.task_id)):ml.items||[]);
+   setWorkspaces(verified?[verified]:wr.items||[]);
+   setScopedWorkspace(verified?.id||null);
+   setSelected(t=>t?visibleTasks.find(item=>item.id===t.id)||null:null);
+   window.dispatchEvent(new CustomEvent("robotronix:tasks-workspace-selected",{detail:{workspaceId:verified?.id||""}}));
    setError("");
   }catch(e){setError(e instanceof Error?e.message:"Unable to load connected work.");}
   finally{setLoading(false)}
  },[request]);
- useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{void refresh();return ()=>{
+  window.dispatchEvent(new CustomEvent("robotronix:tasks-workspace-selected",{detail:{workspaceId:""}}));
+ };},[refresh]);
  useEffect(()=>{window.addEventListener("tasks:changed",refresh);return()=>window.removeEventListener("tasks:changed",refresh)},[refresh]);
  useEffect(()=>{
   let mounted=true;
@@ -185,7 +201,7 @@ export function TasksV2Connected(){
       </section>}
       {view==="teams"&&<section className="mt2-connected-team">
       <div className="mt2-connected-section-title"><div><p className="mt2-eyebrow">INVITE · ASSIGN · DISCUSS</p><h2>Team Spaces</h2></div><span>Invite teammates, manage access and keep work moving</span></div>
-      <TeamSpaces request={request} tasks={tasks} userId={userId} onUpdated={refresh} onOpenTask={t=>{const found=tasks.find(x=>x.id===t.id);if(found)setSelected(found)}}/>
+      <TeamSpaces scopeWorkspaceId={scopedWorkspace||undefined} request={request} tasks={tasks} userId={userId} onUpdated={refresh} onOpenTask={t=>{const found=tasks.find(x=>x.id===t.id);if(found)setSelected(found)}}/>
      </section>}
      {view==="overview"&&<>
       {(assigned.some(t=>t.status!=="done")||delegated.some(t=>t.status!=="done"))?<div className="mt2-connected-panes">
