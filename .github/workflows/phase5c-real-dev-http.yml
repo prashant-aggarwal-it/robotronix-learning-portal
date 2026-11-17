@@ -10,6 +10,7 @@ jobs:
   dev-http:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[live-dev]')
     runs-on: ubuntu-latest
+    environment: qa
     timeout-minutes: 25
     env:
       E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
