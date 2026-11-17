@@ -30,3 +30,8 @@ Branch: `feature/education-suite-phase4d`. DEV only.
 - Queried live **DEV only** PostgreSQL catalog: `public` 80/80, `saas` 26/26, `connect` 66/66, `tasks` 21/21 base tables have RLS enabled (193/193). This proves RLS enabled, not authorization correctness.
 - DEV security advisor reports 155 `rls_enabled_no_policy` **INFO** findings across schemas. This pattern previously includes intentionally default-deny/private tables; review grants and exposure rather than automatically adding broad policies.
 - **Phase 4D DEV certification remains NOT PASSED**: full Academy, admission-enrollment, Tasks privacy, subscription access and typechecking gates have not all been evidenced in this phase.
+
+## Phase 4D source-test gate — 2026-11-17
+- Extended `.github/workflows/qa-branch-static.yml` to trigger on `feature/education-suite-phase4d`. It runs installation, typography contract, TypeScript, parent billing/finance regression, canonical database package checks, CRM hardening and business rules, and Tasks v2 test contracts. No Netlify build and no PROD access.
+- GitHub Actions run [44015096293](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44015096293) was created from commit `9b63cc255ad0c680c65dcd2861964479f6bb916d`. At inspection, dependency installation and typography contract passed; typecheck was running. Final outcome must be checked before treating this gate as complete.
+- This workflow is source/contract validation, not a replacement for authenticated end-to-end admission, student finance, payroll, subscription-expiry or Tasks privacy testing.
