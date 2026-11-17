@@ -52,3 +52,12 @@ test("Suite Home switches without retaining stale module context",()=>{
  assert.match(suite,/\[orgRevision\]/);
  assert.match(provider,/snapshot\.context!==currentContext/);
 });
+
+test("tenant identity hides corporate logo while active organization branding resolves",()=>{
+ const identity=read("components/TenantIdentity.tsx");
+ const css=read("app/tenant-branding.css");
+ assert.match(identity,/if\(loading\)return/);
+ assert.match(css,/tenantIdentityLoading/);
+ assert.match(css,/cx-nav-item\.active/);
+ assert.match(css,/suiteHomeCard:focus-visible/);
+});
