@@ -135,7 +135,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
     </label>
     <div className="brandingSectionTitle">1. Your logo</div>
     <div className="brandingDrop" onDragOver={e=>e.preventDefault()} onDrop={drop}>
-     <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>acceptFile(e.target.files?.[0]||null)} className="brandingFileInput" aria-label="Upload organization logo"/>
+     <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const selected=e.currentTarget.files?.[0]||null;e.currentTarget.value="";acceptFile(selected)}} className="brandingFileInput" aria-label="Upload organization logo"/>
      {previewLogo?<img src={previewLogo} alt="Current organization logo" className="brandingUploadedLogo"/>:<div className="brandingLogoPlaceholder" aria-hidden="true">◎</div>}
      <button type="button" onClick={()=>input.current?.click()} disabled={busy||loading}>{previewLogo?"Replace logo":"Browse logo"}</button>
      <small>Drag PNG, JPG or WebP here · Up to 3 MB</small>
