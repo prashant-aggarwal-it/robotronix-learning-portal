@@ -5,6 +5,7 @@ on:
       - fix/qa-onboarding-save-feedback-20261025
       - feature/education-suite-phase4d
       - feature/education-suite-phase5a-theme-foundation
+      - feature/education-suite-phase5b-branding-studio
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,6 +24,8 @@ jobs:
         run: node scripts/check-typography.mjs
       - name: Phase 5A theme architecture tests
         run: npm run test:theme-foundation
+      - name: Phase 5B branding palette and authorization tests
+        run: npm run test:branding-studio
       - name: Typecheck
         run: npm run typecheck
       - name: Billing and finance regression tests
