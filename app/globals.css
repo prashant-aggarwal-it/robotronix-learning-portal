@@ -1,15 +1,15 @@
 @import "./readability.css";
 
 :root {
-  --ink: #182033;
-  --muted: #65708a;
-  --line: #e8e8f2;
-  --surface: #ffffff;
-  --surface-soft: #f8f8fd;
-  --purple: #6d3cc9;
-  --purple-dark: #4f27a8;
-  --pink: #e83d8c;
-  --teal: #14b8a6;
+  --ink: var(--app-text);
+  --muted: var(--app-text-muted);
+  --line: var(--app-border);
+  --surface: var(--app-surface);
+  --surface-soft: var(--app-surface-muted);
+  --purple: var(--brand-primary);
+  --purple-dark: var(--brand-primary-hover);
+  --pink: var(--brand-secondary);
+  --teal: var(--brand-accent);
   --orange: #ff8a00;
   --green: #16a36a;
   --amber: #c57b04;
