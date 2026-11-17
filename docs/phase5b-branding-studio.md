@@ -47,18 +47,22 @@ Migration `phase5b_public_tenant_logo_bucket` and `phase5b_tenant_branding_rpc` 
 
 ## Tests
 
+**Certification update:** The browser workflow `.github/workflows/phase5b-branding-browser-qa.yml` exercises a route only enabled for dedicated development QA (`/qa-branding-preview`). All **8/8 Chromium scenarios passed** in run `44149518918`. Phase 5A and 5B source checks plus TypeScript and app regression checks passed in run `44149518991`. The DEV Owner authorization subtransaction passed and left no test data. 
+
 Run `npm run test:branding-studio` and `npm run test:theme-foundation`. The Phase 5B branch runs these before TypeScript, Academy billing, authentication, canonical DB, CRM, Tasks and security source checks via `.github/workflows/qa-branch-static.yml`.
 
 The palette unit tests use synthetic RGBA arrays (transparent/white, saturated multi-color, monochrome, invalid URLs and contrast). Source/contract tests check authorization and scoped preview. They do **not** simulate authentic uploaded photographic logos or authenticated browser interactions.
 
 ## Known limitations and Phase 5C requirements
 
-- Authenticated end-to-end browser tests for Owner, Super Admin, non-owner rejection and cross-tenant upload/save have not yet been executed; these remain mandatory before production release.
-- No authenticated screenshots or full responsive QA of the actual rendered Branding Studio have been performed; automated source/CI checks are not pixel-perfect verification.
+- **Completed:** Eight Chromium interaction scenarios with synthetic auth and mocked HTTP API: save/reload, tenant switching, actual PNG Canvas extraction, corrupt-image rejection, denied writes, failed upload rollback, reset, and mobile layout (CI run `44149518918` PASS). These verify browser UI, not a real Supabase sign-in or Storage round trip.
+- **Completed:** DEV database authorization tests with an existing non-Platform Admin actor and a temporary Academy Owner membership in a rollback-only PL/pgSQL subtransaction. Tested positive Owner access, denied non-owner and cross-tenant access, and save/read recovery. No test membership or branding persisted.
+- **Pending for production acceptance:** End-to-end HTTP smoke using real DEV Supabase sessions, and an actual Supabase Storage upload and restore through the Next.js API.
+- **Completed:** Playwright rendered the Branding Studio on desktop and 390px mobile widths, tested preview visibility and horizontal overflow. Full pixel-diff approval against design references was not performed.
 - Remote URL extraction depends on the host allowing browser CORS; uploaded files are the reliable path.
 - Image decode is browser-based; malformed image data can fail detection and display an error.
 - Existing-logo storage management is bounded opportunistically; future production hardening can introduce scheduled orphan cleanup and image dimension/antivirus policy if required.
 - Existing `/onboarding/branding` Academy Owner flow still exposes a legacy account-level setup contract elsewhere; Phase 5C should standardize organization choice, login/entry-page branding and tenant switch cache invalidation.
 - Phase 5C must load only the approved tenant settings, apply scoped CSS design tokens and correct logo identity across Academy, CRM, Tasks, Suite, and customer login. Platform Admin remains corporate branded. Add authenticated tenant-isolation and visual regression tests.
 
-**Release gate:** Do not merge to main, update PROD Supabase or deploy until UI E2E and security checks are complete.
+**Release gate:** Phase 5B is implemented and automated source/browser-UI verified for continued DEV development. Production release still requires authenticated HTTP and actual Storage integration acceptance. Do not merge, modify PROD or deploy before those checks.
