@@ -40,7 +40,7 @@ test("existing themes and module-level baselines remain available",()=>{
  assert.match(read("app/theme.css"),/data-portal-theme="ai-flow"/);
  assert.match(read("components/ThemeSwitcher.tsx"),/classic/);
  assert.match(read("app/connect/connect.css"),/var\(--product-accent/);
- assert.match(read("app/tasks/v2/v2.css"),/var\(--product-primary/);
+ assert.match(read("app/tasks/v2/v2.css"),/var\(--product-navigation-primary/);
  assert.match(read("app/platform-admin/platform-admin.css"),/var\(--nav-background/);
  assert.match(read("app/suite-shell.css"),/var\(--input-focus-ring/);
 });
