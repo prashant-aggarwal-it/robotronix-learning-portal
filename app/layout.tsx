@@ -7,6 +7,7 @@ import "./schedule-unified.css";
 import "./typography.css";
 import "./ui-foundations.css";
 import "./ui-role-experiences.css";
+import {TenantBrandingProvider} from "@/components/TenantBrandingProvider";
 import {GridHorizontalScrollBridge} from "@/components/admin/GridHorizontalScrollBridge";
 import {GlobalEscapeDismiss} from "@/components/GlobalEscapeDismiss";
 import {productionConfigurationError} from "@/lib/config";
@@ -28,7 +29,7 @@ export const metadata:Metadata={
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-scroll-behavior="smooth" data-portal-theme="ai-flow">
-      <body>{productionConfigurationError ? <main className="loginShell"><section className="card"><h1>{brand.appName} configuration required</h1><p>This application is not connected to its database. Contact your administrator.</p></section></main> : <><GlobalEscapeDismiss/>{children}<GridHorizontalScrollBridge/></>}</body>
+      <body>{productionConfigurationError ? <main className="loginShell"><section className="card"><h1>{brand.appName} configuration required</h1><p>This application is not connected to its database. Contact your administrator.</p></section></main> : <TenantBrandingProvider><GlobalEscapeDismiss/>{children}<GridHorizontalScrollBridge/></TenantBrandingProvider>}</body>
     </html>
   );
 }
