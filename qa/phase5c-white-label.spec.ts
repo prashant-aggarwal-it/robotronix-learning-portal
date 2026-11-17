@@ -4,6 +4,8 @@ const A="11111111-1111-4111-8111-111111111111";
 const B="22222222-2222-4222-8222-222222222222";
 const CRM_A="33333333-3333-4333-8333-333333333333";
 const CRM_B="44444444-4444-4444-8444-444444444444";
+const TASK_A="66666666-6666-4666-8666-666666666666";
+const TASK_B="77777777-7777-4777-8777-777777777777";
 const orgs=[{id:A,displayName:"Alpha Academy",slug:"alpha",role:"owner"},{id:B,displayName:"Beta Academy",slug:"beta",role:"owner"}];
 
 async function mockSuite(page:Page){
@@ -30,7 +32,7 @@ async function mockSuite(page:Page){
    payload={ok:true,modules:{academy:true,crm:true,tasks:true}};
   }else if(u.pathname.endsWith("/organization-links")){
    payload={ok:true,links:{crm:{status:"ready",tenantId:u.searchParams.get("organizationId")===A?CRM_A:CRM_B},
-    tasks:{status:"ready",workspaces:[]}}};
+    tasks:{status:"ready",workspaces:[{id:u.searchParams.get("organizationId")===A?TASK_A:TASK_B,role:"owner"}]}}};
   }else if(u.pathname.endsWith("/my-products")){
    payload={ok:true,products:[{id:"portal",href:"/admin",label:"Academy"},
     {id:"crm",href:"/connect",label:"Connect"},{id:"tasks",href:"/tasks",label:"My Tasks"}]};
@@ -54,6 +56,10 @@ async function mockSuite(page:Page){
  // Playwright selects the last registered matching route.
  await page.route("**/api/connect/workspaces",async route=>route.fulfill({status:200,contentType:"application/json",
   body:JSON.stringify({ok:true,workspaces:[{tenant_id:tenantAccess,workspace_name:"QA CRM"}]})}));
+ await page.route("**/api/tasks/**",async route=>route.fulfill({status:200,contentType:"application/json",
+  body:JSON.stringify({ok:true,items:[]})}));
+ await page.route("**/api/tasks/collaboration?scope=workspaces",async route=>route.fulfill({status:200,contentType:"application/json",
+  body:JSON.stringify({ok:true,items:[{id:TASK_A,name:"Team Alpha",role:"owner"},{id:TASK_B,name:"Team Beta",role:"owner"}]})}));
  return {getSelected:()=>selected,setCrmTenant:(id:string)=>{tenantAccess=id},getCalls:()=>getCalls};
 }
 test("Suite theme follows server-confirmed organization selection without page reload",async({page})=>{
@@ -89,4 +95,21 @@ test("unlinked CRM workspace does not borrow Suite tenant branding",async({page}
  await expect(page.locator(".cx-sidebar")).toBeVisible();
  await expect(page.locator("[data-tenant-id='"+A+"']")).toHaveCount(0);
  expect(await page.locator(".tenantThemeScope").count()).toBe(0);
+});
+
+test("scoped connected Tasks inherits organization identity only for mapped workspace",async({page})=>{
+ await mockSuite(page);
+ await page.goto("/tasks/connected?view=teams&suiteWorkspace="+TASK_A);
+ await expect(page.locator(".tw-space-list button")).toHaveCount(1);
+ await expect(page.locator(".tw-space-list button")).toContainText("Team Alpha");
+ await expect(page.locator("[data-tenant-id='"+A+"']")).toBeVisible();
+ await expect.poll(()=>page.locator("[data-tenant-id='"+A+"']").evaluate(el=>getComputedStyle(el).getPropertyValue("--brand-primary").trim())).toBe("#235ce2");
+});
+test("connected Tasks with another authorized but unmapped workspace retains corporate identity",async({page})=>{
+ await mockSuite(page);
+ await page.goto("/tasks/connected?view=teams&suiteWorkspace="+TASK_B);
+ await expect(page.locator(".tw-space-list button")).toHaveCount(1);
+ await expect(page.locator(".tw-space-list button")).toContainText("Team Beta");
+ await expect(page.locator("[data-tenant-id='"+A+"']")).toHaveCount(0);
+ await expect(page.locator(".tenantThemeScope")).toHaveCount(0);
 });
