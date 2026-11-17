@@ -38,13 +38,25 @@
  --product-primary:#235ce2;
  --product-accent:#078db3;
  --product-surface:var(--app-surface,#fff);
+ --product-focus-ring:#62bed7;
 }
 .mt2-shell {
  --product-primary:#237cb5;
  --product-accent:#20a3ab;
+ --product-nav-active-start:#e6f5fc;
+ --product-nav-active-end:#eff6fc;
+ --product-nav-active-border:#d4eaf3;
+ --product-nav-active-text:#136e9c;
  --product-surface:var(--app-surface,#fff);
 }
 .platformConsole {
  --platform-brand-primary:#7542bc;
  --platform-brand-accent:#d33d9a;
+ --platform-focus-ring:#bb9aef;
+ --platform-button-focus:#8146db;
+ --platform-action-start:#7142d2;
+ --platform-action-end:#c83d9d;
+ --platform-control-background:#f5f0fc;
+ --platform-control-hover:#eaddfc;
+ --platform-control-text:#6240a4;
 }
