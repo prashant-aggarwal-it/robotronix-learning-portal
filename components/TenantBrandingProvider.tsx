@@ -6,7 +6,7 @@ import {tenantStyle,type TenantBranding} from "@/lib/theme/tenant-runtime";
 import "@/app/tenant-branding.css";
 
 type TenantContext={branding:TenantBranding|null;loading:boolean;reload:()=>void};
-type Snapshot={branding:TenantBranding;linkedCrmTenant:string|null};
+type Snapshot={branding:TenantBranding;linkedCrmTenant:string|null;context:"crm"|"suite"|"academy"};
 const Context=createContext<TenantContext>({branding:null,loading:false,reload:()=>{}});
 export const useTenantBranding=()=>useContext(Context);
 
@@ -79,7 +79,7 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
     const mapped=crm&&links?.links?.crm?.status==="ready"&&typeof links.links.crm.tenantId==="string"
      ?links.links.crm.tenantId:null;
     if(!controller.signal.aborted&&current===generation.current)
-     setSnapshot({branding:theme.branding as TenantBranding,linkedCrmTenant:mapped});
+     setSnapshot({branding:theme.branding as TenantBranding,linkedCrmTenant:mapped,context:crm?"crm":path.startsWith("/suite")?"suite":"academy"});
    }catch{
     if(!controller.signal.aborted&&current===generation.current)setSnapshot(null);
    }finally{
@@ -91,11 +91,12 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
    if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED")setRevision(x=>x+1);
   });
   return ()=>{controller.abort();generation.current++;subscription.unsubscribe()};
- },[revision,corporate,crm,sharedTasks,path]);
+ },[revision,corporate,crm,sharedTasks,path.startsWith("/suite")]);
 
  // CRM branding must correspond to the actual CRM-authorized workspace, not
  // just the last Suite organization selected in a cookie.
- const shown=corporate||sharedTasks||!snapshot ? null :
+ const currentContext=crm?"crm":path.startsWith("/suite")?"suite":"academy";
+ const shown=corporate||sharedTasks||!snapshot||snapshot.context!==currentContext ? null :
   crm && (!snapshot.linkedCrmTenant||snapshot.linkedCrmTenant!==activeCrmTenant)
    ?null:snapshot.branding;
  return <Context.Provider value={{branding:shown,loading,reload:()=>setRevision(x=>x+1)}}>

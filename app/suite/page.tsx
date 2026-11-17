@@ -35,8 +35,15 @@ export default function SuiteHome(){
  const [needsSelection,setNeedsSelection]=useState(false);
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
+ const [orgRevision,setOrgRevision]=useState(0);
+ useEffect(()=>{
+  const refresh=()=>setOrgRevision(n=>n+1);
+  window.addEventListener("robotronix:organization-changed",refresh);
+  return()=>window.removeEventListener("robotronix:organization-changed",refresh);
+ },[]);
  useEffect(()=>{
   let active=true;
+  setLoading(true);setOrganizationName("");setNeedsSelection(false);setModules(null);setLinks(null);
   (async()=>{
    const [p,capabilities]=await Promise.all([request("/api/platform/my-products"),request("/api/platform/capabilities")]);
    const singleModule=capabilities.legacyDefault!==true&&capabilities.products?.length===1;
@@ -62,7 +69,7 @@ export default function SuiteHome(){
   })().catch(e=>{if(active)setError(e instanceof Error?e.message:"Unable to load your applications")})
   .finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
- },[]);
+ },[orgRevision]);
  const visible=products.filter(p=>!organizationUnavailable&&(!hasOrganizations||(!needsSelection&&modules?.[suiteModuleById(p.id).entitlement]===true)));
  return <main className="suiteHome">
   <header className="suiteHomeHeader">

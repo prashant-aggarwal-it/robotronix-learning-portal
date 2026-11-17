@@ -37,3 +37,6 @@
 
 ## Tenant linkage safety improvement
 The CRM theme now requires the Suite organization's CRM entitlement, a membership-checked `organization-links` mapping, and an active CRM tenant ID emitted by the CRM page. A mismatch deliberately shows corporate branding rather than attributing one tenant's data to another tenant's identity. Connected Tasks remains corporate for now because its aggregated list can include tasks from more than one workspace. Branding that aggregated view as one organization would be misleading. The existing full reload on organization change is deliberately retained until underlying module caches and record subscriptions are proven safe to reuse without a reload.
+
+## Safe Suite-only organization switch
+Suite Home now listens to the existing server-validated organization-switch event and refetches module entitlements/mappings without forcing a browser reload. Academy, CRM, and Tasks preserve their full reload because those modules manage potentially sensitive in-memory and subscription caches. The theme provider clears its old snapshot and uses a route-context discriminator so a previous module's tenant identity cannot render during a route transition.

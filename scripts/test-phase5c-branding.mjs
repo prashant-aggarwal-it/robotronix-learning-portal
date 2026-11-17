@@ -41,3 +41,14 @@ test("shared Tasks stays corporate until a workspace-specific branding contract 
  const provider=read("components/TenantBrandingProvider.tsx");
  assert.match(provider,/corporate\|\|sharedTasks\|\|!snapshot/);
 });
+
+test("Suite Home switches without retaining stale module context",()=>{
+ const switcher=read("components/SuiteOrganizationSwitcher.tsx");
+ const suite=read("app/suite/page.tsx");
+ const provider=read("components/TenantBrandingProvider.tsx");
+ assert.match(switcher,/if\(pathname==="\/suite"\)/);
+ assert.match(switcher,/robotronix:organization-changed/);
+ assert.match(switcher,/window\.location\.reload\(\)/);
+ assert.match(suite,/\[orgRevision\]/);
+ assert.match(provider,/snapshot\.context!==currentContext/);
+});

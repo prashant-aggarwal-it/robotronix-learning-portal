@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
-import {useRouter} from "next/navigation";
+import {usePathname,useRouter} from "next/navigation";
 import {getSupabaseBrowserClient,setAcademyBrowserOrganizationContext} from "@/lib/supabase/browser";
 
 type Organization={id:string;displayName:string;role:string;slug:string};
@@ -18,6 +18,7 @@ async function authorizedRequest(path:string,init:RequestInit={}){
 /** Shared org picker; org selection is never authorization. Server rechecks every action. */
 export function SuiteOrganizationSwitcher(){
  const router=useRouter();
+ const pathname=usePathname();
  const [organizations,setOrganizations]=useState<Organization[]>([]);
  const [selected,setSelected]=useState("");
  const [loading,setLoading]=useState(true);
@@ -39,8 +40,15 @@ export function SuiteOrganizationSwitcher(){
   try{
    await authorizedRequest("/api/platform/organizations",next?{method:"POST",body:JSON.stringify({organizationId:next})}:{method:"DELETE"});
    setAcademyBrowserOrganizationContext(next||null);
-   // A hard navigation deliberately clears module-owned browser caches and live state.
-   window.location.reload();
+   if(pathname==="/suite"){
+    // Suite Home owns no module record caches: refresh only its authorization-derived state.
+    setSelected(next);setBusy(false);
+    window.dispatchEvent(new Event("robotronix:organization-changed"));
+    router.refresh();
+   }else{
+    // Module-owned state and subscriptions must be discarded until cache isolation is certified.
+    window.location.reload();
+   }
   }catch(e){
    setError(e instanceof Error?e.message:"Organization switch failed");setBusy(false);
   }
