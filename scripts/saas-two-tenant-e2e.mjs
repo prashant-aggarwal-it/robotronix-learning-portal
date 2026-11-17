@@ -760,14 +760,14 @@ async function run(){
  // Phase 4D: real expired-subscription denial + restoration on synthetic DEV School B.
  // Never modify non-synthetic subscriptions; always restore the original expiry.
  const {data:syntheticSubscriptions,error:subscriptionReadError}=await admin.from("platform_subscriptions")
-  .select("id,ends_at,plan_code,status").eq("organization_id",B)
+  .select("id,started_at,ends_at,plan_code,status").eq("organization_id",B)
   .order("started_at",{ascending:false}).order("id",{ascending:false}).limit(1);
  if(subscriptionReadError||syntheticSubscriptions?.length!==1||
     syntheticSubscriptions[0].plan_code!=="qa_trial"||syntheticSubscriptions[0].status!=="trial")
   throw new Error("Refusing to modify non-synthetic subscription fixture");
  const originalSubscription=syntheticSubscriptions[0];
  const {error:expireError}=await admin.from("platform_subscriptions")
-  .update({ends_at:new Date(Date.now()-60000).toISOString()}).eq("id",originalSubscription.id)
+  .update({started_at:new Date(Date.now()-120000).toISOString(),ends_at:new Date(Date.now()-60000).toISOString()}).eq("id",originalSubscription.id)
   .eq("organization_id",B).eq("plan_code","qa_trial");
  if(expireError)throw new Error("Synthetic subscription expiry failed: "+expireError.message);
  try{
@@ -783,7 +783,7 @@ async function run(){
   assert(otherApi.status===200,"Expiry of School B does not disable active School A");
  }finally{
   const {error:restoreError}=await admin.from("platform_subscriptions")
-   .update({ends_at:originalSubscription.ends_at}).eq("id",originalSubscription.id)
+   .update({started_at:originalSubscription.started_at,ends_at:originalSubscription.ends_at}).eq("id",originalSubscription.id)
    .eq("organization_id",B).eq("plan_code","qa_trial");
   if(restoreError)throw new Error("CRITICAL: synthetic subscription restoration failed: "+restoreError.message);
  }
