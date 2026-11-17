@@ -51,3 +51,10 @@ NOT PASSED until live authenticated cross-tenant tests and required build/test c
 
 ### Gate outcome
 **Phase 4C functional DEV E2E gate: PASS.** **Phase 4C final security certification: PENDING** due to privileged-function grant review and security-advisor disposition. No PROD changes, main merge or Netlify deployment authorized.
+
+## Additional DEV privilege review — 2026-11-17
+- Inspected all 16 anonymous-executable `public` SECURITY DEFINER functions. Fifteen are read-only boolean/identity Academy authorization helpers using `auth.uid()` (directly or through helper calls); one is `saas_public_academy_brand(text)`, which returns publicly intended branding for active subscribed Academy tenants. **No anonymous mutation-capable SECURITY DEFINER function was found in this set.** Existing EXECUTE grants were retained to avoid breaking RLS policy evaluation and public branding.
+- Inspected RLS-enabled tables without policies in four key schemas: `connect` 66, `public` 26, `saas` 22, `tasks` 17. All `connect`, `saas`, and `tasks` no-policy tables had no direct SELECT grant to `anon` or `authenticated`. Two `public` no-policy tables (`invoice_sequences`, `system_settings`) had authenticated privileges despite default-deny RLS.
+- **DEV-only correction executed and verified:** `REVOKE ALL PRIVILEGES ON TABLE public.invoice_sequences, public.system_settings FROM anon, authenticated;`. Post-change queries confirm no authenticated SELECT or INSERT grants on either table. Existing RLS remained enabled. Privileged service-side access was not revoked.
+- Advisor `rls_enabled_no_policy` INFO notices for server-only tables are an intentional default-deny posture, **not a reason to add permissive policies**. This audit is scoped to the inspected schemas and the 16 public anonymous-executable definer functions; other advisor categories and application endpoints are not exhaustively certified here.
+- This change was made directly in DEV. It must be added to the canonical deployment SQL/migration package and covered by a post-change regression run before final signoff.
