@@ -39,7 +39,7 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
    finally{if(live&&current===generation.current)setLoading(false)}
   };
   void run();
-  const {data:{subscription}}=client?.auth.onAuthStateChange(()=>{setReloadCount(n=>n+1)})||{data:{subscription:null}};
+  const {data:{subscription}}=client?.auth.onAuthStateChange((event)=>{if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED")setReloadCount(n=>n+1)})||{data:{subscription:null}};
   return ()=>{live=false;generation.current++;subscription?.unsubscribe()};
  },[reloadCount]);
  useEffect(()=>{
