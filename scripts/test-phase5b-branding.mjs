@@ -39,7 +39,7 @@ test("logo URL validation rejects scripts, credentials, external protocols and q
 test("Branding Studio has server-side actor authorization, isolated preview, and accessible file controls",()=>{
  const route=read("app/api/branding-studio/route.ts"),upload=read("app/api/branding-studio/upload/route.ts");
  assert.match(route,/authorizeBranding/);assert.match(route,/saas_branding_save_v1/);
- assert.match(upload,/authorizeBranding/);assert.match(upload,/image\/png/);assert.match(upload,/MAX=3\*1024\*1024/);
+ assert.match(upload,/authorizeBranding/);assert.match(upload,/detectRasterLogo/);assert.match(upload,/MAX_LOGO_BYTES/);
  const ui=read("features/branding/BrandingStudio.tsx");
  assert.match(ui,/role="alert"/);assert.match(ui,/brandingPreview/);assert.match(ui,/detectLogoPalette/);
  assert.ok(!ui.includes("document.documentElement.style"));
