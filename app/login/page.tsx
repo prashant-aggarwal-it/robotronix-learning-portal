@@ -7,6 +7,9 @@ import {loadAuthDeployment,loadSignedInAccess,passwordSignIn as passwordAuthSign
 import {resolveAuthDestination,safeAuthNext} from "@/lib/platform/auth-routing";
 import type {DeploymentConfig} from "@/lib/platform/deployment";
 import {consumeInvitation} from "@/lib/platform/pending-invitation";
+import {generatePalette} from "@/lib/theme/logo-palette";
+import {themeToCssVariables} from "@/lib/theme/tokens";
+import type {CSSProperties} from "react";
 
 export default function Login(){return <Suspense fallback={<main className="authPage"><section className="authCard">Loading sign in…</section></main>}><LoginContent/></Suspense>}
 function LoginContent(){
@@ -15,11 +18,13 @@ function LoginContent(){
  const requested=query.get("next");
  const academySlug=query.get("academy");
  const [academyName,setAcademyName]=useState("");
+ const [academyLogo,setAcademyLogo]=useState("");
+ const [academyAccent,setAcademyAccent]=useState("");
  const [deployment,setDeployment]=useState<DeploymentConfig|null>(null);
  useEffect(()=>{let alive=true;if(!academySlug||!/^[a-z0-9][a-z0-9-]{2,62}$/.test(academySlug))return;
    void import("@/lib/supabase/browser").then(async m=>{const client=m.getSupabaseBrowserClient();if(!client)return;
     const {data,error}=await client.rpc("saas_public_academy_brand",{p_slug:academySlug});
-    if(alive&&!error&&data?.name)setAcademyName(data.name);
+    if(alive&&!error&&data?.name){setAcademyName(data.name);setAcademyLogo(typeof data.logoUrl==="string"&&/^https:\/\//.test(data.logoUrl)?data.logoUrl:"");setAcademyAccent(typeof data.accentColor==="string"?data.accentColor:"");}
    }).catch(()=>{});return()=>{alive=false};},[academySlug]);
  useEffect(()=>{let active=true;void loadAuthDeployment().then(config=>{if(active)setDeployment(config);}).catch(()=>{if(active)setError("Application configuration is unavailable.");});return()=>{active=false};},[]);
  const next=deployment?safeAuthNext(requested,deployment):null;
@@ -121,8 +126,8 @@ function LoginContent(){
  @media(max-width:810px){.loginSuiteShell{grid-template-columns:1fr;max-width:580px}.loginSuiteStory{padding:24px 30px;gap:8px}.loginSuiteStory h2{font-size:26px;margin:10px 0}.loginSuiteBenefits{display:none}.loginSuiteForm{padding:28px}.loginSuite{padding:18px 14px}}
  @media(max-width:420px){.loginSuiteForm{padding:22px}.loginSuiteStory{padding:20px 23px}}
  `}</style>;
-return <main className={isSuite?"loginSuite":"authPage"}>{isSuite&&suiteTheme}<div className={isSuite?"loginSuiteShell":undefined}>{isSuite&&<aside className="loginSuiteStory"><div><span className="loginSuiteStoryLabel">WELCOME BACK</span><h2>Pick up where your team left off.</h2><p>One secure account connects you to the learning organizations and applications you can access.</p></div><div className="loginSuiteBenefits"><span><b>✓</b> Your organizations</span><span><b>✓</b> Your learning workspace</span><span><b>✓</b> Your assigned tools</span></div></aside>}<section className={isSuite?"loginSuiteForm":"authCard"}>
-  <Link href="/" className="authBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
+return <main className={isSuite?"loginSuite":"authPage"} style={academyName?themeToCssVariables(generatePalette(academyAccent||"#6d3cc9")) as CSSProperties:undefined}>{isSuite&&suiteTheme}<div className={isSuite?"loginSuiteShell":undefined}>{isSuite&&<aside className="loginSuiteStory"><div><span className="loginSuiteStoryLabel">WELCOME BACK</span><h2>Pick up where your team left off.</h2><p>One secure account connects you to the learning organizations and applications you can access.</p></div><div className="loginSuiteBenefits"><span><b>✓</b> Your organizations</span><span><b>✓</b> Your learning workspace</span><span><b>✓</b> Your assigned tools</span></div></aside>}<section className={isSuite?"loginSuiteForm":"authCard"}>
+  <Link href="/" className="authBrand"><img src={academyLogo||"/brand/robotronix-horizontal.png"} alt={academyName||"Robotronix"} style={{objectFit:"contain"}} onError={e=>{e.currentTarget.src="/brand/robotronix-horizontal.png"}}/></Link>
   <div className="formStepHead"><span>{productName.toUpperCase()}</span><h1>{academyName?`Sign in to ${academyName}`:"Sign in to Robotronix"}</h1><p>Use your email and password, Google, or a one-time code to open your workspace.</p></div>
   {academyName&&<p className="infoBanner">Academy: <strong>{academyName}</strong>. Access is verified using your account membership and permissions.</p>}
   {error&&<div role="alert" className="errorBanner">{error}</div>}
