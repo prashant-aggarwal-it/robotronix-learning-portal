@@ -1,26 +1,20 @@
 import {NextRequest,NextResponse} from "next/server";
 import {authorizeBranding} from "@/lib/server/saas/branding-auth";
 import {SaaSAccessError} from "@/lib/server/saas/organization-context";
+import {detectRasterLogo,MAX_LOGO_BYTES} from "@/lib/theme/logo-file-validation";
 export const runtime="nodejs";export const dynamic="force-dynamic";
-const BUCKET="tenant-brand-logos",MAX=3*1024*1024;
+const BUCKET="tenant-brand-logos";
 const headers={"Cache-Control":"private, no-store","Vary":"Authorization"};
-function kind(buffer:Uint8Array):{ext:string;mime:string}|null{
- const match=(bytes:number[])=>bytes.every((v,i)=>buffer[i]===v);
- if(match([137,80,78,71,13,10,26,10]))return {ext:"png",mime:"image/png"};
- if(match([255,216,255]))return {ext:"jpg",mime:"image/jpeg"};
- if(buffer.length>=12&&String.fromCharCode(...buffer.slice(0,4))==="RIFF"&&String.fromCharCode(...buffer.slice(8,12))==="WEBP")return {ext:"webp",mime:"image/webp"};
- return null;
-}
 export async function POST(request:NextRequest){
  try{
   const organizationId=request.headers.get("x-branding-organization")||"";
   const {db,organization,branding}=await authorizeBranding(request.headers.get("authorization"),organizationId);
   const form=await request.formData();
   const uploaded=form.get("logo");
-  if(!(uploaded instanceof File)||uploaded.size===0||uploaded.size>MAX)
+  if(!(uploaded instanceof File)||uploaded.size===0||uploaded.size>MAX_LOGO_BYTES)
    throw new SaaSAccessError(400,"Select a logo under 3 MB");
-  const bytes=new Uint8Array(await uploaded.arrayBuffer()),detected=kind(bytes);
-  if(!detected||uploaded.type!==detected.mime)throw new SaaSAccessError(400,"Valid PNG, JPEG or WebP required");
+  const bytes=new Uint8Array(await uploaded.arrayBuffer()),detected=detectRasterLogo(bytes,uploaded.type);
+  if(!detected)throw new SaaSAccessError(400,"Valid PNG, JPEG or WebP required");
   // Immutable versioned asset: failed saves cannot overwrite the live image.
   const path=organization.id+"/logo-"+crypto.randomUUID()+"."+detected.ext;
   const {error}=await db.storage.from(BUCKET).upload(path,bytes,{
