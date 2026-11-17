@@ -1,0 +1,31 @@
+name: Phase 5C White Label Integration
+on:
+  push:
+    branches:
+      - feature/education-suite-phase5c-white-label-integration
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Phase 5A / 5B regression
+        run: |
+          npm run test:theme-foundation
+          npm run test:branding-studio
+      - name: Phase 5C architecture contract
+        run: node --test scripts/test-phase5c-branding.mjs
+      - name: Build
+        run: npm run build
