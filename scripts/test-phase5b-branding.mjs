@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {generatePalette,paletteFromPixels,validatePublicLogoUrl} from "../lib/theme/logo-palette.ts";
 import {hasReadableContrast} from "../lib/theme/tokens.ts";
+import {detectRasterLogo,MAX_LOGO_BYTES} from "../lib/theme/logo-file-validation.ts";
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const pixels=(a)=>new Uint8ClampedArray(a.flat());
 test("detect prominent brand color without counting transparent or white background",()=>{
@@ -48,4 +49,19 @@ test("branding RPC migration forbids anonymous access and restricts writes to ex
  assert.match(sql,/revoke all on function public.saas_branding_save_v1/);
  assert.match(sql,/saas_branding_access_v1\(p_actor,p_org\)/);
  assert.match(sql,/organization_id,setting_key/);
+});
+
+test("reject missing, mismatched, truncated and oversized image files",()=>{
+ assert.equal(detectRasterLogo(new Uint8Array([]),"image/png"),null);
+ assert.equal(detectRasterLogo(new Uint8Array(34),"image/png"),null);
+ assert.equal(detectRasterLogo(new Uint8Array(MAX_LOGO_BYTES+1),"image/jpeg"),null);
+ const truncatedPng=new Uint8Array([137,80,78,71,13,10,26,10]);
+ assert.equal(detectRasterLogo(truncatedPng,"image/png"),null);
+});
+test("accept a well-formed PNG header with reasonable dimensions and reject huge image",()=>{
+ const png=new Uint8Array(64);png.set([137,80,78,71,13,10,26,10]);png.set([73,72,68,82],12);
+ const view=new DataView(png.buffer);view.setUint32(16,1200);view.setUint32(20,600);
+ assert.equal(detectRasterLogo(png,"image/png")?.mime,"image/png");
+ assert.equal(detectRasterLogo(png,"image/jpeg"),null);
+ view.setUint32(16,40000);assert.equal(detectRasterLogo(png,"image/png"),null);
 });
