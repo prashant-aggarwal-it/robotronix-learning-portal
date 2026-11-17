@@ -43,3 +43,9 @@ A focused second pass moved CRM focus rings and sidebar surfaces, Tasks sidebar 
 The automated source tests cover these bindings and baseline paint tokens. Existing sprawling layout-specific stylesheet values remain intentionally intact because they do not all represent tenant-adjustable brand identity. Full static elimination of every literal CSS color would also remove semantic data visualization and status distinctions; Phase 5C should only theme the approved brand-sensitive subset.
 
 **Final visual certification limitation:** The repository CI checks source contracts, tests and compilation, but it does not include an authenticated screenshot comparison across every Academy role, CRM, Tasks and the Platform Admin. Do not claim that all visual changes have been inspected. Before production rollout, obtain signed-off screenshots for those views, including Classic/AI Flow.
+
+## Independent second-pass audit
+
+Source review uncovered and fixed three default-palette regressions from the original token migration: CRM success green had unintentionally changed from `#128764`; Tasks primary branding blue `#147cad` had been overwritten by its navigation blue `#237cb5`; and Platform Admin sidebar border/hover tones had inherited generic values. Product-scoped compatibility tokens now preserve the prior literal colors. New source tests pin these values.
+
+These findings demonstrate that source-level checks alone are not a substitute for authenticated screenshot comparison. The branch is suitable for Phase 5B development, but not certified for production visual parity until interactive visual QA is performed.
