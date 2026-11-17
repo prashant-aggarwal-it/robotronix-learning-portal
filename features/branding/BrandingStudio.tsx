@@ -115,7 +115,8 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
    const updated=data.branding as BrandData;
    setSaved(updated);setTagline(updated.tagline);setLogoUrl(updated.logoUrl);
    setFile(null);setPalette(updated.palette||palette);setRecommended(updated.palette||palette);
-   setMessage("Branding saved for "+selected?.display_name+". It will be applied across modules in Phase 5C.");
+   window.dispatchEvent(new Event("robotronix:branding-saved"));
+   setMessage("Branding saved for "+selected?.display_name+". Your active workspace will update automatically.");
   }catch(e){setError(e instanceof Error?e.message:"Branding could not be saved");}
   finally{setBusy(false);}
  }
@@ -180,7 +181,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
       <label className="brandingPreviewInput">Example input<input readOnly value="Academy demo" aria-label="Preview example input"/></label>
      </main>
     </div>
-    <p className="brandingHint">Preview values are isolated to this panel. Each workspace keeps its current appearance until Phase 5C.</p>
+    <p className="brandingHint">Preview values are isolated to this panel until saved.</p>
    </div>
   </div>
  </section>;
