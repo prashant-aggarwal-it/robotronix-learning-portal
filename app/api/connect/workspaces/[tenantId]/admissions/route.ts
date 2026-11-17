@@ -54,7 +54,7 @@ export async function POST(request:NextRequest,{params}:Context){
   if(error.code==="22023"||error.code==="23514")return connectFailure("Admission is not eligible for this action. Check the offer, learner and onboarding status.",409);
   return connectFailure("Admission action could not be completed.",503);
  }
- if(!data||typeof data!=="object"||(action==="accept"&&(typeof data.id!=="string"||!uuid(data.id)||typeof data.status!=="string")))\n  return connectFailure("Admission service returned an invalid response.",503);\n if(action==="accept"&&data.existing&&data.payloadHash!==p_data.payloadHash)
+ if(action==="accept"&&data.existing&&data.payloadHash!==p_data.payloadHash)
   return connectFailure("Request ID was already used for a different offer.",409);
  // Optional CRM → Tasks follow-up, explicitly requested by the CRM operator.
  // Tasks is independent: an unavailable integration must never roll back admission.
