@@ -1,0 +1,2 @@
+-- Public read is intentional for customer-facing academy logos; writes occur only through authorized service-side routes.
+insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types) values ('tenant-brand-logos','tenant-brand-logos',true,3145728,array['image/png','image/jpeg','image/webp']::text[]) on conflict(id) do update set public=excluded.public,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
