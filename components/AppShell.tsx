@@ -2,6 +2,8 @@
 import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
 import { usePathname } from "next/navigation";
+import {TenantIdentity} from "./TenantIdentity";
+import {useTenantBranding} from "./TenantBrandingProvider";
 import { ModeBadge } from "./ModeBadge";
 import {ApplicationSwitcher} from "./ApplicationSwitcher";
 import {SuiteContextLink} from "./SuiteContextLink";
@@ -85,6 +87,7 @@ function isActive(path:string, href:string){
 
 export function AppShell({ role, children }: { role: UserRole; children: React.ReactNode }) {
   const pathname=usePathname();
+  const {branding}=useTenantBranding();
   const authorizedProducts=useAuthorizedProducts();
   const hasTasksAccess=authorizedProducts.some(product=>product.id==="tasks");
   const sidebarRef=useRef<HTMLElement|null>(null);
@@ -116,7 +119,7 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
   if(workspace){
     return <div className={`workspaceShell ${role==="admin"&&sidebarCollapsed?"adminSidebarCollapsed":""}`}>
       <aside className="workspaceSidebar">
-        <Link href={`/${role}`} className="sidebarBrand" aria-label="Robotronix Learning Portal"><img src="/brand/robotronix-horizontal.png" alt="Robotronix"/></Link>
+        <Link href={`/${role}`} className="sidebarBrand" aria-label={branding?.name||"Robotronix Learning Portal"}><TenantIdentity/></Link>
         <div className="portalName">Learning Portal <span>{role==="admin"?"Admin":"Trainer"}</span></div>
         {role==="admin"&&<ApplicationSwitcher current="portal"/>}
         {role==="admin"&&<button type="button" className="adminSidebarToggle" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed?"Expand admin navigation":"Collapse admin navigation"} title={sidebarCollapsed?"Expand navigation":"Collapse navigation"}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d={sidebarCollapsed?"m15 10 3 2-3 2":"m17 10-3 2 3 2"}/></svg><span>{sidebarCollapsed?"":"Collapse menu"}</span></button>}
@@ -136,13 +139,13 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
         </nav>
         <div className="sidebarFooter"><div className="roleBadge"><span className="statusDot"/> {role==="admin"?"Administrator":"Trainer account"}</div><SignOutButton className="sidebarSignout" label="Sign out"/></div>
       </aside>
-      <div className="workspaceMain"><header className="workspaceTopbar"><div><SuiteContextLink module="portal"/><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main>{role==="admin"&&<AdminRecordHistory/>}<div className="footer">Robotronix™ Learning Portal · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
+      <div className="workspaceMain"><header className="workspaceTopbar"><div><SuiteContextLink module="portal"/><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main>{role==="admin"&&<AdminRecordHistory/>}<div className="footer">{branding?.name||"Robotronix™ Learning Portal"} · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
   }
   return <>
     <div className="shell experienceShell">
       {role==="parent"?<header className="topbar experienceTopbar parentPortalHeader">
         <div className="parentPortalHeaderTop">
-          <Link href="/parent" className="brandLogo" aria-label="Robotronix Family Dashboard"><img src="/brand/robotronix-horizontal.png" alt="Robotronix Future Ready Skills" /></Link>
+          <Link href="/parent" className="brandLogo" aria-label={branding?.name||"Robotronix Family Dashboard"}><TenantIdentity/></Link>
           <div className="parentPortalHeaderActions">
             <Link href="/onboarding" className="parentPortalAddLearner">+ Add learner</Link>
             <ThemeSwitcher/>
@@ -154,12 +157,12 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
           {navByRole.parent.filter(item=>item.href!=="/onboarding"&&item.href!=="/parent/notifications").map(({label,href})=><Link className={isActive(pathname,href)?"active":""} href={href} key={href} aria-current={isActive(pathname,href)?"page":undefined}>{label}</Link>)}
         </nav>
       </header>:<header className="topbar experienceTopbar">
-        <Link href={`/${role}`} className="brandLogo" aria-label="Robotronix Learning Portal"><img src="/brand/robotronix-horizontal.png" alt="Robotronix Future Ready Skills" /></Link>
+        <Link href={`/${role}`} className="brandLogo" aria-label={branding?.name||"Robotronix Learning Portal"}><TenantIdentity/></Link>
         <nav className="nav">{navByRole[role].map(({label,href}) => <Link className={isActive(pathname,href)?"active":""} href={href} key={href}>{label}</Link>)}</nav>
         <div className="experienceAccount"><ThemeSwitcher/><NotificationBell role={role}/><span>Learner account</span><SignOutButton label="Sign out"/></div>
       </header>}
       {children}
-      <div className="footer">Robotronix™ Learning Portal · Learning progress, projects and mentor feedback in one place</div>
+      <div className="footer">{branding?.name||"Robotronix™ Learning Portal"} · Learning progress, projects and mentor feedback in one place</div>
     </div>
     <nav className="mobileExperienceNav">{navByRole[role].filter(item=>role!=="parent"||!["/onboarding","/parent/notifications"].includes(item.href)).map(({label,href})=><Link className={isActive(pathname,href)?"active":""} href={href} key={href}>{label}</Link>)}</nav>
     <ModeBadge />
