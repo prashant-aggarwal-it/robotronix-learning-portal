@@ -28,6 +28,8 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
  const [message,setMessage]=useState(""),[error,setError]=useState("");
  const input=useRef<HTMLInputElement>(null);
+ const analysisVersion=useRef(0);
+ const [analyzing,setAnalyzing]=useState(false);
  const selected=organizations.find(o=>o.id===organizationId);
  useEffect(()=>{setOrganizationId(v=>organizations.some(o=>o.id===v)?v:organizations[0]?.id||"");},[organizations]);
  useEffect(()=>{
@@ -37,7 +39,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
  },[file]);
  useEffect(()=>{
   if(!organizationId)return;
-  let live=true;setLoading(true);setError("");setMessage("");setFile(null);setSaved(initial);setTagline("");setLogoUrl("");setPalette(generatePalette("#4537a5"));
+  let live=true;analysisVersion.current++;setAnalyzing(false);setLoading(true);setError("");setMessage("");setFile(null);setSaved(initial);setTagline("");setLogoUrl("");setPalette(generatePalette("#4537a5"));
   (async()=>{try{
    const response=await fetch("/api/branding-studio?organizationId="+encodeURIComponent(organizationId),
     {headers:await authHeaders(),cache:"no-store"});
@@ -54,17 +56,26 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
  },[organizationId]);
  const isDirty=tagline!==saved.tagline||logoUrl!==saved.logoUrl||!!file||
   JSON.stringify(palette)!==JSON.stringify(saved.palette||generatePalette(saved.accentColor||"#4537a5"));
- async function analyze(blob:Blob){
-  try{const suggestion=await detectLogoPalette(blob);setPalette(suggestion);setRecommended(suggestion);
+ async function analyze(blob:Blob,fromUpload=false){
+  const version=++analysisVersion.current;
+  setAnalyzing(true);
+  try{
+   const suggestion=await detectLogoPalette(blob);
+   if(version!==analysisVersion.current)return;
+   setPalette(suggestion);setRecommended(suggestion);
    setError("");setMessage("Brand colors detected. Review the preview before saving.");
-  }catch(e){setError(e instanceof Error?e.message:"Unable to detect colors");}
+  }catch(e){
+   if(version!==analysisVersion.current)return;
+   if(fromUpload)setFile(null);
+   setError(e instanceof Error?e.message:"Unable to detect colors");
+  }finally{if(version===analysisVersion.current)setAnalyzing(false);}
  }
  function acceptFile(candidate:File|null){
   if(!candidate)return;
   if(!["image/png","image/jpeg","image/webp"].includes(candidate.type)||candidate.size>MAX||candidate.size<=0){
    setError("Choose a PNG, JPEG or WebP logo smaller than 3 MB.");return;
   }
-  setFile(candidate);setError("");void analyze(candidate);
+  setFile(candidate);setError("");void analyze(candidate,true);
  }
  function drop(e:DragEvent<HTMLDivElement>){e.preventDefault();acceptFile(e.dataTransfer.files[0]||null);}
  async function detectUrl(){
@@ -81,11 +92,12 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
   setPalette(p=>generatePalette(key==="primary"?value:p.primary,key==="secondary"?value:p.secondary,key==="accent"?value:p.accent));
  }
  function reset(){
+  analysisVersion.current++;setAnalyzing(false);
   setFile(null);setTagline(saved.tagline);setLogoUrl(saved.logoUrl);
   setPalette(saved.palette||generatePalette(saved.accentColor));setMessage("Unsaved changes reset.");setError("");
  }
  async function save(){
-  if(!organizationId||busy||loading)return;
+  if(!organizationId||busy||loading||analyzing)return;
   if(!validatePublicLogoUrl(logoUrl)){setError("Logo URL must be a valid HTTPS address.");return;}
   setBusy(true);setError("");setMessage("");
   try{
@@ -127,10 +139,10 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
      {previewLogo?<img src={previewLogo} alt="Current organization logo" className="brandingUploadedLogo"/>:<div className="brandingLogoPlaceholder" aria-hidden="true">◎</div>}
      <button type="button" onClick={()=>input.current?.click()} disabled={busy||loading}>{previewLogo?"Replace logo":"Browse logo"}</button>
      <small>Drag PNG, JPG or WebP here · Up to 3 MB</small>
-     {previewLogo&&<button type="button" className="brandingTextButton" onClick={()=>{setFile(null);setLogoUrl("");}} disabled={busy}>Remove logo</button>}
+     {previewLogo&&<button type="button" className="brandingTextButton" onClick={()=>{analysisVersion.current++;setAnalyzing(false);setFile(null);setLogoUrl("");}} disabled={busy}>Remove logo</button>}
     </div>
     <label className="brandingField">Or paste an HTTPS logo URL
-     <input type="url" value={logoUrl} onChange={e=>{setFile(null);setLogoUrl(e.target.value)}} placeholder="https://example.com/academy-logo.png" maxLength={600} disabled={busy}/>
+     <input type="url" value={logoUrl} onChange={e=>{analysisVersion.current++;setAnalyzing(false);setFile(null);setLogoUrl(e.target.value)}} placeholder="https://example.com/academy-logo.png" maxLength={600} disabled={busy}/>
     </label>
     <button type="button" className="brandingSecondaryButton" disabled={!logoUrl||busy} onClick={()=>void detectUrl()}>Detect colors from URL</button>
     <div className="brandingSectionTitle">2. Brand colors</div>
@@ -142,10 +154,11 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
      <input value={tagline} onChange={e=>setTagline(e.target.value)} maxLength={180} disabled={busy} placeholder="Learn. Build. Create."/>
     </label>
     <div className="brandingActions">
-     <button type="button" className="brandingSaveButton" disabled={busy||loading||!organizationId||!isDirty} onClick={()=>void save()}>{busy?"Saving…":"Save branding"}</button>
-     <button type="button" className="brandingSecondaryButton" disabled={busy||loading||!isDirty} onClick={reset}>Reset changes</button>
+     <button type="button" className="brandingSaveButton" disabled={busy||loading||analyzing||!organizationId||!isDirty} onClick={()=>void save()}>{busy?"Saving…":"Save branding"}</button>
+     <button type="button" className="brandingSecondaryButton" disabled={busy||loading||analyzing||!isDirty} onClick={reset}>Reset changes</button>
     </div>
     {loading&&<p role="status">Loading saved branding…</p>}
+    {analyzing&&<p role="status">Analyzing logo colors…</p>}
     {error&&<p className="brandingError" role="alert">{error}</p>}
     {message&&<p className="brandingSuccess" role="status">{message}</p>}
    </div>
