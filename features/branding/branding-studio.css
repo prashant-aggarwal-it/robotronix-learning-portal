@@ -45,3 +45,10 @@
 .brandingPreviewInput{display:grid;gap:5px;font-size:10px;font-weight:750}.brandingPreviewInput input{width:100%;min-width:0;border:1px solid var(--brand-primary);border-radius:7px;padding:8px;background:#fff;color:#4d455c;font-size:10px}
 @media(max-width:1100px){.brandingStudioGrid{grid-template-columns:1fr}.brandingPreviewCol{position:static}}
 @media(max-width:500px){.brandingPreview{grid-template-columns:95px minmax(0,1fr)}.brandingPreviewMain{padding:10px}.brandingStudioHeader{flex-wrap:wrap}}
+
+/* Platform Admin legacy .platformPanel button rules must not restyle Studio controls. */
+.brandingStudio .brandingSaveButton{border:0;background:#6637b9;color:#fff}
+.brandingStudio .brandingSecondaryButton{border:1px solid #daccf0;background:#fff;color:#5d399c}
+.brandingStudio .brandingPreview .brandingPreviewCourse button,
+.brandingStudio .brandingPreview .brandingPreviewActions button:first-child{border:0;background:var(--brand-primary);color:var(--brand-on-primary)}
+.brandingStudio .brandingPreview .brandingPreviewActions button:last-child{border:1px solid var(--brand-accent);background:#fff;color:#2b3650}
