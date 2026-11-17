@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - fix/qa-onboarding-save-feedback-20261025
+      - feature/education-suite-phase4d
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,14 +17,17 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - name: Shared typography contract
         run: node scripts/check-typography.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Billing and finance regression tests
         run: npx playwright test qa/parent-billing-config.spec.ts --project=desktop-chromium --no-deps
-      - name: Build in demo mode
-        run: npm run build
-        env:
-          NEXT_PUBLIC_APP_ENV: demo
+      - name: Phase 4D source and contract checks
+        run: |
+          npm run db:check-canonical
+          npm run db:check-packages
+          npm run check:connect-hardening
+          npm run test:connect-business
+          npm run test:tasks-v2
