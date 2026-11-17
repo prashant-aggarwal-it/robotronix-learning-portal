@@ -46,3 +46,6 @@ A real DEV-only HTTP and Storage acceptance script is at `scripts/qa-phase5c-liv
 
 ## UI consistency and first-paint guard
 The shared TenantIdentity component renders a neutral loading placeholder instead of momentarily showing the Robotronix corporate logo while the selected tenant is being authenticated and resolved. Scoped navigation active states in Suite Home, CRM, Academy and Tasks use the saved primary/soft theme variables, preserving default corporate surfaces. This does not constitute a complete pixel-by-pixel audit or server-rendered tenant first paint; the current Supabase browser-local session means client authentication must occur before private branding can load.
+
+## Real HTTP finding: privileged role claim compatibility
+The first authenticated DEV integration discovered 403 on an otherwise valid synthetic Academy Owner's Branding Studio GET. The member and entitlement were correct in DEV SQL. Migration `phase5c_branding_service_claim_compat` replaces legacy per-claim `request.jwt.claim.role` checks with `auth.jwt()->>'role'` in three service-only branding entry functions, retaining explicit EXECUTE revocations, membership checks and service-role-only grants. Re-run real HTTP acceptance; do not infer a pass from SQL role impersonation alone.

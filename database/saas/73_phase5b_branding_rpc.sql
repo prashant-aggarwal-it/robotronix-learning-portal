@@ -1,7 +1,7 @@
 -- Phase 5B private-schema RPC interface: checked service role + verified actor.
 create or replace function public.saas_branding_access_v1(p_actor uuid,p_org uuid)
 returns boolean language sql stable security definer set search_path='pg_catalog' as $fn$
- select current_setting('request.jwt.claim.role',true)='service_role'
+ select (auth.jwt()->>'role')='service_role'
  and exists(select 1 from saas.organizations o where o.id=p_org and o.status='active'
  and exists(select 1 from saas.module_entitlements e where e.organization_id=o.id and e.module_key='academy' and e.enabled)
  and (exists(select 1 from saas.platform_administrators pa where pa.user_id=p_actor and pa.active)
@@ -12,7 +12,7 @@ grant execute on function public.saas_branding_access_v1(uuid,uuid) to service_r
 
 create or replace function public.saas_branding_owner_organizations_v1(p_actor uuid)
 returns jsonb language sql stable security definer set search_path='pg_catalog' as $fn$
- select case when current_setting('request.jwt.claim.role',true)='service_role'
+ select case when (auth.jwt()->>'role')='service_role'
  then coalesce((select jsonb_agg(jsonb_build_object('id',o.id,'slug',o.slug,'display_name',o.display_name) order by o.display_name)
  from saas.organizations o join saas.memberships m on m.organization_id=o.id
  where m.user_id=p_actor and m.role_key='owner' and m.status='active' and o.status='active'

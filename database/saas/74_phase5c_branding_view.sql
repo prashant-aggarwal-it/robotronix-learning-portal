@@ -2,7 +2,7 @@
 -- An organization name, logo and palette are never authorization for its modules.
 create or replace function public.saas_branding_view_v1(p_actor uuid,p_org uuid)
 returns jsonb language sql stable security definer set search_path='pg_catalog' as $fn$
- select case when current_setting('request.jwt.claim.role',true)='service_role'
+ select case when (auth.jwt()->>'role')='service_role'
  and exists(select 1 from saas.organizations o where o.id=p_org and o.status='active')
  and (exists(select 1 from saas.platform_administrators pa where pa.user_id=p_actor and pa.active)
       or exists(select 1 from saas.memberships m where m.organization_id=p_org and m.user_id=p_actor and m.status='active'))
