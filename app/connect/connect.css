@@ -1,7 +1,7 @@
 /* Robotronix Connect — education CRM workspace.
    Isolated cx- selectors, aligned to Learning Portal's shared Inter and blue/teal foundations.
    Scoped to .cx-app/.cx-gate to avoid changing other Portal roles. */
-.cx-app,.cx-gate{--cx-ink:#193550;--cx-muted:#667c91;--cx-border:#dce8f1;--cx-blue:var(--state-info);--cx-teal:var(--product-accent,#078db3);--cx-soft:#f3f8fc;--cx-green:var(--state-success);--cx-shadow:0 7px 28px rgba(22,57,94,.045);font-family:Inter,"Segoe UI Variable",ui-sans-serif,system-ui,sans-serif;color:var(--cx-ink);font-size:14px}
+.cx-app,.cx-gate{--cx-ink:#193550;--cx-muted:#667c91;--cx-border:#dce8f1;--cx-blue:var(--state-info);--cx-teal:var(--product-accent,#078db3);--cx-soft:#f3f8fc;--cx-green:var(--product-success,#128764);--cx-shadow:0 7px 28px rgba(22,57,94,.045);font-family:Inter,"Segoe UI Variable",ui-sans-serif,system-ui,sans-serif;color:var(--cx-ink);font-size:14px}
 .cx-app *,.cx-gate *{box-sizing:border-box}
 .cx-app{display:flex;min-height:100vh;background:#f5f9fc}
 .cx-app button,.cx-gate button{cursor:pointer;font:inherit}
