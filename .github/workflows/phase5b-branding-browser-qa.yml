@@ -1,0 +1,28 @@
+name: Phase 5B Branding Studio Browser QA
+on:
+  push:
+    branches:
+      - feature/education-suite-phase5b-branding-studio
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  branding-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      PHASE5B_UI_QA: "1"
+      NEXT_PUBLIC_SUPABASE_URL: "https://mock.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "phase5b-local-only-synthetic-test-key"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Install Chromium for independent browser QA
+        run: npx playwright install chromium --with-deps
+      - name: Run Branding Studio UI scenarios
+        run: npx playwright test qa/branding-studio-ui.spec.ts --project=desktop-chromium --no-deps
