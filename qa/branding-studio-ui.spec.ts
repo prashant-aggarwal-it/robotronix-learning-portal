@@ -71,7 +71,7 @@ async function mockApi(page:Page,opts:{rejectSave?:boolean;rejectUpload?:boolean
 test.beforeEach(async({page})=>{await page.goto("about:blank");});
 test("loads tenant-specific branding, previews changes and persists after refresh",async({page})=>{
  const api=await mockApi(page);
- const response=await page.goto("/__qa__/branding-studio");
+ const response=await page.goto("/qa-branding-preview");
  console.log("BRANDING QA diagnostic",JSON.stringify({status:response?.status(),url:page.url(),body:(await page.locator("body").innerText()).slice(0,1000)}));
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await expect(page.locator(".brandingPreviewTop strong")).toHaveText("QA Academy Alpha");
@@ -89,7 +89,7 @@ test("loads tenant-specific branding, previews changes and persists after refres
 });
 test("switches organizations without leaking unsaved values",async({page})=>{
  await mockApi(page);
- await page.goto("/__qa__/branding-studio");
+ await page.goto("/qa-branding-preview");
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await page.getByLabel("Tagline").fill("Unsaved A only");
  await page.getByLabel("Choose organization").selectOption(B);
@@ -100,7 +100,7 @@ test("switches organizations without leaking unsaved values",async({page})=>{
 });
 test("extracts color from a real PNG and uploads before saving",async({page})=>{
  const api=await mockApi(page);
- await page.goto("/__qa__/branding-studio");
+ await page.goto("/qa-branding-preview");
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await page.getByLabel("Upload organization logo").setInputFiles({
   name:"school-logo.png",mimeType:"image/png",buffer:png(30,120,210)
@@ -115,7 +115,7 @@ test("extracts color from a real PNG and uploads before saving",async({page})=>{
 });
 test("invalid image cannot be saved as an uploaded file",async({page})=>{
  const api=await mockApi(page);
- await page.goto("/__qa__/branding-studio");
+ await page.goto("/qa-branding-preview");
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await page.getByLabel("Upload organization logo").setInputFiles({
   name:"broken.png",mimeType:"image/png",buffer:Buffer.from("this is not an image")
@@ -126,7 +126,7 @@ test("invalid image cannot be saved as an uploaded file",async({page})=>{
 });
 test("API denial is shown without pretending branding is saved",async({page})=>{
  const api=await mockApi(page,{rejectSave:true});
- await page.goto("/__qa__/branding-studio");
+ await page.goto("/qa-branding-preview");
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await page.getByLabel("Tagline").fill("Rejected branding");
  await page.getByRole("button",{name:"Save branding"}).click();
@@ -137,7 +137,7 @@ test("API denial is shown without pretending branding is saved",async({page})=>{
 test("mobile viewport keeps all editor controls and live preview accessible",async({page})=>{
  await mockApi(page);
  await page.setViewportSize({width:390,height:844});
- await page.goto("/__qa__/branding-studio");
+ await page.goto("/qa-branding-preview");
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await expect(page.locator(".brandingPreview")).toBeVisible();
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
