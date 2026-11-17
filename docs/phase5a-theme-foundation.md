@@ -35,3 +35,11 @@ This is **the foundation, not full app-wide no-hardcoding completion**. Legacy s
 **Phase 5B:** Logo upload or validated remote URL, pixel extraction, palette suggestions, contrast-aware generation, manual correction and live preview. Restrict external image fetching and verify MIME, size, image format and access as appropriate.
 
 **Phase 5C:** Authenticated tenant theme fetch/cache; organization switch lifecycle, safe scoped CSS variables, consistent tenant logo/name in Academy, CRM, Tasks and Suite; prevent tenant theme bleed and retain platform-admin corporate identity. Include tenancy isolation tests and visual regression coverage.
+
+## Phase 5A completion pass
+
+A focused second pass moved CRM focus rings and sidebar surfaces, Tasks sidebar surfaces and active-navigation colors, and Platform Admin form focus rings, action gradients and controls into named semantic compatibility tokens. The literal fallback paint values were retained where applicable, avoiding an intended redesign.
+
+The automated source tests cover these bindings and baseline paint tokens. Existing sprawling layout-specific stylesheet values remain intentionally intact because they do not all represent tenant-adjustable brand identity. Full static elimination of every literal CSS color would also remove semantic data visualization and status distinctions; Phase 5C should only theme the approved brand-sensitive subset.
+
+**Final visual certification limitation:** The repository CI checks source contracts, tests and compilation, but it does not include an authenticated screenshot comparison across every Academy role, CRM, Tasks and the Platform Admin. Do not claim that all visual changes have been inspected. Before production rollout, obtain signed-off screenshots for those views, including Classic/AI Flow.
