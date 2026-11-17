@@ -1,0 +1,30 @@
+import {readFileSync} from "node:fs";
+import assert from "node:assert/strict";
+import {test} from "node:test";
+const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
+test("member brand read remains service-only and scoped to active membership",()=>{
+ const sql=read("database/saas/74_phase5c_branding_view.sql");
+ assert.match(sql,/current_setting\('request\.jwt\.claim\.role',true\)='service_role'/);
+ assert.match(sql,/m\.organization_id=p_org and m\.user_id=p_actor and m\.status='active'/);
+ assert.match(sql,/revoke all on function public\.saas_branding_view_v1\(uuid,uuid\) from public,anon,authenticated/);
+});
+test("branding route checks bearer identity and never caches private identities",()=>{
+ const route=read("app/api/tenant-branding/route.ts");
+ assert.match(route,/verifiedBrandingActor/);
+ assert.match(route,/saas_branding_view_v1/);
+ assert.match(route,/private, no-store/);
+});
+test("theme scope is tenant-local and corporate route is exempt",()=>{
+ const provider=read("components/TenantBrandingProvider.tsx");
+ assert.match(provider,/tenantThemeScope/);
+ assert.match(provider,/corporatePath\(path\)/);
+ assert.match(provider,/\/platform-admin/);
+ assert.match(provider,/generation\.current/);
+ assert.match(provider,/robotronix:branding-saved/);
+ assert.doesNotMatch(provider,/document\.documentElement\.style/);
+});
+test("Academy identity and Suite Home both use shared runtime",()=>{
+ assert.match(read("components/AppShell.tsx"),/TenantIdentity/);
+ assert.match(read("app/suite/page.tsx"),/useTenantBranding/);
+ assert.match(read("features/branding/BrandingStudio.tsx"),/robotronix:branding-saved/);
+});
