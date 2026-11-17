@@ -24,6 +24,8 @@ jobs:
         run: npm run typecheck
       - name: Billing and finance regression tests
         run: npx playwright test qa/parent-billing-config.spec.ts --project=desktop-chromium --no-deps
+      - name: Authentication callback regression
+        run: node --test scripts/test-auth-confirmation-callback.test.mjs
       - name: Phase 4D source and contract checks
         run: |
           npm run db:check-canonical
