@@ -15,6 +15,8 @@ export default function PlatformAdminPage(){
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
  const [refresh,setRefresh]=useState(0);
+ const [activeSection,setActiveSection]=useState("overview");
+ useEffect(()=>{const sync=()=>{const id=window.location.hash.slice(1);setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory"].includes(id)?id:"overview");};sync();window.addEventListener("hashchange",sync);return()=>window.removeEventListener("hashchange",sync);},[]);
  const [assisted,setAssisted]=useState({name:"",slug:"",kind:"academy",ownerId:""});
  const [assistedMessage,setAssistedMessage]=useState("");const [assistedBusy,setAssistedBusy]=useState(false);
  useEffect(()=>{
@@ -49,12 +51,12 @@ export default function PlatformAdminPage(){
     <span className="platformWorkspaceLabel">EDUCATION SUITE</span>
     <div className="platformWorkspaceName"><span className="platformWorkspaceIcon">✦</span><span>Control Centre<small>Platform administration</small></span></div>
     <nav className="platformNav">
-     <a href="#overview" className="platformNavActive">◫ <span>Overview</span></a>
-     <a href="#customers">♧ <span>Customers & access</span></a>
-     <a href="#subscriptions">▤ <span>Subscriptions</span></a>
-     <a href="#branding">◈ <span>Tenant branding</span></a>
-     <a href="#onboarding">✚ <span>New customer</span></a>
-     <a href="#directory">▦ <span>Directory</span></a>
+     <a href="#overview" className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
+     <a href="#customers" className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
+     <a href="#subscriptions" className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
+     <a href="#branding" className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
+     <a href="#onboarding" className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
+     <a href="#directory" className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
     </nav>
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link></div>
    </aside>
