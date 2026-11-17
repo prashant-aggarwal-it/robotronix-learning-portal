@@ -18,3 +18,8 @@ Branch: `feature/education-suite-phase4d`. DEV only.
 7. Check DEV database drift and advisors; commit only reproducible, tested changes.
 
 **Certification: NOT YET PASSED.** Branch creation and initial source inspection are complete; functional implementation and end-to-end validation remain outstanding. No PROD/main/Netlify actions.
+
+## Implementation update — 2026-11-17
+- Hardened `app/api/connect/workspaces/[tenantId]/admissions/route.ts`: malformed/null admission RPC responses are rejected before optional Tasks follow-up effects; acceptance responses must include a UUID handoff ID and status. Non-accept actions preserve their existing response shapes.
+- Extended `.github/workflows/saas-two-tenant-e2e.yml` to run on Phase 4D and admission API changes. Fresh authenticated DEV regression [run 44012695723](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44012695723) started on commit `eb0879f8`; outcome pending at time of writing.
+- **Not complete:** No verified full CRM enquiry-to-enrollment workflow, Academy finance/payroll UI lifecycle, personal Tasks privacy matrix, or Phase 4D security certification. Do not infer completion from the existing Phase 4C E2E suite.
