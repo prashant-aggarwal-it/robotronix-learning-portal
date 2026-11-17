@@ -1,0 +1,50 @@
+/* Canonical semantic design tokens. Values preserve the approved Robotronix defaults.
+ * Phase 5A: defaults and compatibility mappings only; no runtime tenant overrides.
+ * Scope tenant overrides later to an authorized workspace, never :root.
+ */
+:root {
+ --brand-primary:#6d3cc9;
+ --brand-primary-hover:#4f27a8;
+ --brand-primary-soft:#f3edff;
+ --brand-secondary:#e83d8c;
+ --brand-accent:#14b8a6;
+ --brand-on-primary:#ffffff;
+ --app-background:#f5f6fb;
+ --app-surface:#ffffff;
+ --app-surface-muted:#f8f8fd;
+ --app-border:#e8e8f2;
+ --app-text:#182033;
+ --app-text-muted:#65708a;
+ --app-text-on-brand:#ffffff;
+ --nav-background:#ffffff;
+ --nav-text:#65708a;
+ --nav-active-background:#f3edff;
+ --nav-active-text:#6d3cc9;
+ --button-primary-background:var(--brand-primary);
+ --button-primary-hover:var(--brand-primary-hover);
+ --button-primary-text:var(--brand-on-primary);
+ --card-background:var(--app-surface);
+ --card-border:var(--app-border);
+ --input-border:var(--app-border);
+ --input-focus-ring:#6b38ed;
+ --state-success:#16845b;
+ --state-warning:#a56700;
+ --state-error:#bf3445;
+ --state-info:#235ce2;
+}
+/* Product-local visual baselines. Future tenant themes may supply these semantic
+ * values at a scoped workspace root without changing layout or structure. */
+.cx-app,.cx-gate {
+ --product-primary:var(--brand-primary,#235ce2);
+ --product-accent:var(--brand-accent,#078db3);
+ --product-surface:var(--app-surface,#fff);
+}
+.mt2-shell {
+ --product-primary:var(--brand-primary,#237cb5);
+ --product-accent:var(--brand-accent,#20a3ab);
+ --product-surface:var(--app-surface,#fff);
+}
+.platformConsole {
+ --platform-brand-primary:#7542bc;
+ --platform-brand-accent:#d33d9a;
+}
