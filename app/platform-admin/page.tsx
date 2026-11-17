@@ -1,5 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
+import Link from "next/link";
+import "./platform-admin.css";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import PlatformCustomerActions from "./PlatformCustomerActions";
 import PlatformSubscriptions from "./PlatformSubscriptions";
@@ -40,28 +42,60 @@ export default function PlatformAdminPage(){
    setAssistedMessage("Created "+body.slug+". Refresh the organization directory to see the new tenant.");
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Creation failed")}finally{setAssistedBusy(false)}
  }
- return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 20px",fontFamily:"system-ui",color:"#24233b"}}>
-  <header style={{marginBottom:28}}><p style={{color:"#6546a0",fontWeight:700,letterSpacing:1}}>ROBOTRONIX EDUCATION SUITE</p><h1>Platform Administration</h1><p>Platform-wide customer directory and subscription overview. Academy operations remain inside each tenant.</p></header>
-  {loading&&<p role="status">Loading platform overview…</p>}
-  {error&&<p role="alert" style={{color:"#9b2346"}}>{error}</p>}
-  {overview&&!loading&&<>
-   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14,marginBottom:28}}>
-    {([["Organizations",overview.metrics.organizations],["Active subscriptions",overview.metrics.activeSubscriptions],["Trial subscriptions",overview.metrics.trials]] as const).map(([label,value])=><section key={label} style={{border:"1px solid #ddd5eb",borderRadius:16,padding:20}}><p>{label}</p><strong style={{fontSize:32}}>{value}</strong></section>)}
+ return <main className="platformConsole">
+  <div className="platformLayout">
+   <aside className="platformSidebar" aria-label="Platform navigation">
+    <Link href="/" className="platformBrand"><img src="/brand/robotronix-horizontal.png" alt="Robotronix" /></Link>
+    <span className="platformWorkspaceLabel">EDUCATION SUITE</span>
+    <div className="platformWorkspaceName"><span className="platformWorkspaceIcon">✦</span><span>Control Centre<small>Platform administration</small></span></div>
+    <nav className="platformNav">
+     <a href="#overview" className="platformNavActive">◫ <span>Overview</span></a>
+     <a href="#customers">♧ <span>Customers & access</span></a>
+     <a href="#subscriptions">▤ <span>Subscriptions</span></a>
+     <a href="#branding">◈ <span>Tenant branding</span></a>
+     <a href="#onboarding">✚ <span>New customer</span></a>
+     <a href="#directory">▦ <span>Directory</span></a>
+    </nav>
+    <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link></div>
+   </aside>
+   <div className="platformMain">
+    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>Control Centre</h1><p>Manage your customers, access and subscriptions in one place.</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
+    <div className="platformContent">
+     {loading&&<div className="platformFeedback" role="status">Loading platform overview…</div>}
+     {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
+     {overview&&!loading&&<>
+      <section id="overview" className="platformOverview" aria-label="Platform overview">
+       <div className="platformSectionIntro"><div><span className="platformEyebrow">YOUR PLATFORM AT A GLANCE</span><h2>Overview</h2></div><span className="platformReadOnlyHint">Live DEV workspace</span></div>
+       <div className="platformMetricGrid">
+        {([{label:"Customer organizations",value:overview.metrics.organizations,icon:"▣",note:"Registered workspaces"},{label:"Active subscriptions",value:overview.metrics.activeSubscriptions,icon:"◉",note:"Current paid plans"},{label:"Trial subscriptions",value:overview.metrics.trials,icon:"◷",note:"Evaluation workspaces"}] as const).map(metric=><article className="platformMetric" key={metric.label}><div className="platformMetricTop"><span>{metric.label}</span><span className="platformMetricIcon" aria-hidden="true">{metric.icon}</span></div><strong>{metric.value}</strong><small>{metric.note}</small></article>)}
+       </div>
+      </section>
+      <div className="platformColumns">
+       <div id="customers" className="platformPanel"><PlatformCustomerActions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+       <div id="subscriptions" className="platformPanel"><PlatformSubscriptions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+      </div>
+      <div className="platformColumns">
+       <div id="branding" className="platformPanel"><PlatformTenantBranding organizations={overview.organizations}/></div>
+       <section id="onboarding" className="platformPanel platformOnboarding">
+        <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Create a trial for an existing, verified customer account. No email invitation is sent automatically.</p>
+        <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
+         <label>Owner Auth UUID<input required value={assisted.ownerId} onChange={e=>setAssisted(s=>({...s,ownerId:e.target.value}))} placeholder="Verified customer's user ID"/></label>
+         <label>Organization name<input required value={assisted.name} onChange={e=>setAssisted(s=>({...s,name:e.target.value}))} placeholder="e.g. ABC Learning Academy"/></label>
+         <label>URL slug<input required value={assisted.slug} onChange={e=>setAssisted(s=>({...s,slug:e.target.value}))} placeholder="abc-learning-academy"/></label>
+         <label>Organization type<select value={assisted.kind} onChange={e=>setAssisted(s=>({...s,kind:e.target.value}))}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Tutor</option></select></label>
+         <button type="submit" disabled={assistedBusy||!assisted.ownerId||!assisted.name||!assisted.slug}>{assistedBusy?"Creating…":"Create trial workspace"}</button>
+         {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
+        </form>
+       </section>
+      </div>
+      <section id="directory" className="platformDirectory platformPanel">
+       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Organization directory</h2><p>Find and review registered organizations.</p></div><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
+       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Workspace slug</th><th>Status</th><th>Created</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><code>{o.slug}</code></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td></tr>)}</tbody></table></div>}
+       <div className="platformPagination"><span>{overview.total} matching organizations · Page {page}</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><button disabled={page*20>=overview.total} onClick={()=>setPage(p=>p+1)}>Next</button></div></div>
+      </section>
+     </>}
+    </div>
    </div>
-   <PlatformCustomerActions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/>
-   <PlatformSubscriptions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/>
-   <PlatformTenantBranding organizations={overview.organizations}/>
-   <section style={{border:"1px solid #ddd5eb",borderRadius:16,padding:20,marginBottom:24}}><h2>Assisted onboarding</h2><p>Create a trial for an existing, verified customer Auth user. This does not send an email invitation.</p><div style={{display:"grid",gap:12,maxWidth:520}}><label>Owner Auth UUID<input value={assisted.ownerId} onChange={e=>setAssisted(s=>({...s,ownerId:e.target.value}))} style={{display:"block",width:"100%"}}/></label><label>Organization name<input value={assisted.name} onChange={e=>setAssisted(s=>({...s,name:e.target.value}))} style={{display:"block",width:"100%"}}/></label><label>URL slug<input value={assisted.slug} onChange={e=>setAssisted(s=>({...s,slug:e.target.value}))} style={{display:"block",width:"100%"}}/></label><label>Type<select value={assisted.kind} onChange={e=>setAssisted(s=>({...s,kind:e.target.value}))}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Tutor</option></select></label><button disabled={assistedBusy||!assisted.ownerId||!assisted.name||!assisted.slug} onClick={()=>void createAssisted()}>Create assisted trial</button>{assistedMessage&&<p role="status">{assistedMessage}</p>}</div></section>
-   <section style={{border:"1px solid #ddd5eb",borderRadius:16,padding:20}}>
-    <h2>Customer organizations</h2>
-    <label htmlFor="org-search">Search organizations</label>{" "}
-    <input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Organization name" style={{padding:9,borderRadius:8,border:"1px solid #aaa"}}/>
-    {overview.organizations.length===0?<p>No matching organizations.</p>:<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",marginTop:20,textAlign:"left"}}>
-     <thead><tr><th>Organization</th><th>Slug</th><th>Status</th><th>Created</th></tr></thead>
-     <tbody>{overview.organizations.map(o=><tr key={o.id}><td style={{padding:"12px 0"}}>{o.display_name}</td><td>{o.slug}</td><td>{o.status}</td><td>{new Date(o.created_at).toLocaleDateString()}</td></tr>)}</tbody>
-    </table></div>}
-    <div style={{display:"flex",gap:12,alignItems:"center",marginTop:20}}><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><span>Page {page} · {overview.total} matching</span><button disabled={page*20>=overview.total} onClick={()=>setPage(p=>p+1)}>Next</button></div>
-   </section>
-  </>}
+  </div>
  </main>;
 }
