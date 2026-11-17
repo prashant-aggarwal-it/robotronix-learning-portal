@@ -5,7 +5,7 @@
 :root{
  --rx-ui-ink:#193550;--rx-ui-muted:#647b91;--rx-ui-border:#dce8f1;
  --rx-ui-blue:#087fa7;--rx-ui-blue-hover:#066d92;--rx-ui-soft:#f2f8fc;
- --rx-ui-danger:#b42336;--rx-ui-radius:11px;
+ --rx-ui-danger:var(--state-error,#b42336);--rx-ui-radius:11px;
  --rx-ui-control-height:42px;--rx-ui-compact-height:34px;
 }
 .workspaceShell :is(.button,.zoomActionButton,.pageButton){
@@ -20,7 +20,7 @@
 .workspaceShell .button:not(.secondary):not(.ghost):not(.danger):hover:not(:disabled){background:linear-gradient(110deg,#164bc6,#077e9f);box-shadow:0 6px 16px rgba(21,92,158,.13)}
 .workspaceShell .button.secondary,.workspaceShell .button.ghost{
  min-height:var(--rx-ui-control-height);padding:9px 14px;
- border:1px solid var(--rx-ui-border);background:#fff;color:#254763;
+ border:1px solid var(--app-border,var(--rx-ui-border));background:#fff;color:#254763;
  font-size:14px;font-weight:650;box-shadow:none;
 }
 .workspaceShell .button.secondary:hover:not(:disabled),.workspaceShell .button.ghost:hover:not(:disabled){background:var(--rx-ui-soft);border-color:#adcfdf;box-shadow:none}
