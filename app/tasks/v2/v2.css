@@ -1,4 +1,4 @@
-.mt2-shell{--mt2-ink:#1d3148;--mt2-muted:#8391a4;--mt2-border:#e5ebf3;--mt2-blue:var(--product-primary,#237cb5);display:flex;min-height:100vh;color:var(--mt2-ink);background:#f7f9fd;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.mt2-shell{--mt2-ink:#1d3148;--mt2-muted:#8391a4;--mt2-border:#e5ebf3;--mt2-blue:var(--product-navigation-primary,#237cb5);display:flex;min-height:100vh;color:var(--mt2-ink);background:#f7f9fd;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
 .mt2-shell *{box-sizing:border-box}
 .mt2-shell button,.mt2-shell input,.mt2-shell select{font:inherit}
 .mt2-shell button{cursor:pointer}
