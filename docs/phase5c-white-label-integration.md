@@ -49,3 +49,16 @@ The shared TenantIdentity component renders a neutral loading placeholder instea
 
 ## Real HTTP finding: privileged role claim compatibility
 The first authenticated DEV integration discovered 403 on an otherwise valid synthetic Academy Owner's Branding Studio GET. The member and entitlement were correct in DEV SQL. Migration `phase5c_branding_service_claim_compat` replaces legacy per-claim `request.jwt.claim.role` checks with `auth.jwt()->>'role'` in three service-only branding entry functions, retaining explicit EXECUTE revocations, membership checks and service-role-only grants. Re-run real HTTP acceptance; do not infer a pass from SQL role impersonation alone.
+
+## Latest DEV verification — 18 November 2026
+
+GitHub commit `063ce4fc12294050932559384e8b437311af9cd5` passed all three available Phase 5C validation workflows:
+- Source / typecheck / Phase 5A–5B regression / Next.js build: https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44156791789
+- Three Chromium synthetic browser scenarios (Suite organization switching, mobile viewport, CRM workspace branding isolation): https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44156792084
+- Real authenticated DEV HTTP/Storage roundtrip (synthetic Owner, real image upload, save/reload, unsigned/nonmember rejection, failed update rejection, restore): https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44156791785
+
+The real test exposed and resolved a legacy service-role claim compatibility defect. DEV migration `phase5c_branding_service_claim_compat` passed a post-install privileges check: the service-only functions have EXECUTE denied to `anon` and `authenticated`, and granted to `service_role`.
+
+Two synthetic `phase5c-qa-*` DEV organizations were created by the test attempts. Their logo Storage objects were removed, and both organizations were individually verified as **archived** after testing. Their synthetic Owner accounts remain because the `guard_last_active_owner` trigger prevents deleting the sole Owner; this security trigger was **not** disabled or weakened. A deliberate, appropriately authorized cleanup migration would be needed for full physical deletion.
+
+**DEV code/regression and real API acceptance: passed.** This is not a full white-label production sign-off. Remaining work includes cross-role authenticated browser acceptance (Parent/Trainer/Student and Google OAuth), complete legacy CSS/state visual audit, and organization-specific Tasks UI branding when the screen is scoped to a verified single shared workspace. The aggregated personal/connected Tasks view intentionally stays corporate to avoid attributing mixed-organization task data to one tenant. Application module switches still use a full reload to clear sensitive caches; Suite Home itself switches without a full reload. Production database and `main` remain unchanged.
