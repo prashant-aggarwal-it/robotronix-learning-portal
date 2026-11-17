@@ -31,3 +31,5 @@ jobs:
           npm run check:connect-hardening
           npm run test:connect-business
           npm run test:tasks-v2
+          npm run test:phase4e
+          npx playwright test qa/payroll-rules.spec.ts qa/security-static.spec.ts --project=desktop-chromium --no-deps
