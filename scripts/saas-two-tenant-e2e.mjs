@@ -157,7 +157,7 @@ async function run(){
    }};
   const result=await request(actor,"POST","/api/connect/workspaces/"+tenant+"/admissions",offer);
   assert(result.status===200&&Boolean(result.body?.id)&&Boolean(result.body?.inviteUrl),
-   "CRM "+label+" independently creates Academy onboarding invitation");
+   "CRM "+label+" independently creates Academy onboarding invitation (HTTP "+result.status+", error="+String(result.body?.error||"none").slice(0,160)+")");
   const other=actor===b?c:b;
   const denied=await request(other,"GET","/api/connect/workspaces/"+tenant+"/admissions");
   assert(denied.status===403,"CRM "+(actor===b?"C":"B")+" cannot read CRM "+label+" admissions");
