@@ -1,0 +1,26 @@
+name: Phase 5C Browser Theme QA
+on:
+  push:
+    branches:
+      - feature/education-suite-phase5c-white-label-integration
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_SUPABASE_URL: "https://mock.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "synthetic-phase5c-browser-key"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install chromium --with-deps
+      - name: Run tenant theme browser scenarios
+        run: npx playwright test qa/phase5c-white-label.spec.ts --project=desktop-chromium --no-deps
