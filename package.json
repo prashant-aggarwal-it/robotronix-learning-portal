@@ -87,7 +87,8 @@
     "check:deployment-env": "node --experimental-strip-types scripts/check-deployment-env.mjs",
     "deployment:profile": "node scripts/print-deployment-profile.mjs",
     "db:build-editor": "node scripts/build-education-suite-installer.mjs && node scripts/build-db-sql-editor-files.mjs",
-    "test:phase4e": "node --test lib/server/saas/phase4e-subscription-security.test.mjs"
+    "test:phase4e": "node --test lib/server/saas/phase4e-subscription-security.test.mjs",
+    "test:theme-foundation": "node --experimental-strip-types --test scripts/test-phase5a-theme.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
