@@ -59,3 +59,16 @@ test("major workspace tokens retain equivalent existing paint values",()=>{
  assert.match(read("app/connect/connect.css"),/var\(--product-focus-ring\)/);
  assert.match(read("app/platform-admin/platform-admin.css"),/var\(--platform-action-start\)/);
 });
+
+test("Phase 5A preserves original CRM, Tasks and Platform Admin colors",()=>{
+ const tokens=read("app/design-tokens.css");
+ for(const pair of [
+  "--product-success:#128764","--product-primary:#147cad",
+  "--product-navigation-primary:#237cb5","--platform-nav-border:#eee9f5",
+  "--platform-nav-hover:#f6f1ff"
+ ])assert.ok(tokens.includes(pair),pair);
+ assert.match(read("app/connect/connect.css"),/--cx-green:var\(--product-success,#128764\)/);
+ assert.match(read("app/tasks/v2/v2.css"),/--mt2-blue:var\(--product-navigation-primary,#237cb5\)/);
+ assert.match(read("app/tasks/product-experience.css"),/--mt2-brand:var\(--product-primary,#147cad\)/);
+ assert.match(read("app/platform-admin/platform-admin.css"),/var\(--platform-nav-border,#eee9f5\)/);
+});
