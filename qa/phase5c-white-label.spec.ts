@@ -50,9 +50,10 @@ async function mockSuite(page:Page){
     theme:{primary:alpha?"#235ce2":"#126b4d",secondary:"#e83d8c",accent:"#14b8a6",
      primaryHover:"#123b99",primarySoft:"#eef2ff",onPrimary:"#ffffff"}}})});
  });
+ await page.route("**/api/connect/**",async route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,items:[]})}));
+ // Playwright selects the last registered matching route.
  await page.route("**/api/connect/workspaces",async route=>route.fulfill({status:200,contentType:"application/json",
   body:JSON.stringify({ok:true,workspaces:[{tenant_id:tenantAccess,workspace_name:"QA CRM"}]})}));
- await page.route("**/api/connect/**",async route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,items:[]})}));
  return {getSelected:()=>selected,setCrmTenant:(id:string)=>{tenantAccess=id},getCalls:()=>getCalls};
 }
 test("Suite theme follows server-confirmed organization selection without page reload",async({page})=>{
