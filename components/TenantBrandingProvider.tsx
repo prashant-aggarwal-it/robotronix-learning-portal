@@ -8,7 +8,7 @@ import "@/app/tenant-branding.css";
 type TenantContext={branding:TenantBranding|null;loading:boolean;reload:()=>void};
 const Context=createContext<TenantContext>({branding:null,loading:false,reload:()=>{}});
 export const useTenantBranding=()=>useContext(Context);
-const corporatePath=(p:string)=>p.startsWith("/platform-admin")||p.startsWith("/login")||p.startsWith("/signup")||p.startsWith("/qa-");
+const corporatePath=(p:string)=>p.startsWith("/platform-admin")||p.startsWith("/login")||p.startsWith("/signup")||p.startsWith("/qa-")||(p.startsWith("/tasks")&&!p.startsWith("/tasks/connected"));
 export function TenantBrandingProvider({children}:{children:ReactNode}){
  const path=usePathname()||"/";
  const corporate=corporatePath(path);
