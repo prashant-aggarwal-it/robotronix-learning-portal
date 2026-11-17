@@ -8,9 +8,11 @@ on:
       - feature/education-suite-phase3f
       - feature/education-suite-phase3g
       - feature/education-suite-phase4c
+      - feature/education-suite-phase4d
     paths:
       - scripts/saas-two-tenant-e2e.mjs
       - scripts/saas-phase3c-invitations-e2e.mjs
+      - app/api/connect/workspaces/**/admissions/route.ts
       - app/api/platform/organization-links/route.ts
       - database/saas/12_module_links_rpc.sql
       - database/saas/68_phase4c_private_table_privileges.sql
