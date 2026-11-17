@@ -6,7 +6,7 @@
 .cx-app{display:flex;min-height:100vh;background:#f5f9fc}
 .cx-app button,.cx-gate button{cursor:pointer;font:inherit}
 .cx-app button:disabled,.cx-gate button:disabled{cursor:not-allowed;opacity:.55}
-.cx-app :is(button,input,select,textarea,a):focus-visible,.cx-gate :is(button,input,select,textarea,a):focus-visible{outline:3px solid #62bed7;outline-offset:2px}
+.cx-app :is(button,input,select,textarea,a):focus-visible,.cx-gate :is(button,input,select,textarea,a):focus-visible{outline:3px solid var(--product-focus-ring);outline-offset:2px}
 .cx-app :is(input,textarea,select),.cx-gate :is(input,textarea,select){width:100%;color:var(--cx-ink);background:#fff;border:1px solid #d7e3ec;border-radius:10px;padding:10px 12px;min-height:42px;font:inherit;font-weight:450}
 .cx-app :is(input,textarea,select):focus,.cx-gate :is(input,textarea,select):focus{border-color:#078db3;outline:2px solid rgba(7,141,179,.12)}
 .cx-app :is(h1,h2,h3,p),.cx-gate :is(h1,h2,h3,p){margin-top:0}
@@ -22,7 +22,7 @@
 .cx-logo b{color:#087fa7}
 .cx-logo-image{display:block;width:auto;max-width:170px;height:38px;object-fit:contain;object-position:left center;flex-shrink:1;min-width:0}
 .cx-logo-product{font-size:17px;font-weight:800;color:#087fa7;letter-spacing:-.025em;flex-shrink:0}
-.cx-sidebar{width:248px;flex:0 0 248px;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;padding:23px 14px 13px;background:#fff;border-right:1px solid var(--cx-border);z-index:25}
+.cx-sidebar{width:248px;flex:0 0 248px;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;padding:23px 14px 13px;background:var(--product-surface);border-right:1px solid var(--cx-border);z-index:25}
 .cx-sidebar>.cx-logo{padding:3px 10px 23px}
 /* Align the Connect sidebar brand with the Portal's brand/title stack. */
 .cx-sidebar-brand{padding:0 0 2px}
