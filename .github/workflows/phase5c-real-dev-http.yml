@@ -1,0 +1,45 @@
+name: Phase 5C Real DEV HTTP Acceptance
+on:
+  push:
+    branches:
+      - feature/education-suite-phase5c-white-label-integration
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dev-http:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[live-dev]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Actual DEV authenticated HTTP and Storage acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$E2E_SUPABASE_URL" || -z "$E2E_SUPABASE_ANON_KEY" || -z "$E2E_SUPABASE_SERVICE_ROLE_KEY" ]]; then
+            echo "::error::Required E2E_SUPABASE_* CI secrets are missing. Real DEV acceptance is BLOCKED."
+            exit 1
+          fi
+          export NEXT_PUBLIC_SUPABASE_URL="$E2E_SUPABASE_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$E2E_SUPABASE_ANON_KEY"
+          export SUPABASE_URL="$E2E_SUPABASE_URL"
+          export SUPABASE_SERVICE_ROLE_KEY="$E2E_SUPABASE_SERVICE_ROLE_KEY"
+          npm run dev -- --hostname 127.0.0.1 > /tmp/phase5c-dev.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 100); do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then break; fi
+            sleep 2
+          done
+          node scripts/qa-phase5c-live.mjs
