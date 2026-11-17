@@ -757,6 +757,38 @@ async function run(){
    }
   }finally{await browser.close()}
  }
+ // Phase 4D: real expired-subscription denial + restoration on synthetic DEV School B.
+ // Never modify non-synthetic subscriptions; always restore the original expiry.
+ const {data:syntheticSubscriptions,error:subscriptionReadError}=await admin.from("platform_subscriptions")
+  .select("id,ends_at,plan_code,status").eq("organization_id",B)
+  .order("started_at",{ascending:false}).order("id",{ascending:false}).limit(1);
+ if(subscriptionReadError||syntheticSubscriptions?.length!==1||
+    syntheticSubscriptions[0].plan_code!=="qa_trial"||syntheticSubscriptions[0].status!=="trial")
+  throw new Error("Refusing to modify non-synthetic subscription fixture");
+ const originalSubscription=syntheticSubscriptions[0];
+ const {error:expireError}=await admin.from("platform_subscriptions")
+  .update({ends_at:new Date(Date.now()-60000).toISOString()}).eq("id",originalSubscription.id)
+  .eq("organization_id",B).eq("plan_code","qa_trial");
+ if(expireError)throw new Error("Synthetic subscription expiry failed: "+expireError.message);
+ try{
+  const {data:active,error:accessError}=await admin.rpc("saas_subscription_access_v1",{p_organization_id:B});
+  assert(!accessError&&active===false,"Expired synthetic Academy subscription denied at database gate");
+  const {error:rpcError}=await admin.rpc("saas_academy_v1",{
+   p_actor_id:b.id,p_organization_id:B,p_kind:"students",p_action:"list",p_data:{}
+  });
+  assert(rpcError?.code==="42501","Expired subscription blocks direct privileged Academy CRUD RPC");
+  const expiredApi=await request(b,"GET","/api/platform/academy/students?organizationId="+B);
+  assert(expiredApi.status===403,"Expired subscription blocks authenticated Academy HTTP API");
+  const otherApi=await request(a,"GET","/api/platform/academy/students?organizationId="+A);
+  assert(otherApi.status===200,"Expiry of School B does not disable active School A");
+ }finally{
+  const {error:restoreError}=await admin.from("platform_subscriptions")
+   .update({ends_at:originalSubscription.ends_at}).eq("id",originalSubscription.id)
+   .eq("organization_id",B).eq("plan_code","qa_trial");
+  if(restoreError)throw new Error("CRITICAL: synthetic subscription restoration failed: "+restoreError.message);
+ }
+ const restoredApi=await request(b,"GET","/api/platform/academy/students?organizationId="+B);
+ assert(restoredApi.status===200,"Restored subscription re-enables authorized Academy access");
  const toggleMembership=async(status)=>{
   const {error}=await admin.rpc("saas_qa_set_synthetic_membership_status",{
    p_actor_id:b.id,p_organization_id:B,p_status:status
