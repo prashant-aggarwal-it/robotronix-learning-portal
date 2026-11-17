@@ -71,7 +71,8 @@ async function mockApi(page:Page,opts:{rejectSave?:boolean;rejectUpload?:boolean
 test.beforeEach(async({page})=>{await page.goto("about:blank");});
 test("loads tenant-specific branding, previews changes and persists after refresh",async({page})=>{
  const api=await mockApi(page);
- await page.goto("/__qa__/branding-studio");
+ const response=await page.goto("/__qa__/branding-studio");
+ console.log("BRANDING QA diagnostic",JSON.stringify({status:response?.status(),url:page.url(),body:(await page.locator("body").innerText()).slice(0,1000)}));
  await expect(page.getByLabel("Tagline")).toHaveValue("Alpha learning");
  await expect(page.locator(".brandingPreviewTop strong")).toHaveText("QA Academy Alpha");
  await page.getByLabel("Tagline").fill("Alpha rebranded");
