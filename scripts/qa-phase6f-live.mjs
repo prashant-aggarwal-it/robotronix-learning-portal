@@ -29,7 +29,7 @@ async function call(path,actor=null,method="GET",body=null,extra={}){
  return {status:resp.status,body:await resp.json().catch(()=>null)};
 }
 async function onboard(actor,label){
- const slug="phase6f-"+label+"-"+randomUUID().slice(0,9);
+ const slug="phase6f-"+label+"-"+randomUUID().slice(0,8);
  const res=await call("/api/platform/onboard",actor,"POST",{
   name:"Phase 6F "+label+" QA",slug,kind:"academy",modules:["academy"],requestKey:randomUUID()});
  assert.equal(res.status,200,"DEV onboarding "+label+" "+JSON.stringify(res.body));
