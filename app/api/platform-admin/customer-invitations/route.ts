@@ -18,15 +18,15 @@ export async function POST(request:NextRequest){
   const slug=typeof b.slug==="string"?b.slug.trim().toLowerCase():"";
   const kind=typeof b.kind==="string"?b.kind:"";
   const modules=b.modules;
-  if(name.length<2||name.length>160||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||
+  const action=b.action==="rotate"?"rotate":"create";
+  if(action==="rotate"&&(typeof b.id!=="string"||!/^[a-f0-9-]{36}$/i.test(b.id)))throw new SaaSAccessError(400,"Invalid invitation");
+  if(action==="create"&&(name.length<2||name.length>160||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||
     slug.length<3||slug.length>63||!slugRe.test(slug)||reserved.has(slug)||
     !["academy","institute","tutor"].includes(kind)||
     !Array.isArray(modules)||modules.length<1||modules.length>3||
-    new Set(modules).size!==modules.length||!modules.every((m:unknown)=>["academy","crm","tasks"].includes(String(m))))
+    new Set(modules).size!==modules.length||!modules.every((m:unknown)=>["academy","crm","tasks"].includes(String(m)))))
     throw new SaaSAccessError(400,"Check organization name, owner email, slug and modules");
   const secret=randomBytes(32).toString("hex");
-  const action=b.action==="rotate"?"rotate":"create";
-  if(action==="rotate"&&(typeof b.id!=="string"||!/^[a-f0-9-]{36}$/i.test(b.id)))throw new SaaSAccessError(400,"Invalid invitation");
   const {data,error:dbError}=await db.rpc("saas_pending_customer_manage_v1",{
    p_actor:userId,p_action:action,p_data:{
     id:action==="rotate"?b.id:undefined,
