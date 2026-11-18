@@ -104,7 +104,7 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
   };
   void load();
   const {data:{subscription}}=client.auth.onAuthStateChange(event=>{
-   if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED")setRevision(x=>x+1);
+   if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){generation.current++;setSnapshot(null);setRevision(x=>x+1);}
   });
   return ()=>{controller.abort();generation.current++;subscription.unsubscribe()};
  },[revision,corporate,crm,sharedTasks,path.startsWith("/suite")]);
