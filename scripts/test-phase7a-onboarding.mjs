@@ -36,3 +36,13 @@ test("Invitation API verifies bearer identity and hashes link token",()=>{
  assert.match(accept,/verifiedBrandingActor/);
  assert.match(accept,/createHash\("sha256"\)/);
 });
+
+test("Customer invitation is preserved across auth and remains token-shaped",()=>{
+ const helper=read("lib/platform/pending-invitation.ts");
+ assert.match(helper,/customer-invite/);
+ assert.match(helper,/\\?token=\[a-f0-9\]\{64\}/);
+ const login=read("app/login/page.tsx");
+ const callback=read("app/auth/callback/page.tsx");
+ assert.match(login,/consumeInvitation/);
+ assert.match(callback,/consumeInvitation/);
+});

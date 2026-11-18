@@ -1,6 +1,6 @@
 /** Only internal, token-shaped invitation URLs may survive an auth round trip. */
 const key="robotronix:pending-organization-invitation";
-const allowed=/^\/invite(?:\/family)?\?token=[a-f0-9]{64}$/;
+const allowed=/^\/(?:invite(?:\/family)?|customer-invite)\?token=[a-f0-9]{64}$/;
 export function preserveInvitation(path:string):void{
  if(typeof window!=="undefined"&&allowed.test(path))window.sessionStorage.setItem(key,path);
 }
