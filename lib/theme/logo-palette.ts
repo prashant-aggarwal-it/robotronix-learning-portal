@@ -1,4 +1,4 @@
-import {contrastRatio,normalizeHexColor,resolveTenantTheme,type TenantTheme} from "./tokens.ts";
+import {normalizeHexColor,preferredOnPrimary,resolveTenantTheme,type TenantTheme} from "./tokens.ts";
 export type SuggestedPalette=Pick<TenantTheme,"primary"|"secondary"|"accent"|"primaryHover"|"primarySoft"|"onPrimary">;
 type Sample={r:number;g:number;b:number;a?:number};
 const hex=(r:number,g:number,b:number)=>"#"+[r,g,b].map(x=>Math.min(255,Math.max(0,Math.round(x))).toString(16).padStart(2,"0")).join("");
@@ -8,7 +8,7 @@ function saturation({r,g,b}:Sample){const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
 export function generatePalette(primary:string,secondary?:string,accent?:string):SuggestedPalette{
  const p=normalizeHexColor(primary)||"#6d3cc9";
  const s=normalizeHexColor(secondary)||p, a=normalizeHexColor(accent)||s;
- const onPrimary=contrastRatio("#ffffff",p)>=4.5?"#ffffff":"#000000";
+ const onPrimary=preferredOnPrimary(p);
  const hover=mix(p,onPrimary==="#ffffff"?"#000000":"#ffffff",0.16);
  return resolveTenantTheme({primary:p,secondary:s,accent:a,primaryHover:hover,primarySoft:mix(p,"#ffffff",0.91),onPrimary});
 }

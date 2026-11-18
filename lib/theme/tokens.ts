@@ -33,6 +33,16 @@ export function contrastRatio(a:string,b:string):number{
 export function hasReadableContrast(foreground:string,background:string,minimum=4.5):boolean{
  try{return contrastRatio(foreground,background)>=minimum;}catch{return false;}
 }
+/** Choose readable button text without forcing stark pure-black on bright themes.
+ * White is preferred for dark colors; neutral dark navy for lighter colors;
+ * pure black is the last-resort maximum-contrast fallback.
+ */
+export function preferredOnPrimary(primary:string):string{
+ const p=normalizeHexColor(primary)||ROBOTRONIX_THEME.primary;
+ if(hasReadableContrast("#ffffff",p))return "#ffffff";
+ if(hasReadableContrast("#14213d",p))return "#14213d";
+ return contrastRatio("#000000",p)>=contrastRatio("#ffffff",p)?"#000000":"#ffffff";
+}
 export function resolveTenantTheme(input:Partial<Record<keyof TenantTheme,unknown>>|null|undefined):TenantTheme{
  const output={...ROBOTRONIX_THEME};
  if(!input)return output;
@@ -41,8 +51,11 @@ export function resolveTenantTheme(input:Partial<Record<keyof TenantTheme,unknow
   if(valid)output[key]=valid;
  }
  // Unsafe combinations should never be emitted as active primary button colors.
- if(!hasReadableContrast(output.onPrimary,output.primary))output.onPrimary=
-  contrastRatio("#ffffff",output.primary)>=4.5?"#ffffff":"#000000";
+ // Keep an explicitly selected accessible color, except legacy auto-generated
+ // pure black on light themes, which now receives the softer navy preference.
+ if(!hasReadableContrast(output.onPrimary,output.primary)||
+    (output.onPrimary==="#000000"&&preferredOnPrimary(output.primary)!=="#000000"))
+  output.onPrimary=preferredOnPrimary(output.primary);
  if(!hasReadableContrast(output.onPrimary,output.primary))output.primary=ROBOTRONIX_THEME.primary;
  return output;
 }

@@ -28,7 +28,7 @@ test("three brand hues produce usable palette",()=>{
 });
 test("brightness contrast and safe manual overrides",()=>{
  const white=generatePalette("#ffffff","#123abc","#ff8844");
- assert.equal(white.onPrimary,"#000000");
+ assert.equal(white.onPrimary,"#14213d");
  const deep=generatePalette("#100040");
  assert.equal(deep.onPrimary,"#ffffff");
 });
@@ -118,4 +118,12 @@ test("two vivid colors do not get a dark wordmark as invented accent",()=>{
  assert.notEqual(p.primary,"#08172b");
  assert.notEqual(p.secondary,"#08172b");
  assert.notEqual(p.accent,"#08172b");
+});
+
+test("palette selection uses contrast-safe navy for bright primary and white for deep primary",()=>{
+ const blue=generatePalette("#08a1f7","#a812e2","#2858f5");
+ assert.equal(blue.onPrimary,"#14213d");
+ assert.ok(hasReadableContrast(blue.onPrimary,blue.primary));
+ const dark=generatePalette("#22115e");
+ assert.equal(dark.onPrimary,"#ffffff");
 });

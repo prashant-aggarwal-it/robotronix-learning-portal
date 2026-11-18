@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {ROBOTRONIX_THEME,BRAND_TOKEN_KEYS,normalizeHexColor,contrastRatio,hasReadableContrast,resolveTenantTheme,themeToCssVariables} from "../lib/theme/tokens.ts";
+import {ROBOTRONIX_THEME,BRAND_TOKEN_KEYS,normalizeHexColor,contrastRatio,hasReadableContrast,preferredOnPrimary,resolveTenantTheme,themeToCssVariables} from "../lib/theme/tokens.ts";
 const read=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 test("default Robotronix colors and WCAG contrast",()=>{
  assert.equal(ROBOTRONIX_THEME.primary,"#6d3cc9");
@@ -71,4 +71,17 @@ test("Phase 5A preserves original CRM, Tasks and Platform Admin colors",()=>{
  assert.match(read("app/tasks/v2/v2.css"),/--mt2-blue:var\(--product-navigation-primary,#237cb5\)/);
  assert.match(read("app/tasks/product-experience.css"),/--mt2-brand:var\(--product-primary,#147cad\)/);
  assert.match(read("app/platform-admin/platform-admin.css"),/var\(--platform-nav-border,#eee9f5\)/);
+});
+
+test("tenant button foreground prefers neutral navy over pure black on bright blues",()=>{
+ const blue="#08a1f7";
+ assert.equal(preferredOnPrimary(blue),"#14213d");
+ assert.ok(hasReadableContrast("#14213d",blue));
+ assert.equal(resolveTenantTheme({primary:blue,onPrimary:"#000000"}).onPrimary,"#14213d");
+ assert.equal(themeToCssVariables({primary:blue,onPrimary:"#000000"})["--brand-on-primary"],"#14213d");
+});
+test("dark themes keep readable white and custom readable foreground remains supported",()=>{
+ assert.equal(preferredOnPrimary("#100040"),"#ffffff");
+ assert.equal(resolveTenantTheme({primary:"#100040",onPrimary:"#ffffff"}).onPrimary,"#ffffff");
+ assert.equal(resolveTenantTheme({primary:"#08a1f7",onPrimary:"#101b32"}).onPrimary,"#101b32");
 });
