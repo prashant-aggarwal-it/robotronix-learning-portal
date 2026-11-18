@@ -55,11 +55,23 @@ export function paletteFromPixels(pixels:Uint8ClampedArray):SuggestedPalette{
   const neutral=neutralCount?hex(neutralR/neutralCount,neutralG/neutralCount,neutralB/neutralCount):"#242424";
   return generatePalette(neutral,neutral,neutral);
  }
+ // Populate the full palette from distinctive colors first. Dark lettering
+ // is not a meaningful accent when the logo already has vivid brand hues.
+ // Allow moderately separated gradient endpoints as independent accents.
  const selected=[primary];
- for(const group of ranked){
+ for(const group of vivid){
   if(selected.includes(group))continue;
-  if(selected.every(other=>distance(other,group)>=83))selected.push(group);
+  if(selected.every(other=>distance(other,group)>=62))selected.push(group);
   if(selected.length===3)break;
+ }
+ // If the mark is truly muted, pick its other visible colors. For colorful
+ // logos with just two hues, repeat one instead of inventing a navy accent.
+ if(!vivid.length){
+  for(const group of ranked){
+   if(selected.includes(group))continue;
+   if(selected.every(other=>distance(other,group)>=83))selected.push(group);
+   if(selected.length===3)break;
+  }
  }
  const colors=selected.map(g=>hex(g.r/g.n,g.g/g.n,g.b/g.n));
  return generatePalette(colors[0],colors[1]||colors[0],colors[2]||colors[1]||colors[0]);

@@ -95,3 +95,27 @@ test("gradient shades do not fill all three suggestions with duplicates",()=>{
  ]));
  assert.notEqual(p.primary,p.secondary);assert.notEqual(p.secondary,p.accent);
 });
+
+test("vivid logo accents outrank a large dark wordmark in all three slots",()=>{
+ const p=paletteFromPixels(pixels([
+  ...Array.from({length:260},()=>[8,23,43,255]),
+  ...Array.from({length:60},()=>[8,161,247,255]),
+  ...Array.from({length:45},()=>[168,18,226,255]),
+  ...Array.from({length:20},()=>[232,12,151,255])
+ ]));
+ const colors=[p.primary,p.secondary,p.accent];
+ assert.ok(colors.includes("#08a1f7"));
+ assert.ok(colors.includes("#a812e2"));
+ assert.ok(colors.includes("#e80c97"));
+ assert.ok(!colors.includes("#08172b"));
+});
+test("two vivid colors do not get a dark wordmark as invented accent",()=>{
+ const p=paletteFromPixels(pixels([
+  ...Array.from({length:180},()=>[8,23,43,255]),
+  ...Array.from({length:40},()=>[8,161,247,255]),
+  ...Array.from({length:30},()=>[168,18,226,255])
+ ]));
+ assert.notEqual(p.primary,"#08172b");
+ assert.notEqual(p.secondary,"#08172b");
+ assert.notEqual(p.accent,"#08172b");
+});
