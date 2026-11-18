@@ -42,3 +42,10 @@ test("Invitation management shows structured status and clipboard feedback",()=>
  assert.match(s,/Secure invitation link copied/);
  assert.match(s,/Copy failed/);
 });
+
+test("Platform Branding Studio excludes archived tenants and avoids misleading permission errors",()=>{
+ const page=src("app/platform-admin/page.tsx");
+ const auth=src("lib/server/saas/branding-auth.ts");
+ assert.match(page,/PlatformTenantBranding organizations=\{overview\.organizations\.filter\(o=>o\.status==="active"\)\}/);
+ assert.match(auth,/Select an active academy you can access/);
+});
