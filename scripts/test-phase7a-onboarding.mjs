@@ -6,7 +6,7 @@ test("Super Admin onboarding no longer requires customer Auth UUID",()=>{
  const ui=read("app/platform-admin/page.tsx");
  assert.match(ui,/Owner email/);
  assert.match(ui,/customer-invitations/);
- assert.match(ui,/manual delivery/);
+ assert.match(ui,/Manual invitation recovery/);
  assert.doesNotMatch(ui,/Owner Auth UUID/);
 });
 test("pending invitations have no membership until email-verified acceptance",()=>{
@@ -32,7 +32,7 @@ test("Invitation API verifies bearer identity and hashes link token",()=>{
  const accept=read("app/api/platform-admin/customer-invitations/accept/route.ts");
  assert.match(route,/requirePlatformAdmin/);
  assert.match(route,/randomBytes\(32\)/);
- assert.match(route,/delivery:"manual"/);
+ assert.match(route,/delivery:"not_configured"/);
  assert.match(accept,/verifiedBrandingActor/);
  assert.match(accept,/createHash\("sha256"\)/);
 });
