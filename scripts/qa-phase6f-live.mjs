@@ -18,7 +18,7 @@ async function user(label){
  const browser=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
  const signed=await browser.auth.signInWithPassword({email,password});
  assert.ifError(signed.error);assert.ok(signed.data.session?.access_token);
- return {id,token:signed.data.session.access_token};
+ return {id,email,token:signed.data.session.access_token};
 }
 async function call(path,actor=null,method="GET",body=null,extra={}){
  const headers={...extra};
@@ -40,6 +40,30 @@ async function onboard(actor,label){
 try{
  const a=await user("owner-a"),b=await user("owner-b"),outside=await user("unrelated");
  const orgA=await onboard(a,"a"),orgB=await onboard(b,"b");
+ // Exercise genuine organization Admin and Trainer logins via the product's invitation flow.
+ for(const role of ["admin","trainer"]){
+  const invitee=await user(role);
+  const sent=await call("/api/platform/invitations",a,"POST",
+   {organizationId:orgA.id,email:invitee.email,role});
+  assert.equal(sent.status,201,"Owner invite "+role+" "+JSON.stringify(sent.body));
+  const secret=new URL(sent.body.invitationUrl).searchParams.get("token");
+  assert.ok(secret);
+  const accepted=await call("/api/platform/invitations/accept",invitee,"POST",{token:secret});
+  assert.equal(accepted.status,200,"Invite accepted "+role+" "+JSON.stringify(accepted.body));
+  assert.equal(accepted.body.organizationId,orgA.id);
+  const own=await call("/api/tenant-branding?organizationId="+orgA.id,invitee);
+  assert.equal(own.status,200,"Active "+role+" own branding GET "+JSON.stringify(own.body));
+  assert.equal(own.body.branding.level,"standard");
+  const tier=await call("/api/platform/branding-entitlements?organizationId="+orgA.id,invitee);
+  assert.equal(tier.status,200,"Active "+role+" read tier");
+  assert.equal((await call("/api/tenant-branding?organizationId="+orgB.id,invitee)).status,403);
+  const attempt=await call("/api/branding-studio",invitee,"POST",
+   {organizationId:orgA.id,tagline:"Forbidden",logoUrl:"",
+    primary:"#235ce2",secondary:"#e83d8c",accent:"#14b8a6"});
+  assert.equal(attempt.status,403,"Non-Owner "+role+" must not edit");
+  console.log("PASS real DEV HTTP invited "+role+" access, denial of unrelated org and branding mutation");
+ }
+
  for(const [actor,org,foreign] of [[a,orgA,b],[b,orgB,a]]){
   const id=encodeURIComponent(org.id);
   const entitlement=await call("/api/platform/branding-entitlements?organizationId="+id,actor);
