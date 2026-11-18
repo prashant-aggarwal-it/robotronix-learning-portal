@@ -30,6 +30,8 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
  const input=useRef<HTMLInputElement>(null);
  const analysisVersion=useRef(0);
  const [analyzing,setAnalyzing]=useState(false);
+ const [canEdit,setCanEdit]=useState(false);
+ const [brandingLevel,setBrandingLevel]=useState<"standard"|"custom"|"white_label"|null>(null);
  const selected=organizations.find(o=>o.id===organizationId);
  useEffect(()=>{setOrganizationId(v=>organizations.some(o=>o.id===v)?v:organizations[0]?.id||"");},[organizations]);
  useEffect(()=>{
@@ -39,13 +41,17 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
  },[file]);
  useEffect(()=>{
   if(!organizationId)return;
-  let live=true;analysisVersion.current++;setAnalyzing(false);setLoading(true);setError("");setMessage("");setFile(null);setSaved(initial);setTagline("");setLogoUrl("");setPalette(generatePalette("#4537a5"));
+  let live=true;analysisVersion.current++;setAnalyzing(false);setLoading(true);setError("");setMessage("");setFile(null);setSaved(initial);setTagline("");setLogoUrl("");setPalette(generatePalette("#4537a5"));setCanEdit(false);setBrandingLevel(null);
   (async()=>{try{
    const response=await fetch("/api/branding-studio?organizationId="+encodeURIComponent(organizationId),
     {headers:await authHeaders(),cache:"no-store"});
    const body=await response.json();
    if(!response.ok||!body.ok)throw new Error(body.error||"Could not load branding");
    if(!live)return;
+   const tier=await fetch("/api/platform/branding-entitlements?organizationId="+encodeURIComponent(organizationId),{headers:await authHeaders(),cache:"no-store"});
+   const tierData=await tier.json();if(!tier.ok||!tierData.ok)throw new Error(tierData.error||"Branding tier unavailable");
+   if(!live)return;
+   setCanEdit(body.canEdit===true);setBrandingLevel(tierData.level);
    const brand=body.branding as BrandData;
    const existing=brand.palette?generatePalette(brand.palette.primary,brand.palette.secondary,brand.palette.accent):generatePalette(brand.accentColor||"#4537a5");
    setSaved({...brand,palette:existing});setTagline(brand.tagline||"");setLogoUrl(brand.logoUrl||"");
@@ -71,13 +77,13 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
   }finally{if(version===analysisVersion.current)setAnalyzing(false);}
  }
  function acceptFile(candidate:File|null){
-  if(!candidate)return;
+  if(!candidate||!canEdit)return;
   if(!["image/png","image/jpeg","image/webp"].includes(candidate.type)||candidate.size>MAX||candidate.size<=0){
    setError("Choose a PNG, JPEG or WebP logo smaller than 3 MB.");return;
   }
   setFile(candidate);setError("");void analyze(candidate,true);
  }
- function drop(e:DragEvent<HTMLDivElement>){e.preventDefault();acceptFile(e.dataTransfer.files[0]||null);}
+ function drop(e:DragEvent<HTMLDivElement>){e.preventDefault();if(canEdit)acceptFile(e.dataTransfer.files[0]||null);}
  async function detectUrl(){
   if(!logoUrl||!validatePublicLogoUrl(logoUrl)){setError("Provide a valid HTTPS image URL.");return;}
   setBusy(true);setError("");
@@ -97,7 +103,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
   setPalette(saved.palette||generatePalette(saved.accentColor));setMessage("Unsaved changes reset.");setError("");
  }
  async function save(){
-  if(!organizationId||busy||loading||analyzing)return;
+  if(!organizationId||busy||loading||analyzing||!canEdit)return;
   if(!validatePublicLogoUrl(logoUrl)){setError("Logo URL must be a valid HTTPS address.");return;}
   setBusy(true);setError("");setMessage("");
   try{
@@ -134,6 +140,8 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
       {organizations.map(o=><option key={o.id} value={o.id}>{o.display_name} ({o.slug})</option>)}
      </select>
     </label>
+    {!loading&&brandingLevel==="standard"&&!canEdit&&<p className="brandingEntitlementNotice" role="status">Standard branding is active. Custom logo, colors and tagline are available after an upgrade. Previously saved branding is safely retained.</p>}
+    <fieldset className="brandingEntitlementFields" disabled={!canEdit||busy||loading}>
     <div className="brandingSectionTitle">1. Your logo</div>
     <div className="brandingDrop" onDragOver={e=>e.preventDefault()} onDrop={drop}>
      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const selected=e.currentTarget.files?.[0]||null;e.currentTarget.value="";acceptFile(selected)}} className="brandingFileInput" aria-label="Upload organization logo"/>
@@ -158,6 +166,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
      <button type="button" className="brandingSaveButton" disabled={busy||loading||analyzing||!organizationId||!isDirty} onClick={()=>void save()}>{busy?"Saving…":"Save branding"}</button>
      <button type="button" className="brandingSecondaryButton" disabled={busy||loading||analyzing||!isDirty} onClick={reset}>Reset changes</button>
     </div>
+    </fieldset>
     {loading&&<p role="status">Loading saved branding…</p>}
     {analyzing&&<p role="status">Analyzing logo colors…</p>}
     {error&&<p className="brandingError" role="alert">{error}</p>}

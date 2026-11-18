@@ -22,3 +22,8 @@
 @media(max-width:620px){.platformWelcomeCard{flex-direction:column;align-items:stretch;padding:22px}.platformPrimaryLink{text-align:center}.platformRecentCard{align-items:start;flex-direction:column}.platformCompactList>div{padding:13px}.platformTabSections>.platformPanel:not([hidden])>section{padding:20px!important}}
 
 .platformSignout{display:block;width:100%;padding:10px 12px;border:1px solid #e5d9f6;border-radius:10px;background:var(--card-background,#fff);color:var(--platform-brand-primary,#7542bc);font:inherit;font-size:12px;font-weight:750;text-align:left;cursor:pointer}.platformSignout:hover{background:#efe8fd}.platformSignout:disabled{opacity:.55;cursor:wait}
+
+.platformBrandingEntitlements{border-top:1px solid #ebe2f6;padding-top:22px;margin-top:20px}
+.platformBrandingTierCard{background:#faf8ff;border:1px solid #e6ddef;padding:18px;border-radius:13px;display:grid;gap:10px}
+.platformBrandingTierCard p{margin:0}
+@media(max-width:620px){.platformBrandingTierCard{padding:13px}}

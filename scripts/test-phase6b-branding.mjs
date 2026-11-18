@@ -28,3 +28,21 @@ test("phase6a level transitions keep stored configuration and audit history",()=
  assert.match(sql,/insert into saas.audit_events/);
  assert.doesNotMatch(sql,/delete from saas.organization_settings/i);
 });
+
+test("admin controls are persisted and reload effective level",()=>{
+ const ui=read("app/platform-admin/PlatformBrandingEntitlements.tsx");
+ assert.match(ui,/Branding level/);
+ assert.match(ui,/window.confirm/);
+ assert.match(ui,/method:"POST"/);
+ assert.match(ui,/Could not verify saved entitlement/);
+ assert.match(ui,/existing logo, colors and tagline/i);
+ const page=read("app/platform-admin/page.tsx");assert.match(page,/PlatformBrandingEntitlements/);
+});
+test("branding editor is read-only for non-entitled owners, but retains preview",()=>{
+ const ui=read("features/branding/BrandingStudio.tsx");
+ assert.match(ui,/setCanEdit\(body.canEdit===true\)/);
+ assert.match(ui,/disabled=\{!canEdit\|\|busy\|\|loading\}/);
+ assert.match(ui,/Standard branding is active/);
+ assert.match(ui,/!canEdit\)return/);
+ assert.match(ui,/className="brandingPreview"/);
+});

@@ -7,6 +7,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import PlatformCustomerActions from "./PlatformCustomerActions";
 import PlatformSubscriptions from "./PlatformSubscriptions";
 import PlatformTenantBranding from "./PlatformTenantBranding";
+import PlatformBrandingEntitlements from "./PlatformBrandingEntitlements";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
 type Overview={organizations:Org[];page:number;total:number;metrics:{organizations:number;trials:number;activeSubscriptions:number}};
 export default function PlatformAdminPage(){
@@ -75,7 +76,7 @@ export default function PlatformAdminPage(){
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link><SignOutButton className="platformSignout" label="Sign out"/></div>
    </aside>
    <div className="platformMain">
-    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory"} as Record<string,string>)[activeSection]}</h1><p>Manage your customers, access and subscriptions in one place.</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
+    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage access, invitations and commercial branding entitlements.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
     <div className="platformContent">
      {loading&&<div className="platformFeedback" role="status">Loading platform overview…</div>}
      {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
@@ -100,7 +101,7 @@ export default function PlatformAdminPage(){
        <div className="platformCompactList">{overview.organizations.slice(0,4).map(o=><div key={o.id}><span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span><span><strong>{o.display_name}</strong><small>{o.slug}</small></span><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></div>)}{overview.organizations.length===0&&<p>No customer records on this page.</p>}</div>
       </div>}
       <div className="platformColumns platformTabSections">
-       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
        <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel"><PlatformSubscriptions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
       </div>
       <div className="platformColumns platformTabSections">

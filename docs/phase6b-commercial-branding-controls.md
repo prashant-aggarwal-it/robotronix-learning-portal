@@ -9,3 +9,5 @@ The protected POST and upload endpoints use `authorizeBrandingWrite` which calls
 The tier change API from Phase 6A preserves `organization_settings` values. Reactivation of a saved `custom` or `white_label` tier reuses them; effective theme rendering for Standard is the separate Phase 6C task.
 
 Run `node --test scripts/test-phase6b-branding.mjs`, previous Phase 5 and 6A regression tests, TypeScript and production build before acceptance.
+
+Platform Admin's Customers & Access section now includes `PlatformBrandingEntitlements`. It confirms downgrades and re-fetches saved tiers. Branding Studio uses `canEdit` from authenticated GET to disable all editor controls for Standard Owners while retaining existing preview/read access; API and DB checks remain authoritative.

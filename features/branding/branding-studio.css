@@ -115,3 +115,7 @@
  .brandingPreviewKpis{grid-template-columns:1fr}
  .brandingPreviewActions button{flex:1 1 100%}
 }
+
+.brandingEntitlementFields{border:0;min-width:0;padding:0;margin:0;display:grid;gap:12px}
+.brandingEntitlementFields:disabled{opacity:.68}
+.brandingEntitlementNotice{border:1px solid #dfd1f3;background:#f9f6ff;color:#553e78;border-radius:11px;padding:14px;font-size:13px;line-height:1.6}
