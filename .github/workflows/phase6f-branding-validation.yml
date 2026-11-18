@@ -1,0 +1,43 @@
+name: Phase 6F Branding Release Validation
+on:
+  push:
+    branches:
+      - feature/education-suite-phase6f-branding-release-certification
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-phase6f-branding.mjs scripts/test-phase6d-white-label.mjs scripts/test-phase6c-branding.mjs scripts/test-phase6b-branding.mjs scripts/test-phase6a-branding.mjs scripts/test-phase5c-branding.mjs
+      - run: npm run test:theme-foundation
+      - run: npm run test:branding-studio
+      - run: npm run typecheck
+      - run: npm run build
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_SUPABASE_URL: "https://mock.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "synthetic-phase6f-browser-key"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install chromium --with-deps
+      - run: npx playwright test qa/phase6d-white-label.spec.ts qa/phase6c-branding.spec.ts qa/phase5c-white-label.spec.ts qa/phase6b-branding.spec.ts --project=desktop-chromium --no-deps
+      - run: npx playwright test qa/phase6d-white-label.spec.ts --project=mobile-chromium --no-deps

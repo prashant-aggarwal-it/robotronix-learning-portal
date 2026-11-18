@@ -1,0 +1,25 @@
+name: Phase 6F Exact-Scope DEV QA Cleanup
+on:
+  push:
+    branches:
+      - feature/education-suite-phase6f-branding-release-certification
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cleanup:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[cleanup-dev]')
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 12
+    env:
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node scripts/qa-phase6f-cleanup.mjs
