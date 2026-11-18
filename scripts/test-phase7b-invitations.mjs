@@ -26,3 +26,11 @@ test("Manual invitation link not prominently visible",()=>{
  assert.match(s,/Create academy & send invitation/);
  assert.match(s,/Resend invitation/);
 });
+
+test("Recipient lookup failure terminates dispatch in the ledger",()=>{
+ const s=src("app/api/platform-admin/customer-invitations/route.ts");
+ const section=s.match(/if\(detailError\|\|!invite\)\{([\s\S]*?)\n  \}/)?.[1]??"";
+ assert.match(section,/saas_invitation_delivery_admin_v1/);
+ assert.match(section,/p_action:"result"/);
+ assert.match(section,/ok:false/);
+});
