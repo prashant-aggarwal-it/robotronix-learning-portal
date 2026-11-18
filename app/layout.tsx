@@ -17,6 +17,7 @@ const brand=getProductBrand(process.env);
 export const metadata:Metadata={
  ...(brand.appName==="Robotronix™ Learning Portal"?{metadataBase:new URL("https://portal.robotronixstemlab.com")}:{}),
  applicationName:brand.appName,
+ icons:{icon:[{url:"/brand/robotronix-stacked.png",type:"image/png"}],shortcut:"/brand/robotronix-stacked.png",apple:"/brand/robotronix-stacked.png"},
  title:{default:brand.title,template:"%s | "+brand.appName},
  description:brand.description,
  creator:"Robotronix™",
