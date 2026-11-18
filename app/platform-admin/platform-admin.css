@@ -27,3 +27,20 @@
 .platformBrandingTierCard{background:#faf8ff;border:1px solid #e6ddef;padding:18px;border-radius:13px;display:grid;gap:10px}
 .platformBrandingTierCard p{margin:0}
 @media(max-width:620px){.platformBrandingTierCard{padding:13px}}
+
+/* Phase 7A onboarding: compact, accessible module selection and high-contrast CTA. */
+.platformOnboarding .platformModuleFieldset{min-width:0;margin:8px 0 12px;padding:15px 16px 16px;border:1px solid #e7dff2;border-radius:12px;background:#fcfbff}
+.platformOnboarding .platformModuleFieldset legend{padding:0 6px;font-size:13px;font-weight:800;color:#352450}
+.platformOnboarding .platformModuleHint{margin:0 0 12px;font-size:12px;color:#716885}
+.platformOnboarding .platformModuleChoices{display:grid;gap:8px}
+.platformOnboarding .platformModuleChoices .platformModuleOption{display:flex!important;align-items:center;gap:12px!important;margin:0!important;padding:11px 12px;border:1px solid #eee8f7;border-radius:10px;background:#fff;cursor:pointer;min-height:58px}
+.platformOnboarding .platformModuleChoices .platformModuleOption:hover{border-color:#c9b6ec;background:#faf7ff}
+.platformOnboarding .platformModuleChoices .platformModuleOption:focus-within{outline:2px solid #7342ca;outline-offset:2px}
+.platformOnboarding .platformModuleChoices .platformModuleOption input[type=checkbox]{appearance:auto;display:block;flex:0 0 18px;width:18px!important;height:18px!important;margin:0!important;accent-color:#6933b8;cursor:pointer}
+.platformOnboarding .platformModuleCopy{display:grid;gap:3px;min-width:0}
+.platformOnboarding .platformModuleCopy strong{font-size:13px;color:#352450;font-weight:750}
+.platformOnboarding .platformModuleCopy small{font-size:11px;color:#77708a;font-weight:450;line-height:1.4}
+.platformOnboarding .platformCreateInvitation[type=submit]{width:100%;min-height:46px;border-radius:11px;background:#6630b2!important;color:#fff!important;font-size:13px;font-weight:800;opacity:1;box-shadow:0 3px 9px #45207c20}
+.platformOnboarding .platformCreateInvitation[type=submit]:hover:not(:disabled){background:#55259c!important}
+.platformOnboarding .platformCreateInvitation[type=submit]:disabled{background:#e8e0f2!important;color:#74678a!important;box-shadow:none;opacity:1;cursor:not-allowed}
+.platformOnboarding .platformCreateInvitation[type=submit]:focus-visible{outline:3px solid #9b78e4;outline-offset:3px}
