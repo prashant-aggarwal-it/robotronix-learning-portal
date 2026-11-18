@@ -1,0 +1,27 @@
+name: Phase 6A Branding Entitlements
+on:
+  push:
+    branches:
+      - feature/education-suite-phase6a-branding-entitlements
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-phase6a-branding.mjs
+      - run: npm run test:theme-foundation
+      - run: npm run test:branding-studio
+      - run: node --test scripts/test-phase5c-branding.mjs
+      - run: npm run typecheck
+      - run: npm run build
