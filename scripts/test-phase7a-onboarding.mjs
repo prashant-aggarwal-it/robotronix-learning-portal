@@ -46,3 +46,9 @@ test("Customer invitation is preserved across auth and remains token-shaped",()=
  assert.match(login,/consumeInvitation/);
  assert.match(callback,/consumeInvitation/);
 });
+
+test("New-owner immediate signup respects the pending invitation",()=>{
+ const signup=read("app/signup/page.tsx");
+ assert.match(signup,/consumeInvitation/);
+ assert.match(signup,/if\(invitation\)\{router.replace\(invitation\);return;\}/);
+});

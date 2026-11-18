@@ -4,6 +4,7 @@ import {FormEvent,useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {loadAuthDeployment,createProductAccount,googleSignIn,loadSignedInAccess} from "@/lib/platform/auth-client";
 import {resolveAuthDestination} from "@/lib/platform/auth-routing";
+import {consumeInvitation} from "@/lib/platform/pending-invitation";
 import type {DeploymentConfig} from "@/lib/platform/deployment";
 
 export default function SignupPage(){
@@ -24,6 +25,8 @@ export default function SignupPage(){
    const result=await createProductAccount(email,password);
    if(!result.ok){setError(result.error??"Registration failed.");return;}
    if(result.signedIn){
+    const invitation=consumeInvitation();
+    if(invitation){router.replace(invitation);return;}
     const access=await loadSignedInAccess(deployment);
     const destination=resolveAuthDestination(deployment,access,null);
     if(destination.denied){setError(destination.denied);return;}
