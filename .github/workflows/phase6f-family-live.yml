@@ -1,0 +1,43 @@
+name: Phase 6F Real Academy Family Branding Acceptance
+on:
+  push:
+    branches:
+      - feature/education-suite-phase6f-branding-release-certification
+permissions:
+  contents: read
+jobs:
+  dev-family:
+    if: contains(github.event.head_commit.message, '[family-live-dev]')
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 15
+    env:
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: DEV real authenticated Parent Student branding
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$E2E_SUPABASE_URL" = "https://uzzuquxeeqonxeqcuohh.supabase.co" ]]
+          export NEXT_PUBLIC_SUPABASE_URL="$E2E_SUPABASE_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$E2E_SUPABASE_ANON_KEY"
+          export SUPABASE_URL="$E2E_SUPABASE_URL"
+          export SUPABASE_SERVICE_ROLE_KEY="$E2E_SUPABASE_SERVICE_ROLE_KEY"
+          npm run dev -- --hostname 127.0.0.1 >/tmp/phase6f-family-next.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [[ "$ready" != 1 ]]; then cat /tmp/phase6f-family-next.log; exit 1; fi
+          node scripts/qa-phase6f-family-live.mjs
