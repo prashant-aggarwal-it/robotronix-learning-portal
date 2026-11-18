@@ -8,14 +8,19 @@ declare
  v_before integer;v_after integer;v_did_reject boolean;
 begin
  select user_id into v_admin from saas.platform_administrators where active limit 1;
- select id into v_org from saas.organizations where status='active' order by created_at limit 1;
- if v_admin is null or v_org is null then raise exception 'DEV active platform admin and active org required';end if;
- select m.user_id into v_owner from saas.memberships m where m.organization_id=v_org and m.status='active' and m.role_key='owner'
-  and not exists(select 1 from saas.platform_administrators a where a.user_id=m.user_id and a.active) limit 1;
+ -- Use an active DEV member; temporarily set Owner inside the rollback transaction
+ -- because old synthetic Owner organizations have already been archived.
+ select m.organization_id,m.user_id into v_org,v_owner from saas.memberships m
+ join saas.organizations o on o.id=m.organization_id and o.status='active'
+ where m.status='active' and not exists(
+  select 1 from saas.platform_administrators a where a.user_id=m.user_id and a.active)
+ order by m.created_at limit 1;
+ if v_admin is null or v_org is null or v_owner is null then raise exception 'DEV active admin and active member required';end if;
+ update saas.memberships set role_key='owner' where organization_id=v_org and user_id=v_owner;
  select m.user_id into v_foreign from saas.memberships m where m.status='active' and m.organization_id<>v_org
   and not exists(select 1 from saas.platform_administrators a where a.user_id=m.user_id and a.active)
   and not exists(select 1 from saas.memberships mm where mm.organization_id=v_org and mm.user_id=m.user_id and mm.status='active') limit 1;
- if v_owner is null or v_foreign is null then raise exception 'DEV independent owner and foreign member required';end if;
+ if v_foreign is null then raise exception 'DEV independent foreign member required';end if;
  if has_function_privilege('anon','public.saas_branding_tier_read_v1(uuid,uuid)','EXECUTE')
  or has_function_privilege('authenticated','public.saas_branding_tier_set_v1(uuid,uuid,text)','EXECUTE')
  or not has_function_privilege('service_role','public.saas_branding_tier_set_v1(uuid,uuid,text)','EXECUTE')

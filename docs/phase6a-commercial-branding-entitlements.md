@@ -24,4 +24,4 @@ Phase 6A only adds commercial entitlement administration and safe storage. Exist
 
 No PROD Supabase, main branch, Netlify deploy or schema changes beyond DEV. Tests: `node --test scripts/test-phase6a-branding.mjs`, `npm run typecheck`, `npm run build`.
 
-DEV rollback verification: execute `database/saas/PHASE6A_DEV_ROLLBACK_VERIFY.sql` in the DEV SQL editor. It requires one active non-platform-admin Owner and one foreign member, checks both negative and positive paths, and rolls back changes.
+DEV rollback verification: execute `database/saas/PHASE6A_DEV_ROLLBACK_VERIFY.sql` in the DEV SQL editor. It temporarily assigns Owner to an active non-platform-admin DEV member within the rollback transaction, requires an independent foreign member, checks both negative and positive paths, and rolls back all changes.
