@@ -56,7 +56,12 @@ export async function POST(request:NextRequest){
   // Fetch authoritative recipient/name/expiry on every dispatch, including rotations.
   const {data:details,error:detailError}=await db.rpc("saas_pending_customer_manage_v1",{p_actor:userId,p_action:"list",p_data:{}});
   const invite=Array.isArray(details)?details.find((x:{id:string})=>x.id===id):undefined;
-  if(detailError||!invite)return send({ok:true,invitation:data,delivery:"failed",message:"Invitation created, but recipient lookup failed."},201);
+  if(detailError||!invite){
+   // Ensure dispatch failures have an auditable terminal state, not a stuck "sending" row.
+   await db.rpc("saas_invitation_delivery_admin_v1",{p_actor:userId,p_action:"result",
+    p_data:{id:queued.id,ok:false,messageId:null}});
+   return send({ok:true,invitation:data,delivery:"failed",message:"Invitation created, but recipient lookup failed. Use resend."},201);
+  }
   const delivery=await deliverInvitation({to:invite.owner_email,academy:invite.organization_name,url:invitationUrl,expiresAt:invite.expires_at},queued.id);
   await db.rpc("saas_invitation_delivery_admin_v1",{p_actor:userId,p_action:"result",
    p_data:{id:queued.id,ok:delivery.status==="provider_accepted",messageId:delivery.status==="provider_accepted"?delivery.messageId:null}});
