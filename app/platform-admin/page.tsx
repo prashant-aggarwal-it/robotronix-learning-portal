@@ -142,7 +142,7 @@ export default function PlatformAdminPage(){
        <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel"><PlatformSubscriptions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
       </div>
       <div className="platformColumns platformTabSections">
-       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations}/></div>
+       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
        <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
         <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Enter the customer details and Owner email. The system will send a secure activation email when delivery is configured.</p>
         <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
