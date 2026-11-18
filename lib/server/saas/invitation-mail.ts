@@ -2,7 +2,7 @@ import "server-only";
 export type InvitationEmail={to:string;academy:string;url:string;expiresAt:string};
 const escape=(s:string)=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 export function invitationOrigin(){
- const raw=process.env.INVITATION_APP_URL||process.env.NEXT_PUBLIC_APP_URL||"";
+ const raw=process.env.INVITATION_APP_URL||process.env.NEXT_PUBLIC_APP_URL||(process.env.NODE_ENV!=="production"?"http://localhost:3000":"");
  if(!raw)throw Error("Invitation public URL not configured");
  const u=new URL(raw);
  const local=["localhost","127.0.0.1"].includes(u.hostname);
