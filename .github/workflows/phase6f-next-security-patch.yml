@@ -1,0 +1,47 @@
+name: Patch Next.js 16.4.6 on Phase 6F
+on:
+  push:
+    branches:
+      - feature/education-suite-phase6f-branding-release-certification
+permissions:
+  contents: write
+concurrency:
+  group: phase6f-next-patch
+  cancel-in-progress: false
+jobs:
+  patch:
+    if: contains(github.event.head_commit.message, '[patch-next-1646]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Upgrade exact Next.js version and regenerate lock
+        run: npm install --package-lock-only --save-exact next@16.4.6 --ignore-scripts --no-audit --no-fund
+      - name: Confirm both manifests and lock agree
+        run: |
+          node -e "const a=require('./package.json'), b=require('./package-lock.json');if(a.dependencies.next!=='16.4.6'||b.packages[''].dependencies.next!=='16.4.6'||b.packages['node_modules/next'].version!=='16.4.6')process.exit(1)"
+      - name: Install with npm ci and verify actual installed version
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          node -e "if(require('next/package.json').version!=='16.4.6')process.exit(1)"
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Commit only dependency manifests to current feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo "Both manifests are already at Next.js 16.4.6"
+          else
+            git commit -m "fix(deps): patch Next.js to 16.4.6"
+            git push origin HEAD:feature/education-suite-phase6f-branding-release-certification
+          fi
