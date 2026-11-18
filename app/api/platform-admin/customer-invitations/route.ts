@@ -25,14 +25,17 @@ export async function POST(request:NextRequest){
     new Set(modules).size!==modules.length||!modules.every((m:unknown)=>["academy","crm","tasks"].includes(String(m))))
     throw new SaaSAccessError(400,"Check organization name, owner email, slug and modules");
   const secret=randomBytes(32).toString("hex");
+  const action=b.action==="rotate"?"rotate":"create";
+  if(action==="rotate"&&(typeof b.id!=="string"||!/^[a-f0-9-]{36}$/i.test(b.id)))throw new SaaSAccessError(400,"Invalid invitation");
   const {data,error:dbError}=await db.rpc("saas_pending_customer_manage_v1",{
-   p_actor:userId,p_action:"create",p_data:{
+   p_actor:userId,p_action:action,p_data:{
+    id:action==="rotate"?b.id:undefined,
     ownerEmail:email,ownerName:typeof b.ownerName==="string"?b.ownerName.trim().slice(0,160):null,
     name,slug,kind,modules,tokenHash:createHash("sha256").update(secret).digest("hex")
    }
   });
-  if(dbError)throw new SaaSAccessError(dbError.code==="23505"?409:503,
-   dbError.code==="23505"?"A pending invitation or organization already uses this URL":"Unable to create customer invitation");
+  if(dbError)throw new SaaSAccessError(dbError.code==="23505"||dbError.code==="23514"?409:503,
+   dbError.code==="23505"?"A pending invitation or organization already uses this URL":dbError.code==="23514"?"Invitation rate limit or rotation cooldown applies":"Unable to create customer invitation");
   const invitationUrl=new URL("/customer-invite?token="+secret,request.nextUrl.origin).toString();
   return send({ok:true,invitation:data,invitationUrl,delivery:"manual",message:"Invitation created. Copy and securely share the link; no email was sent."},201);
  }catch(e){return error(e)}

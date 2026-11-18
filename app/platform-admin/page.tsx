@@ -60,6 +60,16 @@ export default function PlatformAdminPage(){
    setPendingCustomers(data.invitations);
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Unable to load invitations")}
  }
+ async function rotatePending(id:string){
+  try{
+   const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+   if(!session)throw Error("Sign in first");
+   const response=await fetch("/api/platform-admin/customer-invitations",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({action:"rotate",id})});
+   const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Unable to rotate invitation");
+   setInvitationUrl(body.invitationUrl);setAssistedMessage("A replacement link was issued. The previous link is invalid. Share this one securely.");
+   await loadPendingCustomers();
+  }catch(e){setAssistedMessage(e instanceof Error?e.message:"Unable to rotate invitation")}
+ }
  async function revokePending(id:string){
   if(!window.confirm("Revoke this invitation? The link will stop working."))return;
   try{
@@ -143,7 +153,7 @@ export default function PlatformAdminPage(){
          {invitationUrl&&<div role="status"><p>Secure invitation link (manual delivery; share only with intended Owner):</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={()=>void navigator.clipboard.writeText(invitationUrl)}>Copy invitation link</button></div>}
          {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
          <div><button type="button" onClick={()=>void loadPendingCustomers()}>Refresh pending invitations</button>
-          {pendingCustomers.map(inv=><p key={inv.id}>{inv.organization_name} ({inv.organization_slug}) — {inv.owner_email} — {inv.status} — expires {new Date(inv.expires_at).toLocaleDateString()} {inv.status==="pending"&&<button type="button" onClick={()=>void revokePending(inv.id)}>Revoke</button>}</p>)}
+          {pendingCustomers.map(inv=><p key={inv.id}>{inv.organization_name} ({inv.organization_slug}) — {inv.owner_email} — {inv.status} — expires {new Date(inv.expires_at).toLocaleDateString()} {inv.status==="pending"&&<><button type="button" onClick={()=>void rotatePending(inv.id)}>Replace link</button><button type="button" onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</p>)}
          </div>
         </form>
        </section>
