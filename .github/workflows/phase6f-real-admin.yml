@@ -1,0 +1,44 @@
+name: Phase 6F Authenticated Super Admin and Entitled Owner
+on:
+  push:
+    branches:
+      - feature/education-suite-phase6f-branding-release-certification
+permissions:
+  contents: read
+jobs:
+  dev-admin:
+    if: contains(github.event.head_commit.message, '[admin-live-dev]')
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 15
+    env:
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Real authenticated DEV tier upgrade/save/downgrade/restore
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$E2E_SUPABASE_URL" || -z "$E2E_SUPABASE_ANON_KEY" || -z "$E2E_SUPABASE_SERVICE_ROLE_KEY" ]]; then exit 1; fi
+          export SUPABASE_URL="$E2E_SUPABASE_URL"
+          export NEXT_PUBLIC_SUPABASE_URL="$E2E_SUPABASE_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$E2E_SUPABASE_ANON_KEY"
+          export SUPABASE_SERVICE_ROLE_KEY="$E2E_SUPABASE_SERVICE_ROLE_KEY"
+          npm run dev -- --hostname 127.0.0.1 >/tmp/phase6f-admin-dev.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [[ "$ready" != 1 ]]; then cat /tmp/phase6f-admin-dev.log; exit 1; fi
+          node scripts/qa-phase6f-admin-live.mjs
