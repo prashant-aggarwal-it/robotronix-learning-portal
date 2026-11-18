@@ -20,7 +20,7 @@ test("Super Admin creates pending customer by Owner email without a UUID",async(
   if(route.request().method()==="POST"){
    submitted.value=route.request().postDataJSON();
    return route.fulfill({status:201,contentType:"application/json",body:JSON.stringify({
-    ok:true,invitation:{id:ORG,status:"pending"},delivery:"manual",
+    ok:true,invitation:{id:ORG,status:"pending"},delivery:"not_configured",message:"Email delivery is not configured.",
     invitationUrl:"http://localhost:3000/customer-invite?token="+("a".repeat(64))})});
   }
   return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,invitations:[]})});
@@ -30,8 +30,9 @@ test("Super Admin creates pending customer by Owner email without a UUID",async(
  await page.getByLabel("Owner email").fill("owner@brightfuture.example");
  await page.getByLabel("Organization name").fill("Bright Future Academy");
  await expect(page.getByLabel("URL slug")).toHaveValue("bright-future-academy");
- await page.getByRole("button",{name:"Create customer invitation"}).click();
- await expect(page.getByText(/Invitation pending/)).toBeVisible();
+ await page.getByRole("button",{name:"Create academy & send invitation"}).click();
+ await expect(page.getByText(/Email delivery is not configured/)).toBeVisible();
+ await page.getByRole("button",{name:/Advanced · Manual invitation recovery/}).click();
  await expect(page.getByLabel("Owner invitation link")).toHaveValue(/\/customer-invite\?token=/);
  expect(submitted.value.ownerEmail).toBe("owner@brightfuture.example");
  expect(submitted.value.ownerId).toBeUndefined();
@@ -42,7 +43,7 @@ test("Verified customer can open invitation acceptance screen",async({page})=>{
   status:403,contentType:"application/json",
   body:JSON.stringify({ok:false,error:"Invitation intended for another email"})}));
  await page.goto("/customer-invite?token="+("a".repeat(64)));
- await expect(page.getByRole("heading",{name:"Join your academy"})).toBeVisible();
- await page.getByRole("button",{name:"Accept invitation and start trial"}).click();
+ await expect(page.getByRole("heading",{name:"Welcome to your academy"})).toBeVisible();
+ await page.getByRole("button",{name:"Accept invitation & start trial"}).click();
  await expect(page.getByText("Invitation intended for another email")).toBeVisible();
 });
