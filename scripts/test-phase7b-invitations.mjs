@@ -34,3 +34,11 @@ test("Recipient lookup failure terminates dispatch in the ledger",()=>{
  assert.match(section,/p_action:"result"/);
  assert.match(section,/ok:false/);
 });
+
+test("Invitation management shows structured status and clipboard feedback",()=>{
+ const s=src("app/platform-admin/page.tsx");
+ assert.match(s,/<th>Academy<\/th>/);
+ assert.match(s,/<th>Email delivery<\/th>/);
+ assert.match(s,/Secure invitation link copied/);
+ assert.match(s,/Copy failed/);
+});
