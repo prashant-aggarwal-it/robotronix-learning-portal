@@ -1,0 +1,23 @@
+name: Phase 7A Customer Onboarding
+on:
+  push:
+    branches:
+      - feature/education-suite-phase7a-customer-onboarding
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-phase7a-onboarding.mjs
+      - run: npm run typecheck
+      - run: npm run build
