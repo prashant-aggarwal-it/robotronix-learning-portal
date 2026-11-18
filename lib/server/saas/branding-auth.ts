@@ -19,3 +19,12 @@ export async function authorizeBranding(authorization:string|null,organizationId
  if(!data||!data.organization)throw new SaaSAccessError(403,"Academy Owner or Platform Admin required");
  return {db,userId,organization:data.organization as {id:string;slug:string;display_name:string},branding:data.branding};
 }
+
+/** Recheck entitlement and ownership for every logo upload or branding write. */
+export async function authorizeBrandingWrite(authorization:string|null,organizationId:string){
+ const ctx=await authorizeBranding(authorization,organizationId);
+ const {data,error}=await ctx.db.rpc("saas_branding_write_access_v2",{p_actor:ctx.userId,p_org:organizationId});
+ if(error)throw new SaaSAccessError(503,"Branding permission unavailable");
+ if(data!==true)throw new SaaSAccessError(403,"Custom branding is not enabled for this organization");
+ return ctx;
+}

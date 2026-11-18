@@ -1,5 +1,5 @@
 import {NextRequest,NextResponse} from "next/server";
-import {authorizeBranding,ORG_ID} from "@/lib/server/saas/branding-auth";
+import {authorizeBranding,authorizeBrandingWrite,ORG_ID} from "@/lib/server/saas/branding-auth";
 import {SaaSAccessError} from "@/lib/server/saas/organization-context";
 import {normalizeHexColor} from "@/lib/theme/tokens";
 import {generatePalette,validatePublicLogoUrl} from "@/lib/theme/logo-palette";
@@ -9,8 +9,11 @@ function failure(e:unknown){const status=e instanceof SaaSAccessError?e.status:5
 export async function GET(request:NextRequest){
  try{
   const organizationId=new URL(request.url).searchParams.get("organizationId")||"";
-  const {organization,branding}=await authorizeBranding(request.headers.get("authorization"),organizationId);
-  return NextResponse.json({ok:true,organization,branding},{headers});
+  const ctx=await authorizeBranding(request.headers.get("authorization"),organizationId);
+  const {data:canEdit,error:accessError}=await ctx.db.rpc("saas_branding_write_access_v2",{p_actor:ctx.userId,p_org:organizationId});
+  if(accessError)throw new SaaSAccessError(503,"Branding permission unavailable");
+  const {organization,branding}=ctx;
+  return NextResponse.json({ok:true,organization,branding,canEdit:canEdit===true},{headers});
  }catch(e){return failure(e);}
 }
 export async function POST(request:NextRequest){
@@ -22,7 +25,7 @@ export async function POST(request:NextRequest){
    throw new SaaSAccessError(400,"Invalid branding");
   const primary=normalizeHexColor(body.primary),secondary=normalizeHexColor(body.secondary),accent=normalizeHexColor(body.accent);
   if(!primary||!secondary||!accent)throw new SaaSAccessError(400,"Invalid palette colors");
-  const {db,userId,organization}=await authorizeBranding(request.headers.get("authorization"),body.organizationId);
+  const {db,userId,organization}=await authorizeBrandingWrite(request.headers.get("authorization"),body.organizationId);
   const palette=generatePalette(primary,secondary,accent);
   const {data,error}=await db.rpc("saas_branding_save_v1",{
    p_actor:userId,p_org:organization.id,p_tagline:body.tagline.trim(),p_logo:body.logoUrl,

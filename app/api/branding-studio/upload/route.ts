@@ -1,5 +1,5 @@
 import {NextRequest,NextResponse} from "next/server";
-import {authorizeBranding} from "@/lib/server/saas/branding-auth";
+import {authorizeBrandingWrite} from "@/lib/server/saas/branding-auth";
 import {SaaSAccessError} from "@/lib/server/saas/organization-context";
 import {detectRasterLogo,MAX_LOGO_BYTES} from "@/lib/theme/logo-file-validation";
 export const runtime="nodejs";export const dynamic="force-dynamic";
@@ -8,7 +8,7 @@ const headers={"Cache-Control":"private, no-store","Vary":"Authorization"};
 export async function POST(request:NextRequest){
  try{
   const organizationId=request.headers.get("x-branding-organization")||"";
-  const {db,organization,branding}=await authorizeBranding(request.headers.get("authorization"),organizationId);
+  const {db,organization,branding}=await authorizeBrandingWrite(request.headers.get("authorization"),organizationId);
   const form=await request.formData();
   const uploaded=form.get("logo");
   if(!(uploaded instanceof File)||uploaded.size===0||uploaded.size>MAX_LOGO_BYTES)
