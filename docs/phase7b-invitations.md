@@ -21,3 +21,10 @@ Manual fallback remains available only to verified Super Admins; if provider cre
 
 ## Release
 DEV-only work; no PROD schema, Netlify deployment or main merge. Do not commercialize email onboarding until public HTTPS hosting, verified sender/domain, webhook config and actual delivery testing are complete.
+
+## Follow-up engineering verification (18 November 2026)
+- Super Admin invitation management is displayed in a structured table, with explicit invitation state, email-delivery state, expiry and resend/revoke actions.
+- Manual-recovery clipboard operations now report success and failure.
+- An interrupted recipient lookup is recorded as a failed dispatch instead of leaving its ledger row as `sending`.
+- A fully automatic durable retry worker is **not implemented**. The one-time raw invitation token is deliberately not persisted, only its hash; a background worker cannot reconstruct the URL to resend it. Retrying without rotating requires a carefully designed encrypted, expiring secret escrow and worker authorization, or a different token issuance architecture. Do not weaken one-time invitation security by writing raw tokens into plaintext database columns.
+- Domain verification, environment credentials, Resend webhook setup, real mailbox deliverability and end-to-end activation remain external certification prerequisites. The latest CI result alone does not prove these.
