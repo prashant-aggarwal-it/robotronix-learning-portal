@@ -67,3 +67,10 @@ test("tenant identity hides corporate logo while active organization branding re
  assert.match(css,/cx-nav-item\.active/);
  assert.match(css,/suiteHomeCard:focus-visible/);
 });
+
+test("sign in never renders legacy form before deployment mode is known",()=>{
+ const login=read("app/login/page.tsx");
+ assert.match(login,/if\(!deployment\)return <main className="authPage"/);
+ assert.match(login,/const isSuite=Boolean\(deployment\?\.mode==="combined"/);
+ assert.match(login,/className=\{isSuite\?"loginSuite":"authPage"\}/);
+});

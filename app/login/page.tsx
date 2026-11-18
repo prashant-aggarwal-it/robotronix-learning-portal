@@ -96,6 +96,17 @@ function LoginContent(){
   }finally{setLoading(false);}
  }
  
+ // Deployment mode is resolved asynchronously. Never render the legacy login
+ // while determining whether this is the two-panel Education Suite screen.
+ // Showing the legacy form first causes a full layout flash on every cold load.
+ if(!deployment)return <main className="authPage" aria-busy={!error}>
+  <section className="authCard" role="status" aria-live="polite" style={{maxWidth:440,margin:"auto",textAlign:"center"}}>
+   <img src="/brand/robotronix-horizontal.png" alt="Robotronix" style={{width:220,maxWidth:"100%",height:"auto",objectFit:"contain"}}/>
+   <p style={{marginTop:22}}>{error||"Preparing your secure sign-in…"}</p>
+   {error&&<button type="button" className="button secondary" onClick={()=>window.location.reload()}>Retry</button>}
+  </section>
+ </main>;
+ 
  const suiteTheme=<style>{`
  .loginSuite{min-height:100dvh;display:grid;place-items:center;padding:22px 24px;background:radial-gradient(ellipse at 12% 12%,#eadfff 0%,transparent 43%),radial-gradient(ellipse at 88% 85%,#ffdfef 0%,transparent 47%),linear-gradient(135deg,#fffaff,#f7f8ff);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#211b45}
  .loginSuite *{box-sizing:border-box}
