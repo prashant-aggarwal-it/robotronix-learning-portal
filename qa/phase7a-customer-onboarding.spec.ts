@@ -13,12 +13,12 @@ async function session(page:Page){
 }
 test("Super Admin creates pending customer by Owner email without a UUID",async({page})=>{
  await session(page);
- let request:Record<string,unknown>|null=null;
+ const submitted:{value:Record<string,unknown>}={value:{}};
  await page.route("**/api/platform-admin/overview?*",route=>route.fulfill({status:200,contentType:"application/json",
   body:JSON.stringify({ok:true,organizations:[],page:1,total:0,metrics:{organizations:0,trials:0,activeSubscriptions:0}})}));
  await page.route("**/api/platform-admin/customer-invitations",route=>{
   if(route.request().method()==="POST"){
-   request=route.request().postDataJSON();
+   submitted.value=route.request().postDataJSON();
    return route.fulfill({status:201,contentType:"application/json",body:JSON.stringify({
     ok:true,invitation:{id:ORG,status:"pending"},delivery:"manual",
     invitationUrl:"http://localhost:3000/customer-invite?token="+("a".repeat(64))})});
@@ -33,8 +33,8 @@ test("Super Admin creates pending customer by Owner email without a UUID",async(
  await page.getByRole("button",{name:"Create customer invitation"}).click();
  await expect(page.getByText(/Invitation pending/)).toBeVisible();
  await expect(page.getByLabel("Owner invitation link")).toHaveValue(/\/customer-invite\?token=/);
- expect(request?.ownerEmail).toBe("owner@brightfuture.example");
- expect(request?.ownerId).toBeUndefined();
+ expect(submitted.value.ownerEmail).toBe("owner@brightfuture.example");
+ expect(submitted.value.ownerId).toBeUndefined();
 });
 test("Verified customer can open invitation acceptance screen",async({page})=>{
  await session(page);
