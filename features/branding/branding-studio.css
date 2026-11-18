@@ -52,3 +52,66 @@
 .brandingStudio .brandingPreview .brandingPreviewCourse button,
 .brandingStudio .brandingPreview .brandingPreviewActions button:first-child{border:0;background:var(--brand-primary);color:var(--brand-on-primary)}
 .brandingStudio .brandingPreview .brandingPreviewActions button:last-child{border:1px solid var(--brand-accent);background:#fff;color:#2b3650}
+
+
+/* Phase 5B.2 — full-scale, legible tenant branding preview.
+   Presentation-only: all colors still come from the isolated preview tokens. */
+.brandingStudioGrid{grid-template-columns:minmax(310px,.9fr) minmax(430px,1.15fr);gap:30px}
+.brandingPreviewCol{gap:14px}
+.brandingPreviewCaption{font-size:11px;line-height:1.5}
+.brandingPreview{
+ grid-template-columns:minmax(155px,31%) minmax(0,1fr);
+ min-height:505px;
+ border-radius:18px;
+}
+.brandingPreviewSidebar{padding:23px 13px;gap:11px}
+.brandingPreviewSidebar>strong{font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.brandingPreviewLogo{height:62px;margin-bottom:5px}
+.brandingPreviewNav{font-size:12px;line-height:1.4;font-weight:700;padding:12px 10px;border-radius:9px}
+.brandingPreviewMain{padding:24px 20px;gap:18px}
+.brandingPreviewTop{gap:6px}
+.brandingPreviewTop strong{font-size:18px;line-height:1.35;overflow-wrap:anywhere}
+.brandingPreviewTop small{font-size:12px;line-height:1.5}
+.brandingPreviewKpis{gap:10px}
+.brandingPreviewKpis div{gap:8px;padding:15px 13px;border-radius:11px;min-width:0}
+.brandingPreviewKpis span{font-size:12px;line-height:1.4}
+.brandingPreviewKpis strong{font-size:24px;line-height:1.2}
+.brandingPreviewCourse{padding:17px 15px;gap:10px;border-radius:11px}
+.brandingPreviewCourse span{font-size:11px;line-height:1.4}
+.brandingPreviewCourse strong{font-size:14px;line-height:1.45}
+.brandingPreviewCourse p{font-size:12px;line-height:1.5}
+.brandingPreviewActions{gap:10px}
+.brandingStudio .brandingPreview .brandingPreviewCourse button,
+.brandingStudio .brandingPreview .brandingPreviewActions button:first-child{
+ min-height:40px;padding:10px 14px;font-size:12px;line-height:1.35;
+ font-weight:750;border-radius:9px;
+}
+.brandingStudio .brandingPreview .brandingPreviewActions button:last-child{
+ min-height:40px;padding:10px 14px;font-size:12px;line-height:1.35;
+ font-weight:750;border-radius:9px;
+}
+.brandingPreviewInput{font-size:12px;gap:8px;line-height:1.4}
+.brandingPreviewInput input{font-size:13px;min-height:43px;padding:10px 12px;border-radius:9px}
+@media(max-width:1250px){
+ .brandingStudioGrid{grid-template-columns:1fr}
+ .brandingPreviewCol{position:static}
+ .brandingPreview{grid-template-columns:minmax(155px,25%) minmax(0,1fr)}
+}
+@media(max-width:620px){
+ .brandingPreview{grid-template-columns:minmax(0,1fr)}
+ .brandingPreviewSidebar{
+  border-right:0;border-bottom:1px solid #e6e0eb;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  padding:14px;
+ }
+ .brandingPreviewLogo,.brandingPreviewSidebar>strong{grid-column:1/-1}
+ .brandingPreviewLogo{width:180px;max-width:100%;height:54px;margin-bottom:2px}
+ .brandingPreviewNav{padding:10px 8px;font-size:12px}
+ .brandingPreviewMain{padding:17px 14px;gap:15px}
+ .brandingPreviewKpis div{padding:12px 10px}
+ .brandingPreviewKpis strong{font-size:21px}
+}
+@media(max-width:390px){
+ .brandingPreviewKpis{grid-template-columns:1fr}
+ .brandingPreviewActions button{flex:1 1 100%}
+}

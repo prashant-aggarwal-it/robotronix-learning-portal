@@ -127,3 +127,18 @@ test("palette selection uses contrast-safe navy for bright primary and white for
  const dark=generatePalette("#22115e");
  assert.equal(dark.onPrimary,"#ffffff");
 });
+
+test("Branding Studio preview uses full-scale legible controls and adapts to narrow screens",()=>{
+ const css=read("features/branding/branding-studio.css");
+ assert.match(css,/Phase 5B\.2/);
+ assert.match(css,/\.brandingPreviewNav\{font-size:12px/);
+ assert.match(css,/\.brandingPreviewTop strong\{font-size:18px/);
+ assert.match(css,/\.brandingPreviewKpis strong\{font-size:24px/);
+ assert.match(css,/\.brandingPreviewInput input\{font-size:13px;min-height:43px/);
+ assert.match(css,/@media\(max-width:620px\)/);
+ assert.match(css,/grid-template-columns:minmax\(0,1fr\)/);
+ assert.match(css,/background:var\(--brand-primary\);color:var\(--brand-on-primary\)/);
+ const ui=read("features/branding/BrandingStudio.tsx");
+ assert.match(ui,/className="brandingPreview"/);
+ assert.match(ui,/style=\{previewStyle\}/);
+});
