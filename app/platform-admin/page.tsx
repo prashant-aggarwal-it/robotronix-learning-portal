@@ -34,6 +34,8 @@ export default function PlatformAdminPage(){
  }
  const [assisted,setAssisted]=useState({name:"",slug:"",kind:"academy",ownerEmail:"",ownerName:"",modules:["academy"] as string[]});
  const [invitationUrl,setInvitationUrl]=useState("");
+ const [showRecovery,setShowRecovery]=useState(false);
+ const [deliveryStatus,setDeliveryStatus]=useState<Record<string,string>>({});
  const [pendingCustomers,setPendingCustomers]=useState<{id:string;owner_email:string;organization_name:string;organization_slug:string;status:string;expires_at:string}[]>([]);
  const [assistedMessage,setAssistedMessage]=useState("");const [assistedBusy,setAssistedBusy]=useState(false);
  useEffect(()=>{
@@ -58,6 +60,7 @@ export default function PlatformAdminPage(){
    const response=await fetch("/api/platform-admin/customer-invitations",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
    const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||"Unable to load invitations");
    setPendingCustomers(data.invitations);
+   const byId:Record<string,string>={};for(const d of data.deliveries||[]){if(!byId[d.invitation_id])byId[d.invitation_id]=d.status;}setDeliveryStatus(byId);
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Unable to load invitations")}
  }
  async function rotatePending(id:string){
@@ -66,7 +69,7 @@ export default function PlatformAdminPage(){
    if(!session)throw Error("Sign in first");
    const response=await fetch("/api/platform-admin/customer-invitations",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({action:"rotate",id})});
    const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Unable to rotate invitation");
-   setInvitationUrl(body.invitationUrl);setAssistedMessage("A replacement link was issued. The previous link is invalid. Share this one securely.");
+   setInvitationUrl(body.invitationUrl||"");setShowRecovery(false);setAssistedMessage(body.message||"Invitation resend requested.");
    await loadPendingCustomers();
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Unable to rotate invitation")}
  }
@@ -88,8 +91,8 @@ export default function PlatformAdminPage(){
    const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
    const response=await fetch("/api/platform-admin/customer-invitations",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify(assisted)});
    const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Creation failed");
-   setAssistedMessage("Invitation pending. The customer will be activated only after the invited Owner verifies their email and accepts.");
-   setInvitationUrl(body.invitationUrl||"");
+   setAssistedMessage(body.message||"Customer invitation created.");
+   setInvitationUrl(body.invitationUrl||"");setShowRecovery(false);
    await loadPendingCustomers();
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Creation failed")}finally{setAssistedBusy(false)}
  }
@@ -141,7 +144,7 @@ export default function PlatformAdminPage(){
       <div className="platformColumns platformTabSections">
        <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations}/></div>
        <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
-        <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Enter the customer details and Owner email. A secure invitation link will be created for manual delivery; no email is sent automatically.</p>
+        <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Enter the customer details and Owner email. The system will send a secure activation email when delivery is configured.</p>
         <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
          <label>Owner email<input required type="email" value={assisted.ownerEmail} onChange={e=>setAssisted(v=>({...v,ownerEmail:e.target.value}))} placeholder="owner@example.com"/></label>
          <label>Owner name (optional)<input value={assisted.ownerName} onChange={e=>setAssisted(v=>({...v,ownerName:e.target.value}))} placeholder="Owner name"/></label>
@@ -149,11 +152,11 @@ export default function PlatformAdminPage(){
          <label>URL slug<input required value={assisted.slug} onChange={e=>setAssisted(s=>({...s,slug:e.target.value}))} placeholder="abc-learning-academy"/></label>
          <label>Organization type<select value={assisted.kind} onChange={e=>setAssisted(s=>({...s,kind:e.target.value}))}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Tutor</option></select></label>
          <fieldset className="platformModuleFieldset"><legend>Enabled trial modules</legend><p className="platformModuleHint">Choose which applications the customer can try.</p><div className="platformModuleChoices">{(["academy","crm","tasks"] as const).map(m=><label key={m} className="platformModuleOption"><input type="checkbox" checked={assisted.modules.includes(m)} onChange={e=>setAssisted(s=>({...s,modules:e.target.checked?[...s.modules,m]:s.modules.filter(x=>x!==m)}))}/><span className="platformModuleCopy"><strong>{m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks"}</strong><small>{m==="academy"?"Students, trainers, classes and fees":m==="crm"?"Enquiries, admissions and follow-ups":"Daily tasks and team coordination"}</small></span></label>)}</div></fieldset>
-         <button className="platformCreateInvitation" type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create customer invitation"}</button>
-         {invitationUrl&&<div role="status"><p>Secure invitation link (manual delivery; share only with intended Owner):</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={()=>void navigator.clipboard.writeText(invitationUrl)}>Copy invitation link</button></div>}
+         <button className="platformCreateInvitation" type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create academy & send invitation"}</button>
+         {invitationUrl&&<div><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. This link grants access to the invitation process; share privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={()=>void navigator.clipboard.writeText(invitationUrl)}>Copy secure link</button></div>}</div>}
          {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
          <div><button type="button" onClick={()=>void loadPendingCustomers()}>Refresh pending invitations</button>
-          {pendingCustomers.map(inv=><p key={inv.id}>{inv.organization_name} ({inv.organization_slug}) — {inv.owner_email} — {inv.status} — expires {new Date(inv.expires_at).toLocaleDateString()} {inv.status==="pending"&&<><button type="button" onClick={()=>void rotatePending(inv.id)}>Replace link</button><button type="button" onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</p>)}
+          {pendingCustomers.map(inv=><p key={inv.id}>{inv.organization_name} ({inv.organization_slug}) — {inv.owner_email} — {inv.status} — expires {new Date(inv.expires_at).toLocaleDateString()} <span> · Delivery: {deliveryStatus[inv.id]||"not sent"}</span> {inv.status==="pending"&&<><button type="button" onClick={()=>void rotatePending(inv.id)}>Resend invitation</button><button type="button" onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</p>)}
          </div>
         </form>
        </section>
