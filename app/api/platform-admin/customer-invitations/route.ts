@@ -25,11 +25,12 @@ export async function POST(request:NextRequest){
     new Set(modules).size!==modules.length||!modules.every((m:unknown)=>["academy","crm","tasks"].includes(String(m))))
     throw new SaaSAccessError(400,"Check organization name, owner email, slug and modules");
   const secret=randomBytes(32).toString("hex");
-  const {data,error:dbError}=await db.schema("saas").from("pending_customer_invitations").insert({
-   created_by:userId,owner_email:email,owner_name:typeof b.ownerName==="string"?b.ownerName.trim().slice(0,160):null,
-   organization_name:name,organization_slug:slug,organization_kind:kind,module_keys:modules,
-   token_sha256:createHash("sha256").update(secret).digest("hex")
-  }).select("id,organization_slug,status,expires_at").single();
+  const {data,error:dbError}=await db.rpc("saas_pending_customer_manage_v1",{
+   p_actor:userId,p_action:"create",p_data:{
+    ownerEmail:email,ownerName:typeof b.ownerName==="string"?b.ownerName.trim().slice(0,160):null,
+    name,slug,kind,modules,tokenHash:createHash("sha256").update(secret).digest("hex")
+   }
+  });
   if(dbError)throw new SaaSAccessError(dbError.code==="23505"?409:503,
    dbError.code==="23505"?"A pending invitation or organization already uses this URL":"Unable to create customer invitation");
   const invitationUrl=new URL("/customer-invite?token="+secret,request.nextUrl.origin).toString();
@@ -38,23 +39,19 @@ export async function POST(request:NextRequest){
 }
 export async function GET(request:NextRequest){
  try{
-  const {db}=await requirePlatformAdmin(request.headers.get("authorization"));
-  const {data,error:dbError}=await db.schema("saas").from("pending_customer_invitations")
-    .select("id,owner_email,organization_name,organization_slug,organization_kind,module_keys,status,expires_at,created_at,accepted_at,organization_id")
-    .order("created_at",{ascending:false}).limit(100);
+  const {db,userId}=await requirePlatformAdmin(request.headers.get("authorization"));
+  const {data,error:dbError}=await db.rpc("saas_pending_customer_manage_v1",{p_actor:userId,p_action:"list",p_data:{}});
   if(dbError)throw new SaaSAccessError(503,"Invitations unavailable");
   return send({ok:true,invitations:data??[]});
  }catch(e){return error(e)}
 }
 export async function DELETE(request:NextRequest){
  try{
-  const {db}=await requirePlatformAdmin(request.headers.get("authorization"));
+  const {db,userId}=await requirePlatformAdmin(request.headers.get("authorization"));
   const body=await request.json().catch(()=>null),id=body?.id;
   if(typeof id!=="string"||!/^[a-f0-9-]{36}$/i.test(id))throw new SaaSAccessError(400,"Invalid invitation");
-  const {data,error:dbError}=await db.schema("saas").from("pending_customer_invitations")
-   .update({status:"revoked"}).eq("id",id).eq("status","pending").select("id").maybeSingle();
-  if(dbError)throw new SaaSAccessError(503,"Unable to revoke");
-  if(!data)throw new SaaSAccessError(409,"Invitation no longer pending");
+  const {error:dbError}=await db.rpc("saas_pending_customer_manage_v1",{p_actor:userId,p_action:"revoke",p_data:{id}});
+  if(dbError)throw new SaaSAccessError(dbError.code==="23514"?409:503,"Unable to revoke");
   return send({ok:true});
  }catch(e){return error(e)}
 }
