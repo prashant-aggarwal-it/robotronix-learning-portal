@@ -32,7 +32,8 @@ export default function PlatformAdminPage(){
   window.history.pushState(null,"","#"+section);
   window.scrollTo({top:0,behavior:"instant"});
  }
- const [assisted,setAssisted]=useState({name:"",slug:"",kind:"academy",ownerId:""});
+ const [assisted,setAssisted]=useState({name:"",slug:"",kind:"academy",ownerEmail:"",ownerName:"",modules:["academy"] as string[]});
+ const [invitationUrl,setInvitationUrl]=useState("");
  const [assistedMessage,setAssistedMessage]=useState("");const [assistedBusy,setAssistedBusy]=useState(false);
  useEffect(()=>{
   let active=true;setLoading(true);setError("");
@@ -50,13 +51,14 @@ export default function PlatformAdminPage(){
   return()=>{active=false};
  },[page,search,refresh]);
  async function createAssisted(){
-  if(assistedBusy)return;setAssistedBusy(true);setAssistedMessage("");
+  if(assistedBusy)return;setAssistedBusy(true);setAssistedMessage("");setInvitationUrl("");
   try{
    const client=getSupabaseBrowserClient();if(!client)throw Error("Sign in first");
    const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
-   const response=await fetch("/api/platform/onboard",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({...assisted,assisted:true,modules:["academy"],requestKey:crypto.randomUUID()})});
+   const response=await fetch("/api/platform-admin/customer-invitations",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify(assisted)});
    const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Creation failed");
-   setAssistedMessage("Created "+body.slug+". Refresh the organization directory to see the new tenant.");
+   setAssistedMessage("Invitation pending. The customer will be activated only after the invited Owner verifies their email and accepts.");
+   setInvitationUrl(body.invitationUrl||"");
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Creation failed")}finally{setAssistedBusy(false)}
  }
  return <main className="platformConsole">
@@ -107,13 +109,15 @@ export default function PlatformAdminPage(){
       <div className="platformColumns platformTabSections">
        <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations}/></div>
        <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
-        <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Create a trial for an existing, verified customer account. No email invitation is sent automatically.</p>
+        <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Enter the customer details and Owner email. A secure invitation link will be created for manual delivery; no email is sent automatically.</p>
         <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
          <label>Owner Auth UUID<input required value={assisted.ownerId} onChange={e=>setAssisted(s=>({...s,ownerId:e.target.value}))} placeholder="Verified customer's user ID"/></label>
-         <label>Organization name<input required value={assisted.name} onChange={e=>setAssisted(s=>({...s,name:e.target.value}))} placeholder="e.g. ABC Learning Academy"/></label>
+         <label>Organization name<input required value={assisted.name} onChange={e=>setAssisted(s=>({...s,name:e.target.value,slug:s.slug||e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}))} placeholder="e.g. ABC Learning Academy"/></label>
          <label>URL slug<input required value={assisted.slug} onChange={e=>setAssisted(s=>({...s,slug:e.target.value}))} placeholder="abc-learning-academy"/></label>
          <label>Organization type<select value={assisted.kind} onChange={e=>setAssisted(s=>({...s,kind:e.target.value}))}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Tutor</option></select></label>
-         <button type="submit" disabled={assistedBusy||!assisted.ownerId||!assisted.name||!assisted.slug}>{assistedBusy?"Creating…":"Create trial workspace"}</button>
+         <fieldset><legend>Enabled trial modules</legend>{(["academy","crm","tasks"] as const).map(m=><label key={m} style={{display:"flex",gap:10,alignItems:"center"}}><input type="checkbox" style={{width:"auto"}} checked={assisted.modules.includes(m)} onChange={e=>setAssisted(s=>({...s,modules:e.target.checked?[...s.modules,m]:s.modules.filter(x=>x!==m)}))}/>{m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks"}</label>)}</fieldset>
+         <button type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create customer invitation"}</button>
+         {invitationUrl&&<div role="status"><p>Secure invitation link (manual delivery; share only with intended Owner):</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={()=>void navigator.clipboard.writeText(invitationUrl)}>Copy invitation link</button></div>}
          {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
         </form>
        </section>
