@@ -112,7 +112,7 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
  // CRM branding must correspond to the actual CRM-authorized workspace, not
  // just the last Suite organization selected in a cookie.
  const currentContext=crm?"crm":sharedTasks?"tasks":path.startsWith("/suite")?"suite":"academy";
- const shown=corporate||!snapshot||snapshot.context!==currentContext ? null :
+ const shown=corporate||loading||!snapshot||snapshot.context!==currentContext ? null :
   crm && (!snapshot.linkedCrmTenant||snapshot.linkedCrmTenant!==activeCrmTenant) ? null :
   sharedTasks && (!activeTasksWorkspace||!snapshot.linkedTaskWorkspaces.includes(activeTasksWorkspace)) ? null :
   snapshot.branding;
