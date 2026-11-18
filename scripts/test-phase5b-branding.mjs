@@ -15,7 +15,7 @@ test("detect prominent brand color without counting transparent or white backgro
 test("brand logo monochrome produces deterministic accessible default",()=>{
  const sample=pixels(Array.from({length:25},()=>[255,255,255,255]));
  const a=paletteFromPixels(sample),b=paletteFromPixels(sample);
- assert.deepEqual(a,b);assert.equal(a.primary,"#6d3cc9");
+ assert.deepEqual(a,b);assert.equal(a.primary,"#242424");
 });
 test("three brand hues produce usable palette",()=>{
  const p=paletteFromPixels(pixels([
@@ -64,4 +64,34 @@ test("accept a well-formed PNG header with reasonable dimensions and reject huge
  assert.equal(detectRasterLogo(png,"image/png")?.mime,"image/png");
  assert.equal(detectRasterLogo(png,"image/jpeg"),null);
  view.setUint32(16,40000);assert.equal(detectRasterLogo(png,"image/png"),null);
+});
+
+test("large dark wordmark does not overwhelm smaller vivid logo icon",()=>{
+ const p=paletteFromPixels(pixels([
+  ...Array.from({length:240},()=>[7,23,42,255]),
+  ...Array.from({length:55},()=>[100,56,213,255]),
+  ...Array.from({length:35},()=>[7,174,247,255]),
+  ...Array.from({length:30},()=>[178,14,232,255])
+ ]));
+ assert.notEqual(p.primary,"#07172a");
+ assert.ok([p.primary,p.secondary,p.accent].some(c=>c==="#6438d5"));
+ assert.ok(hasReadableContrast(p.onPrimary,p.primary));
+});
+test("monochrome logo remains neutral and transparent pixels are ignored",()=>{
+ const p=paletteFromPixels(pixels([
+  ...Array.from({length:60},()=>[34,34,34,255]),
+  ...Array.from({length:60},()=>[255,0,0,0]),
+  ...Array.from({length:60},()=>[255,255,255,255])
+ ]));
+ assert.equal(p.primary,"#222222");assert.equal(p.secondary,"#222222");
+});
+test("gradient shades do not fill all three suggestions with duplicates",()=>{
+ const p=paletteFromPixels(pixels([
+  ...Array.from({length:30},()=>[86,48,202,255]),
+  ...Array.from({length:30},()=>[98,54,212,255]),
+  ...Array.from({length:30},()=>[113,60,223,255]),
+  ...Array.from({length:24},()=>[0,176,231,255]),
+  ...Array.from({length:24},()=>[220,15,183,255])
+ ]));
+ assert.notEqual(p.primary,p.secondary);assert.notEqual(p.secondary,p.accent);
 });

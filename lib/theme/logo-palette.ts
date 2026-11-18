@@ -12,25 +12,57 @@ export function generatePalette(primary:string,secondary?:string,accent?:string)
  const hover=mix(p,onPrimary==="#ffffff"?"#000000":"#ffffff",0.16);
  return resolveTenantTheme({primary:p,secondary:s,accent:a,primaryHover:hover,primarySoft:mix(p,"#ffffff",0.91),onPrimary});
 }
-/** Deterministic color histogram; excludes transparent/near-white and neutral backdrops. */
+/** Deterministic, logo-agnostic palette extraction.
+ * Cluster nearby shades, suppress neutral wordmarks when colorful artwork is
+ * present, and keep true monochrome logos neutral rather than inventing hues.
+ */
 export function paletteFromPixels(pixels:Uint8ClampedArray):SuggestedPalette{
- const bins=new Map<string,{n:number;r:number;g:number;b:number;s:number}>();
+ type Bin={n:number;r:number;g:number;b:number;s:number};
+ const bins=new Map<string,Bin>();
+ let neutralCount=0,neutralR=0,neutralG=0,neutralB=0;
  for(let i=0;i+3<pixels.length;i+=4){
-  const sample:Sample={r:pixels[i],g:pixels[i+1],b:pixels[i+2],a:pixels[i+3]};
-  if((sample.a||0)<150)continue;
-  const sat=saturation(sample),brightness=(sample.r+sample.g+sample.b)/3;
-  if(brightness>237&&sat<0.12)continue;
-  if(brightness<25&&sat<0.12)continue;
-  if(sat<0.14)continue;
-  const key=[sample.r,sample.g,sample.b].map(v=>Math.min(7,Math.floor(v/32))).join(":");
+  const alpha=pixels[i+3]/255;
+  if(alpha<0.55)continue;
+  const sample:Sample={r:pixels[i],g:pixels[i+1],b:pixels[i+2]};
+  const sat=saturation(sample),bright=Math.max(sample.r,sample.g,sample.b);
+  if(bright>245&&sat<0.12)continue; // white / light background
+  if(sat<0.19){neutralCount++;neutralR+=sample.r;neutralG+=sample.g;neutralB+=sample.b;continue;}
+  const key=[sample.r,sample.g,sample.b].map(v=>Math.min(11,Math.floor(v/22))).join(":");
   const bin=bins.get(key)||{n:0,r:0,g:0,b:0,s:0};
   bin.n++;bin.r+=sample.r;bin.g+=sample.g;bin.b+=sample.b;bin.s+=sat;bins.set(key,bin);
  }
- const candidates=[...bins.values()].sort((a,b)=>b.n*(0.6+b.s/b.n)-a.n*(0.6+a.s/a.n))
-  .map(b=>hex(b.r/b.n,b.g/b.n,b.b/b.n));
- const unique:string[]=[];
- for(const c of candidates){if(unique.every(prev=>{const a=rgb(prev)!,b=rgb(c)!;return a.reduce((sum,v,i)=>sum+(v-b[i])**2,0)>5000;}))unique.push(c);if(unique.length>=3)break;}
- return generatePalette(unique[0]||"#6d3cc9",unique[1]||"#e83d8c",unique[2]||"#14b8a6");
+ // Group nearby quantized shades before ranking. This prevents a gradient
+ // from occupying all three palette slots with almost identical colors.
+ const groups:Bin[]=[];
+ const distance=(a:Bin,b:Bin)=>Math.sqrt((a.r/a.n-b.r/b.n)**2+(a.g/a.n-b.g/b.n)**2+(a.b/a.n-b.b/b.n)**2);
+ for(const bin of [...bins.values()].sort((a,b)=>b.n-a.n)){
+  const match=groups.find(g=>distance(g,bin)<48);
+  if(match){match.n+=bin.n;match.r+=bin.r;match.g+=bin.g;match.b+=bin.b;match.s+=bin.s;}
+  else groups.push({...bin});
+ }
+ const score=(g:Bin)=>{
+  const sat=g.s/g.n;
+  const max=Math.max(g.r/g.n,g.g/g.n,g.b/g.n);
+  // Frequency is deliberately sublinear so large dark lettering does not
+  // automatically dominate a smaller but vivid multicolor mark.
+  return Math.sqrt(g.n)*(0.25+sat*1.8)*(0.55+max/510);
+ };
+ const ranked=groups.sort((a,b)=>score(b)-score(a));
+ const vivid=ranked.filter(g=>g.s/g.n>=0.38&&Math.max(g.r/g.n,g.g/g.n,g.b/g.n)>=90);
+ const primaryPool=vivid.length?vivid:ranked;
+ const primary=primaryPool[0];
+ if(!primary){
+  const neutral=neutralCount?hex(neutralR/neutralCount,neutralG/neutralCount,neutralB/neutralCount):"#242424";
+  return generatePalette(neutral,neutral,neutral);
+ }
+ const selected=[primary];
+ for(const group of ranked){
+  if(selected.includes(group))continue;
+  if(selected.every(other=>distance(other,group)>=83))selected.push(group);
+  if(selected.length===3)break;
+ }
+ const colors=selected.map(g=>hex(g.r/g.n,g.g/g.n,g.b/g.n));
+ return generatePalette(colors[0],colors[1]||colors[0],colors[2]||colors[1]||colors[0]);
 }
 export async function detectLogoPalette(file:Blob):Promise<SuggestedPalette>{
  if(!["image/png","image/jpeg","image/webp"].includes(file.type))throw new Error("Upload PNG, JPEG or WebP");
