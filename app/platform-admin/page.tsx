@@ -34,6 +34,7 @@ export default function PlatformAdminPage(){
  }
  const [assisted,setAssisted]=useState({name:"",slug:"",kind:"academy",ownerEmail:"",ownerName:"",modules:["academy"] as string[]});
  const [invitationUrl,setInvitationUrl]=useState("");
+ const [pendingCustomers,setPendingCustomers]=useState<{id:string;owner_email:string;organization_name:string;organization_slug:string;status:string;expires_at:string}[]>([]);
  const [assistedMessage,setAssistedMessage]=useState("");const [assistedBusy,setAssistedBusy]=useState(false);
  useEffect(()=>{
   let active=true;setLoading(true);setError("");
@@ -50,6 +51,26 @@ export default function PlatformAdminPage(){
   void load().then(x=>{if(active)setOverview(x)}).catch(e=>{if(active){setOverview(null);setError(e instanceof Error?e.message:"Access unavailable")}}).finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
  },[page,search,refresh]);
+ async function loadPendingCustomers(){
+  try{
+   const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+   if(!session)throw Error("Sign in first");
+   const response=await fetch("/api/platform-admin/customer-invitations",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
+   const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||"Unable to load invitations");
+   setPendingCustomers(data.invitations);
+  }catch(e){setAssistedMessage(e instanceof Error?e.message:"Unable to load invitations")}
+ }
+ async function revokePending(id:string){
+  if(!window.confirm("Revoke this invitation? The link will stop working."))return;
+  try{
+   const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+   if(!session)throw Error("Sign in first");
+   const response=await fetch("/api/platform-admin/customer-invitations",{method:"DELETE",
+     headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({id})});
+   const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||"Revoke failed");
+   await loadPendingCustomers();
+  }catch(e){setAssistedMessage(e instanceof Error?e.message:"Revoke failed")}
+ }
  async function createAssisted(){
   if(assistedBusy)return;setAssistedBusy(true);setAssistedMessage("");setInvitationUrl("");
   try{
@@ -59,6 +80,7 @@ export default function PlatformAdminPage(){
    const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Creation failed");
    setAssistedMessage("Invitation pending. The customer will be activated only after the invited Owner verifies their email and accepts.");
    setInvitationUrl(body.invitationUrl||"");
+   await loadPendingCustomers();
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Creation failed")}finally{setAssistedBusy(false)}
  }
  return <main className="platformConsole">
@@ -119,6 +141,9 @@ export default function PlatformAdminPage(){
          <button type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create customer invitation"}</button>
          {invitationUrl&&<div role="status"><p>Secure invitation link (manual delivery; share only with intended Owner):</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={()=>void navigator.clipboard.writeText(invitationUrl)}>Copy invitation link</button></div>}
          {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
+         <div><button type="button" onClick={()=>void loadPendingCustomers()}>Refresh pending invitations</button>
+          {pendingCustomers.map(inv=><p key={inv.id}>{inv.organization_name} ({inv.organization_slug}) — {inv.owner_email} — {inv.status} — expires {new Date(inv.expires_at).toLocaleDateString()} {inv.status==="pending"&&<button type="button" onClick={()=>void revokePending(inv.id)}>Revoke</button>}</p>)}
+         </div>
         </form>
        </section>
       </div>
