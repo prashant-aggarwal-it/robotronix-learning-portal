@@ -24,9 +24,10 @@ Scope: commercial branding and white-label portions of Robotronix Education Suit
 | Real Standard Owner branding write + logo upload refusal | `/api/branding-studio`, `/upload` | Real authenticated DEV HTTP passed | PASS |
 | Real Owner self-escalation refusal | Phase 6A authorization API | Real authenticated DEV HTTP passed | PASS |
 | Real unrelated tenant / anonymous access refusal | `/api/tenant-branding`, Phase 6F HTTP | Real authenticated DEV HTTP passed | PASS |
-| Super Admin changes tier via real HTTP | `/api/platform/branding-entitlements` | No authorized real Super Admin QA session available for live execution | BLOCKED |
-| Entitled Owner saves real logo and colors after Admin upgrade | Phase 6B Branding Studio APIs and Phase 6A control | Existing DEV RPC rollback tests and mocked UI only, not full real HTTP acceptance on an entitled tenant | BLOCKED |
-| Live Academy Admin/Trainer/Parent/Student sessions | Shared `AppShell`, provider | Code and mocked browser checks pass; live role-specific QA not completed | BLOCKED |
+| Super Admin changes tier via real HTTP | `/api/platform/branding-entitlements` | Disposable authenticated DEV Super Admin successfully set Custom, White-label and Standard via HTTP in run 44245200191 | PASS |
+| Entitled Owner saves real logo and colors after Admin upgrade | Phase 6B Studio HTTP APIs + DEV Storage | Real Owner uploaded a PNG, saved palette+tagline, read effective Custom/White-label, downgraded, preserved saved values and restored on re-upgrade in run 44245200191 | PASS |
+| Real Academy-family Parent and Student branding API sessions | `saas_invite_academy_family`, `saas_accept_academy_family_invite`, `/api/tenant-branding` | Real separate authenticated Parent/Student accounts accepted invitations and passed own-org read, foreign-org and editor-write denial in run 44246190834 | PASS (API) |
+| Live visual Academy Admin/Trainer/Parent/Student dashboards | Shared `AppShell`, provider | Mocked browser coverage; real rendered per-role dashboard QA not executed | BLOCKED (visual) |
 | Suite Home organization switching | Suite switcher and provider | Desktop/mobile mocked browser verification passes | PASS (mock); BLOCKED (live two-org session) |
 | CRM linked/unlinked tenant identity | Organization-link RPC and provider | Existing mocked browser regressions pass; live CRM identity acceptance not performed | PASS (mock); BLOCKED (live) |
 | Linked Tasks and personal Tasks isolation | Provider + Tasks workspace mapping | Existing mocked browser regressions pass; live role/workspace acceptance not performed | PASS (mock); BLOCKED (live) |
@@ -42,7 +43,7 @@ Scope: commercial branding and white-label portions of Robotronix Education Suit
 
 ## Outstanding release blockers
 
-1. **Remaining real DEV identity matrix:** Platform Super Admin tier updates; Custom/White-label entitled Owners' actual save/upload/restore; Academy Parent and Student, plus the distinct Academy Admin/Trainer user-facing workflows must be exercised with real sessions and authorized module data. SaaS Admin and Trainer branding reads/denials are already verified with real tokens.
+1. **Remaining live role UI:** Real authenticated Super Admin, Owners, Admin, Trainer, Parent and Student branding API checks passed. The remaining gate is visual interaction with each role's actual Academy dashboard using a running DEV application and seeded representative role data. The current Playwright visual suite relies on mocked branding APIs.
 2. **Full live cross-module UI:** verify distinct customer themes and vendor attribution on linked CRM/Tasks and all supported Academy roles, including logout/login and tenant switching, on a running DEV build with genuine sessions.
 3. **Legacy white-label surface review:** ensure no inappropriate vendor branding remains in client-facing legacy surfaces, notifications or documents, without hiding legal or operational disclosures.
 4. **Production-level security review:** existing Supabase advisor warnings require triage. At Phase 6F verification: 155 `rls_enabled_no_policy` INFO, 16 `anon_security_definer_function_executable` WARN, 50 `authenticated_security_definer_function_executable` WARN, one `auth_leaked_password_protection` WARN. These are project-level findings and not newly introduced Phase 6F failures, but require appropriate platform release review.
@@ -50,10 +51,18 @@ Scope: commercial branding and white-label portions of Robotronix Education Suit
 
 ## Explicit next action
 
-Keep the branch in DEV. Arrange dedicated real DEV QA sessions for a platform Super Admin and Academy role-specific test accounts, then execute the remaining matrix. Only after the blocked items are resolved and retested should a production release be approved. Phase 6E custom domains/email branding is optional and **not** a prerequisite for the initial SaaS branding tier release.
+Keep the branch in DEV. Arrange a controlled DEV deployment or a local application QA environment with representative role data, and execute live visual Academy/CRM/Tasks and session-switch checks. No further missing branding-tier API behavior was identified. Only after the blocked items are resolved and retested should a production release be approved. Phase 6E custom domains/email branding is optional and **not** a prerequisite for the initial SaaS branding tier release.
 
 ## Safe release and rollback guidance
 
 - Treat migration 78 as a privacy/commercial-entitlement correctness fix. Reverting to the pre-6F public RPC would re-expose saved Standard-tier branding. Any rollback must preserve the tier-gating rule or disable public custom branding until a corrected function is available.
 - Leave PROD unchanged until the blocked real-session authorization/visual acceptance items are closed and existing Supabase security warnings are assessed.
 - DEV cleanup in these QA runs required an exact-organization, lock-scoped transaction that briefly disabled the last-owner trigger only while deleting disposable Owner memberships, then re-enabled it before committing. Do not generalize that pattern to user-managed customer organizations.
+
+## Additional Phase 6F certification evidence (final acceptance expansion)
+
+- **Actual authenticated Platform Super Admin and entitled Owner:** [Actions 44245200191](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44245200191) completed successfully. A disposable QA platform administrator was granted in DEV only after verifying the exact synthetic Auth identity. Its actual Bearer session changed tiers via Next.js, while a separate Owner Bearer session uploaded to real DEV Storage, saved real branding, experienced White-label and Standard transitions, and restored saved branding upon re-upgrade. Foreign-tenant reads and unauthorized tier updates were denied.
+- **Platform Admin cleanup:** [Actions 44245639066](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44245639066) completed successfully. Direct follow-up SQL verified zero disposable orgs/users/privileges and the last-Owner guard enabled. The immutable QA logo object was removed from DEV Storage.
+- **Actual authenticated Parent/Student:** [Actions 44246190834](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44246190834) completed successfully. A real owner created a synthetic Academy learner, invited separate real Parent and Student accounts through the normal family invitation RPCs, and each authenticated account passed its own-branding and membership checks plus cross-tenant/editor denials.
+- **Family cleanup:** Exact synthetic DEV family-access rows, invitations, Academy student, organizations, subscriptions and memberships were deleted in a single guarded transaction. [Actions 44246554987](https://github.com/prashant-aggarwal-it/robotronix-learning-portal/actions/runs/44246554987) removed the exact synthetic Auth accounts. Independent SQL verification found zero remaining family orgs, users or synthetic students, with the last-Owner guard enabled.
+- These API assertions are not substitutes for **live browser rendering** of every module/role. CRM and Tasks linked-workspace visuals, legacy branded notices, and cross-account visual transitions remain pending. Project-wide advisor findings also require platform release triage. Because PROD changes and Netlify deployment were explicitly prohibited, **the release decision remains NOT YET READY**, despite the completed branding API acceptance.
