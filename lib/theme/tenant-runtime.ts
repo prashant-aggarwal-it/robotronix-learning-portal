@@ -1,5 +1,7 @@
 import {ROBOTRONIX_THEME,resolveTenantTheme,themeToCssVariables,type TenantTheme} from "./tokens";
 export type BrandingLevel="standard"|"custom"|"white_label";
+/** Optional vendor attribution; absence of an authorized tier never implies white-label. */
+export function showVendorAttribution(level:BrandingLevel|null|undefined):boolean{return level!=="white_label"}
 export type TenantBranding=Readonly<{
  level:BrandingLevel;
  organizationId:string;slug:string;name:string;tagline:string;logoUrl:string;theme:TenantTheme;
