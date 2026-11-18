@@ -16,7 +16,10 @@ export async function authorizeBranding(authorization:string|null,organizationId
  const {db,userId}=await verifiedBrandingActor(authorization);
  const {data,error}=await db.rpc("saas_branding_detail_v1",{p_actor:userId,p_org:organizationId});
  if(error)throw new SaaSAccessError(503,"Branding authorization unavailable");
- if(!data||!data.organization)throw new SaaSAccessError(403,"Academy Owner or Platform Admin required");
+ if(!data||!data.organization){
+  // Do not disclose organization existence to unauthorized users.
+  throw new SaaSAccessError(403,"This organization is unavailable for branding. Select an active academy you can access.");
+ }
  return {db,userId,organization:data.organization as {id:string;slug:string;display_name:string},branding:data.branding};
 }
 
