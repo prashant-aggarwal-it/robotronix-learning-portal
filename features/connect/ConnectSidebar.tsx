@@ -1,6 +1,7 @@
 "use client";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {TenantIdentity} from "@/components/TenantIdentity";
+import {TenantVendorAttribution} from "@/components/TenantVendorAttribution";
 import {useTenantBranding} from "@/components/TenantBrandingProvider";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import type {ConnectWorkspace} from "@/features/connect/api/client";
@@ -27,6 +28,7 @@ export function ConnectSidebar({showMobileNav,onToggleMobile,canOpenPortal,tenan
     <span className="cx-nav-label">WORKSPACE</span>
     {visibleNavigation.map(n=><button key={n.id} className={"cx-nav-item "+(section===n.id?"active":"")} onClick={()=>onSectionChange(n.id)}><span aria-hidden="true">{n.icon}</span>{n.label}</button>)}
    </nav>
+   <TenantVendorAttribution className="cx-vendor-attribution"/>
    <div className="cx-sidebar-footer"><div className="cx-persona">{initials(accountEmail)}</div>
     <div className="cx-sidebar-account"><strong>{accountEmail.split("@")[0]}</strong><small>{accountEmail}</small></div>
     <button title="Sign out" aria-label="Sign out" className="cx-signout" onClick={()=>void getSupabaseBrowserClient()?.auth.signOut()}>↪</button>

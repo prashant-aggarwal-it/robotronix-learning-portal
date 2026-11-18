@@ -3,6 +3,7 @@ import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
 import { usePathname } from "next/navigation";
 import {TenantIdentity} from "./TenantIdentity";
+import {TenantVendorAttribution} from "./TenantVendorAttribution";
 import {useTenantBranding} from "./TenantBrandingProvider";
 import { ModeBadge } from "./ModeBadge";
 import {ApplicationSwitcher} from "./ApplicationSwitcher";
@@ -139,7 +140,7 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
         </nav>
         <div className="sidebarFooter"><div className="roleBadge"><span className="statusDot"/> {role==="admin"?"Administrator":"Trainer account"}</div><SignOutButton className="sidebarSignout" label="Sign out"/></div>
       </aside>
-      <div className="workspaceMain"><header className="workspaceTopbar"><div><SuiteContextLink module="portal"/><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main>{role==="admin"&&<AdminRecordHistory/>}<div className="footer">{branding?.name||"Robotronix™ Learning Portal"} · Structured learning, visible progress, connected operations</div></div><ModeBadge /></div>
+      <div className="workspaceMain"><header className="workspaceTopbar"><div><SuiteContextLink module="portal"/><span className="workspaceCrumb">{pathname.split("/").filter(Boolean).slice(1).map(s=>s.replaceAll("-"," ")).join(" / ")||"overview"}</span></div><div className="topbarActions"><ThemeSwitcher/><NotificationBell role={role}/><SignOutButton/></div></header><main className="workspaceContent">{children}</main>{role==="admin"&&<AdminRecordHistory/>}<div className="footer">{branding?.name||"Robotronix™ Learning Portal"} · Structured learning, visible progress, connected operations <TenantVendorAttribution/></div></div><ModeBadge /></div>
   }
   return <>
     <div className="shell experienceShell">
@@ -162,7 +163,7 @@ export function AppShell({ role, children }: { role: UserRole; children: React.R
         <div className="experienceAccount"><ThemeSwitcher/><NotificationBell role={role}/><span>Learner account</span><SignOutButton label="Sign out"/></div>
       </header>}
       {children}
-      <div className="footer">{branding?.name||"Robotronix™ Learning Portal"} · Learning progress, projects and mentor feedback in one place</div>
+      <div className="footer">{branding?.name||"Robotronix™ Learning Portal"} · Learning progress, projects and mentor feedback in one place <TenantVendorAttribution/></div>
     </div>
     <nav className="mobileExperienceNav">{navByRole[role].filter(item=>role!=="parent"||!["/onboarding","/parent/notifications"].includes(item.href)).map(({label,href})=><Link className={isActive(pathname,href)?"active":""} href={href} key={href}>{label}</Link>)}</nav>
     <ModeBadge />

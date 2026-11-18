@@ -59,3 +59,8 @@
 .tenantThemeScope .suiteOrgControl select{accent-color:var(--brand-primary)}
 .tenantThemeScope .cx-app button:focus-visible,
 .tenantThemeScope .mt2-shell button:focus-visible{outline-color:var(--brand-primary)}
+
+/* Only optional product attribution; does not alter required notices. */
+.tenantVendorAttribution{display:inline-block;font-size:.68rem;line-height:1.5;font-weight:600;letter-spacing:.02em;opacity:.72}
+.footer .tenantVendorAttribution{margin-inline-start:.65rem}
+.cx-vendor-attribution,.mt2-vendor-attribution{margin:.25rem .85rem .65rem}

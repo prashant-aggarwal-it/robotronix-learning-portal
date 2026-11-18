@@ -3,6 +3,7 @@ import Link from "next/link";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import {TenantIdentity} from "@/components/TenantIdentity";
+import {TenantVendorAttribution} from "@/components/TenantVendorAttribution";
 import {ApplicationSwitcher} from "@/components/ApplicationSwitcher";
 import {TasksNotifications} from "./TasksNotifications";
 import {TasksPrimaryNav} from "./TasksPrimaryNav";
@@ -169,6 +170,7 @@ export function TasksV2Connected(){
   <aside className={"mt2-sidebar "+(mobileNav?"mt2-sidebar-open":"")}>
    <Link href="/tasks" className="mt2-brand"><TenantIdentity/></Link>
    <div className="mt2-product">My Tasks <span>CONNECTED WORK</span></div>
+   <TenantVendorAttribution className="mt2-vendor-attribution"/>
    <ApplicationSwitcher current="tasks"/>
    <div className="mt2-sidebar-heading">TASKS</div>
    <TasksPrimaryNav section="connected"/>

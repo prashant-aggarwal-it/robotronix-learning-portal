@@ -8,6 +8,7 @@ import {SignOutButton} from "@/components/SignOutButton";
 import {ThemeSwitcher} from "@/components/ThemeSwitcher";
 import {useTenantBranding} from "@/components/TenantBrandingProvider";
 import {TenantIdentity} from "@/components/TenantIdentity";
+import {TenantVendorAttribution} from "@/components/TenantVendorAttribution";
 
 type Product={id:SuiteModuleId;label:string;href:string};
 type OrgResponse={ok:boolean;organizations:{id:string;displayName:string;role:string}[];selectedOrganizationId:string|null;requiresSelection:boolean};
@@ -73,7 +74,7 @@ export default function SuiteHome(){
  const visible=products.filter(p=>!organizationUnavailable&&(!hasOrganizations||(!needsSelection&&modules?.[suiteModuleById(p.id).entitlement]===true)));
  return <main className="suiteHome">
   <header className="suiteHomeHeader">
-   <div><span className="suiteEyebrow">{branding?.name||"Robotronix"}</span><h1>Education Suite</h1><p>{branding?.tagline||"Choose a workspace you are authorized to use."}</p>{branding?.logoUrl&&<TenantIdentity/>}</div>
+   <div><span className="suiteEyebrow">{branding?.name||"Robotronix"}</span><h1>Education Suite</h1><p>{branding?.tagline||"Choose a workspace you are authorized to use."}</p>{branding?.logoUrl&&<TenantIdentity/>}<TenantVendorAttribution/></div>
    <div className="suiteHomeControls"><SuiteOrganizationSwitcher/><ThemeSwitcher/><SignOutButton/></div>
   </header>
   {loading&&<p role="status">Checking your workspace access…</p>}
