@@ -30,13 +30,18 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
  const generation=useRef(0);
 
  useEffect(()=>{
-  const onRefresh=()=>setRevision(x=>x+1);
+  const onRefresh=()=>{generation.current++;setSnapshot(null);setRevision(x=>x+1)};
   const onCrmTenant=(event:Event)=>{
    const id=(event as CustomEvent<{tenantId?:string}>).detail?.tenantId;
    setActiveCrmTenant(typeof id==="string"?id:"");
   };
   window.addEventListener("robotronix:branding-saved",onRefresh);
   window.addEventListener("robotronix:organization-changed",onRefresh);
+  const onStorage=(event:StorageEvent)=>{
+   // Auth session/organization changes in other tabs invalidate the previous identity.
+   if(event.key?.includes("auth-token")||event.key==="robotronix_active_org")onRefresh();
+  };
+  window.addEventListener("storage",onStorage);
   const onTasksWorkspace=(event:Event)=>{
    const id=(event as CustomEvent<{workspaceId?:string}>).detail?.workspaceId;
    setActiveTasksWorkspace(typeof id==="string"?id:"");
@@ -48,6 +53,7 @@ export function TenantBrandingProvider({children}:{children:ReactNode}){
    window.removeEventListener("robotronix:organization-changed",onRefresh);
    window.removeEventListener("robotronix:crm-tenant-selected",onCrmTenant);
    window.removeEventListener("robotronix:tasks-workspace-selected",onTasksWorkspace);
+   window.removeEventListener("storage",onStorage);
   };
  },[]);
 

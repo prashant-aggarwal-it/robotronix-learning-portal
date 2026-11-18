@@ -40,10 +40,11 @@ export function SuiteOrganizationSwitcher(){
   try{
    await authorizedRequest("/api/platform/organizations",next?{method:"POST",body:JSON.stringify({organizationId:next})}:{method:"DELETE"});
    setAcademyBrowserOrganizationContext(next||null);
+   // Clear previously rendered tenant identity before the new organization is resolved.
+   window.dispatchEvent(new Event("robotronix:organization-changed"));
    if(pathname==="/suite"){
     // Suite Home owns no module record caches: refresh only its authorization-derived state.
     setSelected(next);setBusy(false);
-    window.dispatchEvent(new Event("robotronix:organization-changed"));
     router.refresh();
    }else{
     // Module-owned state and subscriptions must be discarded until cache isolation is certified.

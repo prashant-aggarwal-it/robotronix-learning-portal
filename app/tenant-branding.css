@@ -47,3 +47,15 @@
  color:var(--app-text);
  border-color:var(--brand-primary);
 }
+
+/* Effective themes use the centralized tokens rather than duplicating palette constants. */
+.tenantThemeScope .suiteHomeCard:focus-visible,
+.tenantThemeScope .suiteOrgControl select:focus-visible{
+ outline-color:var(--brand-primary);
+}
+.tenantThemeScope .suiteHomeIcon{color:var(--brand-primary)}
+.tenantThemeScope .suiteEyebrow{color:var(--brand-primary)}
+.tenantThemeScope .suiteHomeCard:focus-within{border-color:var(--brand-primary)}
+.tenantThemeScope .suiteOrgControl select{accent-color:var(--brand-primary)}
+.tenantThemeScope .cx-app button:focus-visible,
+.tenantThemeScope .mt2-shell button:focus-visible{outline-color:var(--brand-primary)}

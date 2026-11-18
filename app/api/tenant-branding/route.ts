@@ -10,10 +10,16 @@ export async function GET(request:NextRequest){
   const id=request.nextUrl.searchParams.get("organizationId")||"";
   if(!ORG_ID.test(id))throw new SaaSAccessError(400,"Valid organization required");
   const {db,userId}=await verifiedBrandingActor(request.headers.get("authorization"));
-  const {data,error}=await db.rpc("saas_branding_view_v1",{p_actor:userId,p_org:id});
+  // Both RPCs independently verify active membership / Platform Admin against the same actor.
+  const [{data,error},{data:tier,error:tierError}]=await Promise.all([
+   db.rpc("saas_branding_view_v1",{p_actor:userId,p_org:id}),
+   db.rpc("saas_branding_tier_read_v1",{p_actor:userId,p_org:id})
+  ]);
+  if(tierError||!tier||tier.organizationId!==id||!["standard","custom","white_label"].includes(tier.level))
+   throw new SaaSAccessError(503,"Branding entitlement unavailable");
   if(error)throw new SaaSAccessError(503,"Tenant branding unavailable");
   if(!data)throw new SaaSAccessError(403,"Organization is not accessible");
-  const branding=parseTenantBranding(data);
+  const branding=parseTenantBranding({...data,level:tier.level});
   if(!branding)throw new SaaSAccessError(503,"Invalid organization branding");
   return NextResponse.json({ok:true,branding},{headers});
  }catch(e){

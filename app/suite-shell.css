@@ -14,7 +14,7 @@
 .suiteHomeControls{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
 .suiteHomeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1rem}
 .suiteHomeCard{display:flex;min-height:190px;flex-direction:column;gap:.75rem;border:1px solid #94a3b87a;border-radius:16px;padding:1.35rem;background:var(--surface,#fff);color:inherit;text-decoration:none;box-shadow:0 3px 16px #0000000a}
-.suiteHomeCard:hover,.suiteHomeCard:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.suiteHomeCard:hover,.suiteHomeCard:focus-visible{outline:2px solid var(--brand-primary,#2563eb);outline-offset:2px}
 .suiteHomeCard strong{font-size:1.12rem}
 .suiteHomeCard>span:not(.suiteHomeIcon){font-size:.87rem;opacity:.75}
 .suiteHomeCard small{margin-top:auto;font-weight:650}
