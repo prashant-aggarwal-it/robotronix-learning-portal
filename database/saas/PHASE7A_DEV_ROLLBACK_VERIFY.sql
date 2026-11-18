@@ -18,6 +18,8 @@ begin
   'ownerEmail',owner_email,'name','Phase 7A Rollback QA','slug',v_slug,'kind','academy',
   'modules',jsonb_build_array('academy'),'tokenHash',secret_hash));
  if created->>'status'<>'pending' then raise exception 'Pending creation failed';end if;
+ if not exists(select 1 from saas.platform_admin_audit where actor_user_id=admin_id and action='pending_customer_invitation_created:'||(created->>'id')) then
+  raise exception 'Missing invitation creation audit';end if;
  select count(*) into row_count from saas.organizations where slug=v_slug;
  if row_count<>0 then raise exception 'Pending customer prematurely activated';end if;
  rejected:=false;
