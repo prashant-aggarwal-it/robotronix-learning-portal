@@ -1,0 +1,48 @@
+name: Phase 6F Real DEV HTTP Certification
+on:
+  push:
+    branches:
+      - feature/education-suite-phase6f-branding-release-certification
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dev-http:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[live-dev]')
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 30
+    env:
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Real authenticated DEV HTTP acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$E2E_SUPABASE_URL" || -z "$E2E_SUPABASE_ANON_KEY" || -z "$E2E_SUPABASE_SERVICE_ROLE_KEY" ]]; then
+            echo "::error::Required DEV QA secrets missing; acceptance blocked"
+            exit 1
+          fi
+          export NEXT_PUBLIC_SUPABASE_URL="$E2E_SUPABASE_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$E2E_SUPABASE_ANON_KEY"
+          export SUPABASE_URL="$E2E_SUPABASE_URL"
+          export SUPABASE_SERVICE_ROLE_KEY="$E2E_SUPABASE_SERVICE_ROLE_KEY"
+          npm run dev -- --hostname 127.0.0.1 > /tmp/phase6f-dev.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then ready=1; break; fi
+            sleep 2
+          done
+          if [[ "$ready" != 1 ]]; then cat /tmp/phase6f-dev.log; exit 1; fi
+          node scripts/qa-phase6f-live.mjs
