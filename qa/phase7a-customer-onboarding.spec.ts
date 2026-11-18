@@ -32,7 +32,7 @@ test("Super Admin creates pending customer by Owner email without a UUID",async(
  await expect(page.getByLabel("URL slug")).toHaveValue("bright-future-academy");
  await page.getByRole("button",{name:"Create customer invitation"}).click();
  await expect(page.getByText(/Invitation pending/)).toBeVisible();
- await expect(page.getByLabel("Owner invitation link")).toContainText("/customer-invite?token=");
+ await expect(page.getByLabel("Owner invitation link")).toHaveValue(/\/customer-invite\?token=/);
  expect(request?.ownerEmail).toBe("owner@brightfuture.example");
  expect(request?.ownerId).toBeUndefined();
 });
