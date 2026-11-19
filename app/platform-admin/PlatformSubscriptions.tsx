@@ -3,8 +3,8 @@ import {useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 type Org={id:string;display_name:string};
 type Snapshot={subscription:{plan_code:string;status:string;started_at:string;ends_at:string|null}|null;modules:{module:string;enabled:boolean}[];events:{event_type:string;occurred_at:string}[]};
-export default function PlatformSubscriptions({organizations,onChanged}:{organizations:Org[];onChanged:()=>void}){
- const [organizationId,setOrganizationId]=useState("");
+export default function PlatformSubscriptions({organizations,onChanged,initialOrganizationId=""}:{organizations:Org[];onChanged:()=>void;initialOrganizationId?:string}){
+ const [organizationId,setOrganizationId]=useState(initialOrganizationId);
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null);
  const [planCode,setPlanCode]=useState("standard");
  const [endAt,setEndAt]=useState("");
