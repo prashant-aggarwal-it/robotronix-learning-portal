@@ -1,0 +1,7 @@
+# Phase 7F — Automated academy email notification foundation
+
+DEV migrations 90–91: tenant-owned jobs, unique organization/idempotency key, opt-in event preferences (disabled by default), atomic SKIP LOCKED claim. Server module queues explicitly authorized enrollment, class_reminder, fee_reminder, trainer_update, progress_update and invitation events, and dispatches using the selected academy Gmail or SMTP adapter. No Robotronix platform SMTP fallback.
+
+API: GET/PUT /api/academy/email-notifications/preferences (owner/admin bearer required); POST /api/internal/academy-notifications/process (server-only ACADEMY_NOTIFICATION_WORKER_SECRET of at least 32 characters). Configure a trusted scheduler separately; never expose worker secret to the browser. ACADEMY_EMAIL_ENCRYPTION_KEY is also required for provider credentials.
+
+IMPORTANT: This is the queue, preference, and delivery foundation. Existing enrollment/class/finance workflows are NOT yet wired to enqueue notifications. No actual scheduler is configured. No real provider credentials have been verified, and no live email is sent by default. Delivery attempts may be repeated if a worker crashes after provider acceptance but before marking sent. Implement lease recovery, recipient authorization integration, template rendering, audit/event logs and end-to-end testing before production certification. Never enable preferences in PROD until provider certification and consent policies are complete.
