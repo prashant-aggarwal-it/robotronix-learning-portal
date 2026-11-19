@@ -25,5 +25,10 @@
 | Responsive and keyboard-only usability | NOT TESTED | Browser viewport and accessibility walkthrough |
 | Deployment/PROD operational readiness | OUT OF SCOPE | Separate authorization and deployment decision |
 
+## Additional development hardening (19 November 2026)
+- Administrator email lookup now distinguishes a complete negative scan from the 1,000-user search safety bound. Previously, the response could report a limited result even when the server had exhausted all users; the UI also incorrectly described absence on safety-limited lookups.
+- The administrator UI now displays a distinct inconclusive state and clears stale errors on retry.
+- Regression coverage added for the bounded lookup semantics and a dedicated non-deploying CI workflow on `feature/education-suite-phase8e-dev-hardening`.
+
 ## Decision
 **Not release-certified.** Passing source and schema checks is not proof of live multi-tenant isolation, real-world email delivery, or browser-level usability. Do not merge to main or promote to production solely on this document. Complete the remaining acceptance gates with controlled DEV identities and test-provider credentials.
