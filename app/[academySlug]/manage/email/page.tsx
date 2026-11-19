@@ -21,11 +21,11 @@ export default function AcademyEmailSettings(){
   if(active){setOrganizationId(org.id);setName(body.organization.displayName);setConnections(body.connections||[]);}
  }catch(e){if(active)setError(e instanceof Error?e.message:"Unable to load email settings");}
  finally{if(active)setBusy(false);}})();return()=>{active=false};},[academySlug]);
- async function googleAction(action:"start"|"disconnect"){
+ async function oauthAction(provider:"google"|"microsoft",action:"start"|"disconnect"){
   const client=getSupabaseBrowserClient();const {data:{session}}=await client!.auth.getSession();
   if(!session||!organizationId){setError("Sign in and select your academy");return;}
   try{
-   const response=await fetch("/api/academy/email-connections/google/"+action,{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({organizationId}),cache:"no-store"});
+   const response=await fetch("/api/academy/email-connections/"+provider+"/"+action,{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({organizationId}),cache:"no-store"});
    const body=await response.json();if(!response.ok)throw Error(body.error||"Google connection unavailable");
    if(action==="start")window.location.assign(body.url);else window.location.reload();
   }catch(e){setError(e instanceof Error?e.message:"Google connection unavailable");}
@@ -57,7 +57,7 @@ export default function AcademyEmailSettings(){
       {c?.sender_email&&<p>Sender: {c.sender_email}</p>}
       {c?.last_error_code&&<p role="status">Connection issue: {c.last_error_code}</p>}
       {p.key==="google"?<div style={{display:"flex",gap:12,marginTop:14}}>
-       {c?.status==="connected"?<button type="button" onClick={()=>googleAction("disconnect")}>Disconnect Gmail</button>:<button type="button" onClick={()=>googleAction("start")}>Connect Google account</button>}
+       {c?.status==="connected"?<button type="button" onClick={()=>oauthAction("google","disconnect")}>Disconnect Gmail</button>:<button type="button" onClick={()=>oauthAction("google","start")}>Connect Google account</button>}
       </div>:<small style={{color:"#526179"}}>Connection setup is planned for a later phase.</small>}
      </section>})}
     </div>
