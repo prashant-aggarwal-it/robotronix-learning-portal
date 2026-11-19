@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import {queueAcademyNotification} from "@/lib/server/saas/academy-notifications";
 import {NextRequest,NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
 import {getAuthorizedOrganizations,readBearerToken,resolveAuthorizedOrganization,SaaSAccessError} from "@/lib/server/saas/organization-context";
@@ -33,7 +34,23 @@ export async function POST(request:NextRequest,context:{params:Promise<{organiza
    p_role_key:role,p_token_sha256:tokenSha256
   });
   if(error)return NextResponse.json({ok:false,error:error.code==="42501"?"Invitation not authorized":error.code==="22023"?"Invalid invitation":"Invitation service unavailable"},{status:error.code==="42501"?403:error.code==="22023"?400:503,headers});
-  return NextResponse.json({ok:true,invitationId:data,acceptToken:token,delivery:"manual_secure_share",expiresInDays:7},{status:201,headers});
+  // The invitation is already committed; email is best-effort and must never invalidate it.
+  // Only a configured, explicitly enabled academy provider can queue delivery.
+  let delivery="manual_secure_share";
+  try{
+   const appOrigin=process.env.ACADEMY_INVITATION_APP_ORIGIN;
+   if(appOrigin&&new URL(appOrigin).protocol==="https:"){
+    const acceptUrl=new URL("/workspace",appOrigin);
+    acceptUrl.searchParams.set("invite",token);
+    const queued=await queueAcademyNotification({
+     organizationId,eventType:"invitation",idempotencyKey:"academy-invite:"+String(data),
+     to:email.trim().toLowerCase(),subject:"Invitation to join "+org.displayName,
+     text:"You have been invited to join "+org.displayName+".\\n\\nOpen this link to accept your invitation:\\n"+acceptUrl.toString()+"\\n\\nThis invitation expires in 7 days."
+    });
+    if(queued.queued)delivery="academy_email_queued";
+   }
+  }catch{/* preserve manual invitation flow on provider failure */}
+  return NextResponse.json({ok:true,invitationId:data,acceptToken:token,delivery,expiresInDays:7},{status:201,headers});
  }catch(error){
   return NextResponse.json({ok:false,error:error instanceof SaaSAccessError?error.message:"Invitation service unavailable"},{status:error instanceof SaaSAccessError?error.status:503,headers});
  }
