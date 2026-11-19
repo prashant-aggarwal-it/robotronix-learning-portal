@@ -8,7 +8,7 @@ Operational requirements:
 3. Use a dedicated transactional delivery service for managed email if that product decision is made; this implementation supports BYO providers only.
 4. Confirm legacy enrollment and schedule statuses, timezone behavior, recipient consent and finance status against actual fixtures before enabling any academy.
 5. Review class reminders: the current implementation sends on the calendar date of a class, not a configurable interval before its start. The job is idempotent per event/date; fee reminders are idempotent per invoice/day.
-6. Add monitoring and cursor-based pagination before scaling beyond the current bounded scan (10 organizations, 150 enrollments per org). Current worker can exceed serverless execution time for large datasets.
+6. Add monitoring and cursor-based pagination before scaling beyond the current bounded scan (a rotating window of 10 organizations per run, 150 most-recent enrollments per org). Current worker can exceed serverless execution time for large datasets; cursor-based record pagination and workload limits remain necessary.
 7. Email provider acceptance is not proof of inbox delivery. Recovered interrupted sends may duplicate an email. Live tests and operational alerting are required.
 
 This is a development integration, not a production certification. No production changes or Netlify builds were performed.
