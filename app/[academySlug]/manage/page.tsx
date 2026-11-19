@@ -27,6 +27,7 @@ export default function AcademyManagement(){
   {label:"Invite team members",detail:"Give staff and trainers access",href:"/workspace/invitations",icon:"👥"},
   {label:"Invite families",detail:"Connect parents and learners",href:"/workspace/families",icon:"✉️"},
   {label:"Link trainers",detail:"Connect trainer accounts to their records",href:"/workspace/trainers",icon:"🔗"},
+  {label:"Academy email",detail:"Review your academy-owned email connections",href:"/"+academySlug+"/manage/email",icon:"✉️"},
   {label:"Academy branding",detail:"Customize the Academy identity",href:"/onboarding/branding",icon:"🎨"},
   {label:"Academy entry page",detail:"Preview the learner-facing entry point",href:"/"+academySlug,icon:"🌐"}
  ];
