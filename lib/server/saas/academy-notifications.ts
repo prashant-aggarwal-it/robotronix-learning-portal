@@ -1,6 +1,7 @@
 import "server-only";
 import {platformService} from "@/lib/server/saas/platform-admin";
 import {sendAcademyGmail} from "@/lib/server/saas/google-email-send";
+import {sendAcademyMicrosoft} from "@/lib/server/saas/microsoft-email-send";
 import {sendAcademySmtp} from "@/lib/server/saas/academy-smtp";
 import {SaaSAccessError} from "@/lib/server/saas/organization-context";
 export const EVENT_TYPES=["enrollment","class_reminder","fee_reminder","trainer_update","progress_update","invitation"] as const;
@@ -31,7 +32,7 @@ export async function processAcademyNotifications(limit=10){
    results.push({id:job.id,status:"cancelled"});continue;
   }
   try{
-   const sent=job.provider==="google"?await sendAcademyGmail(job.organization_id,job.recipient_email,job.subject,job.body_text):job.provider==="smtp"?await sendAcademySmtp(job.organization_id,job.recipient_email,job.subject,job.body_text):null;
+   const sent=job.provider==="google"?await sendAcademyGmail(job.organization_id,job.recipient_email,job.subject,job.body_text):job.provider==="smtp"?await sendAcademySmtp(job.organization_id,job.recipient_email,job.subject,job.body_text):job.provider==="microsoft"?await sendAcademyMicrosoft(job.organization_id,job.recipient_email,job.subject,job.body_text):null;
    if(!sent)throw Error("Unsupported provider");
    await db.schema("saas").from("academy_email_notification_jobs").update({status:"sent",provider_message_id:sent.messageId,locked_at:null,last_error_code:null,updated_at:new Date().toISOString()}).eq("id",job.id).eq("status","sending");
    results.push({id:job.id,status:"sent"});
