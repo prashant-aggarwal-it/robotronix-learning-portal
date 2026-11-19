@@ -12,7 +12,7 @@ const enabledKinds:Kind[]=["enrollment","class_reminder","fee_reminder","progres
 export async function discoverAcademyEmailEvents(maxOrganizations=10){
  const db=platformService(),now=new Date(),today=now.toISOString().slice(0,10);
  const {data:preferences,error}=await db.schema("saas").from("academy_email_notification_preferences")
-  .select("organization_id,enabled_events").eq("enabled",true).limit(Math.min(Math.max(maxOrganizations,1),50));
+  .select("organization_id,enabled_events,updated_at").eq("enabled",true).order("organization_id").limit(Math.min(Math.max(maxOrganizations,1),50));
  if(error)throw Error("Unable to discover academy email preferences");
  const results:{organizationId:string;queued:number;skipped:number}[]=[];
  for(const pref of preferences||[]){
@@ -33,10 +33,10 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
     const outcome=await queueAcademyNotification({organizationId:orgId,eventType:kind,idempotencyKey:key,to,subject,text:body});
     if(outcome.queued)queued++;else skipped++;
    }
-   if(enabled.includes("enrollment")&&enrollment.status==="active"&&enrollment.created_at&&Date.parse(enrollment.created_at)>now.getTime()-7*86400000){
+   if(enabled.includes("enrollment")&&enrollment.status==="active"&&enrollment.created_at&&Date.parse(enrollment.created_at)>Math.max(now.getTime()-7*86400000,Date.parse(pref.updated_at||""))){
     await emit("enrollment","enrollment:"+enrollment.id,"Enrollment confirmation","Enrollment for "+student.full_name+" has been recorded. Please contact your academy for class details.");
    }
-   if(enabled.includes("progress_update")&&typeof enrollment.progress_percent==="number"&&enrollment.progress_percent>0&&enrollment.updated_at&&Date.parse(enrollment.updated_at)>now.getTime()-7*86400000){
+   if(enabled.includes("progress_update")&&typeof enrollment.progress_percent==="number"&&enrollment.progress_percent>0&&enrollment.updated_at&&Date.parse(enrollment.updated_at)>Math.max(now.getTime()-7*86400000,Date.parse(pref.updated_at||""))){
     await emit("progress_update","progress:"+enrollment.id+":"+Math.floor(enrollment.progress_percent),"Learning progress update","Progress for "+student.full_name+": "+Math.floor(enrollment.progress_percent)+"%.");
    }
    if(enabled.includes("class_reminder")){
