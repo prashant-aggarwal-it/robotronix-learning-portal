@@ -4,7 +4,7 @@ const require=createRequire(import.meta.url);
 type MailResult={messageId:string};
 type Mailer={createTransport:(options:Record<string,unknown>)=>{sendMail:(mail:Record<string,unknown>)=>Promise<MailResult>;close:()=>void}};
 const nodemailer=require("nodemailer") as Mailer;
-export type OutboundEmail={to:string;subject:string;text:string;html:string;replyTo?:string;senderName?:string};
+export type OutboundEmail={to:string;subject:string;text:string;html:string};
 const address=/^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/;
 export function smtpConfigured(){
  return Boolean(process.env.SMTP_HOST&&process.env.SMTP_USER&&process.env.SMTP_PASSWORD&&process.env.SMTP_FROM_EMAIL);
@@ -23,14 +23,14 @@ export function smtpSettings(){
 }
 export async function sendEmail(mail:OutboundEmail):Promise<{status:"smtp_accepted";messageId:string}|{status:"not_configured"|"failed"}>{
  if(!smtpConfigured())return {status:"not_configured"};
- if(!address.test(mail.to)||mail.replyTo&&!address.test(mail.replyTo)||/[\r\n]/.test(mail.subject))return {status:"failed"};
+ if(!address.test(mail.to)||/[\r\n]/.test(mail.subject))return {status:"failed"};
  let transport:ReturnType<Mailer["createTransport"]>|undefined;
  try{
   transport=nodemailer.createTransport(smtpSettings());
-  const fromName=(mail.senderName||process.env.SMTP_FROM_NAME||"Robotronix Education Suite").replace(/[\r\n<>]/g,"").slice(0,120);
+  const fromName=(process.env.SMTP_FROM_NAME||"Robotronix Education Suite").replace(/[\r\n<>]/g,"").slice(0,120);
   const result=await transport.sendMail({
    from:{name:fromName,address:process.env.SMTP_FROM_EMAIL},
-   to:mail.to,replyTo:mail.replyTo||process.env.SMTP_REPLY_TO||undefined,
+   to:mail.to,replyTo:process.env.SMTP_REPLY_TO||undefined,
    subject:mail.subject,text:mail.text,html:mail.html,
    disableFileAccess:true,disableUrlAccess:true
   });
