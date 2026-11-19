@@ -23,9 +23,10 @@ export default function PlatformAdminSafety(){
  async function lookup(){
   setBusy(true);setMessage("");setVerifiedId(null);
   try{
+   setError("");
    const data=await request("?email="+encodeURIComponent(email.trim()));
    setVerifiedId(data.verifiedUserId);
-   setMessage(data.verifiedUserId?"Verified account found. Copy the user ID to the customer access panel to grant rights.":"No verified account found in the bounded lookup. Do not grant access without verification.");
+   setMessage(data.verifiedUserId?"Verified account found. Copy the user ID to the customer access panel to grant rights.":data.lookupLimited?"The lookup reached its safety limit. This does not prove the account is absent.":"No verified account matches this email. Do not grant access without verification.");
   }catch(e){setError(e instanceof Error?e.message:"Lookup failed")}finally{setBusy(false)}
  }
  return <section className="platformPanel" aria-label="Platform administrator safety" style={{padding:20,marginBottom:20}}>
