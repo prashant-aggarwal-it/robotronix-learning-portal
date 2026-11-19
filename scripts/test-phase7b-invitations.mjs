@@ -49,3 +49,15 @@ test("Platform Branding Studio excludes archived tenants and avoids misleading p
  assert.match(page,/PlatformTenantBranding organizations=\{overview\.organizations\.filter\(o=>o\.status==="active"\)\}/);
  assert.match(auth,/Select an active academy you can access/);
 });
+
+test("Hostinger platform transport never impersonates an academy sender",()=>{
+ const transport=src("lib/server/saas/email-transport.ts");
+ assert.doesNotMatch(transport,/mail\\.senderName|mail\\.replyTo/);
+ assert.match(transport,/SMTP_FROM_EMAIL/);
+ assert.match(transport,/SMTP_REPLY_TO/);
+});
+test("New invitation ledger records use Hostinger SMTP, retaining historical entries",()=>{
+ const migration=src("database/saas/85_phase7b_hostinger_smtp_provider.sql");
+ assert.match(migration,/set default 'hostinger_smtp'/);
+ assert.doesNotMatch(migration,/truncate|delete from|drop table/i);
+});
