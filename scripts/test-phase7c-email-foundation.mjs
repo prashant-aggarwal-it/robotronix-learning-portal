@@ -24,3 +24,19 @@ test("academy email status route is authenticated and read-only",()=>{
  assert.match(s,/no-store/);
  assert.doesNotMatch(s,/export async function POST|export async function PUT/);
 });
+
+test("delivery events cannot reference another tenant's connection",()=>{
+ const sql=src("database/saas/87_phase7c_connection_tenant_integrity.sql");
+ assert.match(sql,/foreign key \\(connection_id,organization_id\\)/i);
+ assert.match(sql,/references saas\\.academy_email_connections\\(id,organization_id\\)/i);
+});
+test("email settings require academy settings capability",()=>{
+ const s=src("lib/server/saas/academy-email.ts");
+ assert.match(s,/roleHasCapability\\(organization\\.role,"academy\\.settings\\.manage"\\)/);
+});
+test("email settings screen cannot connect or send through an unverified provider",()=>{
+ const s=src("app/[academySlug]/manage/email/page.tsx");
+ assert.match(s,/Connection setup not yet available/);
+ assert.match(s,/owner","admin/);
+ assert.doesNotMatch(s,/sendEmail\\(|method:"POST"/);
+});
