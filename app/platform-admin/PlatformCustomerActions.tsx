@@ -12,6 +12,14 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
  const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);
  const selected=organizations.find(o=>o.id===organizationId);
  async function call(action:string,fields:Record<string,unknown>={}){
+  const guarded=["set_organization_status","revoke_platform_admin","revoke_owner_invitation"];
+  if(guarded.includes(action)){
+   const target=action==="set_organization_status"?selected?.display_name||organizationId:action==="revoke_platform_admin"?String(fields.targetUserId||""):String(fields.invitationId||"");
+   if(action==="set_organization_status"&&fields.value!=="suspended"){}else{
+    const confirmation=window.prompt("Sensitive platform operation: "+action.replaceAll("_"," ")+". Type the exact target to confirm:\\n"+target);
+    if(confirmation!==target)return;
+   }
+  }
   setBusy(true);setMessage("");setInvitationUrl("");
   try{
    const client=getSupabaseBrowserClient();if(!client)throw Error("Sign in first");
