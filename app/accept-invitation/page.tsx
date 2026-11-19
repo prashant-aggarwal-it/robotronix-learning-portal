@@ -19,4 +19,4 @@ function InvitationContent(){
  }
  return <main style={{fontFamily:"system-ui",maxWidth:520,margin:"64px auto",padding:24}}><h1>Accept academy invitation</h1><p>Sign in with the email address that received this invitation, then accept.</p><p><Link href="/workspace">Sign in / open workspace</Link></p><button disabled={busy||!/^[a-zA-Z0-9_-]{40,64}$/.test(token)} onClick={accept}>{busy?"Accepting…":"Accept invitation"}</button>{message&&<p role="status">{message}</p>}</main>;
 }
-\nexport default function AcceptInvitation(){return <Suspense fallback={<p>Loading invitation…</p>}><InvitationContent/></Suspense>}\n
+export default function AcceptInvitation(){return <Suspense fallback={<p>Loading invitation…</p>}><InvitationContent/></Suspense>}
