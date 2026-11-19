@@ -33,7 +33,7 @@ export async function deliverAcademySmtp(s:AcademySmtpSettings,to:string,subject
  const transport=await smtpTransport(s);
  try{
   const result=await transport.sendMail({from:s.senderEmail,to,subject,text,disableFileAccess:true,disableUrlAccess:true});
-  if(!result.accepted?.some(a=>a.toLowerCase()===to.toLowerCase()))throw new SaaSAccessError(503,"SMTP recipient not accepted");
+  if(!result.accepted?.some((a:string)=>a.toLowerCase()===to.toLowerCase()))throw new SaaSAccessError(503,"SMTP recipient not accepted");
   return {provider:"smtp",messageId:result.messageId};
  }finally{transport.close();}
 }
