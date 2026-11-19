@@ -1,0 +1,23 @@
+name: Phase 7F Academy Notifications
+on:
+  push:
+    branches:
+      - feature/education-suite-phase7f-notifications
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-phase7a-onboarding.mjs scripts/test-phase7b-invitations.mjs scripts/test-phase7c-email-foundation.mjs scripts/test-phase7d-google-email.mjs scripts/test-phase7e-smtp.mjs scripts/test-phase7f-notifications.mjs
+      - run: npm run typecheck
+      - run: npm run build
