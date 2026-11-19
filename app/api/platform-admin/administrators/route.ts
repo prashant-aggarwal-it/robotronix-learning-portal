@@ -3,23 +3,25 @@ import {requirePlatformAdmin} from "@/lib/server/saas/platform-admin";
 import {SaaSAccessError} from "@/lib/server/saas/organization-context";
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store","Vary":"Authorization"};
-const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function GET(request:NextRequest){
  try{
   const {db}=await requirePlatformAdmin(request.headers.get("authorization"));
-  const email=request.nextUrl.searchParams.get("email")?.trim().toLowerCase();
-  if(email){
+  const emailParam=request.nextUrl.searchParams.get("email");
+  if(emailParam!==null){
+   const email=emailParam.trim().toLowerCase();
    if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new SaaSAccessError(400,"Invalid email");
    // Use bounded server-only Auth search, never expose the account directory.
    let userId:string|null=null;
+   let exhausted=false;
    for(let page=1;page<=10;page++){
     const {data,error}=await db.auth.admin.listUsers({page,perPage:100});
     if(error)throw new SaaSAccessError(503,"Verified account lookup unavailable");
     const found=data.users.find(u=>u.email?.toLowerCase()===email&&!!u.email_confirmed_at&&!u.is_anonymous);
     if(found){userId=found.id;break;}
-    if(data.users.length<100)break;
+    if(data.users.length<100){exhausted=true;break;}
    }
-   return NextResponse.json({ok:true,verifiedUserId:userId,lookupLimited:userId===null},{headers});
+   // A negative result after scanning the configured bound is not evidence that an account does not exist.
+   return NextResponse.json({ok:true,verifiedUserId:userId,lookupLimited:userId===null&&!exhausted},{headers});
   }
   const {data:admins,error:adminError}=await db.schema("saas").from("platform_administrators")
    .select("user_id,role_key,active,created_at").order("created_at",{ascending:false}).limit(100);
