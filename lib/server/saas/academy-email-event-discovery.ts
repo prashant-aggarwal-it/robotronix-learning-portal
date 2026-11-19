@@ -62,7 +62,7 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
    const {data:trainers}=await db.from("trainers").select("id,full_name,email").eq("saas_org_id",orgId).limit(100);
    for(const trainer of trainers||[]){
     if(!trainer.email||!email.test(trainer.email))continue;
-    const {data:classes}=await db.from("schedule_events").select("id,date,start_time,timezone,status")
+    const {data:classes}=await db.from("schedule_events").select("id,enrollment_id,date,start_time,timezone,status")
       .eq("trainer_id",trainer.id).eq("date",today).limit(30);
     for(const cls of classes||[]){
      if(!["scheduled","confirmed"].includes(cls.status))continue;
