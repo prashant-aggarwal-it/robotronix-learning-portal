@@ -26,7 +26,7 @@ export async function PUT(req:NextRequest){
   const body=await req.json().catch(()=>null),id=body?.organizationId;
   if(typeof id!=="string")throw new SaaSAccessError(400,"Invalid academy");
   await authorize(req,id);
-  if(typeof body.enabled!=="boolean"||!(body.provider===null||body.provider==="google"||body.provider==="smtp")||!Array.isArray(body.enabledEvents)||body.enabledEvents.some((x:unknown)=>!EVENT_TYPES.includes(x as typeof EVENT_TYPES[number])))throw new SaaSAccessError(400,"Invalid notification preferences");
+  if(typeof body.enabled!=="boolean"||!(body.provider===null||body.provider==="google"||body.provider==="smtp"||body.provider==="microsoft")||!Array.isArray(body.enabledEvents)||body.enabledEvents.some((x:unknown)=>!EVENT_TYPES.includes(x as typeof EVENT_TYPES[number])))throw new SaaSAccessError(400,"Invalid notification preferences");
   const db=platformService();
   if(body.enabled){
    if(!body.provider)throw new SaaSAccessError(400,"Choose an email provider");
