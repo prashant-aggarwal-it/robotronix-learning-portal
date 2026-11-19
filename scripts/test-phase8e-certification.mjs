@@ -51,3 +51,12 @@ test("UI adds confirmation for destructive admin actions",()=>{
  const s=read("app/platform-admin/PlatformCustomerActions.tsx");
  for(const value of ["set_organization_status","revoke_platform_admin","revoke_owner_invitation","window.prompt","confirmation!==target"])assert.ok(s.includes(value),value);
 });
+
+test("administrator lookup differentiates fully scanned absence from safety limit",()=>{
+ const api=read("app/api/platform-admin/administrators/route.ts");
+ const ui=read("app/platform-admin/PlatformAdminSafety.tsx");
+ assert.ok(api.includes("emailParam!==null"));
+ assert.ok(api.includes("exhausted=true"));
+ assert.ok(api.includes("lookupLimited:userId===null&&!exhausted"));
+ assert.ok(ui.includes("data.lookupLimited"));
+});
