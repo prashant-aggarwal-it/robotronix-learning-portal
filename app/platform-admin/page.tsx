@@ -9,9 +9,12 @@ import PlatformSubscriptions from "./PlatformSubscriptions";
 import PlatformTenantBranding from "./PlatformTenantBranding";
 import PlatformBrandingEntitlements from "./PlatformBrandingEntitlements";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
+type Ops={subscriptions:{organization_id:string;plan_code:string;status:string;ends_at:string|null}[];metrics:{expiringTrials:number;expiredTrials:number;pendingInvitations:number;expiredInvitations:number;pastDueSubscriptions:number};alerts:{type:string;organizationId?:string;organizationName?:string;expiresAt:string}[];truncated:boolean};
 type Overview={organizations:Org[];page:number;total:number;metrics:{organizations:number;trials:number;activeSubscriptions:number}};
 export default function PlatformAdminPage(){
  const [overview,setOverview]=useState<Overview|null>(null);
+ const [operations,setOperations]=useState<Ops|null>(null);
+ const [operationsError,setOperationsError]=useState("");
  const [search,setSearch]=useState("");
  const [page,setPage]=useState(1);
  const [error,setError]=useState("");
@@ -75,6 +78,14 @@ export default function PlatformAdminPage(){
   void load().then(x=>{if(active)setOverview(x)}).catch(e=>{if(active){setOverview(null);setError(e instanceof Error?e.message:"Access unavailable")}}).finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
  },[page,search,refresh]);
+ useEffect(()=>{let active=true;(async()=>{try{
+  const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+  if(!session)throw Error("Sign in first");
+  const res=await fetch("/api/platform-admin/operations-summary",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
+  const body=await res.json();if(!res.ok||!body.ok)throw Error(body.error||"Unable to load operational summary");
+  if(active){setOperations(body);setOperationsError("");}
+ }catch(e){if(active)setOperationsError(e instanceof Error?e.message:"Operational summary unavailable")}})();
+ return()=>{active=false};},[refresh]);
  async function loadPendingCustomers(){
   setPendingLoading(true);setPendingError("");
   try{
@@ -154,6 +165,15 @@ export default function PlatformAdminPage(){
        </div>
       </section>
       {activeSection==="overview"&&<div className="platformOverviewBody">
+       {operationsError&&<p role="alert">Operations summary: {operationsError}</p>}
+       {operations&&<section className="platformPanel" aria-label="Action required" style={{padding:20,marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}><h2>Action required</h2><button onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12}}>
+         {([{label:"Trials expiring in 7 days",value:operations.metrics.expiringTrials},{label:"Expired trials",value:operations.metrics.expiredTrials},{label:"Pending owner activations",value:operations.metrics.pendingInvitations},{label:"Expired invitations",value:operations.metrics.expiredInvitations},{label:"Past-due subscriptions",value:operations.metrics.pastDueSubscriptions}]).map(x=><div key={x.label} style={{padding:12,border:"1px solid #e5def1",borderRadius:10}}><strong style={{display:"block",fontSize:24}}>{x.value}</strong><span>{x.label}</span></div>)}
+        </div>
+        {operations.alerts.length>0&&<div style={{marginTop:14}}><h3>Priority follow-ups</h3><ul>{operations.alerts.slice(0,8).map((a,i)=><li key={i}>{a.type.replaceAll("_"," ")} · {a.organizationName||operations.subscriptions.find(x=>x.organization_id===a.organizationId)?.organization_id||"Customer"} · {new Date(a.expiresAt).toLocaleDateString()}</li>)}</ul><button onClick={()=>navigate("subscriptions")}>Review subscriptions</button></div>}
+        {operations.truncated&&<p role="status">Summary is limited to the first records; use filtered customer lookup for a complete audit.</p>}
+       </section>}
        <div className="platformWelcomeCard">
         <div><span className="platformEyebrow">QUICK START</span><h2>What would you like to manage?</h2><p>Jump straight to the action you need. All customer changes remain permission-checked and audited.</p></div>
         <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className="platformPrimaryLink">+ Add customer</a>
