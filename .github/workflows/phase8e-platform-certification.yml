@@ -1,0 +1,25 @@
+name: Phase 8E Platform Certification
+on:
+  push:
+    branches:
+      - feature/education-suite-phase8e-certification
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  certification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Platform authorization and safety regression
+        run: node --test scripts/test-phase8e-certification.mjs
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Next.js build
+        run: npm run build
