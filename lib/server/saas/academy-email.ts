@@ -1,4 +1,5 @@
 import "server-only";
+import {roleHasCapability} from "@/lib/server/saas/role-capabilities.mjs";
 import {platformService} from "@/lib/server/saas/platform-admin";
 import {getAuthorizedOrganizations,resolveAuthorizedOrganization,SaaSAccessError} from "@/lib/server/saas/organization-context";
 export type AcademyEmailProvider="google"|"microsoft"|"smtp";
@@ -7,6 +8,7 @@ export async function academyEmailStatus(bearer:string,organizationId:string){
  const {organizations}=await getAuthorizedOrganizations(bearer);
  const organization=resolveAuthorizedOrganization(organizations,organizationId);
  if(!organization)throw new SaaSAccessError(403,"Select an authorized academy");
+ if(!roleHasCapability(organization.role,"academy.settings.manage"))throw new SaaSAccessError(403,"Academy email settings require owner or admin access");
  const {data,error}=await platformService().schema("saas").from("academy_email_connections")
   .select("provider,status,sender_email,sender_verified_at,last_checked_at,last_error_code")
   .eq("organization_id",organization.id);
