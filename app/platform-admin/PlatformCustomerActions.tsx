@@ -3,8 +3,8 @@ import {useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 type Org={id:string;display_name:string;status:string};
 type Invitation={id:string;email:string;status:string;expiresAt:string};
-export default function PlatformCustomerActions({organizations,onChanged}:{organizations:Org[];onChanged:()=>void}){
- const [organizationId,setOrganizationId]=useState("");
+export default function PlatformCustomerActions({organizations,onChanged,initialOrganizationId=""}:{organizations:Org[];onChanged:()=>void;initialOrganizationId?:string}){
+ const [organizationId,setOrganizationId]=useState(initialOrganizationId);
  const [email,setEmail]=useState("");const [name,setName]=useState("");
  const [adminId,setAdminId]=useState("");
  const [invitations,setInvitations]=useState<Invitation[]>([]);
