@@ -1,3 +1,4 @@
+import {smtpConfigured} from "@/lib/server/saas/email-transport";
 import {NextRequest,NextResponse} from "next/server";
 import {randomBytes,createHash} from "node:crypto";
 import {requirePlatformAdmin,platformService} from "@/lib/server/saas/platform-admin";
@@ -28,7 +29,7 @@ export async function POST(request:NextRequest){
     new Set(modules).size!==modules.length||!modules.every((m:unknown)=>["academy","crm","tasks"].includes(String(m)))))
     throw new SaaSAccessError(400,"Check organization name, owner email, slug and modules");
   const origin=invitationOrigin();
-  const configured=Boolean(process.env.RESEND_API_KEY&&process.env.INVITATION_FROM_EMAIL);
+  const configured=smtpConfigured();
   const secret=randomBytes(32).toString("hex");
   const {data,error:dbError}=await db.rpc("saas_pending_customer_manage_v1",{
    p_actor:userId,p_action:action,p_data:{
@@ -48,7 +49,7 @@ export async function POST(request:NextRequest){
   const {data:queued,error:queueError}=await db.rpc("saas_invitation_delivery_admin_v1",{
    p_actor:userId,p_action:"queue",p_data:{invitationId:id}
   });
-  if(queueError)return send({ok:true,invitation:data,delivery:"failed",message:"Invitation created, but delivery could not be queued. Use resend."},201);
+  if(queueError)return send({ok:true,invitation:data,delivery:"failed",message:"Invitation created, but delivery could not be queued. Use Resend invitation."},201);
   const {error:sendingError}=await db.rpc("saas_invitation_delivery_admin_v1",{
    p_actor:userId,p_action:"sending",p_data:{id:queued.id}
   });
@@ -60,13 +61,13 @@ export async function POST(request:NextRequest){
    // Ensure dispatch failures have an auditable terminal state, not a stuck "sending" row.
    await db.rpc("saas_invitation_delivery_admin_v1",{p_actor:userId,p_action:"result",
     p_data:{id:queued.id,ok:false,messageId:null}});
-   return send({ok:true,invitation:data,delivery:"failed",message:"Invitation created, but recipient lookup failed. Use resend."},201);
+   return send({ok:true,invitation:data,delivery:"failed",message:"Invitation created, but recipient lookup failed. Use Resend invitation."},201);
   }
   const delivery=await deliverInvitation({to:invite.owner_email,academy:invite.organization_name,url:invitationUrl,expiresAt:invite.expires_at},queued.id);
   await db.rpc("saas_invitation_delivery_admin_v1",{p_actor:userId,p_action:"result",
    p_data:{id:queued.id,ok:delivery.status==="provider_accepted",messageId:delivery.status==="provider_accepted"?delivery.messageId:null}});
   return send({ok:true,invitation:data,delivery:delivery.status,
-   message:delivery.status==="provider_accepted"?"Email provider accepted the invitation.":"Invitation created, but email delivery failed. Use resend or Advanced recovery."},201);
+   message:delivery.status==="provider_accepted"?"Email provider accepted the invitation.":"Invitation created, but email delivery failed. Use Resend invitation or Advanced recovery."},201);
  }catch(e){return error(e)}
 }
 export async function GET(request:NextRequest){
