@@ -1,3 +1,4 @@
+import {sendEmail} from "./email-transport";
 import "server-only";
 export type InvitationEmail={to:string;academy:string;url:string;expiresAt:string};
 const escape=(s:string)=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -18,17 +19,9 @@ export function invitationEmail(data:InvitationEmail){
  const html=`<!doctype html><html><body style="margin:0;background:#f7f5fc;padding:32px 12px;font-family:Arial,sans-serif;color:#2d2143"><table role="presentation" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin:auto;background:white;border-radius:16px"><tr><td style="padding:32px"><p style="font-weight:800;color:#6134a6;letter-spacing:1px">ROBOTRONIX EDUCATION SUITE</p><h1 style="font-size:27px">Your academy invitation</h1><p>You've been invited to manage <strong>${academy}</strong>.</p><p>Run courses, classes and day-to-day academy operations in one connected workspace.</p><p style="margin:32px 0"><a href="${link}" style="background:#6835b4;color:#fff;padding:15px 22px;border-radius:9px;text-decoration:none;font-weight:bold">Activate My Academy</a></p><p>This secure invitation expires on ${escape(date)}. Sign in with your invited email address, or register and verify your email first.</p><p style="font-size:12px;color:#6c647b">If the button does not work, paste this secure URL into your browser:<br/><a href="${link}">${link}</a></p><p style="font-size:12px;color:#6c647b">If you did not expect this invitation, you can ignore this message.</p><p>Robotronix Education Suite Team</p></td></tr></table></body></html>`;
  return {subject,text,html};
 }
-export async function deliverInvitation(data:InvitationEmail,idempotencyKey:string){
- const key=process.env.RESEND_API_KEY,from=process.env.INVITATION_FROM_EMAIL;
- if(!key||!from)return {status:"not_configured" as const};
+export async function deliverInvitation(data:InvitationEmail,_idempotencyKey:string){
  const content=invitationEmail(data);
- try{
-  const response=await fetch("https://api.resend.com/emails",{method:"POST",
-   headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json","Idempotency-Key":idempotencyKey},
-   body:JSON.stringify({from,to:[data.to],reply_to:process.env.INVITATION_REPLY_TO||undefined,...content}),signal:AbortSignal.timeout(12000)});
-  if(!response.ok)return {status:"failed" as const};
-  const result=await response.json().catch(()=>null);
-  if(typeof result?.id!=="string")return {status:"failed" as const};
-  return {status:"provider_accepted" as const,messageId:result.id};
- }catch{return {status:"failed" as const};}
+ const result=await sendEmail({to:data.to,...content});
+ if(result.status==="smtp_accepted")return {status:"provider_accepted" as const,messageId:result.messageId};
+ return result;
 }
