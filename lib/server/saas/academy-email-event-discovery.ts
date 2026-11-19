@@ -4,6 +4,20 @@ import {queueAcademyNotification} from "@/lib/server/saas/academy-notifications"
 const email=/^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/;
 type Kind="enrollment"|"class_reminder"|"fee_reminder"|"progress_update"|"trainer_update";
 const enabledKinds:Kind[]=["enrollment","class_reminder","fee_reminder","progress_update","trainer_update"];
+/** Returns true only in the 10-70 minute window before the class, in its declared timezone. */
+export function isUpcomingClass(date:string,startTime:string,timezone:string,now:Date){
+ if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!/^\\d{2}:\\d{2}/.test(startTime))return false;
+ try{
+  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:timezone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(now);
+  const get=(key:string)=>parts.find(p=>p.type===key)?.value||"";
+  const local=get("year")+"-"+get("month")+"-"+get("day");
+  const minutes=Number(get("hour"))*60+Number(get("minute"));
+  const classMinutes=Number(startTime.slice(0,2))*60+Number(startTime.slice(3,5));
+  const days=Math.round((Date.parse(date+"T00:00:00Z")-Date.parse(local+"T00:00:00Z"))/86400000);
+  const until=days*1440+classMinutes-minutes;
+  return until>=10&&until<=70;
+ }catch{return false;}
+}
 /**
  * Tenant-safe event discovery: never infer ownership from a globally unique legacy ID.
  * Every source enrollment AND student must explicitly belong to the same SaaS organization.
@@ -57,8 +71,7 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
      .eq("enrollment_id",enrollment.id).gte("date",today).lte("date",new Date(now.getTime()+2*86400000).toISOString().slice(0,10)).limit(15);
     for(const cls of classes||[]){
      if(!["scheduled","confirmed"].includes(cls.status))continue;
-     // Avoid cross-timezone early/late reminders: send only on the local event date.
-     if(cls.date!==today)continue;
+     if(!isUpcomingClass(cls.date,cls.start_time,cls.timezone||"UTC",now))continue;
      await emit("class_reminder","class:"+cls.id+":"+cls.date,"Class reminder","Upcoming class for "+student.full_name+" on "+cls.date+" at "+cls.start_time+" ("+(cls.timezone||"academy timezone")+").");
     }
    }
@@ -67,6 +80,8 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
      .eq("enrollment_id",enrollment.id).eq("student_id",student.id).lte("due_date",today).gte("due_date",new Date(now.getTime()-14*86400000).toISOString().slice(0,10)).limit(10);
     for(const invoice of invoices||[]){
      if(!["issued","partially_paid","overdue"].includes(invoice.status))continue;
+     const daysLate=Math.floor((Date.parse(today+"T00:00:00Z")-Date.parse(invoice.due_date+"T00:00:00Z"))/86400000);
+     if(daysLate!==0&&daysLate!==3&&daysLate!==7&&daysLate!==14)continue;
      await emit("fee_reminder","fee:"+invoice.id+":"+today,"Fee payment reminder","Please review the outstanding fee for "+student.full_name+". Due date: "+invoice.due_date+". Sign in to your academy portal for payment details.");
     }
    }
@@ -76,9 +91,9 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
    for(const trainer of trainers||[]){
     if(!trainer.email||!email.test(trainer.email))continue;
     const {data:classes}=await db.from("schedule_events").select("id,enrollment_id,date,start_time,timezone,status")
-      .eq("trainer_id",trainer.id).eq("date",today).limit(30);
+      .eq("trainer_id",trainer.id).gte("date",today).lte("date",new Date(now.getTime()+2*86400000).toISOString().slice(0,10)).limit(30);
     for(const cls of classes||[]){
-     if(!["scheduled","confirmed"].includes(cls.status))continue;
+     if(!["scheduled","confirmed"].includes(cls.status)||!isUpcomingClass(cls.date,cls.start_time,cls.timezone||"UTC",now))continue;
      // Validate class membership in the same tenant before notifying a trainer.
      const {data:owned}=await db.from("enrollments").select("id").eq("id",cls.enrollment_id).eq("saas_org_id",orgId).maybeSingle();
      if(!owned)continue;
