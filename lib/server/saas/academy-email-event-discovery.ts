@@ -2,8 +2,8 @@ import "server-only";
 import {platformService} from "@/lib/server/saas/platform-admin";
 import {queueAcademyNotification} from "@/lib/server/saas/academy-notifications";
 const email=/^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/;
-type Kind="enrollment"|"class_reminder"|"fee_reminder"|"progress_update";
-const enabledKinds:Kind[]=["enrollment","class_reminder","fee_reminder","progress_update"];
+type Kind="enrollment"|"class_reminder"|"fee_reminder"|"progress_update"|"trainer_update";
+const enabledKinds:Kind[]=["enrollment","class_reminder","fee_reminder","progress_update","trainer_update"];
 /**
  * Tenant-safe event discovery: never infer ownership from a globally unique legacy ID.
  * Every source enrollment AND student must explicitly belong to the same SaaS organization.
@@ -55,6 +55,25 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
     for(const invoice of invoices||[]){
      if(!["issued","partially_paid","overdue"].includes(invoice.status))continue;
      await emit("fee_reminder","fee:"+invoice.id+":"+today,"Fee payment reminder","Please review the outstanding fee for "+student.full_name+". Due date: "+invoice.due_date+". Sign in to your academy portal for payment details.");
+    }
+   }
+  }
+  if(enabled.includes("trainer_update")){
+   const {data:trainers}=await db.from("trainers").select("id,full_name,email").eq("saas_org_id",orgId).limit(100);
+   for(const trainer of trainers||[]){
+    if(!trainer.email||!email.test(trainer.email))continue;
+    const {data:classes}=await db.from("schedule_events").select("id,date,start_time,timezone,status")
+      .eq("trainer_id",trainer.id).eq("date",today).limit(30);
+    for(const cls of classes||[]){
+     if(!["scheduled","confirmed"].includes(cls.status))continue;
+     // Validate class membership in the same tenant before notifying a trainer.
+     const {data:owned}=await db.from("enrollments").select("id").eq("id",cls.enrollment_id).eq("saas_org_id",orgId).maybeSingle();
+     if(!owned)continue;
+     const outcome=await queueAcademyNotification({organizationId:orgId,eventType:"trainer_update",
+      idempotencyKey:"trainer-class:"+cls.id+":"+today,to:trainer.email.trim().toLowerCase(),
+      subject:"Your class schedule reminder",
+      text:"Your scheduled class is on "+cls.date+" at "+cls.start_time+" ("+(cls.timezone||"academy timezone")+")."});
+     if(outcome.queued)queued++;else skipped++;
     }
    }
   }
