@@ -49,16 +49,25 @@ export default function AcademyEmailSettings(){
    {busy&&<p role="status">Loading email connection status…</p>}
    {error&&<p role="alert" style={{color:"#a32347"}}>{error}</p>}
    {!busy&&!error&&<><h2>{name}</h2>
-    <p style={{padding:16,background:"#fff8e8",borderRadius:12,border:"1px solid #ead6a8"}}>Academy email sending is disabled until a provider is securely connected and verified. Connection setup is being implemented in the next integration phases.</p>
+    <p style={{padding:16,background:"#fff8e8",borderRadius:12,border:"1px solid #ead6a8"}}>Academy email sending is disabled until a provider is securely connected and verified. Choose and verify a provider below, then enable the notifications you want to send.</p>
     <div style={{display:"grid",gap:14}}>
      {providers.map(p=>{const c=connections.find(x=>x.provider===p.key);return <section key={p.key} style={{padding:22,background:"white",border:"1px solid #dce3ef",borderRadius:16}}>
       <h3 style={{margin:"0 0 8px"}}>{p.name}</h3>
       <p style={{margin:"0 0 6px"}}>Status: <strong>{c?.status||"Not connected"}</strong></p>
       {c?.sender_email&&<p>Sender: {c.sender_email}</p>}
       {c?.last_error_code&&<p role="status">Connection issue: {c.last_error_code}</p>}
-      {p.key==="google"?<div style={{display:"flex",gap:12,marginTop:14}}>
-       {c?.status==="connected"?<button type="button" onClick={()=>oauthAction("google","disconnect")}>Disconnect Gmail</button>:<button type="button" onClick={()=>oauthAction("google","start")}>Connect Google account</button>}
-      </div>:<small style={{color:"#526179"}}>Connection setup is planned for a later phase.</small>}
+      {p.key==="google"||p.key==="microsoft"?<div style={{display:"flex",gap:12,marginTop:14}}>
+       {c?.status==="connected"?<button type="button" onClick={()=>oauthAction(p.key as "google"|"microsoft","disconnect")}>Disconnect {p.name}</button>:<button type="button" onClick={()=>oauthAction(p.key as "google"|"microsoft","start")}>Connect {p.name}</button>}
+      </div>:<div style={{display:"grid",gap:10,marginTop:14}}>
+       {c?.status==="connected"&&<button type="button" disabled={smtpBusy} onClick={()=>smtpAction(true)}>Disconnect SMTP</button>}
+       <label>SMTP host <input aria-label="SMTP host" value={smtp.host} onChange={e=>setSmtp(v=>({...v,host:e.target.value}))} autoComplete="off"/></label>
+       <label>Port <input aria-label="SMTP port" type="number" min={1} max={65535} value={smtp.port} onChange={e=>setSmtp(v=>({...v,port:Number(e.target.value)}))}/></label>
+       <label><input type="checkbox" checked={smtp.secure} onChange={e=>setSmtp(v=>({...v,secure:e.target.checked}))}/> Use TLS immediately (usually port 465)</label>
+       <label>Username <input aria-label="SMTP username" value={smtp.username} onChange={e=>setSmtp(v=>({...v,username:e.target.value}))} autoComplete="username"/></label>
+       <label>Password or app password <input aria-label="SMTP password" type="password" value={smtp.password} onChange={e=>setSmtp(v=>({...v,password:e.target.value}))} autoComplete="new-password"/></label>
+       <label>Sender email <input aria-label="Sender email" type="email" value={smtp.senderEmail} onChange={e=>setSmtp(v=>({...v,senderEmail:e.target.value}))}/></label>
+       <button type="button" disabled={smtpBusy||!smtp.host||!smtp.username||!smtp.password||!smtp.senderEmail} onClick={()=>smtpAction(false)}>{smtpBusy?"Checking…":"Connect and verify SMTP"}</button>
+      </div>}
      </section>})}
     </div>
    </>}
