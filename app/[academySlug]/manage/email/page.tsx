@@ -44,7 +44,7 @@ export default function AcademyEmailSettings(){
  return <main style={{minHeight:"100vh",background:"#f4f7fd",padding:"32px 20px",fontFamily:"system-ui",color:"#192541"}}>
   <div style={{maxWidth:900,margin:"auto"}}>
    <Link href={"/"+academySlug+"/manage"}>← Academy management</Link>
-   <h1 style={{fontSize:32,marginBottom:8}}>Academy email</h1>
+   <h1 style={{fontSize:32,marginBottom:8}}>Academy email</h1><p><Link href={"/"+academySlug+"/manage/email/notifications"}>Configure notifications and view delivery history</Link></p>
    <p style={{color:"#526179"}}>Your academy will send emails only through its own authorized account. Robotronix platform SMTP is never used for academy notifications.</p>
    {busy&&<p role="status">Loading email connection status…</p>}
    {error&&<p role="alert" style={{color:"#a32347"}}>{error}</p>}
