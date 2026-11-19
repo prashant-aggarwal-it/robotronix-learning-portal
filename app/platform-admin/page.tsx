@@ -39,6 +39,27 @@ export default function PlatformAdminPage(){
  const [deliveryStatus,setDeliveryStatus]=useState<Record<string,string>>({});
  const [pendingCustomers,setPendingCustomers]=useState<{id:string;owner_email:string;organization_name:string;organization_slug:string;status:string;expires_at:string}[]>([]);
  const [assistedMessage,setAssistedMessage]=useState("");const [assistedBusy,setAssistedBusy]=useState(false);
+ const [pendingLoading,setPendingLoading]=useState(false);
+ const [pendingError,setPendingError]=useState("");
+ const [invitationActionId,setInvitationActionId]=useState("");
+ const [latestDelivery,setLatestDelivery]=useState("");
+ const deliveryLabel=(status:string)=>({
+  provider_accepted:"Accepted by email provider (not confirmed delivered)",
+  sent:"Accepted by email provider (not confirmed delivered)",
+  queued:"Queued for email dispatch",
+  sending:"Sending",
+  failed:"Delivery failed — resend available",
+  not_configured:"Email service not configured",
+  cancelled:"Delivery cancelled"
+ } as Record<string,string>)[status]||"No email delivery recorded";
+ const invitationLabel=(status:string,expires:string)=>{
+  if(status==="accepted"||status==="activated")return "Owner activated";
+  if(status==="revoked")return "Revoked";
+  if(status==="pending"&&Date.parse(expires)<Date.now())return "Expired";
+  if(status==="pending")return "Awaiting owner activation";
+  return status;
+ };
+ useEffect(()=>{if(activeSection==="onboarding")void loadPendingCustomers();},[activeSection]);
  useEffect(()=>{
   let active=true;setLoading(true);setError("");
   async function load(){
@@ -55,6 +76,7 @@ export default function PlatformAdminPage(){
   return()=>{active=false};
  },[page,search,refresh]);
  async function loadPendingCustomers(){
+  setPendingLoading(true);setPendingError("");
   try{
    const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
    if(!session)throw Error("Sign in first");
@@ -62,20 +84,24 @@ export default function PlatformAdminPage(){
    const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||"Unable to load invitations");
    setPendingCustomers(data.invitations);
    const byId:Record<string,string>={};for(const d of data.deliveries||[]){if(!byId[d.invitation_id])byId[d.invitation_id]=d.status;}setDeliveryStatus(byId);
-  }catch(e){setAssistedMessage(e instanceof Error?e.message:"Unable to load invitations")}
+  }catch(e){setPendingError(e instanceof Error?e.message:"Unable to load invitations")}
+  finally{setPendingLoading(false)}
  }
  async function rotatePending(id:string){
+  if(invitationActionId)return;setInvitationActionId(id);
   try{
    const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
    if(!session)throw Error("Sign in first");
    const response=await fetch("/api/platform-admin/customer-invitations",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({action:"rotate",id})});
    const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Unable to rotate invitation");
-   setInvitationUrl(body.invitationUrl||"");setShowRecovery(false);setAssistedMessage(body.message||"Invitation resend requested.");
+   setInvitationUrl(body.invitationUrl||"");setShowRecovery(false);setLatestDelivery(body.delivery||"");setAssistedMessage(body.message||"Invitation resend requested.");
    await loadPendingCustomers();
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Unable to rotate invitation")}
+  finally{setInvitationActionId("")}
  }
  async function revokePending(id:string){
-  if(!window.confirm("Revoke this invitation? The link will stop working."))return;
+  if(invitationActionId||!window.confirm("Revoke this invitation? The link will stop working."))return;
+  setInvitationActionId(id);
   try{
    const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
    if(!session)throw Error("Sign in first");
@@ -84,6 +110,7 @@ export default function PlatformAdminPage(){
    const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||"Revoke failed");
    await loadPendingCustomers();
   }catch(e){setAssistedMessage(e instanceof Error?e.message:"Revoke failed")}
+  finally{setInvitationActionId("")}
  }
  async function createAssisted(){
   if(assistedBusy)return;setAssistedBusy(true);setAssistedMessage("");setInvitationUrl("");
@@ -92,6 +119,7 @@ export default function PlatformAdminPage(){
    const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
    const response=await fetch("/api/platform-admin/customer-invitations",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify(assisted)});
    const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Creation failed");
+   setLatestDelivery(body.delivery||"");
    setAssistedMessage(body.message||"Customer invitation created.");
    setInvitationUrl(body.invitationUrl||"");setShowRecovery(false);
    await loadPendingCustomers();
@@ -153,11 +181,12 @@ export default function PlatformAdminPage(){
          <label>URL slug<input required value={assisted.slug} onChange={e=>setAssisted(s=>({...s,slug:e.target.value}))} placeholder="abc-learning-academy"/></label>
          <label>Organization type<select value={assisted.kind} onChange={e=>setAssisted(s=>({...s,kind:e.target.value}))}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Tutor</option></select></label>
          <fieldset className="platformModuleFieldset"><legend>Enabled trial modules</legend><p className="platformModuleHint">Choose which applications the customer can try.</p><div className="platformModuleChoices">{(["academy","crm","tasks"] as const).map(m=><label key={m} className="platformModuleOption"><input type="checkbox" checked={assisted.modules.includes(m)} onChange={e=>setAssisted(s=>({...s,modules:e.target.checked?[...s.modules,m]:s.modules.filter(x=>x!==m)}))}/><span className="platformModuleCopy"><strong>{m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks"}</strong><small>{m==="academy"?"Students, trainers, classes and fees":m==="crm"?"Enquiries, admissions and follow-ups":"Daily tasks and team coordination"}</small></span></label>)}</div></fieldset>
-         <button className="platformCreateInvitation" type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create academy & send invitation"}</button>
+         <button className="platformCreateInvitation" type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create academy & attempt invitation delivery"}</button>
          {invitationUrl&&<div><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. This link grants access to the invitation process; share privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(invitationUrl);setAssistedMessage("Secure invitation link copied. Share it privately only.");}catch{setAssistedMessage("Copy failed. Select and copy the link manually from the field above.");}}}>Copy secure link</button></div>}</div>}
-         {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
-         <div><button type="button" onClick={()=>void loadPendingCustomers()}>Refresh pending invitations</button>
-          {pendingCustomers.length===0?<p>No pending customer invitations.</p>:<div className="platformTableScroll"><table><thead><tr><th>Academy</th><th>Owner email</th><th>Invitation</th><th>Email delivery</th><th>Expires</th><th>Actions</th></tr></thead><tbody>{pendingCustomers.map(inv=><tr key={inv.id}><td><strong>{inv.organization_name}</strong><small style={{display:"block"}}>{inv.organization_slug}</small></td><td>{inv.owner_email}</td><td>{inv.status}</td><td aria-label={"Delivery status: "+(deliveryStatus[inv.id]||"not sent")}>{deliveryStatus[inv.id]||"not sent"}</td><td>{new Date(inv.expires_at).toLocaleDateString()}</td><td>{inv.status==="pending"&&<><button type="button" disabled={assistedBusy} onClick={()=>void rotatePending(inv.id)}>Resend invitation</button> <button type="button" disabled={assistedBusy} onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</td></tr>)}</tbody></table></div>}
+         {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}{latestDelivery&&<p role="status">Email result: <strong>{deliveryLabel(latestDelivery)}</strong></p>}
+         <div><button type="button" disabled={pendingLoading} onClick={()=>void loadPendingCustomers()}>{pendingLoading?"Refreshing…":"Refresh customer invitations"}</button>
+          {pendingError&&<p role="alert">{pendingError}</p>}
+          {!pendingLoading&&!pendingError&&pendingCustomers.length===0?<p>No customer invitations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Academy</th><th>Owner email</th><th>Invitation</th><th>Email delivery</th><th>Expires</th><th>Actions</th></tr></thead><tbody>{pendingCustomers.map(inv=><tr key={inv.id}><td><strong>{inv.organization_name}</strong><small style={{display:"block"}}>{inv.organization_slug}</small></td><td>{inv.owner_email}</td><td>{invitationLabel(inv.status,inv.expires_at)}</td><td aria-label={"Delivery status: "+deliveryLabel(deliveryStatus[inv.id]||"")}>{deliveryLabel(deliveryStatus[inv.id]||"")}</td><td>{new Date(inv.expires_at).toLocaleDateString()}</td><td>{inv.status==="pending"&&<><button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void rotatePending(inv.id)}>Resend invitation</button> <button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</td></tr>)}</tbody></table></div>}
          </div>
         </form>
        </section>
