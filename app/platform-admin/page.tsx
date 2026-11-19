@@ -188,7 +188,19 @@ export default function PlatformAdminPage(){
       </div>}
       <div className="platformColumns platformTabSections">
        <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
-       <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel"><PlatformSubscriptions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+       <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel">
+        {operations&&<section style={{padding:20,marginBottom:20,border:"1px solid #ddd5eb",borderRadius:16}}>
+         <h2>Customer subscription overview</h2>
+         <p>Select a customer from the table to manage its plan and module entitlements.</p>
+         <div className="platformTableScroll"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>End date</th><th>Action</th></tr></thead><tbody>
+          {operations.subscriptions.filter(x=>overview.organizations.some(o=>o.id===x.organization_id)).map(x=><tr key={x.organization_id}>
+           <td>{overview.organizations.find(o=>o.id===x.organization_id)?.display_name||x.organization_id}</td><td>{x.plan_code}</td><td>{x.status}</td><td>{x.ends_at?new Date(x.ends_at).toLocaleDateString():"Not set"}</td>
+           <td><button type="button" onClick={()=>setSelectedCustomerId(x.organization_id)}>Manage plan</button></td>
+          </tr>)}
+         </tbody></table></div>
+         <p>Showing subscriptions for customers visible on the current directory page. Search Directory to find other customers.</p>
+        </section>}
+        <PlatformSubscriptions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
       </div>
       <div className="platformColumns platformTabSections">
        <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
