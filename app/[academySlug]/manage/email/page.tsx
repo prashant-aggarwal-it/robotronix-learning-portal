@@ -7,7 +7,7 @@ type Connection={provider:string;status:string;sender_email:string|null;sender_v
 const providers=[{key:"google",name:"Gmail / Google Workspace"},{key:"microsoft",name:"Microsoft 365 / Outlook"},{key:"smtp",name:"Hostinger / Other SMTP"}];
 export default function AcademyEmailSettings(){
  const {academySlug}=useParams<{academySlug:string}>();
- const [name,setName]=useState(""),[connections,setConnections]=useState<Connection[]>([]),[error,setError]=useState(""),[busy,setBusy]=useState(true);
+ const [organizationId,setOrganizationId]=useState(""),[name,setName]=useState(""),[connections,setConnections]=useState<Connection[]>([]),[error,setError]=useState(""),[busy,setBusy]=useState(true);
  useEffect(()=>{let active=true;(async()=>{try{
   const client=getSupabaseBrowserClient();if(!client)throw Error("Authentication unavailable");
   const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
@@ -18,9 +18,18 @@ export default function AcademyEmailSettings(){
   const response=await fetch("/api/academy/email-connections?organizationId="+encodeURIComponent(org.id),{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
   const body=await response.json();
   if(!response.ok)throw Error(body.error||"Email settings unavailable");
-  if(active){setName(body.organization.displayName);setConnections(body.connections||[]);}
+  if(active){setOrganizationId(org.id);setName(body.organization.displayName);setConnections(body.connections||[]);}
  }catch(e){if(active)setError(e instanceof Error?e.message:"Unable to load email settings");}
  finally{if(active)setBusy(false);}})();return()=>{active=false};},[academySlug]);
+ async function googleAction(action:"start"|"disconnect"){
+  const client=getSupabaseBrowserClient();const {data:{session}}=await client!.auth.getSession();
+  if(!session||!organizationId){setError("Sign in and select your academy");return;}
+  try{
+   const response=await fetch("/api/academy/email-connections/google/"+action,{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({organizationId}),cache:"no-store"});
+   const body=await response.json();if(!response.ok)throw Error(body.error||"Google connection unavailable");
+   if(action==="start")window.location.assign(body.url);else window.location.reload();
+  }catch(e){setError(e instanceof Error?e.message:"Google connection unavailable");}
+ }
  return <main style={{minHeight:"100vh",background:"#f4f7fd",padding:"32px 20px",fontFamily:"system-ui",color:"#192541"}}>
   <div style={{maxWidth:900,margin:"auto"}}>
    <Link href={"/"+academySlug+"/manage"}>← Academy management</Link>
@@ -36,7 +45,9 @@ export default function AcademyEmailSettings(){
       <p style={{margin:"0 0 6px"}}>Status: <strong>{c?.status||"Not connected"}</strong></p>
       {c?.sender_email&&<p>Sender: {c.sender_email}</p>}
       {c?.last_error_code&&<p role="status">Connection issue: {c.last_error_code}</p>}
-      <small style={{color:"#526179"}}>Connection setup not yet available. No email will be sent through this provider.</small>
+      {p.key==="google"?<div style={{display:"flex",gap:12,marginTop:14}}>
+       {c?.status==="connected"?<button type="button" onClick={()=>googleAction("disconnect")}>Disconnect Gmail</button>:<button type="button" onClick={()=>googleAction("start")}>Connect Google account</button>}
+      </div>:<small style={{color:"#526179"}}>Connection setup is planned for a later phase.</small>}
      </section>})}
     </div>
    </>}
