@@ -23,6 +23,7 @@ export default function AcademyNotificationSettings(){
   const [prefs,conn,history]=await Promise.all([api("/api/academy/email-notifications/preferences?organizationId="+id),api("/api/academy/email-connections?organizationId="+id),api("/api/academy/email-notifications/history?organizationId="+id)]);
   if(active){setOrganizationId(id);setEnabled(prefs.preferences.enabled);setProvider(prefs.preferences.provider||"");setEvents(prefs.preferences.enabled_events||[]);setConnections(conn.connections||[]);setJobs(history.jobs||[]);}
  }catch(e){if(active)setMessage(e instanceof Error?e.message:"Unable to load notifications");}finally{if(active)setBusy(false);}})();return()=>{active=false};},[academySlug]);
+ async function retry(jobId:string){try{await api("/api/academy/email-notifications/retry",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId,jobId})});setJobs(v=>v.map(j=>j.id===jobId?{...j,status:"queued",attempts:0}:j));setMessage("Retry queued");}catch(e){setMessage(e instanceof Error?e.message:"Retry failed");}}
  async function save(){setSaving(true);setMessage("");try{await api("/api/academy/email-notifications/preferences",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId,enabled,provider:provider||null,enabledEvents:events})});setMessage("Preferences saved");}catch(e){setMessage(e instanceof Error?e.message:"Save failed");}finally{setSaving(false);}}
  return <main style={{padding:"32px 20px",maxWidth:850,margin:"auto",fontFamily:"system-ui"}}>
   <Link href={"/"+academySlug+"/manage/email"}>← Email connections</Link>
@@ -36,7 +37,7 @@ export default function AcademyNotificationSettings(){
    <button disabled={saving||!organizationId||enabled&&!provider} onClick={save}>{saving?"Saving…":"Save preferences"}</button>
   </section>
   <h2>Recent delivery history</h2><p>Latest 100 jobs. No email message bodies are shown.</p>
-  <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><th>Event</th><th>Recipient</th><th>Provider</th><th>Status</th><th>Attempts</th></tr></thead><tbody>{jobs.map(j=><tr key={j.id}>{[j.event_type,j.recipient_email,j.provider||"—",j.status,j.attempts].map((v,i)=><td key={i} style={{padding:8,borderBottom:"1px solid #ddd"}}>{v}</td>)}</tr>)}</tbody></table></div>
+  <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><th>Event</th><th>Recipient</th><th>Provider</th><th>Status</th><th>Attempts</th><th>Action</th></tr></thead><tbody>{jobs.map(j=><tr key={j.id}>{[j.event_type,j.recipient_email,j.provider||"—",j.status,j.attempts].map((v,i)=><td key={i} style={{padding:8,borderBottom:"1px solid #ddd"}}>{v}</td>)}<td>{j.status==="failed"?<button onClick={()=>retry(j.id)}>Retry</button>:null}</td></tr>)}</tbody></table></div>
   </>}
  </main>;
 }
