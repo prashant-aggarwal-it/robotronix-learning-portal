@@ -1,0 +1,29 @@
+name: Academy email delivery scheduler
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+permissions:
+  contents: read
+jobs:
+  dispatch:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Process queued academy notifications
+        env:
+          ENDPOINT: ${{ secrets.ACADEMY_NOTIFICATION_WORKER_URL }}
+          TOKEN: ${{ secrets.ACADEMY_NOTIFICATION_WORKER_SECRET }}
+        run: |
+          if [ -z "$ENDPOINT" ] || [ -z "$TOKEN" ]; then
+            echo "Academy email scheduler not configured; no dispatch"
+            exit 0
+          fi
+          case "$ENDPOINT" in
+            https://*/api/internal/academy-notifications/process) ;;
+            *) echo "Invalid HTTPS worker endpoint"; exit 1 ;;
+          esac
+          curl --fail --silent --show-error --retry 2 --max-time 45 \
+            -X POST -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" "$ENDPOINT"
