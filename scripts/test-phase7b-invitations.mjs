@@ -5,7 +5,7 @@ const src=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 test("Invitation email is only accepted by provider after sending",()=>{
  const s=src("lib/server/saas/invitation-mail.ts");
  assert.match(s,/sendEmail/);assert.match(s,/smtp_accepted/);
- assert.match(s,/provider_accepted/);assert.match(s,/not_configured/);
+ assert.match(s,/provider_accepted/);assert.match(src("lib/server/saas/email-transport.ts"),/not_configured/);
  assert.match(s,/INVITATION_APP_URL/);assert.match(s,/href=/);
 });
 test("Auto-delivery never claims email was sent on missing credentials",()=>{
@@ -16,7 +16,7 @@ test("Auto-delivery never claims email was sent on missing credentials",()=>{
 });
 test("SMTP adapter enforces server-side configuration, TLS and accepted-only state",()=>{
  const s=src("lib/server/saas/email-transport.ts");
- assert.match(s,/SMTP_PASSWORD/);assert.match(s,/TLSv1\\.2/);
+ assert.match(s,/SMTP_PASSWORD/);assert.match(s,/TLSv1.2/);
  assert.match(s,/rejectUnauthorized:true/);assert.match(s,/smtp_accepted/);
  assert.match(s,/disableFileAccess:true/);assert.match(s,/disableUrlAccess:true/);
 });
