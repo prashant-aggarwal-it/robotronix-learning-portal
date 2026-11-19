@@ -20,3 +20,9 @@ Gmail OAuth, Microsoft OAuth and SMTP account connection belong to later phases.
 No PROD changes or Netlify deployment.
 
 The owner/admin academy management dashboard links to the email status screen. Email settings access requires academy.settings.manage capability; status responses contain no secrets. Credential storage, actual provider authorization and provider health checks are deliberately deferred until implementing Google OAuth and SMTP adapters; do not mark any provider as connected without verified credentials.
+
+## Security hardening
+Migration 87 enforces a composite foreign key from delivery events to connection id **and** organization id. A delivery event cannot reference a different academy's email connection, even if a privileged writer accidentally passes the wrong connection id. Verified in DEV via pg_constraint. Both private tables have RLS enabled and only service_role receives DML grants; anon and authenticated receive none.
+
+## Completion boundary
+Phase 7C establishes the tenant-owned metadata model, server authorization, read-only settings UI, sender gate and cross-tenant database integrity. Provider credential acquisition, secure storage, token refresh, connection lifecycle, and live provider health checks cannot be safely certified without implementing the actual providers; these are explicit prerequisites for Phases 7D (Google) and 7E (SMTP). No academy sending is enabled by this foundation. CI is not equivalent to a live provider test.
