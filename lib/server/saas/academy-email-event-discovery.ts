@@ -11,9 +11,22 @@ const enabledKinds:Kind[]=["enrollment","class_reminder","fee_reminder","progres
  */
 export async function discoverAcademyEmailEvents(maxOrganizations=10){
  const db=platformService(),now=new Date(),today=now.toISOString().slice(0,10);
- const {data:preferences,error}=await db.schema("saas").from("academy_email_notification_preferences")
-  .select("organization_id,enabled_events,updated_at").eq("enabled",true).order("organization_id").limit(Math.min(Math.max(maxOrganizations,1),50));
+ const pageSize=Math.min(Math.max(maxOrganizations,1),50);
+ const {count,error:countError}=await db.schema("saas").from("academy_email_notification_preferences").select("organization_id",{count:"exact",head:true}).eq("enabled",true);
+ if(countError)throw Error("Unable to count enabled academies");
+ const total=count||0;
+ // Rotate the bounded academy window every scheduler invocation, preventing permanent starvation.
+ const offset=total?((Math.floor(now.getTime()/600000)*pageSize)%total):0;
+ const {data:first,error}=await db.schema("saas").from("academy_email_notification_preferences")
+  .select("organization_id,enabled_events,updated_at").eq("enabled",true).order("organization_id").range(offset,offset+pageSize-1);
  if(error)throw Error("Unable to discover academy email preferences");
+ let preferences=first||[];
+ if(preferences.length<pageSize&&offset>0){
+  const {data:wrapped,error:wrapError}=await db.schema("saas").from("academy_email_notification_preferences")
+   .select("organization_id,enabled_events,updated_at").eq("enabled",true).order("organization_id").range(0,pageSize-preferences.length-1);
+  if(wrapError)throw Error("Unable to load remaining academies");
+  preferences=preferences.concat(wrapped||[]);
+ }
  const results:{organizationId:string;queued:number;skipped:number}[]=[];
  for(const pref of preferences||[]){
   const orgId=pref.organization_id,enabled=(pref.enabled_events||[]).filter((k:string)=>enabledKinds.includes(k as Kind));
