@@ -24,7 +24,7 @@ export function isUpcomingClass(date:string,startTime:string,timezone:string,now
  * No email is sent without a matching guardian contact.
  */
 export async function discoverAcademyEmailEvents(maxOrganizations=10){
- const db=platformService(),now=new Date(),today=now.toISOString().slice(0,10);
+ const db=platformService(),now=new Date(),today=now.toISOString().slice(0,10),yesterday=new Date(now.getTime()-86400000).toISOString().slice(0,10);
  const pageSize=Math.min(Math.max(maxOrganizations,1),50);
  const {count,error:countError}=await db.schema("saas").from("academy_email_notification_preferences").select("organization_id",{count:"exact",head:true}).eq("enabled",true);
  if(countError)throw Error("Unable to count enabled academies");
@@ -60,7 +60,7 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
     const outcome=await queueAcademyNotification({organizationId:orgId,eventType:kind,idempotencyKey:key,to,subject,text:body});
     if(outcome.queued)queued++;else skipped++;
    }
-   if(enabled.includes("enrollment")&&enrollment.status==="active"&&enrollment.created_at&&Date.parse(enrollment.created_at)>Math.max(now.getTime()-7*86400000,Date.parse(pref.updated_at||""))){
+   if(enabled.includes("enrollment")&&enrollment.status==="active"&&enrollment.created_at&&Date.parse(enrollment.created_at)>Math.max(now.getTime()-7*86400000,Date.parse(pref.updated_at||"1970-01-01"))){
     await emit("enrollment","enrollment:"+enrollment.id,"Enrollment confirmation","Enrollment for "+student.full_name+" has been recorded. Please contact your academy for class details.");
    }
    if(enabled.includes("progress_update")&&typeof enrollment.progress_percent==="number"&&enrollment.progress_percent>0&&enrollment.updated_at&&Date.parse(enrollment.updated_at)>Math.max(now.getTime()-7*86400000,Date.parse(pref.updated_at||""))){
@@ -68,7 +68,7 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
    }
    if(enabled.includes("class_reminder")){
     const {data:classes}=await db.from("schedule_events").select("id,date,start_time,timezone,status,title")
-     .eq("enrollment_id",enrollment.id).gte("date",today).lte("date",new Date(now.getTime()+2*86400000).toISOString().slice(0,10)).limit(15);
+     .eq("enrollment_id",enrollment.id).gte("date",yesterday).lte("date",new Date(now.getTime()+2*86400000).toISOString().slice(0,10)).limit(15);
     for(const cls of classes||[]){
      if(!["scheduled","confirmed"].includes(cls.status))continue;
      if(!isUpcomingClass(cls.date,cls.start_time,cls.timezone||"UTC",now))continue;
@@ -91,7 +91,7 @@ export async function discoverAcademyEmailEvents(maxOrganizations=10){
    for(const trainer of trainers||[]){
     if(!trainer.email||!email.test(trainer.email))continue;
     const {data:classes}=await db.from("schedule_events").select("id,enrollment_id,date,start_time,timezone,status")
-      .eq("trainer_id",trainer.id).gte("date",today).lte("date",new Date(now.getTime()+2*86400000).toISOString().slice(0,10)).limit(30);
+      .eq("trainer_id",trainer.id).gte("date",yesterday).lte("date",new Date(now.getTime()+2*86400000).toISOString().slice(0,10)).limit(30);
     for(const cls of classes||[]){
      if(!["scheduled","confirmed"].includes(cls.status)||!isUpcomingClass(cls.date,cls.start_time,cls.timezone||"UTC",now))continue;
      // Validate class membership in the same tenant before notifying a trainer.
