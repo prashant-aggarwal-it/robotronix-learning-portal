@@ -7,6 +7,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import PlatformCustomerActions from "./PlatformCustomerActions";
 import PlatformSubscriptions from "./PlatformSubscriptions";
 import PlatformEmailHealth from "./PlatformEmailHealth";
+import PlatformAdminSafety from "./PlatformAdminSafety";
 import PlatformTenantBranding from "./PlatformTenantBranding";
 import PlatformBrandingEntitlements from "./PlatformBrandingEntitlements";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
@@ -167,6 +168,7 @@ export default function PlatformAdminPage(){
       </section>
       {activeSection==="overview"&&<div className="platformOverviewBody">
        <PlatformEmailHealth/>
+       <PlatformAdminSafety/>
        {operationsError&&<p role="alert">Operations summary: {operationsError}</p>}
        {operations&&<section className="platformPanel" aria-label="Action required" style={{padding:20,marginBottom:20}}>
         <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}><h2>Action required</h2><button onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
