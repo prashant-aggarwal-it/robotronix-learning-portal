@@ -18,6 +18,7 @@ export default function PlatformAdminPage(){
  const [loading,setLoading]=useState(true);
  const [refresh,setRefresh]=useState(0);
  const [activeSection,setActiveSection]=useState("overview");
+ const [selectedCustomerId,setSelectedCustomerId]=useState("");
  useEffect(()=>{
   const sync=()=>{
    const id=window.location.hash.slice(1);
@@ -138,8 +139,8 @@ export default function PlatformAdminPage(){
        <div className="platformCompactList">{overview.organizations.slice(0,4).map(o=><div key={o.id}><span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span><span><strong>{o.display_name}</strong><small>{o.slug}</small></span><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></div>)}{overview.organizations.length===0&&<p>No customer records on this page.</p>}</div>
       </div>}
       <div className="platformColumns platformTabSections">
-       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
-       <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel"><PlatformSubscriptions organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
+       <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel"><PlatformSubscriptions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
       </div>
       <div className="platformColumns platformTabSections">
        <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
@@ -163,7 +164,22 @@ export default function PlatformAdminPage(){
       </div>
       <section id="directory" hidden={activeSection!=="directory"} className="platformDirectory platformPanel">
        <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Organization directory</h2><p>Find and review registered organizations.</p></div><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
-       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Workspace slug</th><th>Status</th><th>Created</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><code>{o.slug}</code></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td></tr>)}</tbody></table></div>}
+       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Workspace slug</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><code>{o.slug}</code></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
+       {selectedCustomerId&&overview.organizations.some(o=>o.id===selectedCustomerId)&&<section className="platformPanel" aria-label="Selected customer actions" style={{marginTop:20,padding:22}}>
+        <span className="platformEyebrow">CUSTOMER WORKSPACE</span>
+        <h3>{overview.organizations.find(o=>o.id===selectedCustomerId)?.display_name}</h3>
+        <p>Customer details and actions. Select an operation to work with this organization.</p>
+        <dl style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12}}>
+         <div><dt>Organization ID</dt><dd style={{overflowWrap:"anywhere"}}>{selectedCustomerId}</dd></div>
+         <div><dt>Workspace slug</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.slug}</dd></div>
+         <div><dt>Status</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.status}</dd></div>
+        </dl>
+        <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
+         <button type="button" onClick={()=>navigate("customers")}>Manage access and status</button>
+         <button type="button" onClick={()=>navigate("subscriptions")}>Manage subscription</button>
+         <button type="button" onClick={()=>navigate("branding")}>Manage branding</button>
+        </div>
+       </section>}
        <div className="platformPagination"><span>{overview.total} matching organizations · Page {page}</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><button disabled={page*20>=overview.total} onClick={()=>setPage(p=>p+1)}>Next</button></div></div>
       </section>
      </>}
