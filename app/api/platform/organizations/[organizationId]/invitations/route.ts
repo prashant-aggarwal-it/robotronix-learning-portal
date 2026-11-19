@@ -40,8 +40,8 @@ export async function POST(request:NextRequest,context:{params:Promise<{organiza
   try{
    const appOrigin=process.env.ACADEMY_INVITATION_APP_ORIGIN;
    if(appOrigin&&new URL(appOrigin).protocol==="https:"){
-    const acceptUrl=new URL("/workspace",appOrigin);
-    acceptUrl.searchParams.set("invite",token);
+    const acceptUrl=new URL("/accept-invitation",appOrigin);
+    acceptUrl.searchParams.set("token",token);
     const queued=await queueAcademyNotification({
      organizationId,eventType:"invitation",idempotencyKey:"academy-invite:"+String(data),
      to:email.trim().toLowerCase(),subject:"Invitation to join "+org.displayName,
