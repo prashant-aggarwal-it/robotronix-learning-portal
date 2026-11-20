@@ -4,14 +4,16 @@ import PlatformEmailHealth from "./PlatformEmailHealth";
 import PlatformAdminSafety from "./PlatformAdminSafety";
 import PlatformServiceHealth from "./PlatformServiceHealth";
 import PlatformWorkerHealth from "./PlatformWorkerHealth";
+import PlatformCustomerHealth from "./PlatformCustomerHealth";
 
-type Panel="summary"|"email"|"security"|"services"|"jobs";
+type Panel="summary"|"email"|"security"|"services"|"jobs"|"customers";
 const sections:{id:Panel;label:string}[]=[
  {id:"summary",label:"Summary"},
  {id:"email",label:"Email monitoring"},
  {id:"security",label:"Security & audit"},
  {id:"services",label:"Services & APIs"},
- {id:"jobs",label:"Background jobs"}
+ {id:"jobs",label:"Background jobs"},
+ {id:"customers",label:"Customers & Integrations"}
 ];
 
 /** Phase 9A organizes existing operational views. It does not invent health measurements. */
@@ -30,11 +32,13 @@ export default function PlatformSystemHealth(){
    <article className="platformPanel platformMonitorTile"><h3>Application & APIs</h3><strong>On-demand health checks</strong><p>Measure application and database response time; historical uptime is not yet recorded.</p><button type="button" onClick={()=>setPanel("services")}>Service coverage</button></article>
    <article className="platformPanel platformMonitorTile"><h3>Email delivery</h3><strong>Available in Email monitoring</strong><p>View recorded queue, provider-acceptance and failure counts.</p><button type="button" onClick={()=>setPanel("email")}>View email monitoring</button></article>
    <article className="platformPanel platformMonitorTile"><h3>Jobs & workers</h3><strong>Heartbeat and queue tracking</strong><p>Review worker executions, queue delays, retries and failures.</p><button type="button" onClick={()=>setPanel("jobs")}>Job coverage</button></article>
+   <article className="platformPanel platformMonitorTile"><h3>Customer and integration health</h3><strong>Full platform aggregates</strong><p>Trial expiry, activation issues and known email connection states.</p><button type="button" onClick={()=>setPanel("customers")}>View customer health</button></article>
    <article className="platformPanel platformMonitorTile"><h3>Administrator audit</h3><strong>Existing records available</strong><p>Inspect privileged administrator changes and verified access.</p><button type="button" onClick={()=>setPanel("security")}>View audit</button></article>
   </div>}
   {panel==="email"&&<PlatformEmailHealth/>}
   {panel==="security"&&<PlatformAdminSafety/>}
   {panel==="services"&&<PlatformServiceHealth/>}
   {panel==="jobs"&&<PlatformWorkerHealth/>}
+  {panel==="customers"&&<PlatformCustomerHealth/>}
  </section>;
 }
