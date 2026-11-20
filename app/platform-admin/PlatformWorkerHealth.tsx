@@ -30,8 +30,8 @@ export default function PlatformWorkerHealth(){
   {busy&&!data&&!error&&<p role="status">Checking worker and queue…</p>}
   {data&&<>
    <p role="status"><strong>Worker status: {data.status}</strong> · Last checked {new Date(data.observedAt).toLocaleString()}</p>
-   <div className="platformMonitorTiles">
-    {([{label:"Queued",value:data.queue.queued},{label:"Retrying",value:data.queue.retry},{label:"Failed",value:data.queue.failed},{label:"Sending",value:data.queue.sending},{label:"Due now",value:data.queue.due},{label:"Retried jobs",value:data.queue.retried},{label:"Stale sending",value:data.queue.staleSending},{label:"Oldest waiting (min)",value:data.queue.oldestWaitMinutes??"—"}]).map(x=><div key={x.label} style={{border:"1px solid #e3d9ec",borderRadius:10,padding:14}}><strong style={{fontSize:20}}>{x.value}</strong><p style={{margin:0}}>{x.label}</p></div>)}
+   <div className="platformHealthStats">
+    {([{label:"Queued",value:data.queue.queued},{label:"Retrying",value:data.queue.retry},{label:"Failed",value:data.queue.failed},{label:"Sending",value:data.queue.sending},{label:"Due now",value:data.queue.due},{label:"Retried jobs",value:data.queue.retried},{label:"Stale sending",value:data.queue.staleSending},{label:"Oldest waiting (min)",value:data.queue.oldestWaitMinutes??"—"}]).map(x=><div key={x.label} className="platformHealthStat"><strong style={{fontSize:20}}>{x.value}</strong><p style={{margin:0}}>{x.label}</p></div>)}
    </div>
    <h3>Notification worker heartbeat</h3>
    {data.heartbeat?<dl>
