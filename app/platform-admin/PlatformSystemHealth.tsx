@@ -41,7 +41,7 @@ export default function PlatformSystemHealth(){
   setChecks({
    services:map.services?{status:map.services.overall==="healthy"?"Healthy":map.services.overall||"Unknown",detail:"On-demand API and database probes; not historical uptime",checkedAt:date(map.services.observedAt),target:"services"}:blank.services,
    jobs:map.jobs?{status:map.jobs.status||"Unknown",detail:map.jobs.scheduledExecutionVerified?"Scheduler execution verified":"Scheduled execution not verified",checkedAt:date(map.jobs.observedAt),target:"services"}:blank.jobs,
-   email:map.email?{status:"Activity recorded",detail:"Queued: "+(map.email.jobs?.queued??0)+" · Failed: "+(map.email.jobs?.failed??0)+" · No activity does not mean healthy delivery",target:"email"}:blank.email,
+   email:map.email?{status:((map.email.jobs?.queued??0)+(map.email.jobs?.sending??0)+(map.email.jobs?.sent??0)+(map.email.jobs?.failed??0))===0?"No recent jobs":"Activity recorded",detail:"Queued: "+(map.email.jobs?.queued??0)+" · Failed: "+(map.email.jobs?.failed??0)+" · No activity does not mean healthy delivery",target:"email"}:blank.email,
    incidents:map.incidents?{status:"Records available",detail:"Open incidents: "+(map.incidents.incidents||[]).filter((i:any)=>i.status!=="resolved").length+" · On-demand detection only",target:"security"}:blank.incidents,
    database:map.recovery?{status:map.recovery.database?.reachable?"Reachable":"Unknown",detail:"Connectivity observed; not a recovery guarantee",checkedAt:date(map.recovery.observedAt),target:"recovery"}:blank.database,
    backups:map.recovery?{status:"Unverified",detail:"Restore drill and backup evidence not recorded",target:"recovery"}:blank.backups
