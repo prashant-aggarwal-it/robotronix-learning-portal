@@ -21,5 +21,5 @@ test("worker UI does not claim unknown heartbeat is healthy",()=>{
  const s=read("app/platform-admin/PlatformWorkerHealth.tsx");
  for(const v of ["No heartbeat recorded yet","Scheduled execution has not been verified","last_started_at","Refresh","Failed","Retrying"])assert.ok(s.includes(v),v);
  const nav=read("app/platform-admin/PlatformSystemHealth.tsx");
- assert.ok(nav.includes('panel==="jobs"&&<PlatformWorkerHealth/>'));
+ assert.ok(nav.includes('panel==="services"&&<div className="platformHealthStack"><PlatformServiceHealth/><PlatformWorkerHealth/>'));
 });
