@@ -43,11 +43,11 @@ export default function PlatformAdminSafety(){
   {verifiedId&&<p>Verified user ID: <code>{verifiedId}</code> <button type="button" onClick={()=>void navigator.clipboard.writeText(verifiedId)}>Copy ID</button></p>}
   <h3>Administrators</h3>
   <div className="platformTableScroll"><table><thead><tr><th>User ID</th><th>Role</th><th>Access</th><th>Added</th></tr></thead><tbody>
-   {administrators.map(a=><tr key={a.user_id}><td><code>{a.user_id}</code></td><td>{a.role_key}</td><td>{a.active?"Active":"Inactive"}</td><td>{new Date(a.created_at).toLocaleDateString()}</td></tr>)}
+   {administrators.map(a=><tr key={a.user_id}><td><details><summary>{a.role_key==="super_admin"?"Super Admin":"Administrator"}</summary><code>{a.user_id}</code></details></td><td>{a.role_key}</td><td>{a.active?"Active":"Inactive"}</td><td>{new Date(a.created_at).toLocaleDateString()}</td></tr>)}
   </tbody></table></div>
   <h3 style={{marginTop:18}}>Recent administrator access audit</h3>
   <div className="platformTableScroll"><table><thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Subject</th></tr></thead><tbody>
-   {audit.map(a=><tr key={a.id}><td>{new Date(a.occurred_at).toLocaleString()}</td><td>{a.action}</td><td><code>{a.actor_user_id}</code></td><td><code>{a.subject_user_id||"—"}</code></td></tr>)}
+   {audit.map(a=><tr key={a.id}><td>{new Date(a.occurred_at).toLocaleString()}</td><td>{a.action.replaceAll("_"," ").replace(/:([0-9a-f-]{36})$/i,"")}</td><td><details><summary>Administrator</summary><code>{a.actor_user_id}</code></details></td><td>{a.subject_user_id?<details><summary>View subject ID</summary><code>{a.subject_user_id}</code></details>:"—"}</td></tr>)}
   </tbody></table></div>
   <p>Administrator audit records cover platform access changes; they are not a comprehensive audit of all customer operations.</p>
  </section>
