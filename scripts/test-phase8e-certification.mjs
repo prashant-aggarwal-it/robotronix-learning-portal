@@ -28,16 +28,20 @@ test("platform admin gate verifies authenticated confirmed users and persisted a
 });
 test("email health has bounded, sanitized read-only surface",()=>{
  const s=read("app/api/platform-admin/email-health/route.ts");
- assert.match(s,/\.limit\(501\)/);
- assert.match(s,/organizationId\)q=q\.eq\("organization_id",organizationId\)/);
- assert.match(s,/connectionsTruncated:/);
+ assert.match(s,/saas_platform_monitor_read_v1/);
+ const sql=read("database/saas/94_phase8_monitor_service_only_read.sql");
+ assert.match(sql,/organization_id=p_organization_id/);
+ assert.match(sql,/connectionsTruncated/);
+ assert.match(sql,/limit 500/);
  assert.ok(!/\.select\([^\n]*(credential_reference|recipient_email|body_text|subject|provider_message_id)/.test(s));
  assert.ok(!s.includes("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY"));
 });
 test("platform roster has privileged limited reads and no credentials",()=>{
  const s=read("app/api/platform-admin/administrators/route.ts");
- assert.match(s,/\.limit\(100\)/);
- assert.match(s,/\.limit\(50\)/);
+ assert.match(s,/saas_platform_monitor_read_v1/);
+ const sql=read("database/saas/94_phase8_monitor_service_only_read.sql");
+ assert.match(sql,/limit 100/);
+ assert.match(sql,/limit 50/);
  assert.match(s,/email_confirmed_at/);
  assert.ok(!s.includes("password_hash"));
 });
@@ -59,4 +63,16 @@ test("administrator lookup differentiates fully scanned absence from safety limi
  assert.ok(api.includes("exhausted=true"));
  assert.ok(api.includes("lookupLimited:userId===null&&!exhausted"));
  assert.ok(ui.includes("data.lookupLimited"));
+});
+
+test("monitoring RPC remains restricted to server service role",()=>{
+ const sql=read("database/saas/94_phase8_monitor_service_only_read.sql");
+ assert.match(sql,/security invoker/);
+ assert.match(sql,/revoke all on function public\.saas_platform_monitor_read_v1\(text,uuid\) from public,anon,authenticated/);
+ assert.match(sql,/grant execute on function public\.saas_platform_monitor_read_v1\(text,uuid\) to service_role/);
+ for(const route of ["email-health","administrators","operations-summary"]){
+  const source=read("app/api/platform-admin/"+route+"/route.ts");
+  assert.match(source,/saas_platform_monitor_read_v1/);
+  assert.ok(!source.includes('.schema("saas")'));
+ }
 });
