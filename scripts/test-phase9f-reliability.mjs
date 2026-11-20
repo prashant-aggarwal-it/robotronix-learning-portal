@@ -15,7 +15,7 @@ test("UI provides honest reliability status and responsive navigation",()=>{
  const ui=read("app/platform-admin/PlatformReliability.tsx");
  for(const token of ["Not verified","Not tested","Not monitored","database.sizeBytes","Refresh checks"])assert.ok(ui.includes(token),token);
  const shell=read("app/platform-admin/PlatformSystemHealth.tsx");
- assert.ok(shell.includes('panel==="reliability"&&<PlatformReliability/>'));
+ assert.ok(shell.includes('panel==="recovery"&&<PlatformReliability/>'));
 });
 test("platform monitoring routes enforce server-side authorization",()=>{
  for(const name of ["service-health","worker-health","customer-health","incidents","incident-scan","reliability","email-health","administrators"]){
