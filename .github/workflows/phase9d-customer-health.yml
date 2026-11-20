@@ -1,0 +1,22 @@
+name: Phase 9D Customer Integration Health
+on:
+  push:
+    branches:
+      - feature/education-suite-phase9d-customer-integration-health
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-phase9d-customer-health.mjs scripts/test-phase9c-worker-health.mjs scripts/test-phase9b-service-health.mjs scripts/test-phase9a-system-health.mjs scripts/test-phase8e-certification.mjs
+      - run: npm run typecheck
+      - run: npm run build
