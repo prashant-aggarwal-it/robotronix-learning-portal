@@ -27,7 +27,7 @@ export default function PlatformEmailHealth(){
    <button type="button" onClick={()=>setRevision(v=>v+1)} disabled={loading}>{loading?"Refreshing…":"Refresh"}</button>
   </div>
   {error&&<p role="alert">{error}</p>}
-  {data&&<><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12}}>
+  {data&&<><div className="platformHealthStats">
    {(["queued","sending","sent","failed"] as const).map(status=><div key={status}><strong style={{fontSize:22,display:"block"}}>{data.jobs[status]||0}</strong><span>{status==="sent"?"Provider accepted":status}</span></div>)}
    <div><strong style={{fontSize:22,display:"block"}}>{data.connections.attention}</strong><span>Connections needing attention</span></div>
   </div><p>Connected accounts: {data.connections.connected}. “Provider accepted” does not guarantee inbox delivery.</p>
