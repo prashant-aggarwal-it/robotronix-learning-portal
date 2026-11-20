@@ -1,0 +1,22 @@
+name: Subscription Manage Selection Validation
+on:
+  push:
+    branches:
+      - fix/subscription-manage-navigation
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-subscription-manage-navigation.mjs scripts/test-priority-followups.mjs
+      - run: npm run typecheck
+      - run: npm run build
