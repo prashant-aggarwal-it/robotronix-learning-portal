@@ -10,7 +10,7 @@ import PlatformSystemHealth from "./PlatformSystemHealth";
 import PlatformTenantBranding from "./PlatformTenantBranding";
 import PlatformBrandingEntitlements from "./PlatformBrandingEntitlements";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
-type Ops={subscriptions:{organization_id:string;plan_code:string;status:string;ends_at:string|null}[];metrics:{expiringTrials:number;expiredTrials:number;pendingInvitations:number;expiredInvitations:number;pastDueSubscriptions:number};alerts:{type:string;organizationId?:string;organizationName?:string;expiresAt:string}[];truncated:boolean};
+type Ops={subscriptions:{organization_id:string;organization_name:string|null;plan_code:string;status:string;ends_at:string|null}[];metrics:{expiringTrials:number;expiredTrials:number;pendingInvitations:number;expiredInvitations:number;pastDueSubscriptions:number};alerts:{type:string;organizationId?:string;organizationName?:string;expiresAt:string}[];truncated:boolean};
 type Overview={organizations:Org[];page:number;total:number;metrics:{organizations:number;trials:number;activeSubscriptions:number}};
 export default function PlatformAdminPage(){
  const [overview,setOverview]=useState<Overview|null>(null);
@@ -32,6 +32,12 @@ export default function PlatformAdminPage(){
   sync();window.addEventListener("hashchange",sync);window.addEventListener("popstate",sync);
   return()=>{window.removeEventListener("hashchange",sync);window.removeEventListener("popstate",sync)};
  },[]);
+ function openFollowUp(organizationId:string|undefined,organizationName:string|undefined,kind:string){
+  if(kind==="invitation_expired"){navigate("onboarding");return;}
+  if(!organizationId)return;
+  setSelectedCustomerId(organizationId);
+  navigate("subscriptions");
+ }
  function navigate(section:string){
   setActiveSection(section);
   window.history.pushState(null,"","#"+section);
@@ -174,7 +180,22 @@ export default function PlatformAdminPage(){
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12}}>
          {([{label:"Trials expiring in 7 days",value:operations.metrics.expiringTrials},{label:"Expired trials",value:operations.metrics.expiredTrials},{label:"Pending owner activations",value:operations.metrics.pendingInvitations},{label:"Expired invitations",value:operations.metrics.expiredInvitations},{label:"Past-due subscriptions",value:operations.metrics.pastDueSubscriptions}]).map(x=><div key={x.label} style={{padding:12,border:"1px solid #e5def1",borderRadius:10}}><strong style={{display:"block",fontSize:24}}>{x.value}</strong><span>{x.label}</span></div>)}
         </div>
-        {operations.alerts.length>0&&<div style={{marginTop:14}}><h3>Priority follow-ups</h3><ul>{operations.alerts.slice(0,8).map((a,i)=><li key={i}>{a.type.replaceAll("_"," ")} · {a.organizationName||operations.subscriptions.find(x=>x.organization_id===a.organizationId)?.organization_id||"Customer"} · {new Date(a.expiresAt).toLocaleDateString()}</li>)}</ul><button onClick={()=>navigate("subscriptions")}>Review subscriptions</button></div>}
+        {operations.alerts.length>0&&<div style={{marginTop:16}}>
+         <h3 style={{marginBottom:12}}>Priority follow-ups</h3>
+         <div style={{display:"grid",gap:8}}>
+          {operations.alerts.slice(0,8).map((a,i)=>{
+           const isInvitation=a.type==="invitation_expired";
+           const label=a.type==="trial_expired"?"Trial expired":a.type==="trial_expiring"?"Trial expiring soon":isInvitation?"Owner invitation expired":a.type.replaceAll("_"," ");
+           const customer=a.organizationName||operations.subscriptions.find(x=>x.organization_id===a.organizationId)?.organization_name||"Unknown customer";
+           const date=new Date(a.expiresAt);
+           return <div key={a.organizationId+"-"+a.type+"-"+i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",padding:"12px 14px",border:"1px solid #e5def1",borderRadius:10}}>
+            <div style={{minWidth:0}}><strong style={{display:"block"}}>{customer}</strong><span style={{fontSize:13,color:"#625a72"}}>{label} · {isInvitation?"Invitation expired":"Trial ends"}: {Number.isFinite(date.getTime())?date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"Date unavailable"}</span></div>
+            <button type="button" disabled={!isInvitation&&!a.organizationId} onClick={()=>openFollowUp(a.organizationId,a.organizationName,a.type)}>{isInvitation?"Review invitation":"Manage subscription"}</button>
+           </div>;
+          })}
+         </div>
+         {operations.alerts.length>8&&<p style={{marginTop:10}}>Showing 8 of {operations.alerts.length} follow-ups.</p>}
+        </div>}
         {operations.truncated&&<p role="status">Summary is limited to the first records; use filtered customer lookup for a complete audit.</p>}
        </section>}
        <div className="platformWelcomeCard">
@@ -197,14 +218,14 @@ export default function PlatformAdminPage(){
          <h2>Customer subscription overview</h2>
          <p>Select a customer from the table to manage its plan and module entitlements.</p>
          <div className="platformTableScroll"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>End date</th><th>Action</th></tr></thead><tbody>
-          {operations.subscriptions.filter(x=>overview.organizations.some(o=>o.id===x.organization_id)).map(x=><tr key={x.organization_id}>
-           <td>{overview.organizations.find(o=>o.id===x.organization_id)?.display_name||x.organization_id}</td><td>{x.plan_code}</td><td>{x.status}</td><td>{x.ends_at?new Date(x.ends_at).toLocaleDateString():"Not set"}</td>
+          {operations.subscriptions.map(x=><tr key={x.organization_id}>
+           <td>{x.organization_name||overview.organizations.find(o=>o.id===x.organization_id)?.display_name||"Unknown customer"}</td><td>{x.plan_code}</td><td>{x.status}</td><td>{x.ends_at?new Date(x.ends_at).toLocaleDateString():"Not set"}</td>
            <td><button type="button" onClick={()=>setSelectedCustomerId(x.organization_id)}>Manage plan</button></td>
           </tr>)}
          </tbody></table></div>
-         <p>Showing subscriptions for customers visible on the current directory page. Search Directory to find other customers.</p>
+         <p>Showing available platform subscription records. Records may be truncated when the monitoring limit is reached.</p>
         </section>}
-        <PlatformSubscriptions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+        <PlatformSubscriptions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={[...overview.organizations,...(operations?.subscriptions||[]).filter(x=>!overview.organizations.some(o=>o.id===x.organization_id)).map(x=>({id:x.organization_id,display_name:x.organization_name||"Unknown customer"}))]} onChanged={()=>setRefresh(x=>x+1)}/></div>
       </div>
       <div className="platformColumns platformTabSections">
        <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
