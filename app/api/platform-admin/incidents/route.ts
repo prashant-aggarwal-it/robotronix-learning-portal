@@ -1,4 +1,5 @@
 import {NextRequest,NextResponse} from "next/server";
+import {randomUUID} from "node:crypto";
 import {requirePlatformAdmin} from "@/lib/server/saas/platform-admin";
 import {SaaSAccessError} from "@/lib/server/saas/organization-context";
 export const runtime="nodejs";export const dynamic="force-dynamic";
@@ -12,6 +13,7 @@ async function handler(req:NextRequest,action:"list"|"mutate"){
    const raw=await req.text();if(raw.length>2000)throw new SaaSAccessError(400,"Payload too large");
    try{payload=JSON.parse(raw);}catch{throw new SaaSAccessError(400,"Invalid JSON");}
    if(!payload||!["create","acknowledge","resolve"].includes(payload.action||""))throw new SaaSAccessError(400,"Invalid action");
+   if(payload.action==="create"&&!payload.fingerprint)payload.fingerprint="manual-"+randomUUID();
    if(payload.action!=="create"&&(!payload.id||!uuid.test(payload.id)))throw new SaaSAccessError(400,"Invalid incident ID");
   }
   const {data,error}=await db.rpc("saas_platform_incidents_v1",{
