@@ -1,0 +1,22 @@
+name: Phase 8 Monitoring 503 Repair
+on:
+  push:
+    branches:
+      - fix/phase8-monitoring-503
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-phase8e-certification.mjs
+      - run: npm run typecheck
+      - run: npm run build
