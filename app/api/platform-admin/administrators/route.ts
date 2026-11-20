@@ -23,12 +23,8 @@ export async function GET(request:NextRequest){
    // A negative result after scanning the configured bound is not evidence that an account does not exist.
    return NextResponse.json({ok:true,verifiedUserId:userId,lookupLimited:userId===null&&!exhausted},{headers});
   }
-  const {data:admins,error:adminError}=await db.schema("saas").from("platform_administrators")
-   .select("user_id,role_key,active,created_at").order("created_at",{ascending:false}).limit(100);
-  if(adminError)throw new SaaSAccessError(503,"Administrator directory unavailable");
-  const {data:audit,error:auditError}=await db.schema("saas").from("platform_admin_audit")
-   .select("id,actor_user_id,subject_user_id,action,occurred_at").order("occurred_at",{ascending:false}).limit(50);
-  if(auditError)throw new SaaSAccessError(503,"Administrator audit unavailable");
-  return NextResponse.json({ok:true,administrators:admins||[],audit:audit||[],truncated:(admins?.length??0)===100},{headers});
+  const {data,error}=await db.rpc("saas_platform_monitor_read_v1",{p_kind:"administrators",p_organization_id:null});
+  if(error){console.error("platform administrator RPC",error.code);throw new SaaSAccessError(503,"Administrator directory unavailable");}
+  return NextResponse.json({ok:true,administrators:data?.administrators||[],audit:data?.audit||[],truncated:!!data?.truncated},{headers});
  }catch(e){return NextResponse.json({ok:false,error:e instanceof SaaSAccessError?e.message:"Platform administration unavailable"},{status:e instanceof SaaSAccessError?e.status:503,headers});}
 }
