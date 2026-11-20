@@ -7,6 +7,16 @@ export default function PlatformIncidents(){
  const [incidents,setIncidents]=useState<Incident[]>([]),[audit,setAudit]=useState<Audit[]>([]);
  const [error,setError]=useState(""),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
  const [form,setForm]=useState({title:"",fingerprint:"",category:"other",severity:"warning"});
+ async function scan(){
+  setBusy(true);setError("");
+  try{
+   const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+   if(!session)throw Error("Sign in first");
+   const res=await fetch("/api/platform-admin/incident-scan",{method:"POST",headers:{Authorization:"Bearer "+session.access_token}});
+   const body=await res.json();if(!res.ok||!body.ok)throw Error(body.error||"Signal scan unavailable");
+   setRevision(v=>v+1);
+  }catch(e){setError(e instanceof Error?e.message:"Signal scan unavailable");}finally{setBusy(false);}
+ }
  async function request(action:"create"|"acknowledge"|"resolve",id?:string){
   setBusy(true);setError("");
   try{
@@ -28,7 +38,7 @@ export default function PlatformIncidents(){
  })().catch(e=>{if(alive)setError(e instanceof Error?e.message:"Incidents unavailable")});
  return()=>{alive=false};},[revision]);
  return <section className="platformPanel platformMonitorTile" aria-label="Incident management">
-  <h3>Security, incidents & alerts</h3><p>Read-only incident monitoring with deliberate manual acknowledgement and resolution. Automated notifications are not configured.</p>
+  <h3>Security, incidents & alerts</h3><p>Record, acknowledge and resolve incidents. On-demand signal scanning detects backed-up email jobs and invitation failures; outbound alert notifications are not configured.</p><button type="button" disabled={busy} onClick={()=>void scan()}>Scan operational signals</button>
   <div className="platformMonitorTiles">
    {(["critical","warning","info"] as const).map(severity=><div key={severity} style={{padding:14,border:"1px solid #e4ddeb",borderRadius:10}}><strong>{incidents.filter(i=>i.severity===severity&&i.status!=="resolved").length}</strong><p>{severity} open or acknowledged</p></div>)}
   </div>
