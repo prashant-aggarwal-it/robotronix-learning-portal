@@ -17,9 +17,9 @@ test("email health and administrator audit are no longer on Overview",()=>{
  assert.ok(monitor.includes('panel==="email"&&<PlatformEmailHealth/>'));
  assert.ok(monitor.includes('panel==="security"&&<PlatformAdminSafety/>'));
 });
-test("unimplemented service and job checks are explicitly unknown",()=>{
+test("monitoring navigation preserves implemented service and worker sections",()=>{
  const s=read("app/platform-admin/PlatformSystemHealth.tsx");
- for(const value of ["On-demand health checks","Heartbeat not monitored","not yet available"])assert.ok(s.includes(value));
+ for(const value of ["On-demand health checks","Heartbeat and queue tracking","<PlatformWorkerHealth/>"])assert.ok(s.includes(value));
  assert.ok(!s.includes("All systems operational"));
 });
 test("Phase 8 monitoring APIs still have service-only authorization",()=>{
