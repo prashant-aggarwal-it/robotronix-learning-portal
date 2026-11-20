@@ -6,8 +6,7 @@ import "./platform-admin.css";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import PlatformCustomerActions from "./PlatformCustomerActions";
 import PlatformSubscriptions from "./PlatformSubscriptions";
-import PlatformEmailHealth from "./PlatformEmailHealth";
-import PlatformAdminSafety from "./PlatformAdminSafety";
+import PlatformSystemHealth from "./PlatformSystemHealth";
 import PlatformTenantBranding from "./PlatformTenantBranding";
 import PlatformBrandingEntitlements from "./PlatformBrandingEntitlements";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
@@ -27,7 +26,7 @@ export default function PlatformAdminPage(){
  useEffect(()=>{
   const sync=()=>{
    const id=window.location.hash.slice(1);
-   setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory"].includes(id)?id:"overview");
+   setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory","system-health"].includes(id)?id:"overview");
    window.scrollTo({top:0,behavior:"instant"});
   };
   sync();window.addEventListener("hashchange",sync);window.addEventListener("popstate",sync);
@@ -151,11 +150,13 @@ export default function PlatformAdminPage(){
      <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
      <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
      <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
+     <span className="platformNavGroupTitle">PLATFORM OPERATIONS</span>
+     <a href="#system-health" onClick={e=>{e.preventDefault();navigate("system-health")}} className={activeSection==="system-health"?"platformNavActive":undefined} aria-current={activeSection==="system-health"?"location":undefined}>◉ <span>System Health &amp; Monitoring</span></a>
     </nav>
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link><SignOutButton className="platformSignout" label="Sign out"/></div>
    </aside>
    <div className="platformMain">
-    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage access, invitations and commercial branding entitlements.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
+    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage access, invitations and commercial branding entitlements.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
     <div className="platformContent">
      {loading&&<div className="platformFeedback" role="status">Loading platform overview…</div>}
      {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
@@ -167,8 +168,6 @@ export default function PlatformAdminPage(){
        </div>
       </section>
       {activeSection==="overview"&&<div className="platformOverviewBody">
-       <PlatformEmailHealth/>
-       <PlatformAdminSafety/>
        {operationsError&&<p role="alert">Operations summary: {operationsError}</p>}
        {operations&&<section className="platformPanel" aria-label="Action required" style={{padding:20,marginBottom:20}}>
         <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}><h2>Action required</h2><button onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
@@ -190,6 +189,7 @@ export default function PlatformAdminPage(){
        <div className="platformRecentCard"><div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Recently created organizations</h2><p>Showing available records from the current directory page, not platform-wide activity.</p></div><a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}}>View directory →</a></div>
        <div className="platformCompactList">{overview.organizations.slice(0,4).map(o=><div key={o.id}><span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span><span><strong>{o.display_name}</strong><small>{o.slug}</small></span><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></div>)}{overview.organizations.length===0&&<p>No customer records on this page.</p>}</div>
       </div>}
+      {activeSection==="system-health"&&<PlatformSystemHealth/>}
       <div className="platformColumns platformTabSections">
        <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
        <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel">
