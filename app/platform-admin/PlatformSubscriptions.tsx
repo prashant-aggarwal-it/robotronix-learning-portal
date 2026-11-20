@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 type Org={id:string;display_name:string};
 type Snapshot={subscription:{plan_code:string;status:string;started_at:string;ends_at:string|null}|null;modules:{module:string;enabled:boolean}[];events:{event_type:string;occurred_at:string}[]};
@@ -15,6 +15,7 @@ export default function PlatformSubscriptions({organizations,onChanged,initialOr
   try{const headers=await authHeaders();const response=await fetch("/api/platform-admin/subscriptions?organizationId="+encodeURIComponent(id),{headers,cache:"no-store"});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||"Unable to load subscription");setSnapshot(result)}
   catch(e){setMessage(e instanceof Error?e.message:"Unable to load subscription")}finally{setBusy(false)}
  }
+ useEffect(()=>{if(initialOrganizationId)void refresh(initialOrganizationId);},[initialOrganizationId]);
  async function action(name:string,fields:Record<string,unknown>={}){
   if(!organizationId||busy)return;
   if(["cancel","suspend","mark_past_due"].includes(name)&&!window.confirm("Confirm "+name.replaceAll("_"," ")+"? Customer module access may stop immediately."))return;
