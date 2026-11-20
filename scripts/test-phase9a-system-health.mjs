@@ -14,12 +14,12 @@ test("email health and administrator audit are no longer on Overview",()=>{
  assert.ok(!page.includes("<PlatformEmailHealth/>"));
  assert.ok(!page.includes("<PlatformAdminSafety/>"));
  const monitor=read("app/platform-admin/PlatformSystemHealth.tsx");
- assert.ok(monitor.includes('panel==="email"&&<PlatformEmailHealth/>'));
- assert.ok(monitor.includes('panel==="security"&&<PlatformAdminSafety/>'));
+ assert.ok(monitor.includes('panel==="email"&&<div className="platformHealthStack"><PlatformEmailHealth/>'));
+ assert.ok(monitor.includes('<PlatformAdminSafety/>'));
 });
 test("monitoring navigation preserves implemented service and worker sections",()=>{
  const s=read("app/platform-admin/PlatformSystemHealth.tsx");
- for(const value of ["On-demand health checks","Heartbeat and queue tracking","<PlatformWorkerHealth/>"])assert.ok(s.includes(value));
+ for(const value of ["On-demand API and database probes","Scheduled execution not verified","<PlatformWorkerHealth/>"])assert.ok(s.includes(value));
  assert.ok(!s.includes("All systems operational"));
 });
 test("Phase 8 monitoring APIs still have service-only authorization",()=>{
