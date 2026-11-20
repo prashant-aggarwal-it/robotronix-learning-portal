@@ -1,0 +1,22 @@
+name: Priority Follow-ups Fix Validation
+on:
+  push:
+    branches:
+      - fix/platform-admin-priority-followups
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-priority-followups.mjs scripts/test-phase9f-reliability.mjs scripts/test-phase9e-incidents.mjs scripts/test-phase9d-customer-health.mjs
+      - run: npm run typecheck
+      - run: npm run build
