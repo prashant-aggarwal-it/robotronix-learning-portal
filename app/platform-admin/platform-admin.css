@@ -58,3 +58,30 @@
 .platformMonitorTile strong{display:block;margin-bottom:8px}
 .platformMonitorTile p,.platformMonitorPlaceholder p{color:#6c6180;line-height:1.6}
 @media(max-width:850px){.platformMonitorTiles{grid-template-columns:1fr}.platformMonitorTabs{gap:6px}.platformMonitorTab{flex:1 1 auto}}
+
+
+/* Final System Health consolidation: compact operational surfaces */
+.platformHealthStack{display:grid;gap:16px;min-width:0}
+.platformHealthHeading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.platformHealthGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.platformHealthSummaryItem{text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:18px!important;background:#fff!important;border:1px solid #e4ddee!important;border-radius:12px;min-width:0;cursor:pointer}
+.platformHealthSummaryItem:hover{background:#faf7ff!important;border-color:#bba2e0!important}
+.platformHealthLabel{font-weight:800;color:#382b54;font-size:13px}
+.platformHealthSummaryItem strong{font-size:17px!important;margin:0!important}
+.platformHealthSummaryItem>span:not(.platformHealthLabel),.platformHealthSummaryItem small{font-size:12px;color:#726887;line-height:1.45}
+.platformHealthSuccess{color:#287c53!important}
+.platformHealthUnknown{color:#805d37!important}
+.platformHealthNote{margin:16px 0 0!important;padding:13px 16px;background:#faf7ff;border:1px solid #e8ddf4;border-radius:10px}
+.platformHealthStats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.platformHealthStat{padding:11px 13px;border:1px solid #e5dfed;border-radius:10px;min-width:0}
+.platformHealthStat strong{font-size:19px!important;margin-bottom:3px!important}
+.platformHealthStat p{margin:0!important}
+.platformHealthStack .platformPanel{margin-bottom:0!important}
+.platformSystemHealth .platformPanel p{font-size:13px}
+.platformSystemHealth .platformMonitorTabs{flex-wrap:wrap;gap:8px}
+.platformSystemHealth .platformMonitorTabs button{font-size:13px}
+.platformSystemHealth .platformPanel{max-width:100%}
+.platformSystemHealth .platformPanel details summary{cursor:pointer;color:#603b9a}
+.platformSystemHealth .platformPanel td code{overflow-wrap:anywhere}
+@media(max-width:990px){.platformHealthGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.platformHealthGrid{grid-template-columns:1fr}.platformMonitorTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.platformMonitorTab{font-size:12px!important;padding:10px!important}}
