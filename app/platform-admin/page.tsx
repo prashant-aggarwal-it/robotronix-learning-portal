@@ -32,7 +32,7 @@ export default function PlatformAdminPage(){
   sync();window.addEventListener("hashchange",sync);window.addEventListener("popstate",sync);
   return()=>{window.removeEventListener("hashchange",sync);window.removeEventListener("popstate",sync)};
  },[]);
- function openFollowUp(organizationId:string|undefined,organizationName:string|undefined,kind:string){
+ function openFollowUp(organizationId:string|undefined,kind:string){
   if(kind==="invitation_expired"){navigate("onboarding");return;}
   if(!organizationId)return;
   setSelectedCustomerId(organizationId);
@@ -189,8 +189,8 @@ export default function PlatformAdminPage(){
            const customer=a.organizationName||operations.subscriptions.find(x=>x.organization_id===a.organizationId)?.organization_name||"Unknown customer";
            const date=new Date(a.expiresAt);
            return <div key={a.organizationId+"-"+a.type+"-"+i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",padding:"12px 14px",border:"1px solid #e5def1",borderRadius:10}}>
-            <div style={{minWidth:0}}><strong style={{display:"block"}}>{customer}</strong><span style={{fontSize:13,color:"#625a72"}}>{label} · {isInvitation?"Invitation expired":"Trial ends"}: {Number.isFinite(date.getTime())?date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"Date unavailable"}</span></div>
-            <button type="button" disabled={!isInvitation&&!a.organizationId} onClick={()=>openFollowUp(a.organizationId,a.organizationName,a.type)}>{isInvitation?"Review invitation":"Manage subscription"}</button>
+            <div style={{minWidth:0}}><strong style={{display:"block"}}>{customer}</strong><span style={{fontSize:13,color:"#625a72"}}>{label} · {isInvitation?"Invitation expired":a.type==="trial_expired"?"Trial ended":"Trial ends"}: {Number.isFinite(date.getTime())?date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"Date unavailable"}</span></div>
+            <button type="button" disabled={!isInvitation&&!a.organizationId} onClick={()=>openFollowUp(a.organizationId,a.type)}>{isInvitation?"Review invitation":"Manage subscription"}</button>
            </div>;
           })}
          </div>
