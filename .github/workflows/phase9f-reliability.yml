@@ -1,0 +1,22 @@
+name: Phase 9F Reliability Certification
+on:
+  push:
+    branches:
+      - feature/education-suite-phase9f-reliability-certification
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-phase9f-reliability.mjs scripts/test-phase9e-incidents.mjs scripts/test-phase9d-customer-health.mjs scripts/test-phase9c-worker-health.mjs scripts/test-phase9b-service-health.mjs scripts/test-phase9a-system-health.mjs scripts/test-phase8e-certification.mjs
+      - run: npm run typecheck
+      - run: npm run build
