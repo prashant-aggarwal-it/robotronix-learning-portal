@@ -44,3 +44,17 @@
 .platformOnboarding .platformCreateInvitation[type=submit]:hover:not(:disabled){background:#55259c!important}
 .platformOnboarding .platformCreateInvitation[type=submit]:disabled{background:#e8e0f2!important;color:#74678a!important;box-shadow:none;opacity:1;cursor:not-allowed}
 .platformOnboarding .platformCreateInvitation[type=submit]:focus-visible{outline:3px solid #9b78e4;outline-offset:3px}
+
+/* Phase 9A: dedicated operational monitoring area */
+.platformNavGroupTitle{display:block;padding:22px 14px 8px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#817193}
+.platformSystemHealth{display:grid;gap:20px;min-width:0}
+.platformMonitorTabs{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:4px}
+.platformMonitorTab{appearance:none;border:1px solid #e7dcf4;background:#fff;color:#46365f;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}
+.platformMonitorTab:hover,.platformMonitorTab:focus-visible{border-color:#8e56c9;outline-offset:2px}
+.platformMonitorTab.active{background:#f1eafa;color:#692eb1;border-color:#bd9ce3;font-weight:700}
+.platformMonitorTiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.platformMonitorTile,.platformMonitorPlaceholder{padding:22px}
+.platformMonitorTile h3{margin:0 0 14px}
+.platformMonitorTile strong{display:block;margin-bottom:8px}
+.platformMonitorTile p,.platformMonitorPlaceholder p{color:#6c6180;line-height:1.6}
+@media(max-width:850px){.platformMonitorTiles{grid-template-columns:1fr}.platformMonitorTabs{gap:6px}.platformMonitorTab{flex:1 1 auto}}
