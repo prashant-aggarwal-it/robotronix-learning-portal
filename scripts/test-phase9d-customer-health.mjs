@@ -14,5 +14,5 @@ test("customer monitoring reports uninstrumented integrations clearly",()=>{
  const ui=read("app/platform-admin/PlatformCustomerHealth.tsx");
  for(const term of ["Not monitored","Connection records only","not included in Phase 9D","/api/platform-admin/customer-health"])assert.ok(ui.includes(term),term);
  const layout=read("app/platform-admin/PlatformSystemHealth.tsx");
- assert.ok(layout.includes('panel==="customers"&&<PlatformCustomerHealth/>'));
+ assert.ok(layout.includes('panel==="email"&&<div className="platformHealthStack"><PlatformEmailHealth/><PlatformCustomerHealth compact/>'));
 });
