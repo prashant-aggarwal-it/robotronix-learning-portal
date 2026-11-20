@@ -25,5 +25,5 @@ test("incident actions retain history and block invalid state transitions",()=>{
  const ui=read("app/platform-admin/PlatformIncidents.tsx");
  for(const term of ["Scan operational signals","Acknowledge","Resolve","window.confirm","No incidents recorded"])assert.ok(ui.includes(term),term);
  const layout=read("app/platform-admin/PlatformSystemHealth.tsx");
- assert.ok(layout.includes('panel==="incidents"&&<PlatformIncidents/>'));
+ assert.ok(layout.includes('panel==="security"&&<div className="platformHealthStack"><PlatformIncidents/>'));
 });
