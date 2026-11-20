@@ -18,5 +18,5 @@ test("services panel displays measured data and honest unknown states",()=>{
  const s=read("app/platform-admin/PlatformServiceHealth.tsx");
  for(const x of ["service-health","Run checks","latencyMs","Health unknown","not measured yet"])assert.ok(s.includes(x),x);
  const parent=read("app/platform-admin/PlatformSystemHealth.tsx");
- assert.ok(parent.includes('panel==="services"&&<PlatformServiceHealth/>'));
+ assert.ok(parent.includes('panel==="services"&&<div className="platformHealthStack"><PlatformServiceHealth/>'));
 });
