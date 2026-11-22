@@ -37,6 +37,8 @@ export default function SuiteHome(){
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
  const [orgRevision,setOrgRevision]=useState(0);
+ const [adminAccess,setAdminAccess]=useState(false);
+ const [organizationError,setOrganizationError]=useState("");
  useEffect(()=>{
   const refresh=()=>setOrgRevision(n=>n+1);
   window.addEventListener("robotronix:organization-changed",refresh);
@@ -44,7 +46,8 @@ export default function SuiteHome(){
  },[]);
  useEffect(()=>{
   let active=true;
-  setLoading(true);setOrganizationName("");setNeedsSelection(false);setModules(null);setLinks(null);
+  setLoading(true);setOrganizationName("");setNeedsSelection(false);setModules(null);setLinks(null);setOrganizationUnavailable(false);setHasOrganizations(false);setOrganizationError("");setError("");
+  void request("/api/platform-admin/access").then(()=>{if(active)setAdminAccess(true)}).catch(()=>{if(active)setAdminAccess(false)});
   (async()=>{
    const [p,capabilities]=await Promise.all([request("/api/platform/my-products"),request("/api/platform/capabilities")]);
    const singleModule=capabilities.legacyDefault!==true&&capabilities.products?.length===1;
@@ -66,7 +69,7 @@ export default function SuiteHome(){
      const mapping=await request("/api/platform/organization-links?organizationId="+encodeURIComponent(selected.id)) as LinksResponse;
      if(active)setLinks(mapping.links);
     }
-   }catch{if(active){setHasOrganizations(false);setModules(null);setLinks(null);setOrganizationUnavailable(!singleModule)}}
+   }catch(e){if(active){setHasOrganizations(false);setModules(null);setLinks(null);setOrganizationUnavailable(!singleModule);setOrganizationError(e instanceof Error?e.message:"Organization access could not be verified")}}
   })().catch(e=>{if(active)setError(e instanceof Error?e.message:"Unable to load your applications")})
   .finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
@@ -79,11 +82,13 @@ export default function SuiteHome(){
   </header>
   {loading&&<p role="status">Checking your workspace access…</p>}
   {error&&<p role="alert" className="suiteOrgError">{error}</p>}
-  {!loading&&!error&&organizationUnavailable&&<p role="alert">Organization permissions could not be verified. Use your existing application entry point until this service is configured.</p>}
+  {!loading&&!error&&organizationUnavailable&&<div role="alert" className="suiteOrgError"><p>Unable to verify organization access: {organizationError||"Organization service unavailable"}.</p><button type="button" onClick={()=>setOrgRevision(v=>v+1)}>Retry access check</button></div>}
+  {!loading&&adminAccess&&<p><Link href="/platform-admin">Open Super Admin Control Centre</Link></p>}
+  {!loading&&!error&&!organizationUnavailable&&!hasOrganizations&&<p role="status">No academy membership is linked to this account. An academy owner can invite you, or use the Super Admin Control Centre if you have platform access.</p>}
   {!loading&&!error&&needsSelection&&<p role="status">Select an organization to view its enabled modules.</p>}
   {!loading&&!error&&hasOrganizations&&!needsSelection&&!modules&&<p role="alert">Module permissions could not be verified. Access is unavailable.</p>}
   {!loading&&!error&&organizationName&&<p>Active organization: <strong>{organizationName}</strong></p>}
-  {!loading&&!error&&visible.length===0&&!needsSelection&&<p>No enabled modules are available for this account.</p>}
+  {!loading&&!error&&!organizationUnavailable&&hasOrganizations&&visible.length===0&&!needsSelection&&<p>No enabled modules are available for the selected academy.</p>}
   <div className="suiteHomeGrid" aria-label="Your enabled applications">
    {!loading&&!error&&visible.map(p=>{
     const module=suiteModuleById(p.id);
