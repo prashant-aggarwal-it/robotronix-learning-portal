@@ -22,10 +22,18 @@ function selectedCookieOptions(request:NextRequest) {
 export async function GET(request:NextRequest) {
  try {
   const {organizations}=await getAuthorizedOrganizations(bearerFrom(request));
-  const requested=request.nextUrl.searchParams.get("organizationId")??request.cookies.get(cookieName)?.value??null;
-  const selected=resolveAuthorizedOrganization(organizations,requested);
-  return NextResponse.json({ok:true,organizations,selectedOrganizationId:selected?.id??null,
+  const explicit=request.nextUrl.searchParams.get("organizationId");
+  const saved=request.cookies.get(cookieName)?.value??null;
+  const requested=explicit??saved;
+  // Cookies are only navigation hints. A stale cookie from a previous login or
+  // revoked membership must not make organization discovery fail for this user.
+  // Explicit organization IDs remain strict: unauthorized selections are 403.
+  const staleSavedSelection=explicit===null&&!!saved&&!organizations.some(o=>o.id===saved);
+  const selected=resolveAuthorizedOrganization(organizations,staleSavedSelection?null:requested);
+  const response=NextResponse.json({ok:true,organizations,selectedOrganizationId:selected?.id??null,
    requiresSelection:organizations.length>1&&!selected},{headers:noStore});
+  if(staleSavedSelection)response.cookies.set(cookieName,"",{...selectedCookieOptions(request),maxAge:0});
+  return response;
  }catch(error){return fail(error);}
 }
 
