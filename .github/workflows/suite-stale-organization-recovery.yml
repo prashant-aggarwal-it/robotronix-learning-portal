@@ -1,0 +1,22 @@
+name: Suite Stale Organization Recovery
+on:
+  push:
+    branches:
+      - fix/suite-stale-organization-selection
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-suite-stale-org-recovery.mjs lib/server/saas/organization-switch-contract.test.mjs lib/platform/suite-shell.test.mjs
+      - run: npm run typecheck
+      - run: npm run build
