@@ -21,8 +21,9 @@ export async function GET(request:NextRequest){
    expiringTrials:expiring.length,expiredTrials:expired.length,pendingInvitations:pending.length,
    expiredInvitations:expiredInvitations.length,pastDueSubscriptions:subscriptions.filter(s=>s.status==="past_due").length
   },alerts:[
-   ...expiring.map(s=>({type:"trial_expiring",organizationId:s.organization_id,organizationName:s.organization_name,expiresAt:s.ends_at})),
    ...expired.map(s=>({type:"trial_expired",organizationId:s.organization_id,organizationName:s.organization_name,expiresAt:s.ends_at})),
+   ...pending.map(i=>({type:"owner_activation_pending",invitationId:i.id,organizationName:i.organization_name,expiresAt:i.expires_at})),
+   ...expiring.map(s=>({type:"trial_expiring",organizationId:s.organization_id,organizationName:s.organization_name,expiresAt:s.ends_at})),
    ...expiredInvitations.map(i=>({type:"invitation_expired",invitationId:i.id,organizationName:i.organization_name,expiresAt:i.expires_at}))
   ].slice(0,30),truncated:!!data?.truncated||!!data?.invitationTruncated},{headers});
  }catch(e){return NextResponse.json({ok:false,error:e instanceof SaaSAccessError?e.message:"Operations summary unavailable"},{status:e instanceof SaaSAccessError?e.status:503,headers});}
