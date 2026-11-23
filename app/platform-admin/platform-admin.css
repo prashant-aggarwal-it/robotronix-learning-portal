@@ -85,3 +85,46 @@
 .platformSystemHealth .platformPanel td code{overflow-wrap:anywhere}
 @media(max-width:990px){.platformHealthGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.platformHealthGrid{grid-template-columns:1fr}.platformMonitorTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.platformMonitorTab{font-size:12px!important;padding:10px!important}}
+
+
+/* Super Admin Overview final widgets: lean, functional, accessible. */
+.platformOverviewHeading{align-items:center;margin-bottom:18px}
+.platformOverviewHeading .platformReadOnlyHint{display:block;margin-top:8px}
+.platformOverviewAddCustomer{display:inline-flex;justify-content:center;align-items:center;min-height:40px;white-space:nowrap;padding:10px 16px;border-radius:11px;background:linear-gradient(110deg,#6734b7,#a341a7);color:#fff;text-decoration:none;font-size:13px;font-weight:750;box-shadow:0 5px 15px #6e40b61c}
+.platformOverviewAddCustomer:hover{filter:brightness(.96)}
+.platformOverviewAddCustomer:focus-visible,.platformKpiWidget:focus-visible,.platformActionWidget:focus-visible,.platformRecentCustomer:focus-visible{outline:3px solid #8655d5;outline-offset:3px}
+.platformKpiGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-bottom:19px}
+.platformKpiWidget{appearance:none;cursor:pointer;min-width:0;width:100%;display:flex;flex-direction:column;align-items:stretch;text-align:left;background:#fff;border:1px solid #e8e1f3;border-radius:17px;padding:18px 21px;box-shadow:0 8px 24px #3b286409;color:#32214f;transition:border-color .15s,box-shadow .15s,transform .15s}
+.platformKpiWidget:hover{border-color:#bca0e0;transform:translateY(-1px);box-shadow:0 11px 28px #3b286414}
+.platformKpiWidgetTop,.platformKpiWidgetBottom{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.platformKpiWidgetTop{font-size:13px;font-weight:750;color:#615475}
+.platformKpiWidgetIcon{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;background:#f2eaff;color:#7b43c8;font-size:18px}
+.platformKpiWidget>strong{font-size:37px;line-height:1.15;letter-spacing:-.045em;margin:7px 0;color:#2d1c4a}
+.platformKpiWidgetBottom{font-size:12px;color:#807691;margin-top:auto}
+.platformKpiWidgetBottom small{font-size:11px;color:#807691}
+.platformKpiWidgetBottom>span{font-size:17px;color:#8658c1}
+.platformActionHeading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}
+.platformActionHeading h2{margin:0 0 3px}
+.platformActionHeading p{margin:0;color:#837a96;font-size:12px}
+.platformActionWidgetGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.platformActionWidget{appearance:none;display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;min-height:126px;padding:14px!important;background:#fcfbfe!important;border:1px solid #e9e3f2!important;border-radius:12px!important;cursor:pointer}
+.platformActionWidget:hover{background:#f9f5ff!important;border-color:#cbb5e8!important}
+.platformActionWidgetNeedsAttention{background:#fff9f4!important;border-color:#f0d7bf!important}
+.platformActionWidgetLabel{font-size:12px;line-height:1.4;color:#6c5f7f;min-height:33px}
+.platformActionWidget strong{font-size:29px!important;line-height:1.1!important;margin:9px 0 10px!important;color:#37204e}
+.platformActionWidgetNeedsAttention strong{color:#9b5524}
+.platformActionWidgetFooter{display:flex;align-items:center;justify-content:space-between;gap:7px;width:100%;font-size:10px;color:#8a8099;margin-top:auto}
+.platformActionWidgetNeedsAttention .platformActionWidgetFooter{color:#95643b}
+.platformActionWidgetFooter>span:last-child{font-size:14px}
+.platformRecentCustomer{width:100%;border:0;border-bottom:1px solid #f1edf6;padding:14px 20px;display:flex;align-items:center;gap:12px;background:#fff;text-align:left;color:#47335d;cursor:pointer}
+.platformRecentCustomer:hover{background:#faf7ff}
+.platformRecentCustomer:last-child{border-bottom:0}
+.platformRecentCustomer>span:nth-child(2){flex:1;min-width:0}
+.platformRecentCustomer strong,.platformRecentCustomer small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.platformRecentCustomer strong{font-size:12px}
+.platformRecentCustomer small{font-size:10px;color:#8c829b;margin-top:3px}
+.platformFilterNotice{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;background:#f5f0ff;border:1px solid #e3d6f3;border-radius:9px;color:#553083;font-size:12px;font-weight:700;margin:12px 0}
+@media(max-width:1250px){.platformActionWidgetGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1000px){.platformKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:740px){.platformActionWidgetGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.platformKpiGrid{grid-template-columns:1fr}.platformOverviewHeading{align-items:stretch}.platformKpiWidget{padding:16px 18px}.platformActionWidget{min-height:115px}}
+@media(max-width:460px){.platformOverviewHeading{flex-direction:column;align-items:flex-start}.platformOverviewAddCustomer{width:100%}.platformActionWidgetGrid{grid-template-columns:1fr}.platformActionWidget{min-height:90px}}
