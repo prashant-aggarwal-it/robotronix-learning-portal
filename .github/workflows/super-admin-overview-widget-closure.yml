@@ -1,0 +1,22 @@
+name: Super Admin Overview Widget Closure
+on:
+  push:
+    branches:
+      - fix/suite-stale-organization-selection
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-super-admin-overview-widgets.mjs scripts/test-super-admin-overview-final.mjs scripts/test-priority-followups.mjs scripts/test-subscription-direct-navigation.mjs scripts/test-subscription-manage-navigation.mjs
+      - run: npm run typecheck
+      - run: npm run build
