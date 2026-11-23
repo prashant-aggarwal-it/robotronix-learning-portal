@@ -10,7 +10,7 @@ import PlatformSystemHealth from "./PlatformSystemHealth";
 import PlatformTenantBranding from "./PlatformTenantBranding";
 import PlatformBrandingEntitlements from "./PlatformBrandingEntitlements";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
-type Ops={subscriptions:{organization_id:string;organization_name:string|null;plan_code:string;status:string;ends_at:string|null}[];metrics:{expiringTrials:number;expiredTrials:number;pendingInvitations:number;expiredInvitations:number;pastDueSubscriptions:number};alerts:{type:string;organizationId?:string;organizationName?:string;expiresAt:string}[];truncated:boolean};
+type Ops={subscriptions:{organization_id:string;organization_name:string|null;plan_code:string;status:string;ends_at:string|null}[];metrics:{expiringTrials:number;expiredTrials:number;pendingInvitations:number;expiredInvitations:number;pastDueSubscriptions:number};alerts:{type:string;organizationId?:string;organizationName?:string;invitationId?:string;expiresAt:string}[];truncated:boolean};
 type Overview={organizations:Org[];page:number;total:number;metrics:{organizations:number;trials:number;activeSubscriptions:number}};
 export default function PlatformAdminPage(){
  const [overview,setOverview]=useState<Overview|null>(null);
@@ -33,7 +33,7 @@ export default function PlatformAdminPage(){
   return()=>{window.removeEventListener("hashchange",sync);window.removeEventListener("popstate",sync)};
  },[]);
  function openFollowUp(organizationId:string|undefined,kind:string){
-  if(kind==="invitation_expired"){navigate("onboarding");return;}
+  if(kind==="invitation_expired"||kind==="owner_activation_pending"){navigate("onboarding");return;}
   if(!organizationId)return;
   setSelectedCustomerId(organizationId);
   navigate("subscriptions");
@@ -170,7 +170,7 @@ export default function PlatformAdminPage(){
       <section id="overview" hidden={activeSection!=="overview"} className="platformOverview" aria-label="Platform overview">
        <div className="platformSectionIntro"><div><span className="platformEyebrow">YOUR PLATFORM AT A GLANCE</span><h2>Overview</h2></div><span className="platformReadOnlyHint">Platform data · live</span></div>
        <div className="platformMetricGrid">
-        {([{label:"Customer organizations",value:overview.metrics.organizations,icon:"▣",note:"Registered workspaces"},{label:"Active subscriptions",value:overview.metrics.activeSubscriptions,icon:"◉",note:"Current paid plans"},{label:"Trial subscriptions",value:overview.metrics.trials,icon:"◷",note:"Evaluation workspaces"}] as const).map(metric=><article className="platformMetric" key={metric.label}><div className="platformMetricTop"><span>{metric.label}</span><span className="platformMetricIcon" aria-hidden="true">{metric.icon}</span></div><strong>{metric.value}</strong><small>{metric.note}</small></article>)}
+        {([{label:"Customer organizations",value:overview.metrics.organizations,icon:"▣",note:"Registered workspaces"},{label:"Active subscriptions",value:overview.metrics.activeSubscriptions,icon:"◉",note:"Current paid plans"},{label:"Active trials",value:overview.metrics.trials,icon:"◷",note:"Unexpired trial subscriptions"}] as const).map(metric=><article className="platformMetric" key={metric.label}><div className="platformMetricTop"><span>{metric.label}</span><span className="platformMetricIcon" aria-hidden="true">{metric.icon}</span></div><strong>{metric.value}</strong><small>{metric.note}</small></article>)}
        </div>
       </section>
       {activeSection==="overview"&&<div className="platformOverviewBody">
@@ -184,12 +184,17 @@ export default function PlatformAdminPage(){
          <h3 style={{marginBottom:12}}>Priority follow-ups</h3>
          <div style={{display:"grid",gap:8}}>
           {operations.alerts.slice(0,8).map((a,i)=>{
-           const isInvitation=a.type==="invitation_expired";
-           const label=a.type==="trial_expired"?"Trial expired":a.type==="trial_expiring"?"Trial expiring soon":isInvitation?"Owner invitation expired":a.type.replaceAll("_"," ");
+           const isInvitation=a.type==="invitation_expired"||a.type==="owner_activation_pending";
            const customer=a.organizationName||operations.subscriptions.find(x=>x.organization_id===a.organizationId)?.organization_name||"Unknown customer";
            const date=new Date(a.expiresAt);
-           return <div key={a.organizationId+"-"+a.type+"-"+i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",padding:"12px 14px",border:"1px solid #e5def1",borderRadius:10}}>
-            <div style={{minWidth:0}}><strong style={{display:"block"}}>{customer}</strong><span style={{fontSize:13,color:"#625a72"}}>{label} · {isInvitation?"Invitation expired":a.type==="trial_expired"?"Trial ended":"Trial ends"}: {Number.isFinite(date.getTime())?date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"Date unavailable"}</span></div>
+           const formattedDate=Number.isFinite(date.getTime())?date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"Date unavailable";
+           const detail=a.type==="trial_expired"?"Trial expired on "+formattedDate
+            :a.type==="trial_expiring"?"Trial ends on "+formattedDate
+            :a.type==="owner_activation_pending"?"Owner activation pending · Invitation expires "+formattedDate
+            :a.type==="invitation_expired"?"Owner invitation expired on "+formattedDate
+            :a.type.replaceAll("_"," ")+" · "+formattedDate;
+           return <div key={a.invitationId||a.organizationId||i+"-"+a.type} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",padding:"12px 14px",border:"1px solid #e5def1",borderRadius:10}}>
+            <div style={{minWidth:0}}><strong style={{display:"block"}}>{customer}</strong><span style={{fontSize:13,color:"#625a72"}}>{detail}</span></div>
             <button type="button" disabled={!isInvitation&&!a.organizationId} onClick={()=>openFollowUp(a.organizationId,a.type)}>{isInvitation?"Review invitation":"Manage subscription"}</button>
            </div>;
           })}
