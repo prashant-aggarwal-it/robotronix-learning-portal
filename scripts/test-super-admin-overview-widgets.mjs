@@ -15,7 +15,7 @@ test("Three concise KPI widgets are actionable and preserve correct metrics",()=
 });
 test("Alert widgets show actual counts, open real sections, and retain follow-up details",()=>{
  const ui=read("app/platform-admin/page.tsx");
- for(const key of ["platformActionWidgetGrid","expiringTrials","expiredTrials","pendingInvitations","expiredInvitations","pastDueSubscriptions","platformActionWidgetNeedsAttention",'navigate("onboarding")','openSubscriptionList(metric.filter||"all")','Priority follow-ups","Review invitation","Manage subscription"])assert.ok(ui.includes(key),key);
+ for(const key of ["platformActionWidgetGrid","expiringTrials","expiredTrials","pendingInvitations","expiredInvitations","pastDueSubscriptions","platformActionWidgetNeedsAttention",'navigate("onboarding")','openSubscriptionList(metric.filter||"all")','Priority follow-ups','Review invitation','Manage subscription'])assert.ok(ui.includes(key),key);
 });
 test("Filtered subscription list has reset and real date comparisons",()=>{
  const ui=read("app/platform-admin/page.tsx");
