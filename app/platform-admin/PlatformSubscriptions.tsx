@@ -27,10 +27,11 @@ export default function PlatformSubscriptions({organizations,onChanged,initialOr
  return <section style={{border:"1px solid #ddd5eb",borderRadius:16,padding:20,marginBottom:24}}>
  <h2>Subscription & module management</h2>
  <p>Changes take effect through server-side entitlement checks. Paid plan activation is a manual administrative action; it does not charge the customer.</p>
- <label>Customer <select value={organizationId} onChange={e=>{setOrganizationId(e.target.value);setSnapshot(null)}}><option value="">Select organization</option>{organizations.map(o=><option key={o.id} value={o.id}>{o.display_name}</option>)}</select></label>
- <button disabled={!organizationId||busy} onClick={()=>void refresh()}>Load subscription</button>
+ {initialOrganizationId?<p><strong>Customer:</strong> {organizations.find(o=>o.id===organizationId)?.display_name||"Selected customer"}</p>:<label>Customer <select value={organizationId} onChange={e=>{setOrganizationId(e.target.value);setSnapshot(null)}}><option value="">Select organization</option>{organizations.map(o=><option key={o.id} value={o.id}>{o.display_name}</option>)}</select></label>}
+ <button disabled={!organizationId||busy} onClick={()=>void refresh()}>{initialOrganizationId?"Refresh subscription":"Load subscription"}</button>
+ {busy&&!snapshot&&<p role="status">Loading selected customer subscription…</p>}
  {snapshot&&<div style={{display:"grid",gap:14,marginTop:18}}>
-  <p><strong>Plan:</strong> {snapshot.subscription?.plan_code||"None"} · <strong>Status:</strong> {snapshot.subscription?.status||"None"} · <strong>Ends:</strong> {snapshot.subscription?.ends_at?new Date(snapshot.subscription.ends_at).toLocaleString():"No end date"}</p>
+  <p><strong>Plan:</strong> {snapshot.subscription?.plan_code?.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase())||"None"} · <strong>Status:</strong> {snapshot.subscription?.status==="trial"&&snapshot.subscription.ends_at&&Date.parse(snapshot.subscription.ends_at)<Date.now()?"Expired trial":snapshot.subscription?.status?.replaceAll("_"," ")||"None"} · <strong>Ends:</strong> {snapshot.subscription?.ends_at?new Date(snapshot.subscription.ends_at).toLocaleString():"No end date"}</p>
   <label>Plan code <input value={planCode} onChange={e=>setPlanCode(e.target.value)}/></label>
   <label>New expiry date <input type="datetime-local" value={endAt} onChange={e=>setEndAt(e.target.value)}/></label>
   <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
