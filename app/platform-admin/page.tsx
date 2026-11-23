@@ -152,7 +152,7 @@ export default function PlatformAdminPage(){
     <nav className="platformNav">
      <a href="#overview" onClick={e=>{e.preventDefault();navigate("overview")}} className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
      <a href="#customers" onClick={e=>{e.preventDefault();navigate("customers")}} className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
-     <a href="#subscriptions" onClick={e=>{e.preventDefault();navigate("subscriptions")}} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
+     <a href="#subscriptions" onClick={e=>{e.preventDefault();setSelectedCustomerId("");navigate("subscriptions")}} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
      <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
      <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
      <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
@@ -219,18 +219,35 @@ export default function PlatformAdminPage(){
       <div className="platformColumns platformTabSections">
        <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
        <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel">
-        {operations&&<section style={{padding:20,marginBottom:20,border:"1px solid #ddd5eb",borderRadius:16}}>
-         <h2>Customer subscription overview</h2>
-         <p>Select a customer from the table to manage its plan and module entitlements.</p>
-         <div className="platformTableScroll"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>End date</th><th>Action</th></tr></thead><tbody>
-          {operations.subscriptions.map(x=><tr key={x.organization_id}>
-           <td>{x.organization_name||overview.organizations.find(o=>o.id===x.organization_id)?.display_name||"Unknown customer"}</td><td>{x.plan_code}</td><td>{x.status}</td><td>{x.ends_at?new Date(x.ends_at).toLocaleDateString():"Not set"}</td>
-           <td><button type="button" onClick={()=>{setSelectedCustomerId(x.organization_id);document.getElementById("subscription-management")?.scrollIntoView({behavior:"smooth",block:"start"});}}>Manage plan</button></td>
-          </tr>)}
-         </tbody></table></div>
-         <p>Showing available platform subscription records. Records may be truncated when the monitoring limit is reached.</p>
-        </section>}
-        <div id="subscription-management" style={{scrollMarginTop:24}}><PlatformSubscriptions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={[...overview.organizations,...(operations?.subscriptions||[]).filter(x=>!overview.organizations.some(o=>o.id===x.organization_id)).map(x=>({id:x.organization_id,display_name:x.organization_name||"Unknown customer"}))]} onChanged={()=>setRefresh(x=>x+1)}/></div></div>
+        {selectedCustomerId?<>
+         <section className="platformSubscriptionSelection" aria-label="Selected customer subscription" style={{padding:"22px 24px 4px"}}>
+          <button type="button" className="platformSubscriptionBack" onClick={()=>{setSelectedCustomerId("");window.scrollTo({top:0,behavior:"smooth"});}}>← Back to all subscriptions</button>
+          <h2 style={{margin:"16px 0 4px"}}>{operations?.subscriptions.find(x=>x.organization_id===selectedCustomerId)?.organization_name||overview.organizations.find(o=>o.id===selectedCustomerId)?.display_name||"Customer subscription"}</h2>
+          <p>Manage this customer’s plan and enabled modules.</p>
+         </section>
+         <div id="subscription-management" style={{scrollMarginTop:24}}>
+          <PlatformSubscriptions key={selectedCustomerId} initialOrganizationId={selectedCustomerId} organizations={[...overview.organizations,...(operations?.subscriptions||[]).filter(x=>!overview.organizations.some(o=>o.id===x.organization_id)).map(x=>({id:x.organization_id,display_name:x.organization_name||"Unknown customer"}))]} onChanged={()=>setRefresh(x=>x+1)}/>
+         </div>
+        </>:<>
+         {operations&&<section style={{padding:20,marginBottom:20,border:"1px solid #ddd5eb",borderRadius:16}}>
+          <h2>Customer subscription overview</h2>
+          <p>Select a customer to manage their subscription and module entitlements.</p>
+          <div className="platformTableScroll"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>End date</th><th>Action</th></tr></thead><tbody>
+           {operations.subscriptions.map(x=>{
+            const expiredTrial=x.status==="trial"&&!!x.ends_at&&Date.parse(x.ends_at)<Date.now();
+            const planLabel=x.plan_code.replaceAll("_"," ").replace(/\\b\\w/g,c=>c.toUpperCase());
+            return <tr key={x.organization_id}>
+             <td>{x.organization_name||overview.organizations.find(o=>o.id===x.organization_id)?.display_name||"Unknown customer"}</td>
+             <td>{planLabel}</td><td><span className={expiredTrial?"platformStatus":"platformStatus platformStatusActive"}>{expiredTrial?"Expired trial":x.status.replaceAll("_"," ")}</span></td><td>{x.ends_at?new Date(x.ends_at).toLocaleDateString("en-GB"):"Not set"}</td>
+             <td><button type="button" onClick={()=>{setSelectedCustomerId(x.organization_id);window.scrollTo({top:0,behavior:"smooth"});}}>Manage plan</button></td>
+            </tr>;
+           })}
+          </tbody></table></div>
+          {operations.truncated&&<p role="status">Some records are omitted by the monitoring limit. Use the Customer directory for additional records.</p>}
+         </section>}
+         {!operations&&<p role="status">Subscription records are unavailable. {operationsError||"Check again shortly."}</p>}
+        </>}
+       </div>
       </div>
       <div className="platformColumns platformTabSections">
        <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
