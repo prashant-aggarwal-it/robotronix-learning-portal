@@ -235,7 +235,7 @@ export default function PlatformAdminPage(){
           <div className="platformTableScroll"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>End date</th><th>Action</th></tr></thead><tbody>
            {operations.subscriptions.map(x=>{
             const expiredTrial=x.status==="trial"&&!!x.ends_at&&Date.parse(x.ends_at)<Date.now();
-            const planLabel=x.plan_code.replaceAll("_"," ").replace(/\\b\\w/g,c=>c.toUpperCase());
+            const planLabel=x.plan_code.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase());
             return <tr key={x.organization_id}>
              <td>{x.organization_name||overview.organizations.find(o=>o.id===x.organization_id)?.display_name||"Unknown customer"}</td>
              <td>{planLabel}</td><td><span className={expiredTrial?"platformStatus":"platformStatus platformStatusActive"}>{expiredTrial?"Expired trial":x.status.replaceAll("_"," ")}</span></td><td>{x.ends_at?new Date(x.ends_at).toLocaleDateString("en-GB"):"Not set"}</td>
