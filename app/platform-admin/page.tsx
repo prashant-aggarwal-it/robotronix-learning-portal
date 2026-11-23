@@ -23,6 +23,7 @@ export default function PlatformAdminPage(){
  const [refresh,setRefresh]=useState(0);
  const [activeSection,setActiveSection]=useState("overview");
  const [selectedCustomerId,setSelectedCustomerId]=useState("");
+ const [subscriptionFilter,setSubscriptionFilter]=useState<"all"|"active"|"active_trials"|"expiring_trials"|"expired_trials"|"past_due">("all");
  useEffect(()=>{
   const sync=()=>{
    const id=window.location.hash.slice(1);
@@ -37,6 +38,9 @@ export default function PlatformAdminPage(){
   if(!organizationId)return;
   setSelectedCustomerId(organizationId);
   navigate("subscriptions");
+ }
+ function openSubscriptionList(filter:typeof subscriptionFilter){
+  setSelectedCustomerId("");setSubscriptionFilter(filter);navigate("subscriptions");
  }
  function navigate(section:string){
   setActiveSection(section);
@@ -152,7 +156,7 @@ export default function PlatformAdminPage(){
     <nav className="platformNav">
      <a href="#overview" onClick={e=>{e.preventDefault();navigate("overview")}} className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
      <a href="#customers" onClick={e=>{e.preventDefault();navigate("customers")}} className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
-     <a href="#subscriptions" onClick={e=>{e.preventDefault();setSelectedCustomerId("");navigate("subscriptions")}} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
+     <a href="#subscriptions" onClick={e=>{e.preventDefault();openSubscriptionList("all")}} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
      <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
      <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
      <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
@@ -168,17 +172,35 @@ export default function PlatformAdminPage(){
      {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
      {overview&&!loading&&<>
       <section id="overview" hidden={activeSection!=="overview"} className="platformOverview" aria-label="Platform overview">
-       <div className="platformSectionIntro"><div><span className="platformEyebrow">YOUR PLATFORM AT A GLANCE</span><h2>Overview</h2></div><span className="platformReadOnlyHint">Platform data · live</span></div>
-       <div className="platformMetricGrid">
-        {([{label:"Customer organizations",value:overview.metrics.organizations,icon:"▣",note:"Registered workspaces"},{label:"Active subscriptions",value:overview.metrics.activeSubscriptions,icon:"◉",note:"Current paid plans"},{label:"Active trials",value:overview.metrics.trials,icon:"◷",note:"Unexpired trial subscriptions"}] as const).map(metric=><article className="platformMetric" key={metric.label}><div className="platformMetricTop"><span>{metric.label}</span><span className="platformMetricIcon" aria-hidden="true">{metric.icon}</span></div><strong>{metric.value}</strong><small>{metric.note}</small></article>)}
+       <div className="platformSectionIntro platformOverviewHeading">
+        <div><span className="platformEyebrow">YOUR PLATFORM AT A GLANCE</span><h2>Overview</h2><small className="platformReadOnlyHint">Live platform records · Refresh to update</small></div>
+        <a href="#onboarding" className="platformOverviewAddCustomer" onClick={e=>{e.preventDefault();navigate("onboarding")}}>＋ Add customer</a>
+       </div>
+       <div className="platformKpiGrid" aria-label="Platform key metrics">
+        {([
+         {label:"Customer organizations",value:overview.metrics.organizations,icon:"▣",note:"Registered workspaces",action:()=>navigate("directory")},
+         {label:"Active subscriptions",value:overview.metrics.activeSubscriptions,icon:"◉",note:"Current paid subscriptions",action:()=>openSubscriptionList("active")},
+         {label:"Active trials",value:overview.metrics.trials,icon:"◷",note:"Trials not yet expired",action:()=>openSubscriptionList("active_trials")}
+        ]).map(metric=><button className="platformKpiWidget" type="button" onClick={metric.action} key={metric.label} aria-label={metric.label+": "+metric.value+". View details"}>
+          <span className="platformKpiWidgetTop"><span>{metric.label}</span><span className="platformKpiWidgetIcon" aria-hidden="true">{metric.icon}</span></span>
+          <strong>{metric.value}</strong><span className="platformKpiWidgetBottom"><small>{metric.note}</small><span aria-hidden="true">↗</span></span>
+         </button>)}
        </div>
       </section>
       {activeSection==="overview"&&<div className="platformOverviewBody">
        {operationsError&&<p role="alert">Operations summary: {operationsError}</p>}
        {operations&&<section className="platformPanel" aria-label="Action required" style={{padding:20,marginBottom:20}}>
-        <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}><h2>Action required</h2><button onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12}}>
-         {([{label:"Trials expiring in 7 days",value:operations.metrics.expiringTrials},{label:"Expired trials",value:operations.metrics.expiredTrials},{label:"Pending owner activations",value:operations.metrics.pendingInvitations},{label:"Expired invitations",value:operations.metrics.expiredInvitations},{label:"Past-due subscriptions",value:operations.metrics.pastDueSubscriptions}]).map(x=><div key={x.label} style={{padding:12,border:"1px solid #e5def1",borderRadius:10}}><strong style={{display:"block",fontSize:24}}>{x.value}</strong><span>{x.label}</span></div>)}
+        <div className="platformActionHeading"><div><h2>Action required</h2><p>Outstanding customer and subscription follow-ups</p></div><button type="button" onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
+        <div className="platformActionWidgetGrid">
+         {([
+          {label:"Trials expiring in 7 days",value:operations.metrics.expiringTrials,filter:"expiring_trials" as const,kind:"subscription" as const,cta:"Review trials"},
+          {label:"Expired trials",value:operations.metrics.expiredTrials,filter:"expired_trials" as const,kind:"subscription" as const,cta:"Review trials"},
+          {label:"Pending owner activations",value:operations.metrics.pendingInvitations,filter:null,kind:"invitation" as const,cta:"Review invitations"},
+          {label:"Expired invitations",value:operations.metrics.expiredInvitations,filter:null,kind:"invitation" as const,cta:"Review invitations"},
+          {label:"Past-due subscriptions",value:operations.metrics.pastDueSubscriptions,filter:"past_due" as const,kind:"subscription" as const,cta:"Review plans"}
+         ]).map(metric=><button type="button" key={metric.label} className={"platformActionWidget "+(metric.value>0?"platformActionWidgetNeedsAttention":"")} onClick={()=>metric.kind==="invitation"?navigate("onboarding"):openSubscriptionList(metric.filter||"all")} aria-label={metric.label+": "+metric.value+". "+metric.cta}>
+          <span className="platformActionWidgetLabel">{metric.label}</span><strong>{metric.value}</strong><span className="platformActionWidgetFooter"><span>{metric.value>0?"Needs review":"No action pending"}</span><span aria-hidden="true">↗</span></span>
+         </button>)}
         </div>
         {operations.alerts.length>0&&<div style={{marginTop:16}}>
          <h3 style={{marginBottom:12}}>Priority follow-ups</h3>
@@ -203,17 +225,8 @@ export default function PlatformAdminPage(){
         </div>}
         {operations.truncated&&<p role="status">Summary is limited to the first records; use filtered customer lookup for a complete audit.</p>}
        </section>}
-       <div className="platformWelcomeCard">
-        <div><span className="platformEyebrow">QUICK START</span><h2>What would you like to manage?</h2><p>Jump straight to the action you need. All customer changes remain permission-checked and audited.</p></div>
-        <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className="platformPrimaryLink">+ Add customer</a>
-       </div>
-       <div className="platformQuickGrid">
-        <a href="#customers" onClick={e=>{e.preventDefault();navigate("customers")}}><span className="platformQuickIcon">♧</span><strong>Customer access</strong><small>Owner invitations, customer status and administrators</small><span aria-hidden="true">↗</span></a>
-        <a href="#subscriptions" onClick={e=>{e.preventDefault();navigate("subscriptions")}}><span className="platformQuickIcon">◉</span><strong>Subscriptions & modules</strong><small>Plans, expiry dates and enabled applications</small><span aria-hidden="true">↗</span></a>
-        <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}}><span className="platformQuickIcon">◈</span><strong>Academy branding</strong><small>Identity, colors and logo settings</small><span aria-hidden="true">↗</span></a>
-       </div>
        <div className="platformRecentCard"><div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Recently created organizations</h2><p>Showing available records from the current directory page, not platform-wide activity.</p></div><a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}}>View directory →</a></div>
-       <div className="platformCompactList">{overview.organizations.slice(0,4).map(o=><div key={o.id}><span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span><span><strong>{o.display_name}</strong><small>{o.slug}</small></span><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></div>)}{overview.organizations.length===0&&<p>No customer records on this page.</p>}</div>
+       <div className="platformCompactList">{overview.organizations.slice(0,4).map(o=><button type="button" className="platformRecentCustomer" key={o.id} onClick={()=>{setSearch(o.display_name);setPage(1);navigate("directory");}}><span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span><span><strong>{o.display_name}</strong><small>{o.slug}</small></span><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span><span aria-hidden="true">↗</span></button>)}{overview.organizations.length===0&&<p>No customer records on this page.</p>}</div>
       </div>}
       {activeSection==="system-health"&&<PlatformSystemHealth/>}
       <div className="platformColumns platformTabSections">
@@ -232,8 +245,18 @@ export default function PlatformAdminPage(){
          {operations&&<section style={{padding:20,marginBottom:20,border:"1px solid #ddd5eb",borderRadius:16}}>
           <h2>Customer subscription overview</h2>
           <p>Select a customer to manage their subscription and module entitlements.</p>
+          {subscriptionFilter!=="all"&&<div className="platformFilterNotice"><span>Showing: {({active:"Active paid subscriptions",active_trials:"Active trials",expiring_trials:"Trials expiring in 7 days",expired_trials:"Expired trials",past_due:"Past-due subscriptions"} as Record<string,string>)[subscriptionFilter]}</span><button type="button" onClick={()=>setSubscriptionFilter("all")}>Clear filter</button></div>}
           <div className="platformTableScroll"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>End date</th><th>Action</th></tr></thead><tbody>
-           {operations.subscriptions.map(x=>{
+           {operations.subscriptions.filter(x=>{
+            const deadline=x.ends_at?Date.parse(x.ends_at):NaN;
+            const now=Date.now();
+            if(subscriptionFilter==="active")return x.status==="active";
+            if(subscriptionFilter==="active_trials")return x.status==="trial"&&deadline>now;
+            if(subscriptionFilter==="expiring_trials")return x.status==="trial"&&deadline>=now&&deadline<=now+7*86400000;
+            if(subscriptionFilter==="expired_trials")return x.status==="trial"&&deadline<now;
+            if(subscriptionFilter==="past_due")return x.status==="past_due";
+            return true;
+           }).map(x=>{
             const expiredTrial=x.status==="trial"&&!!x.ends_at&&Date.parse(x.ends_at)<Date.now();
             const planLabel=x.plan_code.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase());
             return <tr key={x.organization_id}>
