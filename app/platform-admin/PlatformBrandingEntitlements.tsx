@@ -6,18 +6,19 @@ type Level="standard"|"custom"|"white_label";
 const descriptions:Record<Level,string>={
  standard:"Robotronix theme; saved customer branding is retained but not available to Owners",
  custom:"Customer logo, colors and tagline; Robotronix platform identity remains",
- white_label:"Premium custom branding; vendor-brand removal is scheduled for Phase 6D"
+ white_label:"Full white-label branding access; effective appearance depends on the customer theme configuration"
 };
 async function authHeader(){
  const client=getSupabaseBrowserClient();if(!client)throw Error("Sign in first");
  const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
  return {Authorization:"Bearer "+session.access_token};
 }
-export default function PlatformBrandingEntitlements({organizations}:{organizations:Org[]}){
- const [orgId,setOrgId]=useState(""),[level,setLevel]=useState<Level|null>(null),[draft,setDraft]=useState<Level>("standard");
+export default function PlatformBrandingEntitlements({organizations,initialOrganizationId=""}:{organizations:Org[];initialOrganizationId?:string}){
+ const [orgId,setOrgId]=useState(initialOrganizationId),[level,setLevel]=useState<Level|null>(null),[draft,setDraft]=useState<Level>("standard");
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
  const [error,setError]=useState(""),[message,setMessage]=useState("");
  const selected=organizations.find(o=>o.id===orgId);
+ useEffect(()=>{setOrgId(initialOrganizationId)},[initialOrganizationId]);
  useEffect(()=>{
   let current=true;setLevel(null);setDraft("standard");setError("");setMessage("");
   if(!orgId)return;
