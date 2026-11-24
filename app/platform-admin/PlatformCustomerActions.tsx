@@ -6,7 +6,7 @@ type Invitation={id:string;email:string;status:string;expiresAt:string};
 export default function PlatformCustomerActions({organizations,onChanged,initialOrganizationId=""}:{organizations:Org[];onChanged:()=>void;initialOrganizationId?:string}){
  const [organizationId,setOrganizationId]=useState(initialOrganizationId);
  const [email,setEmail]=useState("");const [name,setName]=useState("");
- const [adminId,setAdminId]=useState("");
+ const [adminEmail,setAdminEmail]=useState("");
  const [invitations,setInvitations]=useState<Invitation[]>([]);
  const [invitationUrl,setInvitationUrl]=useState("");
  const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);
@@ -14,7 +14,7 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
  async function call(action:string,fields:Record<string,unknown>={}){
   const guarded=["set_organization_status","revoke_platform_admin","revoke_owner_invitation"];
   if(guarded.includes(action)){
-   const target=action==="set_organization_status"?selected?.display_name||organizationId:action==="revoke_platform_admin"?String(fields.targetUserId||""):String(fields.invitationId||"");
+   const target=action==="set_organization_status"?selected?.display_name||organizationId:action==="revoke_platform_admin"?adminEmail.trim().toLowerCase():String(fields.invitationId||"");
    if(action==="set_organization_status"&&fields.value!=="suspended"){}else{
     const confirmation=window.prompt("Sensitive platform operation: "+action.replaceAll("_"," ")+". Type the exact target to confirm:\\n"+target);
     if(confirmation!==target)return;
@@ -30,6 +30,25 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
    setMessage("Operation completed: "+action);onChanged();
   }catch(e){setMessage(e instanceof Error?e.message:"Operation failed")}finally{setBusy(false)}
  }
+ async function changeAdministrator(action:"grant_platform_admin"|"revoke_platform_admin"){
+  if(busy)return;
+  const targetEmail=adminEmail.trim().toLowerCase();
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(targetEmail)){setMessage("Enter a valid administrator email.");return;}
+  setBusy(true);setMessage("");
+  try{
+   const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+   if(!session)throw Error("Sign in first");
+   const response=await fetch("/api/platform-admin/administrators?email="+encodeURIComponent(targetEmail),{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
+   const lookup=await response.json();
+   if(!response.ok||!lookup.ok)throw Error(lookup.error||"Email lookup unavailable");
+   if(!lookup.verifiedUserId)throw Error(lookup.lookupLimited?"Verified user lookup is limited; contact an administrator.":"No verified user was found for this email.");
+   if(action==="revoke_platform_admin"&&!window.confirm("Revoke platform administrator access for "+targetEmail+"?"))return;
+   const update=await fetch("/api/platform-admin/manage",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({action,organizationId,targetUserId:lookup.verifiedUserId})});
+   const result=await update.json();if(!update.ok||!result.ok)throw Error(result.error||"Administrator update failed");
+   setMessage(action==="grant_platform_admin"?"Administrator access granted to "+targetEmail:"Administrator access revoked for "+targetEmail);onChanged();
+  }catch(e){setMessage(e instanceof Error?e.message:"Administrator update failed")}
+  finally{setBusy(false)}
+ }
  async function loadInvitations(){
   setBusy(true);setMessage("");
   try{
@@ -41,7 +60,7 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
   }catch(e){setMessage(e instanceof Error?e.message:"Unable to load invitations")}finally{setBusy(false)}
  }
  return <section style={{border:"1px solid #ddd5eb",borderRadius:16,padding:20,marginBottom:24}}>
-  <h2>Customer management</h2><p>Manage customer status, owner invitations and authorized platform administrators. Changes are audited.</p>
+  <h2>Customer management</h2><p>Manage workspace status and owner invitations. Changes are audited.</p>
   <label>Organization <select value={organizationId} onChange={e=>{setOrganizationId(e.target.value);setInvitations([])}}><option value="">Select organization</option>{organizations.map(o=><option key={o.id} value={o.id}>{o.display_name}</option>)}</select></label>
   {selected&&<div style={{display:"grid",gap:12,marginTop:18,maxWidth:620}}>
    <div><strong>Status: {selected.status}</strong>{" "}<button disabled={busy} onClick={()=>void call("set_organization_status",{value:selected.status==="active"?"suspended":"active"})}>{selected.status==="active"?"Suspend":"Activate"}</button></div>
@@ -55,8 +74,8 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
   </div>}
   <div style={{marginTop:24,borderTop:"1px solid #ddd",paddingTop:16,display:"grid",gap:10,maxWidth:620}}>
    <h3>Platform administrator access</h3><p>Grant access only to an existing verified Auth user. The last active administrator cannot be revoked.</p>
-   <label>Verified user UUID <input value={adminId} onChange={e=>setAdminId(e.target.value)} style={{width:"100%"}}/></label>
-   <div style={{display:"flex",gap:12}}><button disabled={busy||adminId.length!==36} onClick={()=>void call("grant_platform_admin",{targetUserId:adminId})}>Grant administrator</button><button disabled={busy||adminId.length!==36} onClick={()=>void call("revoke_platform_admin",{targetUserId:adminId})}>Revoke administrator</button></div>
+   <label>Verified account email <input type="email" value={adminEmail} onChange={e=>setAdminEmail(e.target.value)} placeholder="admin@example.com" autoComplete="off" style={{width:"100%"}}/></label>
+   <div style={{display:"flex",flexWrap:"wrap",gap:12}}><button type="button" disabled={busy||!adminEmail.includes("@")} onClick={()=>void changeAdministrator("grant_platform_admin")}>Grant administrator</button><button type="button" disabled={busy||!adminEmail.includes("@")} onClick={()=>void changeAdministrator("revoke_platform_admin")}>Revoke administrator</button></div>
   </div>
   {message&&<p role="status">{message}</p>}
  </section>;
