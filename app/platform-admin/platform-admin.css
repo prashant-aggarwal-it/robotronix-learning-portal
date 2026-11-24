@@ -128,3 +128,22 @@
 @media(max-width:1000px){.platformKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:740px){.platformActionWidgetGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.platformKpiGrid{grid-template-columns:1fr}.platformOverviewHeading{align-items:stretch}.platformKpiWidget{padding:16px 18px}.platformActionWidget{min-height:115px}}
 @media(max-width:460px){.platformOverviewHeading{flex-direction:column;align-items:flex-start}.platformOverviewAddCustomer{width:100%}.platformActionWidgetGrid{grid-template-columns:1fr}.platformActionWidget{min-height:90px}}
+
+
+/* Overview closure: shared action alignment and genuinely compact preview. */
+.platformOverviewBody{gap:12px}
+.platformOverviewBody .platformRecentCard{padding-top:1px;align-items:center;gap:12px}
+.platformOverviewBody .platformRecentCard h2{margin:4px 0 2px}
+.platformOverviewBody .platformRecentCard p{line-height:1.5}
+.platformOverviewBody .platformRecentCard a{display:inline-flex;align-items:center;justify-content:flex-end;min-height:36px}
+.platformOverviewBody .platformCompactList{margin-top:-3px}
+.platformOverviewBody .platformRecentCustomer{min-height:62px;transition:background .15s ease,box-shadow .15s ease}
+.platformOverviewBody .platformRecentCustomer:hover{background:#faf7ff;box-shadow:inset 3px 0 #ab83d7}
+.platformOverviewBody .platformRecentCustomer:focus-visible{outline:2px solid #8457c9;outline-offset:-3px}
+.platformRecentCustomerAction{white-space:nowrap;color:#6940ad;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:6px}
+.platformRecentCustomerInfo{flex:1;min-width:0}
+.platformRecentCustomerAction>span{font-size:15px}
+.platformOverviewBody .platformPanel[aria-label="Action required"] button:not(.platformActionWidget):focus-visible{outline:2px solid #8457c9;outline-offset:3px}
+.platformOverviewBody .platformPanel[aria-label="Action required"] [style*="justify-content:space-between"]>button{white-space:nowrap}
+@media(max-width:650px){.platformRecentCustomerAction{font-size:11px}.platformRecentCustomer{padding:12px!important;gap:9px!important}.platformRecentCustomerAction>span{display:none}}
+@media(max-width:430px){.platformRecentCustomerAction{font-size:0}.platformRecentCustomerAction:after{content:"View";font-size:11px}.platformOverviewBody .platformRecentCard{align-items:flex-start}}
