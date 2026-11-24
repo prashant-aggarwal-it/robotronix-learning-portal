@@ -12,7 +12,7 @@ test("Platform-wide preview uses a protected independent RPC with three active-f
 
 test("Overview uses independent preview rather than current paginated directory records",()=>{
  const page=read("app/platform-admin/page.tsx");
- for(const needle of ['fetch("/api/platform-admin/customer-preview"','customerPreview.map(o=>','Customer preview','setSelectedCustomerId(o.id)','setSearch(o.display_name)','View customer'])assert.ok(page.includes(needle),needle);
+ for(const needle of ['fetch("/api/platform-admin/customer-preview"','customerPreview.map(o=>','Customer preview','openCustomer(o.id,o.display_name)','setSearch(o.display_name)','View customer'])assert.ok(page.includes(needle),needle);
  assert.ok(!page.includes('overview.organizations.slice(0,4)'));
  assert.ok(page.includes('setSearch("");setPage(1);navigate("directory")'));
 });
