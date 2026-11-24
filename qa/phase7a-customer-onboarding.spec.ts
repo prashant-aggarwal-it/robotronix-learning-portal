@@ -29,8 +29,9 @@ test("Super Admin creates pending customer by Owner email without a UUID",async(
  await expect(page.getByText("Owner Auth UUID")).toHaveCount(0);
  await page.getByLabel("Owner email").fill("owner@brightfuture.example");
  await page.getByLabel("Organization name").fill("Bright Future Academy");
- await expect(page.getByLabel("URL slug")).toHaveValue("bright-future-academy");
- await page.getByRole("button",{name:"Create academy & send invitation"}).click();
+ await page.getByText("Advanced workspace URL settings").click();
+ await expect(page.getByLabel("Workspace URL name")).toHaveValue("bright-future-academy");
+ await page.getByRole("button",{name:"Create customer & attempt activation email"}).click();
  await expect(page.getByText(/Email delivery is not configured/)).toBeVisible();
  await page.getByRole("button",{name:/Advanced · Manual invitation recovery/}).click();
  await expect(page.getByLabel("Owner invitation link")).toHaveValue(/\/customer-invite\?token=/);
