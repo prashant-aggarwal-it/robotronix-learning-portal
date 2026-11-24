@@ -26,8 +26,24 @@ export default function PlatformAdminSafety(){
    setError("");
    const data=await request("?email="+encodeURIComponent(email.trim()));
    setVerifiedId(data.verifiedUserId);
-   setMessage(data.verifiedUserId?"Verified account found. Copy the user ID to the customer access panel to grant rights.":data.lookupLimited?"The lookup reached its safety limit. This does not prove the account is absent.":"No verified account matches this email. Do not grant access without verification.");
+   setMessage(data.verifiedUserId?"Verified account found. Confirm the required change below.":data.lookupLimited?"The lookup reached its safety limit. This does not prove the account is absent.":"No verified account matches this email. Do not grant access without verification.");
   }catch(e){setError(e instanceof Error?e.message:"Lookup failed")}finally{setBusy(false)}
+ }
+ async function changeAdmin(action:"grant_platform_admin"|"revoke_platform_admin"){
+  if(!verifiedId||busy)return;
+  const verb=action==="grant_platform_admin"?"grant":"revoke";
+  const confirmation=window.prompt("To "+verb+" platform administrator access for "+email.trim()+", type the email address exactly:");
+  if(confirmation!==email.trim())return;
+  setBusy(true);setError("");setMessage("");
+  try{
+   const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+   if(!session)throw Error("Sign in first");
+   const response=await fetch("/api/platform-admin/manage",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify({action,targetUserId:verifiedId})});
+   const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Access change rejected");
+   setMessage(action==="grant_platform_admin"?"Administrator access granted.":"Administrator access revoked.");
+   setVerifiedId(null);setRefresh(x=>x+1);
+  }catch(e){setError(e instanceof Error?e.message:"Access change failed");}
+  finally{setBusy(false)}
  }
  return <section className="platformPanel" aria-label="Platform administrator safety" style={{padding:20,marginBottom:20}}>
   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
@@ -36,11 +52,11 @@ export default function PlatformAdminSafety(){
   </div>
   {error&&<p role="alert">{error}</p>}
   <form onSubmit={e=>{e.preventDefault();void lookup()}} style={{display:"flex",flexWrap:"wrap",gap:8,alignItems:"end",marginBottom:18}}>
-   <label>Verify existing administrator email <input type="email" required value={email} onChange={e=>{setEmail(e.target.value);setVerifiedId(null);setMessage("");}} placeholder="admin@example.com"/></label>
+   <label>Find verified account by email <input type="email" required value={email} onChange={e=>{setEmail(e.target.value);setVerifiedId(null);setMessage("");}} placeholder="admin@example.com"/></label>
    <button type="submit" disabled={busy}>{busy?"Checking…":"Find verified user"}</button>
   </form>
   {message&&<p role="status">{message}</p>}
-  {verifiedId&&<p>Verified user ID: <code>{verifiedId}</code> <button type="button" onClick={()=>void navigator.clipboard.writeText(verifiedId)}>Copy ID</button></p>}
+  {verifiedId&&<div className="platformVerifiedAdminActions"><strong>Verified account: {email.trim()}</strong><p>Platform administrator access applies across all customers, not just one academy. The last active administrator cannot be revoked.</p><div><button type="button" disabled={busy} onClick={()=>void changeAdmin("grant_platform_admin")}>Grant platform administrator</button><button type="button" disabled={busy} onClick={()=>void changeAdmin("revoke_platform_admin")}>Revoke platform administrator</button></div><details><summary>Technical account ID</summary><code>{verifiedId}</code></details></div>}
   <h3>Administrators</h3>
   <div className="platformTableScroll"><table><thead><tr><th>User ID</th><th>Role</th><th>Access</th><th>Added</th></tr></thead><tbody>
    {administrators.map(a=><tr key={a.user_id}><td><details><summary>{a.role_key==="super_admin"?"Super Admin":"Administrator"}</summary><code>{a.user_id}</code></details></td><td>{a.role_key}</td><td>{a.active?"Active":"Inactive"}</td><td>{new Date(a.created_at).toLocaleDateString()}</td></tr>)}
