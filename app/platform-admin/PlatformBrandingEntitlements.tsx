@@ -6,18 +6,19 @@ type Level="standard"|"custom"|"white_label";
 const descriptions:Record<Level,string>={
  standard:"Robotronix theme; saved customer branding is retained but not available to Owners",
  custom:"Customer logo, colors and tagline; Robotronix platform identity remains",
- white_label:"Premium custom branding; vendor-brand removal is scheduled for Phase 6D"
+ white_label:"Premium branding entitlement. Verify supported white-label surfaces before promising full vendor removal"
 };
 async function authHeader(){
  const client=getSupabaseBrowserClient();if(!client)throw Error("Sign in first");
  const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
  return {Authorization:"Bearer "+session.access_token};
 }
-export default function PlatformBrandingEntitlements({organizations}:{organizations:Org[]}){
- const [orgId,setOrgId]=useState(""),[level,setLevel]=useState<Level|null>(null),[draft,setDraft]=useState<Level>("standard");
+export default function PlatformBrandingEntitlements({organizations,initialOrganizationId=""}:{organizations:Org[];initialOrganizationId?:string}){
+ const [orgId,setOrgId]=useState(initialOrganizationId),[level,setLevel]=useState<Level|null>(null),[draft,setDraft]=useState<Level>("standard");
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
  const [error,setError]=useState(""),[message,setMessage]=useState("");
  const selected=organizations.find(o=>o.id===orgId);
+ useEffect(()=>{if(initialOrganizationId)setOrgId(initialOrganizationId)},[initialOrganizationId]);
  useEffect(()=>{
   let current=true;setLevel(null);setDraft("standard");setError("");setMessage("");
   if(!orgId)return;
@@ -53,12 +54,12 @@ export default function PlatformBrandingEntitlements({organizations}:{organizati
  return <section className="platformBrandingEntitlements" aria-label="Customer branding entitlements">
   <h2>Branding entitlements</h2>
   <p>Control customer branding access separately from Academy, CRM and Tasks subscriptions.</p>
-  <label>Customer organization
+  {initialOrganizationId?<p><strong>Customer:</strong> {selected?.display_name||"Selected customer"}</p>:<label>Customer organization
    <select value={orgId} disabled={busy} onChange={e=>setOrgId(e.target.value)} aria-label="Branding customer">
     <option value="">Choose a customer</option>
     {organizations.map(o=><option key={o.id} value={o.id}>{o.display_name} ({o.status})</option>)}
    </select>
-  </label>
+  </label>}
   {selected&&<div className="platformBrandingTierCard">
    <p role="status">{loading?"Loading branding entitlement…":level?"Current level: "+level.replace("_"," "):"Level unavailable"}</p>
    <label>Branding level
