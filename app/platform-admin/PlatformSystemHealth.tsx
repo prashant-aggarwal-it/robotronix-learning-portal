@@ -2,7 +2,6 @@
 import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import PlatformEmailHealth from "./PlatformEmailHealth";
-import PlatformAdminSafety from "./PlatformAdminSafety";
 import PlatformServiceHealth from "./PlatformServiceHealth";
 import PlatformWorkerHealth from "./PlatformWorkerHealth";
 import PlatformCustomerHealth from "./PlatformCustomerHealth";
@@ -64,7 +63,7 @@ export default function PlatformSystemHealth(){
   </section>}
   {panel==="services"&&<div className="platformHealthStack"><PlatformServiceHealth/><PlatformWorkerHealth/></div>}
   {panel==="email"&&<div className="platformHealthStack"><PlatformEmailHealth/><PlatformCustomerHealth compact/></div>}
-  {panel==="security"&&<div className="platformHealthStack"><PlatformIncidents/><PlatformAdminSafety/></div>}
+  {panel==="security"&&<div className="platformHealthStack"><PlatformIncidents/><section className="platformPanel platformMonitorTile"><h3>Privileged administrator access</h3><p>Manage verified administrator accounts and review access changes in Platform Settings → Security &amp; Admins.</p><a href="/platform-admin#security">Open administrator security</a></section></div>}
   {panel==="recovery"&&<PlatformReliability/>}
  </section>;
 }
