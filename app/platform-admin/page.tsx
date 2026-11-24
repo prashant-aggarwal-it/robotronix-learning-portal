@@ -245,7 +245,7 @@ export default function PlatformAdminPage(){
         {!customerPreviewLoading&&customerPreviewError&&<p role="alert">Customer preview unavailable: {customerPreviewError}</p>}
         {!customerPreviewLoading&&!customerPreviewError&&customerPreview.map(o=><button type="button" className="platformRecentCustomer" key={o.id} onClick={()=>{setSelectedCustomerId(o.id);setSearch(o.display_name);setPage(1);navigate("directory");}} aria-label={"View customer "+o.display_name}>
          <span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span>
-         <span className="platformRecentCustomerInfo"><strong>{o.display_name}</strong><small>{o.slug}</small></span>
+         <span className="platformRecentCustomerInfo"><strong>{o.display_name}</strong><small>Customer workspace</small></span>
          <span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span>
          <span className="platformRecentCustomerAction">View customer <span aria-hidden="true">↗</span></span>
         </button>)}
@@ -254,7 +254,7 @@ export default function PlatformAdminPage(){
       </div>}
       {activeSection==="system-health"&&<PlatformSystemHealth/>}
       <div className="platformColumns platformTabSections">
-       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
+       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
        <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel">
         {selectedCustomerId?<>
          <section className="platformSubscriptionSelection" aria-label="Selected customer subscription" style={{padding:"22px 24px 4px"}}>
@@ -297,7 +297,7 @@ export default function PlatformAdminPage(){
        </div>
       </div>
       <div className="platformColumns platformTabSections">
-       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
+       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformBrandingEntitlements key={selectedCustomerId||"all"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations}/><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
        <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
         <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Enter the customer details and Owner email. The system will send a secure activation email when delivery is configured.</p>
         <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
@@ -312,25 +312,23 @@ export default function PlatformAdminPage(){
          {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}{latestDelivery&&<p role="status">Email result: <strong>{deliveryLabel(latestDelivery)}</strong></p>}
          <div><button type="button" disabled={pendingLoading} onClick={()=>void loadPendingCustomers()}>{pendingLoading?"Refreshing…":"Refresh customer invitations"}</button>
           {pendingError&&<p role="alert">{pendingError}</p>}
-          {!pendingLoading&&!pendingError&&pendingCustomers.length===0?<p>No customer invitations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Academy</th><th>Owner email</th><th>Invitation</th><th>Email delivery</th><th>Expires</th><th>Actions</th></tr></thead><tbody>{pendingCustomers.map(inv=><tr key={inv.id}><td><strong>{inv.organization_name}</strong><small style={{display:"block"}}>{inv.organization_slug}</small></td><td>{inv.owner_email}</td><td>{invitationLabel(inv.status,inv.expires_at)}</td><td aria-label={"Delivery status: "+deliveryLabel(deliveryStatus[inv.id]||"")}>{deliveryLabel(deliveryStatus[inv.id]||"")}</td><td>{new Date(inv.expires_at).toLocaleDateString()}</td><td>{inv.status==="pending"&&<><button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void rotatePending(inv.id)}>Resend invitation</button> <button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</td></tr>)}</tbody></table></div>}
+          {!pendingLoading&&!pendingError&&pendingCustomers.length===0?<p>No customer invitations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Academy</th><th>Owner email</th><th>Invitation</th><th>Email delivery</th><th>Expires</th><th>Actions</th></tr></thead><tbody>{pendingCustomers.map(inv=><tr key={inv.id}><td><strong>{inv.organization_name}</strong></td><td>{inv.owner_email}</td><td>{invitationLabel(inv.status,inv.expires_at)}</td><td aria-label={"Delivery status: "+deliveryLabel(deliveryStatus[inv.id]||"")}>{deliveryLabel(deliveryStatus[inv.id]||"")}</td><td>{new Date(inv.expires_at).toLocaleDateString()}</td><td>{inv.status==="pending"&&<><button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void rotatePending(inv.id)}>Resend invitation</button> <button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</td></tr>)}</tbody></table></div>}
          </div>
         </form>
        </section>
       </div>
       <section id="directory" hidden={activeSection!=="directory"} className="platformDirectory platformPanel">
        <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Organization directory</h2><p>Find and review registered organizations.</p></div><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
-       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Workspace slug</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><code>{o.slug}</code></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
+       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
        {selectedCustomerId&&overview.organizations.some(o=>o.id===selectedCustomerId)&&<section className="platformPanel" aria-label="Selected customer actions" style={{marginTop:20,padding:22}}>
         <span className="platformEyebrow">CUSTOMER WORKSPACE</span>
         <h3>{overview.organizations.find(o=>o.id===selectedCustomerId)?.display_name}</h3>
-        <p>Customer details and actions. Select an operation to work with this organization.</p>
+        <p>Manage this customer’s access, subscription or branding from one place. Your selection carries across the sections.</p>
         <dl style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12}}>
-         <div><dt>Organization ID</dt><dd style={{overflowWrap:"anywhere"}}>{selectedCustomerId}</dd></div>
-         <div><dt>Workspace slug</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.slug}</dd></div>
          <div><dt>Status</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.status}</dd></div>
         </dl>
         <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
-         <button type="button" onClick={()=>navigate("customers")}>Manage access and status</button>
+         <button type="button" onClick={()=>navigate("customers")}>Manage customer & access</button>
          <button type="button" onClick={()=>navigate("subscriptions")}>Manage subscription</button>
          <button type="button" onClick={()=>navigate("branding")}>Manage branding</button>
         </div>
