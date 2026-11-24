@@ -1,0 +1,37 @@
+name: Final Super Admin Synthetic Browser QA
+on:
+  push:
+    branches:
+      - fix/super-admin-final-ux-functional-audit
+    paths:
+      - qa/platform-super-admin-final.spec.ts
+      - .github/workflows/super-admin-browser-qa.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_SUPABASE_URL: "https://mock.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "synthetic-only-mocked-key"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install chromium --with-deps
+      - run: npx playwright test qa/platform-super-admin-final.spec.ts --project=desktop-chromium --no-deps
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: super-admin-final-browser-evidence
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
