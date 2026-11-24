@@ -36,7 +36,11 @@ export default function PlatformAdminPage(){
   sync();window.addEventListener("hashchange",sync);window.addEventListener("popstate",sync);
   return()=>{window.removeEventListener("hashchange",sync);window.removeEventListener("popstate",sync)};
  },[]);
- function openCustomer(organizationId:string,organizationName:string){
+ useEffect(()=>{if(activeSection!=="directory"||!selectedCustomerId||!overview?.organizations.some(o=>o.id===selectedCustomerId))return;
+  const frame=requestAnimationFrame(()=>document.getElementById("platform-selected-customer")?.scrollIntoView({behavior:"smooth",block:"nearest"}));
+  return()=>cancelAnimationFrame(frame);
+ },[activeSection,selectedCustomerId,overview?.organizations]);
+  function openCustomer(organizationId:string,organizationName:string){
   setSelectedCustomerId(organizationId);setSearch(organizationName);setPage(1);navigate("directory");
  }
  function openCustomerManagement(section:"customers"|"subscriptions"|"branding",organizationId:string){
@@ -231,7 +235,7 @@ export default function PlatformAdminPage(){
             :a.type.replaceAll("_"," ")+" · "+formattedDate;
            return <div key={a.invitationId||a.organizationId||i+"-"+a.type} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",padding:"12px 14px",border:"1px solid #e5def1",borderRadius:10}}>
             <div style={{minWidth:0}}><strong style={{display:"block"}}>{customer}</strong><span style={{fontSize:13,color:"#625a72"}}>{detail}</span></div>
-            <button type="button" disabled={!isInvitation&&!a.organizationId} onClick={()=>openFollowUp(a.organizationId,a.type)}>{isInvitation?"Review invitation":"Manage subscription"}</button>
+            <button type="button" className="platformFollowupAction" disabled={!isInvitation&&!a.organizationId} onClick={()=>openFollowUp(a.organizationId,a.type)}>{isInvitation?"Review invitation":"Manage subscription"}</button>
            </div>;
           })}
          </div>
@@ -327,7 +331,7 @@ export default function PlatformAdminPage(){
        {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Customer</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
        {selectedCustomerId&&overview.organizations.some(o=>o.id===selectedCustomerId)&&(()=>{
         const org=overview.organizations.find(o=>o.id===selectedCustomerId)!;
-        return <section className="platformPanel platformCustomerDetail" aria-label="Selected customer actions">
+        return <section id="platform-selected-customer" className="platformPanel platformCustomerDetail" aria-label="Selected customer actions">
          <div className="platformCustomerDetailHeading"><div><span className="platformEyebrow">CUSTOMER WORKSPACE</span><h3>{org.display_name}</h3><p>Manage this customer without searching for them again.</p></div><span className={"platformStatus "+(org.status==="active"?"platformStatusActive":"")}>{org.status}</span></div>
          <div className="platformCustomerFacts"><div><small>Created</small><strong>{new Date(org.created_at).toLocaleDateString("en-GB")}</strong></div><div><small>Workspace status</small><strong>{org.status.charAt(0).toUpperCase()+org.status.slice(1)}</strong></div></div>
          <div className="platformCustomerActions">
