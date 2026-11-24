@@ -3,7 +3,7 @@ import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 type Org={id:string;display_name:string;status:string};
 type Invitation={id:string;email:string;status:string;expiresAt:string};
-export default function PlatformCustomerActions({organizations,onChanged,initialOrganizationId=""}:{organizations:Org[];onChanged:()=>void;initialOrganizationId?:string}){
+export default function PlatformCustomerActions({organizations,onChanged,initialOrganizationId=""}:{organizations:Org[];onChanged:(updatedName?:string)=>void;initialOrganizationId?:string}){
  const [organizationId,setOrganizationId]=useState(initialOrganizationId);
  const [email,setEmail]=useState("");const [name,setName]=useState("");
  const [invitations,setInvitations]=useState<Invitation[]>([]);
@@ -28,7 +28,7 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
    const response=await fetch("/api/platform-admin/manage",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({action,organizationId,...fields})});
    const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||"Operation failed");
    if(result.invitationUrl)setInvitationUrl(result.invitationUrl);
-   setMessage(action==="rename_organization"?"Customer name updated.":action==="set_organization_status"?"Customer status updated.":action==="invite_owner"?"Owner invitation created. Share the secure link if email delivery is unavailable.":"Customer invitation updated.");onChanged();
+   setMessage(action==="rename_organization"?"Customer name updated.":action==="set_organization_status"?"Customer status updated.":action==="invite_owner"?"Owner invitation created. Share the secure link if email delivery is unavailable.":"Customer invitation updated.");onChanged(action==="rename_organization"?String(fields.value||""):undefined);
    if(action==="rename_organization")setName("");
    if(action==="invite_owner"||action==="resend_owner"||action==="revoke_owner_invitation")await loadInvitations();
   }catch(e){setMessage(e instanceof Error?e.message:"Operation failed")}finally{setBusy(false)}
