@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 test("Customer directory is the primary workspace and technical identifiers are optional",()=>{
  const ui=read("app/platform-admin/page.tsx");
- for(const token of ['<span>Customers</span>','id="directory"','className="platformCustomerDetail"','platformTechnicalDetails','<summary>Technical details</summary>','View customer','openCustomerManagement("customers",org.id)','openCustomerManagement("subscriptions",org.id)','openCustomerManagement("branding",org.id)'])assert.ok(ui.includes(token),token);
+ for(const token of ['<span>Customers</span>','id="directory"','className="platformPanel platformCustomerDetail"','platformTechnicalDetails','<summary>Technical details</summary>','View customer','openCustomerManagement("customers",org.id)','openCustomerManagement("subscriptions",org.id)','openCustomerManagement("branding",org.id)'])assert.ok(ui.includes(token),token);
  assert.ok(!ui.includes('<th>Workspace slug</th>'));
  assert.ok(!ui.includes('<small>{o.slug}</small>'));
 });
