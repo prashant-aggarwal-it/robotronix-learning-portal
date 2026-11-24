@@ -1,0 +1,22 @@
+name: Super Admin Consistent Workspace Width
+on:
+  push:
+    branches:
+      - fix/suite-stale-organization-selection
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-super-admin-workspace-width.mjs scripts/test-super-admin-overview-closure.mjs scripts/test-subscription-direct-navigation.mjs
+      - run: npm run typecheck
+      - run: npm run build
