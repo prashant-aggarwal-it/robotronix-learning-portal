@@ -15,7 +15,7 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
  async function call(action:string,fields:Record<string,unknown>={}){
   const guarded=["set_organization_status","revoke_owner_invitation"];
   if(guarded.includes(action)){
-   const target=action==="set_organization_status"?selected?.display_name||organizationId:String(fields.invitationId||"");
+   const target=action==="set_organization_status"?selected?.display_name||organizationId:(invitations.find(i=>i.id===fields.invitationId)?.email||"the invitation");
    if(action==="set_organization_status"&&fields.value!=="suspended"){}else{
     const confirmation=window.prompt("Sensitive platform operation: "+action.replaceAll("_"," ")+". Type the exact target to confirm:\\n"+target);
     if(confirmation!==target)return;
@@ -47,13 +47,14 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
   <h2>Customer access & status</h2><p>Manage this organization’s status, name and owner invitations. Privileged platform administrators are managed separately under System Health → Security.</p>
   {initialOrganizationId?<p><strong>Customer:</strong> {selected?.display_name||"Selected customer"}</p>:<label>Organization <select value={organizationId} onChange={e=>{setOrganizationId(e.target.value);setInvitations([])}}><option value="">Select organization</option>{organizations.map(o=><option key={o.id} value={o.id}>{o.display_name}</option>)}</select></label>}
   {selected&&<div style={{display:"grid",gap:12,marginTop:18,maxWidth:620}}>
-   <div><strong>Status: {selected.status}</strong>{" "}<button disabled={busy} onClick={()=>void call("set_organization_status",{value:selected.status==="active"?"suspended":"active"})}>{selected.status==="active"?"Suspend":"Activate"}</button></div>
+   <div><strong>Status: {selected.status.charAt(0).toUpperCase()+selected.status.slice(1)}</strong>{" "}<button disabled={busy} onClick={()=>void call("set_organization_status",{value:selected.status==="active"?"suspended":"active"})}>{selected.status==="active"?"Suspend":"Activate"}</button></div>
    <label>Customer display name <input value={name} maxLength={160} onChange={e=>setName(e.target.value)} placeholder={selected.display_name}/></label>
    <button disabled={busy||name.trim().length<2} onClick={()=>void call("rename_organization",{value:name.trim()})}>Save name</button>
    <label>Invite an owner by email <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="owner@example.com"/></label>
    <button disabled={busy||!email.includes("@")} onClick={()=>void call("invite_owner",{email})}>Create owner invitation</button>
    {invitationUrl&&<div role="status"><p>One-time invitation link (share securely; email is not sent automatically):</p><input readOnly value={invitationUrl} style={{width:"100%"}}/><button onClick={()=>void navigator.clipboard.writeText(invitationUrl)}>Copy link</button></div>}
    <h3>Owner invitations</h3><button disabled={busy} onClick={()=>void loadInvitations()}>Refresh invitations</button>
+   {invitations.length===0&&!busy&&<p>No owner invitations for this customer.</p>}
    {invitations.map(inv=><div key={inv.id} style={{borderTop:"1px solid #ddd",paddingTop:10}}>{inv.email} — {inv.status} — expires {new Date(inv.expiresAt).toLocaleDateString()} {inv.status==="pending"&&<><button disabled={busy} onClick={()=>void call("resend_owner",{email:inv.email,invitationId:inv.id})}>Rotate / resend link</button><button disabled={busy} onClick={()=>void call("revoke_owner_invitation",{invitationId:inv.id})}>Revoke</button></>}</div>)}
   </div>}
   {message&&<p role="status">{message}</p>}
