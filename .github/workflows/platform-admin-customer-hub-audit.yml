@@ -1,0 +1,22 @@
+name: Platform Admin Customer Hub Audit
+on:
+  push:
+    branches:
+      - fix/platform-admin-customer-hub-audit
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-platform-admin-customer-hub-audit.mjs scripts/test-super-admin-workspace-width.mjs scripts/test-super-admin-overview-closure.mjs scripts/test-subscription-direct-navigation.mjs
+      - run: npm run typecheck
+      - run: npm run build
