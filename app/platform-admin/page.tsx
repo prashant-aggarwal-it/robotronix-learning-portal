@@ -9,6 +9,7 @@ import PlatformSubscriptions from "./PlatformSubscriptions";
 import PlatformSystemHealth from "./PlatformSystemHealth";
 import PlatformTenantBranding from "./PlatformTenantBranding";
 import PlatformBrandingEntitlements from "./PlatformBrandingEntitlements";
+import PlatformSecurity from "./PlatformSecurity";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
 type Ops={subscriptions:{organization_id:string;organization_name:string|null;plan_code:string;status:string;ends_at:string|null}[];metrics:{expiringTrials:number;expiredTrials:number;pendingInvitations:number;expiredInvitations:number;pastDueSubscriptions:number};alerts:{type:string;organizationId?:string;organizationName?:string;invitationId?:string;expiresAt:string}[];truncated:boolean};
 type Overview={organizations:Org[];page:number;total:number;metrics:{organizations:number;trials:number;activeSubscriptions:number}};
@@ -30,7 +31,7 @@ export default function PlatformAdminPage(){
  useEffect(()=>{
   const sync=()=>{
    const id=window.location.hash.slice(1);
-   setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory","system-health"].includes(id)?id:"overview");
+   setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory","security","system-health"].includes(id)?id:"overview");
    window.scrollTo({top:0,behavior:"instant"});
   };
   sync();window.addEventListener("hashchange",sync);window.addEventListener("popstate",sync);
@@ -172,12 +173,13 @@ export default function PlatformAdminPage(){
      <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
      <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
      <span className="platformNavGroupTitle">PLATFORM OPERATIONS</span>
+     <a href="#security" onClick={e=>{e.preventDefault();navigate("security")}} className={activeSection==="security"?"platformNavActive":undefined} aria-current={activeSection==="security"?"location":undefined}>♙ <span>Security & admins</span></a>
      <a href="#system-health" onClick={e=>{e.preventDefault();navigate("system-health")}} className={activeSection==="system-health"?"platformNavActive":undefined} aria-current={activeSection==="system-health"?"location":undefined}>◉ <span>System Health &amp; Monitoring</span></a>
     </nav>
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link><SignOutButton className="platformSignout" label="Sign out"/></div>
    </aside>
    <div className="platformMain">
-    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage access, invitations and commercial branding entitlements.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
+    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory",security:"Security & administrators","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage customer status and owner invitations.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
     <div className="platformContent">
      {loading&&<div className="platformFeedback" role="status">Loading platform overview…</div>}
      {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
@@ -252,6 +254,7 @@ export default function PlatformAdminPage(){
         {!customerPreviewLoading&&!customerPreviewError&&customerPreview.length===0&&<p>No organizations available.</p>}
        </div>
       </div>}
+      {activeSection==="security"&&<PlatformSecurity/>}
       {activeSection==="system-health"&&<PlatformSystemHealth/>}
       <div className="platformColumns platformTabSections">
        <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
