@@ -262,7 +262,7 @@ export default function PlatformAdminPage(){
       </div>}
       {activeSection==="system-health"&&<PlatformSystemHealth/>}
       <div className="platformColumns platformTabSections">
-       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><div className="platformBackLine"><button type="button" onClick={()=>navigate("directory")}>← Back to customers</button></div><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
+       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><div className="platformBackLine"><button type="button" onClick={()=>navigate("directory")}>← Back to customers</button></div><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={updatedName=>{if(updatedName){setSearch(updatedName);setPage(1);}setRefresh(x=>x+1);}}/></div>
        <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel">
         {selectedCustomerId?<>
          <section className="platformSubscriptionSelection" aria-label="Selected customer subscription" style={{padding:"22px 24px 4px"}}>
