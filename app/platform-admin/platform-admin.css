@@ -157,3 +157,50 @@
 .platformTabSections>.platformPanel:not([hidden]) .platformPanel select{max-width:720px}
 .platformTabSections>.platformPanel:not([hidden]) .platformForm{max-width:780px}
 @media(max-width:740px){.platformTabSections>.platformPanel:not([hidden]){width:100%}.platformTabSections>.platformPanel:not([hidden])>section{padding:18px!important}}
+
+
+/* Final Super Admin audit: customer context, technical details, forms and actions. */
+.platformFollowupAction{width:194px!important;min-width:194px!important;min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
+.platformCustomerDetail{margin-top:18px;padding:24px!important;scroll-margin-top:22px}
+.platformCustomerDetailHeading{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.platformCustomerDetailHeading h3{margin:7px 0}
+.platformCustomerDetailHeading p{margin:4px 0;color:#807491}
+.platformCustomerFacts{display:flex;gap:32px;flex-wrap:wrap;margin:15px 0}
+.platformCustomerFacts>div{display:grid;gap:5px;min-width:150px}
+.platformCustomerFacts small{color:#786c8e;font-size:11px}
+.platformCustomerFacts strong{font-size:14px}
+.platformCustomerActions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.platformCustomerActions button{min-height:42px;min-width:145px}
+.platformCustomerActions button:disabled{opacity:.5;cursor:not-allowed}
+.platformTechnicalDetails,.platformOnboardingAdvanced{margin-top:18px;border:1px solid #e8e1f0;border-radius:11px;padding:13px 16px;background:#faf9fd}
+.platformTechnicalDetails>summary,.platformOnboardingAdvanced>summary{font-weight:700;font-size:12px;color:#62478b;cursor:pointer}
+.platformTechnicalDetails dl{display:grid;gap:12px;margin:13px 0 0}
+.platformTechnicalDetails dl>div{display:grid;gap:5px}
+.platformTechnicalDetails dt{font-size:11px;color:#82778f}
+.platformTechnicalDetails dd{margin:0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere}
+.platformTechnicalDetails code{font-size:11px;overflow-wrap:anywhere}
+.platformTechnicalDetails button{padding:5px 10px!important;font-size:11px!important}
+.platformBackLine{padding:0 0 12px}
+.platformBackLine button{font-size:12px!important}
+.platformOnboardingFields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 18px}
+.platformOnboardingFields label{min-width:0}
+.platformOnboardingFields input{width:100%;max-width:none}
+.platformOnboarding .platformForm{max-width:100%!important}
+.platformOnboarding .platformForm>label,.platformOnboarding .platformForm>fieldset,.platformOnboarding .platformForm>button,.platformOnboarding .platformForm>.platformInvitationList{max-width:980px}
+.platformOnboarding .platformForm>.platformOnboardingAdvanced{max-width:980px}
+.platformOnboardingAdvanced input{max-width:680px!important}
+.platformOnboardingAdvanced p{font-size:12px;margin:8px 0;color:#73698a}
+.platformInvitationList{margin-top:20px;border-top:1px solid #eee7f5;padding-top:20px}
+.platformInvitationHeading{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.platformInvitationHeading h3{margin:0 0 6px}
+.platformInvitationHeading p{margin:0;max-width:650px;font-size:12px}
+.platformVerifiedAdminActions{border:1px solid #e5d9f3;padding:16px;border-radius:12px;margin:12px 0;background:#faf7ff}
+.platformVerifiedAdminActions>div{display:flex;flex-wrap:wrap;gap:10px}
+.platformVerifiedAdminActions strong{font-size:13px}
+.platformVerifiedAdminActions p{font-size:12px;color:#786b88}
+.platformVerifiedAdminActions details{margin-top:12px}
+.platformDirectory .platformTableScroll table{width:100%}
+.platformDirectory .platformTableScroll td:last-child{white-space:nowrap}
+.platformConsole button:focus-visible,.platformConsole a:focus-visible,.platformConsole input:focus-visible,.platformConsole select:focus-visible{outline:2px solid #8a5cd6;outline-offset:2px}
+@media(max-width:850px){.platformOnboardingFields{grid-template-columns:1fr}.platformCustomerActions button{flex:1 1 155px}}
+@media(max-width:630px){.platformFollowupAction{width:100%!important;min-width:0!important}.platformCustomerDetail{padding:17px!important}.platformOnboarding .platformForm{max-width:100%}.platformInvitationHeading{align-items:stretch}.platformInvitationHeading button{width:100%}}
