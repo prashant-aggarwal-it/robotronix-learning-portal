@@ -36,11 +36,16 @@ export default function PlatformAdminPage(){
   sync();window.addEventListener("hashchange",sync);window.addEventListener("popstate",sync);
   return()=>{window.removeEventListener("hashchange",sync);window.removeEventListener("popstate",sync)};
  },[]);
+ function openCustomer(organizationId:string,organizationName:string){
+  setSelectedCustomerId(organizationId);setSearch(organizationName);setPage(1);navigate("directory");
+ }
+ function openCustomerManagement(section:"customers"|"subscriptions"|"branding",organizationId:string){
+  setSelectedCustomerId(organizationId);navigate(section);
+ }
  function openFollowUp(organizationId:string|undefined,kind:string){
   if(kind==="invitation_expired"||kind==="owner_activation_pending"){navigate("onboarding");return;}
   if(!organizationId)return;
-  setSelectedCustomerId(organizationId);
-  navigate("subscriptions");
+  openCustomerManagement("subscriptions",organizationId);
  }
  function openSubscriptionList(filter:typeof subscriptionFilter){
   setSelectedCustomerId("");setSubscriptionFilter(filter);navigate("subscriptions");
@@ -166,18 +171,16 @@ export default function PlatformAdminPage(){
     <div className="platformWorkspaceName"><span className="platformWorkspaceIcon">✦</span><span>Control Centre<small>Platform administration</small></span></div>
     <nav className="platformNav">
      <a href="#overview" onClick={e=>{e.preventDefault();navigate("overview")}} className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
-     <a href="#customers" onClick={e=>{e.preventDefault();navigate("customers")}} className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
+     <a href="#directory" onClick={e=>{e.preventDefault();setSelectedCustomerId("");setSearch("");setPage(1);navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>♧ <span>Customers</span></a>
      <a href="#subscriptions" onClick={e=>{e.preventDefault();openSubscriptionList("all")}} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
-     <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
      <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
-     <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
      <span className="platformNavGroupTitle">PLATFORM OPERATIONS</span>
      <a href="#system-health" onClick={e=>{e.preventDefault();navigate("system-health")}} className={activeSection==="system-health"?"platformNavActive":undefined} aria-current={activeSection==="system-health"?"location":undefined}>◉ <span>System Health &amp; Monitoring</span></a>
     </nav>
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link><SignOutButton className="platformSignout" label="Sign out"/></div>
    </aside>
    <div className="platformMain">
-    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage access, invitations and commercial branding entitlements.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
+    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customers","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage access, invitations and commercial branding entitlements.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
     <div className="platformContent">
      {loading&&<div className="platformFeedback" role="status">Loading platform overview…</div>}
      {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
@@ -243,9 +246,9 @@ export default function PlatformAdminPage(){
        <div className="platformCompactList" aria-label="Customer preview">
         {customerPreviewLoading&&<p role="status">Loading recent customer records…</p>}
         {!customerPreviewLoading&&customerPreviewError&&<p role="alert">Customer preview unavailable: {customerPreviewError}</p>}
-        {!customerPreviewLoading&&!customerPreviewError&&customerPreview.map(o=><button type="button" className="platformRecentCustomer" key={o.id} onClick={()=>{setSelectedCustomerId(o.id);setSearch(o.display_name);setPage(1);navigate("directory");}} aria-label={"View customer "+o.display_name}>
+        {!customerPreviewLoading&&!customerPreviewError&&customerPreview.map(o=><button type="button" className="platformRecentCustomer" key={o.id} onClick={()=>openCustomer(o.id,o.display_name)} aria-label={"View customer "+o.display_name}>
          <span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span>
-         <span className="platformRecentCustomerInfo"><strong>{o.display_name}</strong><small>{o.slug}</small></span>
+         <span className="platformRecentCustomerInfo"><strong>{o.display_name}</strong><small>Created {new Date(o.created_at).toLocaleDateString("en-GB")}</small></span>
          <span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span>
          <span className="platformRecentCustomerAction">View customer <span aria-hidden="true">↗</span></span>
         </button>)}
@@ -254,7 +257,7 @@ export default function PlatformAdminPage(){
       </div>}
       {activeSection==="system-health"&&<PlatformSystemHealth/>}
       <div className="platformColumns platformTabSections">
-       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
+       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><div className="platformBackLine"><button type="button" onClick={()=>navigate("directory")}>← Back to customers</button></div><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
        <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel">
         {selectedCustomerId?<>
          <section className="platformSubscriptionSelection" aria-label="Selected customer subscription" style={{padding:"22px 24px 4px"}}>
@@ -297,7 +300,7 @@ export default function PlatformAdminPage(){
        </div>
       </div>
       <div className="platformColumns platformTabSections">
-       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
+       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><div className="platformBackLine"><button type="button" onClick={()=>navigate("directory")}>← Back to customers</button></div><PlatformBrandingEntitlements key={"entitlement-"+selectedCustomerId} organizations={overview.organizations} initialOrganizationId={selectedCustomerId}/><PlatformTenantBranding key={"studio-"+selectedCustomerId} initialOrganizationId={selectedCustomerId} organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
        <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
         <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Enter the customer details and Owner email. The system will send a secure activation email when delivery is configured.</p>
         <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
@@ -318,23 +321,24 @@ export default function PlatformAdminPage(){
        </section>
       </div>
       <section id="directory" hidden={activeSection!=="directory"} className="platformDirectory platformPanel">
-       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Organization directory</h2><p>Find and review registered organizations.</p></div><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
-       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Workspace slug</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><code>{o.slug}</code></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
-       {selectedCustomerId&&overview.organizations.some(o=>o.id===selectedCustomerId)&&<section className="platformPanel" aria-label="Selected customer actions" style={{marginTop:20,padding:22}}>
-        <span className="platformEyebrow">CUSTOMER WORKSPACE</span>
-        <h3>{overview.organizations.find(o=>o.id===selectedCustomerId)?.display_name}</h3>
-        <p>Customer details and actions. Select an operation to work with this organization.</p>
-        <dl style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12}}>
-         <div><dt>Organization ID</dt><dd style={{overflowWrap:"anywhere"}}>{selectedCustomerId}</dd></div>
-         <div><dt>Workspace slug</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.slug}</dd></div>
-         <div><dt>Status</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.status}</dd></div>
-        </dl>
-        <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
-         <button type="button" onClick={()=>navigate("customers")}>Manage access and status</button>
-         <button type="button" onClick={()=>navigate("subscriptions")}>Manage subscription</button>
-         <button type="button" onClick={()=>navigate("branding")}>Manage branding</button>
-        </div>
-       </section>}
+       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Customers</h2><p>Find a customer and open one workspace to manage access, subscriptions and branding.</p></div><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
+       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Customer</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
+       {selectedCustomerId&&overview.organizations.some(o=>o.id===selectedCustomerId)&&(()=>{
+        const org=overview.organizations.find(o=>o.id===selectedCustomerId)!;
+        return <section className="platformPanel platformCustomerDetail" aria-label="Selected customer actions">
+         <div className="platformCustomerDetailHeading"><div><span className="platformEyebrow">CUSTOMER WORKSPACE</span><h3>{org.display_name}</h3><p>Manage this customer without searching for them again.</p></div><span className={"platformStatus "+(org.status==="active"?"platformStatusActive":"")}>{org.status}</span></div>
+         <div className="platformCustomerFacts"><div><small>Created</small><strong>{new Date(org.created_at).toLocaleDateString("en-GB")}</strong></div><div><small>Workspace status</small><strong>{org.status.charAt(0).toUpperCase()+org.status.slice(1)}</strong></div></div>
+         <div className="platformCustomerActions">
+          <button type="button" onClick={()=>openCustomerManagement("customers",org.id)}>Access & owner</button>
+          <button type="button" onClick={()=>openCustomerManagement("subscriptions",org.id)}>Subscription & modules</button>
+          <button type="button" disabled={org.status==="archived"} onClick={()=>openCustomerManagement("branding",org.id)}>Branding</button>
+         </div>
+         <details className="platformTechnicalDetails"><summary>Technical details</summary><dl>
+          <div><dt>Organization ID</dt><dd><code>{org.id}</code> <button type="button" onClick={()=>void navigator.clipboard.writeText(org.id)}>Copy</button></dd></div>
+          <div><dt>Workspace slug</dt><dd><code>{org.slug}</code> <button type="button" onClick={()=>void navigator.clipboard.writeText(org.slug)}>Copy</button></dd></div>
+         </dl></details>
+        </section>;
+       })()}
        <div className="platformPagination"><span>{overview.total} matching organizations · Page {page}</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><button disabled={page*20>=overview.total} onClick={()=>setPage(p=>p+1)}>Next</button></div></div>
       </section>
      </>}
