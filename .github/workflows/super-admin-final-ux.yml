@@ -1,0 +1,22 @@
+name: Super Admin Final UX & Functional Contract
+on:
+  push:
+    branches:
+      - fix/super-admin-final-ux-functional-audit
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/test-super-admin-final-ux.mjs scripts/test-super-admin-overview-closure.mjs scripts/test-super-admin-overview-final.mjs scripts/test-priority-followups.mjs scripts/test-subscription-direct-navigation.mjs scripts/test-phase9e-incidents.mjs scripts/test-phase9f-reliability.mjs
+      - run: npm run typecheck
+      - run: npm run build
