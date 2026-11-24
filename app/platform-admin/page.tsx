@@ -171,8 +171,9 @@ export default function PlatformAdminPage(){
      <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
      <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
      <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Customers</span></a>
-     <span className="platformNavGroupTitle">PLATFORM OPERATIONS</span>
+     <span className="platformNavGroupTitle">PLATFORM SETTINGS</span>
      <a href="#security" onClick={e=>{e.preventDefault();navigate("security")}} className={activeSection==="security"?"platformNavActive":undefined} aria-current={activeSection==="security"?"location":undefined}>♙ <span>Security & admins</span></a>
+     <span className="platformNavGroupTitle">PLATFORM OPERATIONS</span>
      <a href="#system-health" onClick={e=>{e.preventDefault();navigate("system-health")}} className={activeSection==="system-health"?"platformNavActive":undefined} aria-current={activeSection==="system-health"?"location":undefined}>◉ <span>System Health &amp; Monitoring</span></a>
     </nav>
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link><SignOutButton className="platformSignout" label="Sign out"/></div>
