@@ -297,7 +297,7 @@ export default function PlatformAdminPage(){
        </div>
       </div>
       <div className="platformColumns platformTabSections">
-       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformBrandingEntitlements key={selectedCustomerId||"all"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations}/><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
+       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformBrandingEntitlements key={selectedCustomerId||"all"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations}/><PlatformTenantBranding initialOrganizationId={selectedCustomerId} organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
        <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
         <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Enter the customer details and Owner email. The system will send a secure activation email when delivery is configured.</p>
         <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
