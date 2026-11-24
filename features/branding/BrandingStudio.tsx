@@ -16,8 +16,8 @@ async function authHeaders():Promise<Record<string,string>>{
  if(!session)throw new Error("Sign in first");
  return {Authorization:"Bearer "+session.access_token};
 }
-export function BrandingStudio({organizations,ownerMode=false}:{organizations:BrandingOrganization[];ownerMode?:boolean}){
- const [organizationId,setOrganizationId]=useState("");
+export function BrandingStudio({organizations,ownerMode=false,initialOrganizationId=""}:{organizations:BrandingOrganization[];ownerMode?:boolean;initialOrganizationId?:string}){
+ const [organizationId,setOrganizationId]=useState(initialOrganizationId);
  const [saved,setSaved]=useState<BrandData>(initial);
  const [tagline,setTagline]=useState("");
  const [logoUrl,setLogoUrl]=useState("");
@@ -33,7 +33,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
  const [canEdit,setCanEdit]=useState(false);
  const [brandingLevel,setBrandingLevel]=useState<"standard"|"custom"|"white_label"|null>(null);
  const selected=organizations.find(o=>o.id===organizationId);
- useEffect(()=>{setOrganizationId(v=>organizations.some(o=>o.id===v)?v:organizations[0]?.id||"");},[organizations]);
+ useEffect(()=>{setOrganizationId(v=>initialOrganizationId&&organizations.some(o=>o.id===initialOrganizationId)?initialOrganizationId:organizations.some(o=>o.id===v)?v:organizations[0]?.id||"");},[organizations,initialOrganizationId]);
  useEffect(()=>{
   if(!file){setLocalPreview("");return;}
   const url=URL.createObjectURL(file);setLocalPreview(url);
@@ -137,7 +137,7 @@ export function BrandingStudio({organizations,ownerMode=false}:{organizations:Br
     <label className="brandingField">Organization
      <select aria-label="Choose organization" value={organizationId} disabled={busy||loading} onChange={e=>setOrganizationId(e.target.value)}>
       {organizations.length===0&&<option value="">No accessible organization</option>}
-      {organizations.map(o=><option key={o.id} value={o.id}>{o.display_name} ({o.slug})</option>)}
+      {organizations.map(o=><option key={o.id} value={o.id}>{o.display_name}</option>)}
      </select>
     </label>
     {!loading&&brandingLevel==="standard"&&!canEdit&&<p className="brandingEntitlementNotice" role="status">Standard branding is active. Custom logo, colors and tagline are available after an upgrade. Previously saved branding is safely retained.</p>}
