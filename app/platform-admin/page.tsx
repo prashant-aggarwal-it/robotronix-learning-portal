@@ -16,6 +16,9 @@ export default function PlatformAdminPage(){
  const [overview,setOverview]=useState<Overview|null>(null);
  const [operations,setOperations]=useState<Ops|null>(null);
  const [operationsError,setOperationsError]=useState("");
+ const [customerPreview,setCustomerPreview]=useState<Org[]>([]);
+ const [customerPreviewLoading,setCustomerPreviewLoading]=useState(true);
+ const [customerPreviewError,setCustomerPreviewError]=useState("");
  const [search,setSearch]=useState("");
  const [page,setPage]=useState(1);
  const [error,setError]=useState("");
@@ -89,6 +92,14 @@ export default function PlatformAdminPage(){
   void load().then(x=>{if(active)setOverview(x)}).catch(e=>{if(active){setOverview(null);setError(e instanceof Error?e.message:"Access unavailable")}}).finally(()=>{if(active)setLoading(false)});
   return()=>{active=false};
  },[page,search,refresh]);
+ useEffect(()=>{let active=true;setCustomerPreviewLoading(true);(async()=>{try{
+  const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
+  if(!session)throw Error("Sign in first");
+  const response=await fetch("/api/platform-admin/customer-preview",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});
+  const body=await response.json();if(!response.ok||!body.ok)throw Error(body.error||"Preview unavailable");
+  if(active){setCustomerPreview(body.organizations||[]);setCustomerPreviewError("");}
+ }catch(e){if(active){setCustomerPreview([]);setCustomerPreviewError(e instanceof Error?e.message:"Preview unavailable");}}
+ finally{if(active)setCustomerPreviewLoading(false)}})();return()=>{active=false};},[refresh]);
  useEffect(()=>{let active=true;(async()=>{try{
   const client=getSupabaseBrowserClient(),session=(await client?.auth.getSession())?.data.session;
   if(!session)throw Error("Sign in first");
@@ -189,7 +200,7 @@ export default function PlatformAdminPage(){
       </section>
       {activeSection==="overview"&&<div className="platformOverviewBody">
        {operationsError&&<p role="alert">Operations summary: {operationsError}</p>}
-       {operations&&<section className="platformPanel" aria-label="Action required" style={{padding:20,marginBottom:20}}>
+       {operations&&<section className="platformPanel" aria-label="Action required" style={{padding:20,marginBottom:0}}>
         <div className="platformActionHeading"><div><h2>Action required</h2><p>Outstanding customer and subscription follow-ups</p></div><button type="button" onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
         <div className="platformActionWidgetGrid">
          {([
@@ -225,8 +236,21 @@ export default function PlatformAdminPage(){
         </div>}
         {operations.truncated&&<p role="status">Summary is limited to the first records; use filtered customer lookup for a complete audit.</p>}
        </section>}
-       <div className="platformRecentCard"><div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Recently created organizations</h2><p>Showing available records from the current directory page, not platform-wide activity.</p></div><a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}}>View directory →</a></div>
-       <div className="platformCompactList">{overview.organizations.slice(0,4).map(o=><button type="button" className="platformRecentCustomer" key={o.id} onClick={()=>{setSearch(o.display_name);setPage(1);navigate("directory");}}><span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span><span><strong>{o.display_name}</strong><small>{o.slug}</small></span><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span><span aria-hidden="true">↗</span></button>)}{overview.organizations.length===0&&<p>No customer records on this page.</p>}</div>
+       <div className="platformRecentCard">
+        <div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Customer preview</h2><p>Three most recently created active organizations first, across the platform.</p></div>
+        <a href="#directory" onClick={e=>{e.preventDefault();setSearch("");setPage(1);navigate("directory")}}>View directory →</a>
+       </div>
+       <div className="platformCompactList" aria-label="Customer preview">
+        {customerPreviewLoading&&<p role="status">Loading recent customer records…</p>}
+        {!customerPreviewLoading&&customerPreviewError&&<p role="alert">Customer preview unavailable: {customerPreviewError}</p>}
+        {!customerPreviewLoading&&!customerPreviewError&&customerPreview.map(o=><button type="button" className="platformRecentCustomer" key={o.id} onClick={()=>{setSelectedCustomerId(o.id);setSearch(o.display_name);setPage(1);navigate("directory");}} aria-label={"View customer "+o.display_name}>
+         <span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span>
+         <span className="platformRecentCustomerInfo"><strong>{o.display_name}</strong><small>{o.slug}</small></span>
+         <span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span>
+         <span className="platformRecentCustomerAction">View customer <span aria-hidden="true">↗</span></span>
+        </button>)}
+        {!customerPreviewLoading&&!customerPreviewError&&customerPreview.length===0&&<p>No organizations available.</p>}
+       </div>
       </div>}
       {activeSection==="system-health"&&<PlatformSystemHealth/>}
       <div className="platformColumns platformTabSections">
