@@ -25,6 +25,21 @@ export async function GET(request:NextRequest){
   }
   const {data,error}=await db.rpc("saas_platform_monitor_read_v1",{p_kind:"administrators",p_organization_id:null});
   if(error){console.error("platform administrator RPC",error.code);throw new SaaSAccessError(503,"Administrator directory unavailable");}
-  return NextResponse.json({ok:true,administrators:data?.administrators||[],audit:data?.audit||[],truncated:!!data?.truncated},{headers});
+  const administrators=Array.isArray(data?.administrators)?data.administrators:[];
+  // Enrich only the administrator records from the privileged RPC, never the general Auth directory.
+  // Failed identity lookups must not hide the administrators or grant/revoke eligibility.
+  const enriched=await Promise.all(administrators.slice(0,50).map(async(a:{user_id?:string;[key:string]:unknown})=>{
+   if(typeof a.user_id!=="string")return {...a,email:null,display_name:null};
+   try{
+    const {data:account,error:accountError}=await db.auth.admin.getUserById(a.user_id);
+    if(accountError||!account.user)return {...a,email:null,display_name:null};
+    const user=account.user;
+    const fullName=user.user_metadata?.full_name||user.user_metadata?.name||null;
+    return {...a,email:typeof user.email==="string"?user.email:null,
+     display_name:typeof fullName==="string"?fullName.slice(0,160):null};
+   }catch{return {...a,email:null,display_name:null};}
+  }));
+  return NextResponse.json({ok:true,administrators:enriched,
+   audit:Array.isArray(data?.audit)?data.audit:[],truncated:!!data?.truncated||administrators.length>50},{headers});
  }catch(e){return NextResponse.json({ok:false,error:e instanceof SaaSAccessError?e.message:"Platform administration unavailable"},{status:e instanceof SaaSAccessError?e.status:503,headers});}
 }
