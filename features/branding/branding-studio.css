@@ -119,3 +119,12 @@
 .brandingEntitlementFields{border:0;min-width:0;padding:0;margin:0;display:grid;gap:12px}
 .brandingEntitlementFields:disabled{opacity:.68}
 .brandingEntitlementNotice{border:1px solid #dfd1f3;background:#f9f6ff;color:#553e78;border-radius:11px;padding:14px;font-size:13px;line-height:1.6}
+
+
+/* Branding Studio sample actions are visual previews, never clickable controls. */
+.brandingStudio .brandingPreview .brandingPreviewDemoAction,.brandingStudio .brandingPreview .brandingPreviewDemoSecondary{
+ display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:9px;
+ font-size:12px;font-weight:750;line-height:1.35;letter-spacing:normal;min-height:40px;cursor:default;
+}
+.brandingStudio .brandingPreview .brandingPreviewDemoAction{background:var(--brand-primary);color:var(--brand-on-primary)}
+.brandingStudio .brandingPreview .brandingPreviewDemoSecondary{border:1px solid var(--brand-accent);background:#fff;color:#2b3650}
