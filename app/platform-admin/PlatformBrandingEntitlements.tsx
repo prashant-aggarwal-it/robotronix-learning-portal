@@ -13,7 +13,7 @@ async function authHeader(){
  const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
  return {Authorization:"Bearer "+session.access_token};
 }
-export default function PlatformBrandingEntitlements({organizations,initialOrganizationId=""}:{organizations:Org[];initialOrganizationId?:string}){
+export default function PlatformBrandingEntitlements({organizations,initialOrganizationId="",onChanged}:{organizations:Org[];initialOrganizationId?:string;onChanged?:()=>void}){
  const [orgId,setOrgId]=useState(initialOrganizationId),[level,setLevel]=useState<Level|null>(null),[draft,setDraft]=useState<Level>("standard");
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
  const [error,setError]=useState(""),[message,setMessage]=useState("");
@@ -47,7 +47,7 @@ export default function PlatformBrandingEntitlements({organizations,initialOrgan
    const current=await refreshed.json();
    if(!refreshed.ok||!current.ok)throw Error(current.error||"Could not verify saved entitlement");
    setLevel(current.level as Level);setDraft(current.level as Level);
-   setMessage("Branding access updated. Existing logo, colors and tagline were retained.");
+   setMessage("Branding access updated. Existing logo, colors and tagline were retained.");onChanged?.();
   }catch(e){setError(e instanceof Error?e.message:"Could not update entitlement")}
   finally{setBusy(false)}
  }
