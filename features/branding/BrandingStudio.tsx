@@ -185,8 +185,8 @@ export function BrandingStudio({organizations,ownerMode=false,initialOrganizatio
      <main className="brandingPreviewMain">
       <div className="brandingPreviewTop"><strong>{selected?.display_name||"Your academy"}</strong><small>{tagline||"Welcome to your academy"}</small></div>
       <div className="brandingPreviewKpis"><div><span>Students</span><strong>128</strong></div><div><span>Courses</span><strong>12</strong></div></div>
-      <div className="brandingPreviewCourse"><span>COURSE OVERVIEW</span><strong>Python Foundations</strong><p>Build practical coding skills.</p><button type="button">View course</button></div>
-      <div className="brandingPreviewActions"><button type="button">Primary action</button><button type="button">Secondary</button></div>
+      <div className="brandingPreviewCourse"><span>COURSE OVERVIEW</span><strong>Python Foundations</strong><p>Build practical coding skills.</p><span className="brandingPreviewDemoAction">View course</span></div>
+      <div className="brandingPreviewActions"><span className="brandingPreviewDemoAction">Primary action</span><span className="brandingPreviewDemoSecondary">Secondary</span></div>
       <label className="brandingPreviewInput">Example input<input readOnly value="Academy demo" aria-label="Preview example input"/></label>
      </main>
     </div>
