@@ -170,3 +170,71 @@
 .platformSecurityForm input:focus-visible,.platformSecurityActions button:focus-visible{outline:3px solid #9470d1;outline-offset:3px}
 .platformSecurityForm [role=alert]{color:#9a2a37}
 .platformSecurityForm [role=status]{color:#27633a}
+
+/* Responsive customer creation and invitation management */
+.platformOnboardingWorkspace{display:grid;gap:18px;min-width:0;width:100%}
+.platformOnboardingGrid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(280px,1fr);gap:18px;align-items:start;min-width:0}
+.platformOnboardingWorkspace>.platformOnboardingGrid>.platformOnboarding{padding:25px 28px;min-width:0}
+.platformOnboardingWorkspace .platformOnboarding h2{margin:6px 0 9px}
+.platformOnboardingForm{max-width:none!important;gap:10px}
+.platformOnboardingForm>h3{font-size:14px;margin:12px 0 1px;color:#34214e}
+.platformOnboardingFormGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.platformOnboardingFormGrid label{min-width:0;margin-bottom:0!important}
+.platformOnboardingFormGrid input{min-width:0}
+.platformFieldHint{font-size:11px;font-weight:450;color:#766d8c;line-height:1.4}
+.platformOnboardingType{width:min(100%,460px)}
+.platformOnboardingForm .platformModuleChoices{grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+.platformOnboardingForm .platformModuleOption{align-items:flex-start!important;min-width:0;padding:14px!important}
+.platformOnboardingForm .platformModuleCopy{overflow-wrap:anywhere}
+.platformOnboardingActionRow{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:12px;border-top:1px solid #ede8f5;padding-top:18px}
+.platformOnboardingActionRow>span{max-width:270px;color:#777087;font-size:12px;line-height:1.6}
+.platformOnboarding .platformOnboardingActionRow .platformCreateInvitation{width:auto;min-width:230px;padding:12px 17px}
+.platformOnboardingAside{display:grid;gap:16px;min-width:0}
+.platformOnboardingPreview,.platformOnboardingSteps{padding:22px;min-width:0}
+.platformOnboardingPreview dl{display:grid;gap:12px;margin:16px 0}
+.platformOnboardingPreview dl>div{border-bottom:1px solid #eee8f6;padding-bottom:10px;min-width:0}
+.platformOnboardingPreview dt{font-size:11px;color:#81768c;margin-bottom:4px}
+.platformOnboardingPreview dd{margin:0;font-size:13px;font-weight:750;color:#34214e;overflow-wrap:anywhere}
+.platformOnboardingPreview>small{font-size:11px;color:#887e9c;line-height:1.5}
+.platformOnboardingSteps ol{margin:14px 0 12px;padding-left:22px;display:grid;gap:11px;color:#49395f;font-size:12px;line-height:1.5}
+.platformOnboardingSteps li::marker{font-weight:800;color:#7944b9}
+.platformRecoveryArea{margin-top:16px;display:grid;gap:10px}
+.platformRecoveryArea>div{min-width:0;display:grid;gap:8px}
+.platformRecoveryArea input{width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.platformInvitationsPanel{padding:24px 28px;min-width:0}
+.platformInvitationsHeading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:17px}
+.platformInvitationsHeading h2{margin:6px 0}
+.platformInvitationsHeading button{white-space:nowrap}
+.platformInvitationsTable,.platformSecurityTable{width:100%;border-collapse:collapse;font-size:12px;text-align:left}
+.platformInvitationsTable th,.platformSecurityTable th{color:#777087;background:#f8f6fc;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:13px;white-space:nowrap}
+.platformInvitationsTable td,.platformSecurityTable td{padding:14px 13px;border-top:1px solid #eeeaf6;color:#514766;vertical-align:middle;overflow-wrap:anywhere}
+.platformInvitationsTable td strong,.platformSecurityTable td strong{color:#32234c}
+.platformInvitationActions{display:flex;flex-wrap:wrap;gap:7px}
+.platformInvitationActions button{white-space:nowrap}
+.platformInvitationActions .platformRevokeButton,.platformSecurityTable .platformRevokeButton{border-color:#efd4dc;background:#fff8fa;color:#9c3255}
+.platformInvitationActions .platformRevokeButton:hover:not(:disabled),.platformSecurityTable .platformRevokeButton:hover:not(:disabled){background:#ffedf2}
+@media(max-width:1280px){.platformOnboardingGrid{grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr)}.platformOnboardingForm .platformModuleChoices{grid-template-columns:1fr}}
+@media(max-width:1000px){.platformOnboardingGrid{grid-template-columns:minmax(0,1fr)}.platformOnboardingAside{grid-template-columns:repeat(2,minmax(0,1fr))}.platformOnboardingForm .platformModuleChoices{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:740px){.platformOnboardingWorkspace>.platformOnboardingGrid>.platformOnboarding,.platformInvitationsPanel{padding:18px}.platformOnboardingAside{grid-template-columns:1fr}.platformOnboardingFormGrid{grid-template-columns:1fr}.platformOnboardingForm .platformModuleChoices{grid-template-columns:1fr}.platformOnboardingActionRow{align-items:stretch;flex-direction:column}.platformOnboarding .platformOnboardingActionRow .platformCreateInvitation{width:100%;min-width:0}.platformInvitationsHeading{align-items:flex-start;flex-direction:column}}
+
+/* Security console: compact actionable records without displaying technical user IDs */
+.platformSecurityWorkspace{display:grid;gap:16px;min-width:0}
+.platformSecuritySummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.platformSecurityMetric{display:grid;gap:7px;border:1px solid #e9e1f3;background:#fff;border-radius:15px;padding:18px 22px;min-width:0}
+.platformSecurityMetric>span{color:#665b77;font-size:12px;font-weight:750}
+.platformSecurityMetric strong{font-size:28px;color:#31204e;line-height:1.2}
+.platformSecurityMetric small{color:#867b92;font-size:11px}
+.platformSecurityWorkspace .platformSecurity{padding:23px 26px;margin:0}
+.platformSecurityHeading{display:flex;justify-content:space-between;gap:14px;align-items:start;margin-bottom:12px}
+.platformSecurityHeading>button{white-space:nowrap}
+.platformSecurityTable td strong,.platformSecurityTable td small{display:block}
+.platformSecurityTable td small{font-size:11px;color:#81768b;margin-top:3px}
+.platformSecurityStatus{display:inline-flex;border-radius:100px;padding:5px 10px;color:#906b44;background:#fff4e9;font-size:11px;font-weight:750}
+.platformSecurityStatus.isActive{color:#237d53;background:#e8f8ef}
+.platformSecurityWorkspace .platformSecurityForm{width:100%;max-width:720px;margin:15px 0 0}
+.platformSecurityGrantRow{display:flex;align-items:stretch;gap:10px;min-width:0}
+.platformSecurityGrantRow input{flex:1;min-width:0}
+.platformSecurityGrantRow button{white-space:nowrap;padding:10px 19px!important;background:#703bb3!important;color:#fff!important;border-color:#703bb3!important}
+.platformSecurityError{color:#9c3255!important}
+.platformSecuritySuccess{color:#276b4a!important}
+@media(max-width:740px){.platformSecuritySummary{grid-template-columns:1fr}.platformSecurityWorkspace .platformSecurity{padding:18px}.platformSecurityGrantRow{flex-direction:column}.platformSecurityHeading{align-items:flex-start;flex-direction:column}}
