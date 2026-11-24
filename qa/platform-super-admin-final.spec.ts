@@ -45,7 +45,7 @@ test("Directory customer actions preserve customer identity and hide IDs until e
  await page.getByText("Technical details",{exact:true}).click();
  await expect(page.getByText("Organization ID",{exact:true})).toBeVisible();
  await page.getByRole("button",{name:"Subscription & modules"}).click();
- await expect(page.getByText("Customer: Synthetic School C")).toBeVisible();
+ await expect(page.locator("#subscription-management").getByText("Customer: Synthetic School C").first()).toBeVisible();
  await expect(page.getByText(/Expired trial/).first()).toBeVisible();
 });
 test("Overview follow-up opens selected customer and subscription writes remain wired",async({page})=>{
