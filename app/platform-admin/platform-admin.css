@@ -2,7 +2,7 @@
 /* Focused platform workspaces replace the long, sparse two-column form layout. */
 .platformConsole [hidden]{display:none!important}
 .platformTabSections{display:contents}
-.platformTabSections>.platformPanel:not([hidden]){max-width:980px;margin-bottom:20px}
+.platformTabSections>.platformPanel:not([hidden]){width:100%;max-width:none;margin-bottom:20px}
 .platformTabSections>.platformPanel:not([hidden])>section{padding:30px!important}
 .platformOverviewBody{display:grid;gap:17px;margin-top:3px}
 .platformWelcomeCard{background:linear-gradient(110deg,#362263,#6942b0 65%,#a643a7);color:white;border-radius:20px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:22px;box-shadow:0 15px 35px #41257826}
@@ -147,3 +147,13 @@
 .platformOverviewBody .platformPanel[aria-label="Action required"] [style*="justify-content:space-between"]>button{white-space:nowrap}
 @media(max-width:650px){.platformRecentCustomerAction{font-size:11px}.platformRecentCustomer{padding:12px!important;gap:9px!important}.platformRecentCustomerAction>span{display:none}}
 @media(max-width:430px){.platformRecentCustomerAction{font-size:0}.platformRecentCustomerAction:after{content:"View";font-size:11px}.platformOverviewBody .platformRecentCard{align-items:flex-start}}
+
+/* Consistent Super Admin workspace width: panels fill the main canvas, forms stay readable. */
+.platformTabSections{display:contents}
+.platformTabSections>.platformPanel:not([hidden]){width:100%;min-width:0;max-width:none;justify-self:stretch}
+.platformTabSections>.platformPanel:not([hidden])>section{width:100%;min-width:0}
+.platformTabSections>.platformPanel:not([hidden]) .platformTableScroll{width:100%}
+.platformTabSections>.platformPanel:not([hidden]) .platformPanel input:not([type=checkbox]):not([type=color]),
+.platformTabSections>.platformPanel:not([hidden]) .platformPanel select{max-width:720px}
+.platformTabSections>.platformPanel:not([hidden]) .platformForm{max-width:780px}
+@media(max-width:740px){.platformTabSections>.platformPanel:not([hidden]){width:100%}.platformTabSections>.platformPanel:not([hidden])>section{padding:18px!important}}
