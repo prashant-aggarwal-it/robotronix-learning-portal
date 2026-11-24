@@ -157,3 +157,16 @@
 .platformTabSections>.platformPanel:not([hidden]) .platformPanel select{max-width:720px}
 .platformTabSections>.platformPanel:not([hidden]) .platformForm{max-width:780px}
 @media(max-width:740px){.platformTabSections>.platformPanel:not([hidden]){width:100%}.platformTabSections>.platformPanel:not([hidden])>section{padding:18px!important}}
+
+/* Customer hub and sensitive access controls */
+.platformSecurity{width:100%;min-width:0;max-width:none}
+.platformSecurityForm{display:grid;gap:12px;width:min(100%,720px);margin-top:20px}
+.platformSecurityForm>label{font-size:13px;font-weight:700;color:#403157}
+.platformSecurityForm>input{width:100%;min-height:44px;padding:11px 13px;border:1px solid #d8cde7;border-radius:10px;background:#fff;color:#2e2046;font:inherit}
+.platformSecurityActions{display:flex;flex-wrap:wrap;gap:10px}
+.platformSecurityActions button{min-height:42px;padding:10px 16px;border:1px solid #bca4dc;border-radius:10px;background:#fff;color:#5e319f;font:inherit;font-weight:750;cursor:pointer}
+.platformSecurityActions button:first-child{background:#6d3db4;color:#fff;border-color:#6d3db4}
+.platformSecurityActions button:disabled{opacity:.48;cursor:not-allowed}
+.platformSecurityForm input:focus-visible,.platformSecurityActions button:focus-visible{outline:3px solid #9470d1;outline-offset:3px}
+.platformSecurityForm [role=alert]{color:#9a2a37}
+.platformSecurityForm [role=status]{color:#27633a}
