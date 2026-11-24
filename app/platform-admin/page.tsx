@@ -26,6 +26,7 @@ export default function PlatformAdminPage(){
  const [refresh,setRefresh]=useState(0);
  const [activeSection,setActiveSection]=useState("overview");
  const [selectedCustomerId,setSelectedCustomerId]=useState("");
+ const [brandingRevision,setBrandingRevision]=useState(0);
  const [subscriptionFilter,setSubscriptionFilter]=useState<"all"|"active"|"active_trials"|"expiring_trials"|"expired_trials"|"past_due">("all");
  useEffect(()=>{
   const sync=()=>{
@@ -304,7 +305,7 @@ export default function PlatformAdminPage(){
        </div>
       </div>
       <div className="platformColumns platformTabSections">
-       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><div className="platformBackLine"><button type="button" onClick={()=>navigate("directory")}>← Back to customers</button></div><PlatformBrandingEntitlements key={"entitlement-"+selectedCustomerId} organizations={overview.organizations} initialOrganizationId={selectedCustomerId}/><PlatformTenantBranding key={"studio-"+selectedCustomerId} initialOrganizationId={selectedCustomerId} organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
+       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><div className="platformBackLine"><button type="button" onClick={()=>navigate("directory")}>← Back to customers</button></div><PlatformBrandingEntitlements key={"entitlement-"+selectedCustomerId} organizations={overview.organizations} initialOrganizationId={selectedCustomerId} onChanged={()=>setBrandingRevision(v=>v+1)}/><PlatformTenantBranding key={"studio-"+selectedCustomerId+"-"+brandingRevision} initialOrganizationId={selectedCustomerId} organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
        <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
         <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Create a customer workspace and invite its owner. Email delivery is attempted only when configured; failed delivery can be retried securely.</p>
         <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
