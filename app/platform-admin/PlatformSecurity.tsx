@@ -1,4 +1,5 @@
 "use client";
+import {formatPlatformLabel} from "./formatPlatformLabel";
 import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 
@@ -80,7 +81,7 @@ export default function PlatformSecurity(){
     <div className="platformTableScroll"><table className="platformSecurityTable"><thead><tr><th>Administrator</th><th>Role</th><th>Access</th><th>Added</th><th>Action</th></tr></thead><tbody>
     {administrators.map((a,i)=><tr key={a.user_id||i}>
      <td><strong>{displayName(a)}</strong>{a.display_name&&a.email&&<small>{a.email}</small>}</td>
-     <td>{a.role_key==="super_admin"?"Super Admin":a.role_key.replaceAll("_"," ")}</td>
+     <td>{a.role_key==="super_admin"?"Super Admin":formatPlatformLabel(a.role_key)}</td>
      <td><span className={"platformSecurityStatus "+(a.active?"isActive":"")}>{a.active?"Active":"Inactive"}</span></td>
      <td>{readableDate(a.created_at)}</td>
      <td>{a.active?<button type="button" className="platformRevokeButton" disabled={busy||loading||activeAdmins.length<=1||!a.email} title={!a.email?"Email not available for secure confirmation":activeAdmins.length<=1?"The last administrator cannot be revoked":undefined} onClick={()=>void changeAccess("revoke_platform_admin",a)}>Revoke access</button>:<span>—</span>}</td>
@@ -104,7 +105,7 @@ export default function PlatformSecurity(){
    <h2>Recent access activity</h2><p>Changes recorded in the platform security audit (not a complete customer activity history).</p>
    {loading?<p role="status">Loading security events…</p>:audit.length===0?<p>No recent administrator access events returned.</p>:
    <div className="platformTableScroll"><table className="platformSecurityTable"><thead><tr><th>Time</th><th>Change</th><th>Performed by</th><th>Account</th></tr></thead><tbody>
-    {audit.slice(0,12).map((a,i)=><tr key={a.id||i}><td>{readableDate(a.occurred_at)}</td><td>{a.action.replace(/:([0-9a-f-]{36})$/i,"").replaceAll("_"," ")}</td><td>{identity(a.actor_user_id)}</td><td>{identity(a.subject_user_id)}</td></tr>)}
+    {audit.slice(0,12).map((a,i)=><tr key={a.id||i}><td>{readableDate(a.occurred_at)}</td><td>{formatPlatformLabel(a.action.replace(/:([0-9a-f-]{36})$/i,""))}</td><td>{identity(a.actor_user_id)}</td><td>{identity(a.subject_user_id)}</td></tr>)}
    </tbody></table></div>}
   </section>
  </div>;
