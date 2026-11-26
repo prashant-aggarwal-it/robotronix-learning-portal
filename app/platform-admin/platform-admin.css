@@ -254,3 +254,166 @@
 
 .platformOnboardingBack{display:inline-flex;align-items:center;margin-bottom:18px;background:transparent!important;border:0!important;box-shadow:none;color:#7142ae!important;padding:6px 0!important;font-weight:750}
 .platformOnboardingBack:hover:not(:disabled){background:transparent!important;text-decoration:underline}
+
+/* Platform administration control language: role drives styling, not page or tag.
+   Primary = create/commit, secondary = refresh/utility, segment = navigation,
+   destructive = revoke/suspend. Card widgets remain visually distinct. */
+.platformConsole{
+ --pa-primary-start:#6f35b9;
+ --pa-primary-end:#973aa7;
+ --pa-primary-solid:#6932ae;
+ --pa-secondary-bg:#f6f2fc;
+ --pa-secondary-hover:#eee5f9;
+ --pa-secondary-border:#dfd2f0;
+ --pa-secondary-text:#60359a;
+ --pa-action-radius:11px;
+ --pa-action-height:42px;
+}
+.platformConsole .platformPanel button,
+.platformConsole .platformPagination button,
+.platformConsole .platformSecurityWorkspace button,
+.platformConsole .platformSystemHealth button:not(.platformHealthSummaryItem),
+.platformConsole .platformOverviewAddCustomer {
+ font-family:inherit;
+ font-size:13px;
+ font-weight:700;
+ line-height:1.3;
+ border-radius:var(--pa-action-radius);
+ min-height:var(--pa-action-height);
+ transition:background-color .14s ease,border-color .14s ease,box-shadow .14s ease;
+}
+.platformConsole .platformPanel button:not(:disabled):hover,
+.platformConsole .platformPagination button:not(:disabled):hover {
+ transform:none;
+}
+.platformConsole .platformPanel button:focus-visible,
+.platformConsole .platformSystemHealth button:focus-visible,
+.platformConsole .platformOverviewAddCustomer:focus-visible{
+ outline:3px solid #ab83e2;
+ outline-offset:3px;
+}
+.platformConsole .platformButtonPrimary,
+.platformConsole .platformDirectory .platformCustomerAddButton,
+.platformConsole .platformOverviewAddCustomer,
+.platformConsole .platformOnboarding .platformCreateInvitation[type=submit],
+.platformConsole .platformSecurityGrantRow button[type=submit]{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+ min-height:44px;
+ padding:11px 19px;
+ border:1px solid transparent!important;
+ border-radius:var(--pa-action-radius);
+ background:linear-gradient(105deg,var(--pa-primary-start),var(--pa-primary-end))!important;
+ color:#fff!important;
+ text-decoration:none;
+ box-shadow:0 5px 13px rgba(79,35,126,.12);
+ white-space:normal;
+ text-align:center;
+ opacity:1;
+}
+.platformConsole .platformButtonPrimary:hover:not(:disabled),
+.platformConsole .platformDirectory .platformCustomerAddButton:hover:not(:disabled),
+.platformConsole .platformOverviewAddCustomer:hover,
+.platformConsole .platformOnboarding .platformCreateInvitation[type=submit]:hover:not(:disabled),
+.platformConsole .platformSecurityGrantRow button[type=submit]:hover:not(:disabled){
+ background:linear-gradient(105deg,#60299e,#853090)!important;
+ filter:none;
+ box-shadow:0 6px 17px rgba(79,35,126,.2);
+}
+.platformConsole .platformPanel .platformButtonPrimary:disabled,
+.platformConsole .platformOnboarding .platformCreateInvitation[type=submit]:disabled,
+.platformConsole .platformSecurityGrantRow button[type=submit]:disabled{
+ background:#e8e0f3!important;
+ border-color:#e8e0f3!important;
+ color:#6d6081!important;
+ box-shadow:none!important;
+ opacity:1!important;
+ cursor:not-allowed;
+}
+/* Disabled controls must look disabled but remain readable */
+.platformConsole .platformPanel button:disabled,
+.platformConsole .platformPagination button:disabled,
+.platformConsole .platformSystemHealth button:disabled{
+ opacity:.65;
+ cursor:not-allowed;
+ transform:none;
+}
+.platformConsole .platformPanel button.platformCreateInvitation:disabled{
+ opacity:1;
+}
+.platformConsole .platformPanel .platformButtonSecondary,
+.platformConsole .platformSystemHealth .platformButtonSecondary,
+.platformConsole .platformSecurityWorkspace .platformButtonSecondary,
+.platformConsole .platformPagination button{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:7px;
+ min-height:var(--pa-action-height);
+ padding:9px 15px;
+ background:var(--pa-secondary-bg);
+ color:var(--pa-secondary-text);
+ border:1px solid var(--pa-secondary-border);
+ box-shadow:none;
+}
+.platformConsole .platformPanel .platformButtonSecondary:hover:not(:disabled),
+.platformConsole .platformSystemHealth .platformButtonSecondary:hover:not(:disabled),
+.platformConsole .platformPagination button:hover:not(:disabled){
+ background:var(--pa-secondary-hover);
+ border-color:#c9b0e7;
+ transform:none;
+}
+.platformConsole .platformMonitorTabs,
+.platformConsole .platformCustomerTabs{gap:8px}
+.platformConsole .platformMonitorTabs .platformSegmentTab,
+.platformConsole .platformDirectory .platformCustomerTabs .platformSegmentTab{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ min-height:42px;
+ padding:9px 16px;
+ border-radius:var(--pa-action-radius);
+ border:1px solid #e4dcf0;
+ background:#fff;
+ color:#59496e;
+ font-size:13px;
+ font-weight:600;
+ cursor:pointer;
+ box-shadow:none;
+}
+.platformConsole .platformMonitorTabs .platformSegmentTab:hover:not(.active),
+.platformConsole .platformDirectory .platformCustomerTabs .platformSegmentTab:hover:not(.isActive){
+ background:#f8f5fd;
+ border-color:#d6c4ed;
+}
+.platformConsole .platformMonitorTabs .platformSegmentTab.active,
+.platformConsole .platformDirectory .platformCustomerTabs .platformSegmentTab.isActive{
+ background:#f1e8fd;
+ border-color:#ba92e9;
+ color:#642caf;
+ font-weight:750;
+}
+.platformConsole .platformInvitationActions .platformRevokeButton,
+.platformConsole .platformSecurityTable .platformRevokeButton{
+ background:#fff8fa;
+ color:#982f52;
+ border-color:#e9c3cf;
+}
+.platformConsole .platformInvitationActions .platformRevokeButton:hover:not(:disabled),
+.platformConsole .platformSecurityTable .platformRevokeButton:hover:not(:disabled){
+ background:#ffeaf1;
+ border-color:#dca4b6;
+}
+/* The primary CTA should remain a practical button, not an entire card width. */
+.platformConsole .platformOnboarding .platformOnboardingActionRow .platformCreateInvitation{
+ width:auto;
+ max-width:100%;
+ min-width:230px;
+}
+@media(max-width:740px){
+ .platformConsole .platformOnboarding .platformOnboardingActionRow .platformCreateInvitation{width:100%;min-width:0}
+ .platformConsole .platformMonitorTabs .platformSegmentTab,
+ .platformConsole .platformDirectory .platformCustomerTabs .platformSegmentTab{min-height:42px}
+}
