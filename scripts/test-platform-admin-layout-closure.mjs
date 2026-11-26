@@ -38,14 +38,14 @@ test("Admin security has a genuine loaded list, audit, and guarded contextual re
 test("Avoid duplicated access administration and show section-specific subtitles",()=>{
  assert.doesNotMatch(health,/<PlatformAdminSafety\/>/);
  assert.match(health,/Open administrator security/);
- assert.match(page,/Create a customer workspace, assign trial modules and invite the owner/);
+ assert.match(page,/Add a customer workspace and securely invite the owner/);
  assert.match(page,/Control privileged administrator access and review security activity/);
  assert.match(page,/PLATFORM SETTINGS/);
 });
 
 test("One Customers navigation entry houses both the directory and onboarding",()=>{
- assert.equal((page.match(/<span>Customers<\\/span>/g)||[]).length,1);
- assert.doesNotMatch(page,/<span>New customer<\\/span>/);
+ assert.equal(page.split("<span>Customers</span>").length-1,1);
+ assert.ok(!page.includes("<span>New customer</span>"));
  assert.match(page,/\["directory","onboarding","customers"\]\.includes\(activeSection\)/);
  assert.match(page,/className="platformCustomerAddButton"/);
  assert.match(page,/setCustomerTab\("invitations"\)/);
