@@ -187,7 +187,7 @@ export default function PlatformAdminPage(){
       <section id="overview" hidden={activeSection!=="overview"} className="platformOverview" aria-label="Platform overview">
        <div className="platformSectionIntro platformOverviewHeading">
         <div><span className="platformEyebrow">YOUR PLATFORM AT A GLANCE</span><h2>Overview</h2><small className="platformReadOnlyHint">Live platform records · Refresh to update</small></div>
-        <a href="#onboarding" className="platformOverviewAddCustomer" onClick={e=>{e.preventDefault();navigate("onboarding")}}>＋ Add customer</a>
+        <a href="#onboarding" className="platformOverviewAddCustomer platformButtonPrimary" onClick={e=>{e.preventDefault();navigate("onboarding")}}>＋ Add customer</a>
        </div>
        <div className="platformKpiGrid" aria-label="Platform key metrics">
         {([
@@ -203,7 +203,7 @@ export default function PlatformAdminPage(){
       {activeSection==="overview"&&<div className="platformOverviewBody">
        {operationsError&&<p role="alert">Operations summary: {operationsError}</p>}
        {operations&&<section className="platformPanel" aria-label="Action required" style={{padding:20,marginBottom:0}}>
-        <div className="platformActionHeading"><div><h2>Action required</h2><p>Outstanding customer and subscription follow-ups</p></div><button type="button" onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
+        <div className="platformActionHeading"><div><h2>Action required</h2><p>Outstanding customer and subscription follow-ups</p></div><button type="button" className="platformButtonSecondary" onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
         <div className="platformActionWidgetGrid">
          {([
           {label:"Trials expiring in 7 days",value:operations.metrics.expiringTrials,filter:"expiring_trials" as const,kind:"subscription" as const,cta:"Review trials"},
@@ -325,7 +325,7 @@ export default function PlatformAdminPage(){
             <div className="platformModuleChoices">{(["academy","crm","tasks"] as const).map(m=><label key={m} className="platformModuleOption"><input type="checkbox" checked={assisted.modules.includes(m)} onChange={e=>setAssisted(v=>({...v,modules:e.target.checked?[...v.modules,m]:v.modules.filter(x=>x!==m)}))}/><span className="platformModuleCopy"><strong>{m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks"}</strong><small>{m==="academy"?"Students, trainers, classes and fees":m==="crm"?"Enquiries, admissions and follow-ups":"Daily tasks and team coordination"}</small></span></label>)}</div>
            </fieldset>
            <div className="platformOnboardingActionRow"><span>Workspace creation will attempt secure owner invitation delivery.</span>
-            <button className="platformCreateInvitation" type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create customer & send invitation"}</button>
+            <button className="platformCreateInvitation platformButtonPrimary" type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create customer & send invitation"}</button>
            </div>
           </form>
           {invitationUrl&&<div className="platformRecoveryArea"><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. Share this link privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(invitationUrl);setAssistedMessage("Secure invitation link copied. Share privately.");}catch{setAssistedMessage("Copy failed. Select and copy the link manually.");}}}>Copy secure link</button></div>}</div>}
@@ -356,10 +356,10 @@ export default function PlatformAdminPage(){
        </section>
       </div>
       <section id="directory" hidden={activeSection!=="directory"} className="platformDirectory platformPanel">
-       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Customers</h2><p>Manage workspaces, owner invitations and activation from one place.</p></div><button type="button" className="platformCustomerAddButton" onClick={()=>navigate("onboarding")}>＋ Add customer</button></div>
+       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Customers</h2><p>Manage workspaces, owner invitations and activation from one place.</p></div><button type="button" className="platformCustomerAddButton platformButtonPrimary" onClick={()=>navigate("onboarding")}>＋ Add customer</button></div>
        <nav className="platformCustomerTabs" aria-label="Customer views">
-        <button type="button" aria-pressed={customerTab==="all"} className={customerTab==="all"?"isActive":""} onClick={()=>setCustomerTab("all")}>All customers</button>
-        <button type="button" aria-pressed={customerTab==="invitations"} className={customerTab==="invitations"?"isActive":""} onClick={()=>setCustomerTab("invitations")}>Pending invitations</button>
+        <button type="button" aria-pressed={customerTab==="all"} className={"platformSegmentTab "+(customerTab==="all"?"isActive":"")} onClick={()=>setCustomerTab("all")}>All customers</button>
+        <button type="button" aria-pressed={customerTab==="invitations"} className={"platformSegmentTab "+(customerTab==="invitations"?"isActive":"")} onClick={()=>setCustomerTab("invitations")}>Pending invitations</button>
        </nav>
        {customerTab==="all"&&<>
        <div className="platformCustomerSearch"><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
@@ -382,7 +382,7 @@ export default function PlatformAdminPage(){
        {customerTab==="invitations"&&<>
         <section className="platformPanel platformInvitationsPanel" aria-label="Customer invitation management">
          <div className="platformInvitationsHeading"><div><span className="platformEyebrow">CUSTOMER ACTIVATION</span><h2>Customer invitations</h2><p>Monitor activation and delivery; resend or revoke pending invitations when necessary.</p></div>
-          <button type="button" disabled={pendingLoading||!!invitationActionId} onClick={()=>void loadPendingCustomers()}>{pendingLoading?"Refreshing…":"Refresh invitations"}</button>
+          <button type="button" className="platformButtonSecondary" disabled={pendingLoading||!!invitationActionId} onClick={()=>void loadPendingCustomers()}>{pendingLoading?"Refreshing…":"Refresh invitations"}</button>
          </div>
          {pendingError&&<p role="alert">{pendingError}</p>}
          {pendingLoading&&<p role="status">Loading invitations…</p>}
