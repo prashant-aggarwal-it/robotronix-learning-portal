@@ -11,26 +11,40 @@ export default function ResetPasswordPage(){
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState("");
  useEffect(()=>{
+  // Supabase may exchange the recovery URL and clear its fragment before
+  // this page checks the address. A verified session is therefore the
+  // reliable fallback when PASSWORD_RECOVERY was emitted before subscription.
+  const query=new URLSearchParams(window.location.search);
+  const fragment=new URLSearchParams(window.location.hash.slice(1));
+  const linkError=query.get("error_code")||query.get("error")||fragment.get("error_code")||fragment.get("error");
   const client=getSupabaseBrowserClient();
   if(!client){setError("Authentication is currently unavailable.");setState("invalid");return;}
+  if(linkError){setState("invalid");return;}
   let active=true;
   let recoveryConfirmed=false;
   const {data:{subscription}}=client.auth.onAuthStateChange((event,session)=>{
    if(!active)return;
-   if(event==="PASSWORD_RECOVERY"){recoveryConfirmed=true;setState("ready");setError("");}
-   if(event==="SIGNED_OUT"&&!recoveryConfirmed)setState("invalid");
+   if(event==="PASSWORD_RECOVERY"&&session){
+    recoveryConfirmed=true;
+    setState("ready");
+    setError("");
+   }
   });
-  // Recovery links may arrive with a code or token fragment that Supabase
-  // exchanges asynchronously. Allow that exchange to complete before showing an error.
-  const url=new URL(window.location.href);
-  const hasRecoveryLink=url.searchParams.has("code")||url.searchParams.get("type")==="recovery"||url.hash.includes("type=recovery");
-  void client.auth.getSession().then(({data,error:sessionError})=>{
-   if(!active||recoveryConfirmed)return;
-   if(sessionError){setState("invalid");return;}
-   if(hasRecoveryLink&&data.session){setState("ready");return;}
-   if(!hasRecoveryLink)setState("invalid");
-   else setTimeout(()=>{if(active&&!recoveryConfirmed)setState("invalid");},2500);
-  }).catch(()=>{if(active)setState("invalid");});
+  void (async()=>{
+   // getSession waits for the browser client's initial URL processing.
+   // Verify the recovered user with the Auth server, not just local storage.
+   for(let attempt=0;attempt<8;attempt++){
+    const {data,error:sessionError}=await client.auth.getSession();
+    if(!active||recoveryConfirmed)return;
+    if(!sessionError&&data.session){
+     const {data:userData,error:userError}=await client.auth.getUser();
+     if(!active||recoveryConfirmed)return;
+     if(!userError&&userData.user){setState("ready");setError("");return;}
+    }
+    if(attempt<7)await new Promise(resolve=>setTimeout(resolve,400));
+   }
+   if(active&&!recoveryConfirmed)setState("invalid");
+  })().catch(()=>{if(active&&!recoveryConfirmed)setState("invalid");});
   return()=>{active=false;subscription.unsubscribe();};
  },[]);
  async function submit(e:FormEvent){
