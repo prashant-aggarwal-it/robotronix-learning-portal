@@ -148,7 +148,7 @@ export default function PlatformAdminPage(){
   finally{setInvitationActionId("")}
  }
  async function createAssisted(){
-  if(assistedBusy)return;setAssistedBusy(true);setAssistedMessage("");setInvitationUrl("");
+  if(assistedBusy)return;setAssistedBusy(true);setAssistedMessage("");setInvitationUrl("");setLatestDelivery("");
   try{
    const client=getSupabaseBrowserClient();if(!client)throw Error("Sign in first");
    const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
@@ -304,6 +304,7 @@ export default function PlatformAdminPage(){
        <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformOnboardingWorkspace" aria-label="New customer onboarding">
         <div className="platformOnboardingGrid">
          <section className="platformPanel platformOnboarding">
+          <button type="button" className="platformOnboardingBack" onClick={()=>{setCustomerTab("all");navigate("directory")}}>← Back to customers</button>
           <span className="platformEyebrow">NEW WORKSPACE</span>
           <h2>Create customer workspace</h2>
           <p>Set up the owner, organization and trial access. The system attempts to send an activation email when delivery is configured.</p>
@@ -330,7 +331,7 @@ export default function PlatformAdminPage(){
           {invitationUrl&&<div className="platformRecoveryArea"><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. Share this link privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(invitationUrl);setAssistedMessage("Secure invitation link copied. Share privately.");}catch{setAssistedMessage("Copy failed. Select and copy the link manually.");}}}>Copy secure link</button></div>}</div>}
           {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
           {latestDelivery&&<p role="status">Email result: <strong>{deliveryLabel(latestDelivery)}</strong></p>}
-          {assistedMessage&&<button type="button" onClick={()=>{setCustomerTab("invitations");navigate("directory")}}>View customer invitations</button>}
+          {latestDelivery&&<button type="button" onClick={()=>{setCustomerTab("invitations");navigate("directory")}}>View customer invitations</button>}
          </section>
          <aside className="platformOnboardingAside" aria-label="Workspace setup preview">
           <section className="platformPanel platformOnboardingPreview">
@@ -347,7 +348,7 @@ export default function PlatformAdminPage(){
           <section className="platformPanel platformOnboardingSteps">
            <h2>What happens next</h2>
            <ol><li>Customer workspace is created</li><li>Owner invitation is generated</li><li>Delivery is attempted when configured</li><li>Owner activates their account</li></ol>
-           <p>Provider acceptance does not confirm inbox delivery. Invitation status is shown below.</p>
+           <p>Provider acceptance does not confirm inbox delivery. Track activation in Customers → Pending invitations.</p>
           </section>
          </aside>
         </div>
@@ -356,10 +357,10 @@ export default function PlatformAdminPage(){
       </div>
       <section id="directory" hidden={activeSection!=="directory"} className="platformDirectory platformPanel">
        <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Customers</h2><p>Manage workspaces, owner invitations and activation from one place.</p></div><button type="button" className="platformCustomerAddButton" onClick={()=>navigate("onboarding")}>＋ Add customer</button></div>
-       <div className="platformCustomerTabs" role="tablist" aria-label="Customer views">
-        <button type="button" role="tab" aria-selected={customerTab==="all"} className={customerTab==="all"?"isActive":""} onClick={()=>setCustomerTab("all")}>All customers</button>
-        <button type="button" role="tab" aria-selected={customerTab==="invitations"} className={customerTab==="invitations"?"isActive":""} onClick={()=>setCustomerTab("invitations")}>Pending invitations</button>
-       </div>
+       <nav className="platformCustomerTabs" aria-label="Customer views">
+        <button type="button" aria-pressed={customerTab==="all"} className={customerTab==="all"?"isActive":""} onClick={()=>setCustomerTab("all")}>All customers</button>
+        <button type="button" aria-pressed={customerTab==="invitations"} className={customerTab==="invitations"?"isActive":""} onClick={()=>setCustomerTab("invitations")}>Pending invitations</button>
+       </nav>
        {customerTab==="all"&&<>
        <div className="platformCustomerSearch"><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
        {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
