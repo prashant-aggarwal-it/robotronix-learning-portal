@@ -73,7 +73,7 @@ export default function PlatformSecurity(){
   </div>
   <section className="platformPanel platformSecurity" aria-label="Platform administrators">
    <div className="platformSecurityHeading"><div><h2>Platform administrators</h2><p>Only verified platform accounts should receive access. The last active administrator cannot be revoked.</p></div>
-    <button type="button" disabled={loading||busy} onClick={()=>setRefresh(v=>v+1)}>{loading?"Loading…":"Refresh"}</button>
+    <button type="button" className="platformButtonSecondary" disabled={loading||busy} onClick={()=>setRefresh(v=>v+1)}>{loading?"Loading…":"Refresh"}</button>
    </div>
    {error&&<p role="alert" className="platformSecurityError">{error}</p>}
    {loading?<p role="status">Loading administrator records…</p>:administrators.length===0?<p>No administrator records returned.</p>:
@@ -95,7 +95,7 @@ export default function PlatformSecurity(){
     <label htmlFor="platform-admin-email">Verified account email</label>
     <div className="platformSecurityGrantRow">
      <input id="platform-admin-email" required type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="off" placeholder="admin@example.com" disabled={busy}/>
-     <button type="submit" disabled={busy||!email.trim()}>{busy?"Working…":"Grant access"}</button>
+     <button type="submit" className="platformButtonPrimary" disabled={busy||!email.trim()}>{busy?"Working…":"Grant access"}</button>
     </div>
     {message&&<p role="status" className="platformSecuritySuccess">{message}</p>}
    </form>
