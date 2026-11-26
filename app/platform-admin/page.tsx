@@ -26,6 +26,7 @@ export default function PlatformAdminPage(){
  const [loading,setLoading]=useState(true);
  const [refresh,setRefresh]=useState(0);
  const [activeSection,setActiveSection]=useState("overview");
+ const [customerTab,setCustomerTab]=useState<"all"|"invitations">("all");
  const [selectedCustomerId,setSelectedCustomerId]=useState("");
  const [subscriptionFilter,setSubscriptionFilter]=useState<"all"|"active"|"active_trials"|"expiring_trials"|"expired_trials"|"past_due">("all");
  useEffect(()=>{
@@ -77,7 +78,7 @@ export default function PlatformAdminPage(){
   if(status==="pending")return "Awaiting owner activation";
   return status;
  };
- useEffect(()=>{if(activeSection==="onboarding")void loadPendingCustomers();},[activeSection]);
+ useEffect(()=>{if(activeSection==="onboarding"||(activeSection==="directory"&&customerTab==="invitations"))void loadPendingCustomers();},[activeSection,customerTab]);
  useEffect(()=>{
   let active=true;setLoading(true);setError("");
   async function load(){
@@ -169,8 +170,7 @@ export default function PlatformAdminPage(){
      <a href="#overview" onClick={e=>{e.preventDefault();navigate("overview")}} className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
      <a href="#subscriptions" onClick={e=>{e.preventDefault();openSubscriptionList("all")}} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
      <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
-     <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
-     <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Customers</span></a>
+     <a href="#directory" onClick={e=>{e.preventDefault();setCustomerTab("all");navigate("directory")}} className={["directory","onboarding","customers"].includes(activeSection)?"platformNavActive":undefined} aria-current={["directory","onboarding","customers"].includes(activeSection)?"location":undefined}>▦ <span>Customers</span></a>
      <span className="platformNavGroupTitle">PLATFORM SETTINGS</span>
      <a href="#security" onClick={e=>{e.preventDefault();navigate("security")}} className={activeSection==="security"?"platformNavActive":undefined} aria-current={activeSection==="security"?"location":undefined}>♙ <span>Security & admins</span></a>
      <span className="platformNavGroupTitle">PLATFORM OPERATIONS</span>
@@ -179,7 +179,7 @@ export default function PlatformAdminPage(){
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link><SignOutButton className="platformSignout" label="Sign out"/></div>
    </aside>
    <div className="platformMain">
-    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory",security:"Security & administrators","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage customer status and owner invitations.":activeSection==="onboarding"?"Create a customer workspace, assign trial modules and invite the owner.":activeSection==="security"?"Control privileged administrator access and review security activity.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
+    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"Customers",directory:"Customers",security:"Security & administrators","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage customer status and owner invitations.":activeSection==="onboarding"?"Add a customer workspace and securely invite the owner.":activeSection==="directory"?"Find customers, manage pending invitations and add new workspaces.":activeSection==="security"?"Control privileged administrator access and review security activity.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
     <div className="platformContent">
      {loading&&<div className="platformFeedback" role="status">Loading platform overview…</div>}
      {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
@@ -330,6 +330,7 @@ export default function PlatformAdminPage(){
           {invitationUrl&&<div className="platformRecoveryArea"><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. Share this link privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(invitationUrl);setAssistedMessage("Secure invitation link copied. Share privately.");}catch{setAssistedMessage("Copy failed. Select and copy the link manually.");}}}>Copy secure link</button></div>}</div>}
           {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
           {latestDelivery&&<p role="status">Email result: <strong>{deliveryLabel(latestDelivery)}</strong></p>}
+          {assistedMessage&&<button type="button" onClick={()=>{setCustomerTab("invitations");navigate("directory")}}>View customer invitations</button>}
          </section>
          <aside className="platformOnboardingAside" aria-label="Workspace setup preview">
           <section className="platformPanel platformOnboardingPreview">
@@ -350,23 +351,17 @@ export default function PlatformAdminPage(){
           </section>
          </aside>
         </div>
-        <section className="platformPanel platformInvitationsPanel" aria-label="Customer invitation management">
-         <div className="platformInvitationsHeading"><div><span className="platformEyebrow">CUSTOMER ACTIVATION</span><h2>Customer invitations</h2><p>Monitor activation and delivery; resend or revoke pending invitations when necessary.</p></div>
-          <button type="button" disabled={pendingLoading||!!invitationActionId} onClick={()=>void loadPendingCustomers()}>{pendingLoading?"Refreshing…":"Refresh invitations"}</button>
-         </div>
-         {pendingError&&<p role="alert">{pendingError}</p>}
-         {pendingLoading&&<p role="status">Loading invitations…</p>}
-         {!pendingLoading&&!pendingError&&(pendingCustomers.length===0?<p>No customer invitations found.</p>:
-          <div className="platformTableScroll"><table className="platformInvitationsTable"><thead><tr><th>Customer</th><th>Owner email</th><th>Invitation</th><th>Email delivery</th><th>Expires</th><th>Actions</th></tr></thead><tbody>
-           {pendingCustomers.map(inv=><tr key={inv.id}><td><strong>{inv.organization_name}</strong></td><td>{inv.owner_email}</td><td>{invitationLabel(inv.status,inv.expires_at)}</td><td>{deliveryLabel(deliveryStatus[inv.id]||"")}</td><td>{new Date(inv.expires_at).toLocaleDateString()}</td>
-            <td><div className="platformInvitationActions">{inv.status==="pending"&&<><button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void rotatePending(inv.id)}>{invitationActionId===inv.id?"Working…":"Resend"}</button><button type="button" className="platformRevokeButton" disabled={assistedBusy||!!invitationActionId} onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</div></td>
-           </tr>)}
-          </tbody></table></div>)}
-        </section>
+
        </section>
       </div>
       <section id="directory" hidden={activeSection!=="directory"} className="platformDirectory platformPanel">
-       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Customer directory</h2><p>Find customers and open their management actions.</p></div><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
+       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Customers</h2><p>Manage workspaces, owner invitations and activation from one place.</p></div><button type="button" className="platformCustomerAddButton" onClick={()=>navigate("onboarding")}>＋ Add customer</button></div>
+       <div className="platformCustomerTabs" role="tablist" aria-label="Customer views">
+        <button type="button" role="tab" aria-selected={customerTab==="all"} className={customerTab==="all"?"isActive":""} onClick={()=>setCustomerTab("all")}>All customers</button>
+        <button type="button" role="tab" aria-selected={customerTab==="invitations"} className={customerTab==="invitations"?"isActive":""} onClick={()=>setCustomerTab("invitations")}>Pending invitations</button>
+       </div>
+       {customerTab==="all"&&<>
+       <div className="platformCustomerSearch"><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
        {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
        {selectedCustomerId&&overview.organizations.some(o=>o.id===selectedCustomerId)&&<section className="platformPanel" aria-label="Selected customer actions" style={{marginTop:20,padding:22}}>
         <span className="platformEyebrow">CUSTOMER WORKSPACE</span>
@@ -382,6 +377,25 @@ export default function PlatformAdminPage(){
         </div>
        </section>}
        <div className="platformPagination"><span>{overview.total} matching organizations · Page {page}</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><button disabled={page*20>=overview.total} onClick={()=>setPage(p=>p+1)}>Next</button></div></div>
+       </>}
+       {customerTab==="invitations"&&<>
+        <section className="platformPanel platformInvitationsPanel" aria-label="Customer invitation management">
+         <div className="platformInvitationsHeading"><div><span className="platformEyebrow">CUSTOMER ACTIVATION</span><h2>Customer invitations</h2><p>Monitor activation and delivery; resend or revoke pending invitations when necessary.</p></div>
+          <button type="button" disabled={pendingLoading||!!invitationActionId} onClick={()=>void loadPendingCustomers()}>{pendingLoading?"Refreshing…":"Refresh invitations"}</button>
+         </div>
+         {pendingError&&<p role="alert">{pendingError}</p>}
+         {pendingLoading&&<p role="status">Loading invitations…</p>}
+         {!pendingLoading&&!pendingError&&(pendingCustomers.length===0?<p>No customer invitations found.</p>:
+          <div className="platformTableScroll"><table className="platformInvitationsTable"><thead><tr><th>Customer</th><th>Owner email</th><th>Invitation</th><th>Email delivery</th><th>Expires</th><th>Actions</th></tr></thead><tbody>
+           {pendingCustomers.map(inv=><tr key={inv.id}><td><strong>{inv.organization_name}</strong></td><td>{inv.owner_email}</td><td>{invitationLabel(inv.status,inv.expires_at)}</td><td>{deliveryLabel(deliveryStatus[inv.id]||"")}</td><td>{new Date(inv.expires_at).toLocaleDateString()}</td>
+            <td><div className="platformInvitationActions">{inv.status==="pending"&&<><button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void rotatePending(inv.id)}>{invitationActionId===inv.id?"Working…":"Resend"}</button><button type="button" className="platformRevokeButton" disabled={assistedBusy||!!invitationActionId} onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</div></td>
+           </tr>)}
+          </tbody></table></div>)}
+        </section>
+        {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
+        {latestDelivery&&<p role="status">Email result: <strong>{deliveryLabel(latestDelivery)}</strong></p>}
+        {invitationUrl&&<div className="platformRecoveryArea"><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. Share this link privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation recovery link"/><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(invitationUrl);setAssistedMessage("Secure invitation link copied. Share privately.");}catch{setAssistedMessage("Copy failed. Select and copy the link manually.");}}}>Copy secure link</button></div>}</div>}
+       </>}
       </section>
      </>}
     </div>
