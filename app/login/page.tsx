@@ -145,8 +145,10 @@ return <main className={isSuite?"loginSuite":"authPage"} style={academyName?them
   <form className="formStack" onSubmit={passwordSignIn}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
    <label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/></label>
+   <div style={{display:"flex",justifyContent:"flex-end",marginTop:-4}}>
+    <button type="button" disabled={loading} onClick={()=>void forgotPassword()} style={{background:"transparent",border:0,boxShadow:"none",padding:"4px 0",fontSize:13,fontWeight:650,color:"var(--brand-primary, #6d3cc9)",textDecoration:"underline",textUnderlineOffset:3,cursor:loading?"not-allowed":"pointer",opacity:loading?.55:1}}>Forgot password?</button>
+   </div>
    <button className="button fullButton" disabled={loading||!deployment}>{loading?"Signing in…":"Sign in with password"}</button>
-   <button type="button" className="button ghost" disabled={loading} onClick={()=>void forgotPassword()}>Forgot password?</button>
    {canRegister&&<button type="button" className="button secondary fullButton" disabled={loading||!email||password.length<8} onClick={register}>Create a new account</button>}
    {notice&&<p role="status" className="infoBanner">{notice}</p>}
   </form>
