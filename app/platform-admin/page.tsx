@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
+import {formatPlatformLabel} from "./formatPlatformLabel";
 import Link from "next/link";
 import {SignOutButton} from "@/components/SignOutButton";
 import "./platform-admin.css";
@@ -248,7 +249,7 @@ export default function PlatformAdminPage(){
         {!customerPreviewLoading&&!customerPreviewError&&customerPreview.map(o=><button type="button" className="platformRecentCustomer" key={o.id} onClick={()=>{setSelectedCustomerId(o.id);setSearch(o.display_name);setPage(1);navigate("directory");}} aria-label={"View customer "+o.display_name}>
          <span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span>
          <span className="platformRecentCustomerInfo"><strong>{o.display_name}</strong><small>Customer workspace</small></span>
-         <span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span>
+         <span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{formatPlatformLabel(o.status)}</span>
          <span className="platformRecentCustomerAction">View customer <span aria-hidden="true">↗</span></span>
         </button>)}
         {!customerPreviewLoading&&!customerPreviewError&&customerPreview.length===0&&<p>No organizations available.</p>}
@@ -363,13 +364,13 @@ export default function PlatformAdminPage(){
        </nav>
        {customerTab==="all"&&<>
        <div className="platformCustomerSearch"><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
-       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
+       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{formatPlatformLabel(o.status)}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
        {selectedCustomerId&&overview.organizations.some(o=>o.id===selectedCustomerId)&&<section className="platformPanel" aria-label="Selected customer actions" style={{marginTop:20,padding:22}}>
         <span className="platformEyebrow">CUSTOMER WORKSPACE</span>
         <h3>{overview.organizations.find(o=>o.id===selectedCustomerId)?.display_name}</h3>
         <p>Manage this customer’s access, subscription or branding from one place. Your selection carries across the sections.</p>
         <dl style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12}}>
-         <div><dt>Status</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.status}</dd></div>
+         <div><dt>Status</dt><dd>{formatPlatformLabel(overview.organizations.find(o=>o.id===selectedCustomerId)?.status)}</dd></div>
         </dl>
         <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
          <button type="button" onClick={()=>navigate("customers")}>Manage customer & access</button>
