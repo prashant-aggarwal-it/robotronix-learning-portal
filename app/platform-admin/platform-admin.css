@@ -247,7 +247,7 @@
 .platformDirectory .platformCustomerTabs button.isActive{background:#efe8fb;color:#6133ac;border-color:#d9c7f4}
 .platformCustomerSearch{max-width:420px;margin:0 0 16px}
 .platformCustomerSearch label{margin-bottom:0!important}
-.platformDirectory .platformInvitationsPanel{box-shadow:none;border-radius:12px;margin:0;padding:0;border:0}
+.platformDirectory>.platformInvitationsPanel,.platformDirectory .platformInvitationsPanel{box-shadow:none;border-radius:12px;margin:0;padding:0!important;border:0}
 .platformDirectory .platformInvitationsHeading{margin-top:3px}
 .platformDirectory .platformRecoveryArea{max-width:700px;margin-top:18px}
 @media(max-width:740px){.platformDirectory .platformDirectoryHead{align-items:stretch}.platformDirectory .platformCustomerAddButton{width:100%}.platformCustomerSearch{max-width:none}}
