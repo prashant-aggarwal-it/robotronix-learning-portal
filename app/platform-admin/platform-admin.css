@@ -238,3 +238,16 @@
 .platformSecurityError{color:#9c3255!important}
 .platformSecuritySuccess{color:#276b4a!important}
 @media(max-width:740px){.platformSecuritySummary{grid-template-columns:1fr}.platformSecurityWorkspace .platformSecurity{padding:18px}.platformSecurityGrantRow{flex-direction:column}.platformSecurityHeading{align-items:flex-start;flex-direction:column}}
+
+/* Single Customers hub: directory, invitations and Add customer entry point */
+.platformDirectory .platformDirectoryHead{align-items:center}
+.platformDirectory .platformCustomerAddButton{white-space:nowrap;background:linear-gradient(100deg,var(--platform-action-start),var(--platform-action-end));color:#fff;border-color:transparent;padding:12px 20px}
+.platformCustomerTabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px;padding-bottom:13px;border-bottom:1px solid #ede7f6}
+.platformDirectory .platformCustomerTabs button{border-radius:10px;background:#f8f5fd;color:#625777;padding:10px 16px}
+.platformDirectory .platformCustomerTabs button.isActive{background:#efe8fb;color:#6133ac;border-color:#d9c7f4}
+.platformCustomerSearch{max-width:420px;margin:0 0 16px}
+.platformCustomerSearch label{margin-bottom:0!important}
+.platformDirectory .platformInvitationsPanel{box-shadow:none;border-radius:12px;margin:0;padding:0;border:0}
+.platformDirectory .platformInvitationsHeading{margin-top:3px}
+.platformDirectory .platformRecoveryArea{max-width:700px;margin-top:18px}
+@media(max-width:740px){.platformDirectory .platformDirectoryHead{align-items:stretch}.platformDirectory .platformCustomerAddButton{width:100%}.platformCustomerSearch{max-width:none}}
