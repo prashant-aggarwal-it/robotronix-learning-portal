@@ -251,3 +251,6 @@
 .platformDirectory .platformInvitationsHeading{margin-top:3px}
 .platformDirectory .platformRecoveryArea{max-width:700px;margin-top:18px}
 @media(max-width:740px){.platformDirectory .platformDirectoryHead{align-items:stretch}.platformDirectory .platformCustomerAddButton{width:100%}.platformCustomerSearch{max-width:none}}
+
+.platformOnboardingBack{display:inline-flex;align-items:center;margin-bottom:18px;background:transparent!important;border:0!important;box-shadow:none;color:#7142ae!important;padding:6px 0!important;font-weight:750}
+.platformOnboardingBack:hover:not(:disabled){background:transparent!important;text-decoration:underline}
