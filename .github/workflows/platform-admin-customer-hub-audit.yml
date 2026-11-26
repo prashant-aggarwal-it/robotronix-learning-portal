@@ -17,6 +17,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: node --test scripts/test-platform-admin-layout-closure.mjs scripts/test-platform-admin-customer-hub-audit.mjs scripts/test-super-admin-workspace-width.mjs scripts/test-super-admin-overview-closure.mjs scripts/test-subscription-direct-navigation.mjs
+      - run: node --test scripts/test-platform-admin-status-labels.mjs scripts/test-platform-admin-layout-closure.mjs scripts/test-platform-admin-customer-hub-audit.mjs scripts/test-super-admin-workspace-width.mjs scripts/test-super-admin-overview-closure.mjs scripts/test-subscription-direct-navigation.mjs
       - run: npm run typecheck
       - run: npm run build
