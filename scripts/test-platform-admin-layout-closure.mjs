@@ -47,7 +47,7 @@ test("One Customers navigation entry houses both the directory and onboarding",(
  assert.equal(page.split("<span>Customers</span>").length-1,1);
  assert.ok(!page.includes("<span>New customer</span>"));
  assert.match(page,/\["directory","onboarding","customers"\]\.includes\(activeSection\)/);
- assert.match(page,/className="platformCustomerAddButton"/);
+ assert.match(page,/className="platformCustomerAddButton platformButtonPrimary"/);
  assert.match(page,/setCustomerTab\("invitations"\)/);
  assert.match(page,/View customer invitations/);
  assert.match(page,/← Back to customers/);
@@ -61,4 +61,23 @@ test("Pending invitations are managed in Customers, without duplicate tables",()
  assert.match(page,/Advanced · Manual invitation recovery/);
  assert.match(css,/\.platformCustomerTabs\{display:flex/);
  assert.match(css,/\.platformCustomerAddButton/);
+});
+
+test("Super Admin actions use semantic primary, secondary and navigation styles",()=>{
+ const primaryActions=[
+  'platformOverviewAddCustomer platformButtonPrimary',
+  'platformCustomerAddButton platformButtonPrimary',
+  'platformCreateInvitation platformButtonPrimary'
+ ];
+ for(const action of primaryActions)assert.ok(page.includes(action),action);
+ assert.match(security,/className="platformButtonPrimary"/);
+ assert.match(page,/className="platformButtonSecondary"/);
+ assert.match(health,/className="platformButtonSecondary"/);
+ assert.match(health,/platformMonitorTab platformSegmentTab/);
+ assert.match(page,/platformSegmentTab/);
+ assert.match(css,/--pa-action-height:42px/);
+ assert.match(css,/\.platformConsole \.platformPanel \.platformButtonSecondary/);
+ assert.match(css,/\.platformConsole \.platformMonitorTabs \.platformSegmentTab/);
+ assert.match(css,/\.platformConsole \.platformInvitationActions \.platformRevokeButton/);
+ assert.match(css,/\.platformOnboarding \.platformCreateInvitation\[type=submit\]:disabled/);
 });
