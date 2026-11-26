@@ -50,10 +50,10 @@ export default function PlatformSystemHealth(){
  return <section className="platformSystemHealth" aria-label="System health and monitoring">
   <div className="platformSectionIntro"><div><span className="platformEyebrow">PLATFORM OPERATIONS</span><h2>System Health & Monitoring</h2><p>Operational checks and unresolved verification gaps. Unknown is not healthy.</p></div></div>
   <nav className="platformMonitorTabs" aria-label="Monitoring sections">
-   {tabs.map(t=><button type="button" key={t.id} className={panel===t.id?"platformMonitorTab active":"platformMonitorTab"} aria-current={panel===t.id?"page":undefined} onClick={()=>setPanel(t.id)}>{t.label}</button>)}
+   {tabs.map(t=><button type="button" key={t.id} className={panel===t.id?"platformMonitorTab platformSegmentTab active":"platformMonitorTab platformSegmentTab"} aria-current={panel===t.id?"page":undefined} onClick={()=>setPanel(t.id)}>{t.label}</button>)}
   </nav>
   {panel==="overview"&&<section className="platformPanel platformMonitorTile">
-   <div className="platformHealthHeading"><div><h3>Operational overview</h3><p>Latest observations, not continuous monitoring or proof of uptime.</p></div><button type="button" disabled={loading} onClick={()=>setRefresh(n=>n+1)}>{loading?"Checking…":"Refresh checks"}</button></div>
+   <div className="platformHealthHeading"><div><h3>Operational overview</h3><p>Latest observations, not continuous monitoring or proof of uptime.</p></div><button type="button" className="platformButtonSecondary" disabled={loading} onClick={()=>setRefresh(n=>n+1)}>{loading?"Checking…":"Refresh checks"}</button></div>
    <div className="platformHealthGrid">{Object.entries(checks).map(([key,c])=><button type="button" className="platformHealthSummaryItem" key={key} onClick={()=>setPanel(c.target)}>
     <span className="platformHealthLabel">{({services:"Services & APIs",jobs:"Background worker",email:"Email delivery",incidents:"Incidents",database:"Database",backups:"Backup & recovery"} as Record<string,string>)[key]}</span>
     <strong className={c.status.toLowerCase()==="healthy"||c.status.toLowerCase()==="reachable"?"platformHealthSuccess":"platformHealthUnknown"}>{c.status}</strong>
