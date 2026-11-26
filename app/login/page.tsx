@@ -33,6 +33,7 @@ function LoginContent(){
  const isSuite=Boolean(deployment?.mode==="combined"&&!deployment.legacyDefault);
  const canRegister=Boolean(deployment&&!deployment.legacyDefault&&!isSuite&&(deployment.products.includes("tasks")||deployment.products.includes("crm")));
  const[email,setEmail]=useState(""),[password,setPassword]=useState(""),[code,setCode]=useState("");
+ const [showPassword,setShowPassword]=useState(false);
  const[codeSent,setCodeSent]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(false);
  async function finish(){
   try{
@@ -137,23 +138,33 @@ function LoginContent(){
  @media(max-width:810px){.loginSuiteShell{grid-template-columns:1fr;max-width:580px}.loginSuiteStory{padding:24px 30px;gap:8px}.loginSuiteStory h2{font-size:26px;margin:10px 0}.loginSuiteBenefits{display:none}.loginSuiteForm{padding:28px}.loginSuite{padding:18px 14px}}
  @media(max-width:420px){.loginSuiteForm{padding:22px}.loginSuiteStory{padding:20px 23px}}
  `}</style>;
-return <main className={isSuite?"loginSuite":"authPage"} style={academyName?themeToCssVariables(generatePalette(academyAccent||"#6d3cc9")) as CSSProperties:undefined}>{isSuite&&suiteTheme}<div className={isSuite?"loginSuiteShell":undefined}>{isSuite&&<aside className="loginSuiteStory"><div><span className="loginSuiteStoryLabel">WELCOME BACK</span><h2>Pick up where your team left off.</h2><p>One secure account connects you to the learning organizations and applications you can access.</p></div><div className="loginSuiteBenefits"><span><b>✓</b> Your organizations</span><span><b>✓</b> Your learning workspace</span><span><b>✓</b> Your assigned tools</span></div></aside>}<section className={isSuite?"loginSuiteForm":"authCard"}>
+return <main className={isSuite?"loginSuite":"authPage"} style={academyName?themeToCssVariables(generatePalette(academyAccent||"#6d3cc9")) as CSSProperties:undefined}>{isSuite&&suiteTheme}<div className={isSuite?"loginSuiteShell":undefined}>{isSuite&&<aside className="loginSuiteStory"><div><span className="loginSuiteStoryLabel">WELCOME BACK</span><h2>Your academy. Your workspace. All connected.</h2><p>Sign in to manage your students, classes, enquiries and daily operations—all in one place.</p></div><div className="loginSuiteBenefits"><span><b>✓</b> Your organizations</span><span><b>✓</b> Your learning workspace</span><span><b>✓</b> Your assigned tools</span></div></aside>}<section className={isSuite?"loginSuiteForm":"authCard"}>
   <Link href="/" className="authBrand"><img src={academyLogo||"/brand/robotronix-horizontal.png"} alt={academyName||"Robotronix"} style={{objectFit:"contain"}} onError={e=>{e.currentTarget.src="/brand/robotronix-horizontal.png"}}/></Link>
-  <div className="formStepHead"><span>{productName.toUpperCase()}</span><h1>{academyName?`Sign in to ${academyName}`:"Sign in to Robotronix"}</h1><p>Use your email and password, Google, or a one-time code to open your workspace.</p></div>
+  <div className="formStepHead"><span>{productName.toUpperCase()}</span><h1>{academyName?`Sign in to ${academyName}`:"Sign in to your workspace"}</h1><p>Access your academy, students and daily work securely.</p></div>
   {academyName&&<p className="infoBanner">Academy: <strong>{academyName}</strong>. Access is verified using your account membership and permissions.</p>}
   {error&&<div role="alert" className="errorBanner">{error}</div>}
   <form className="formStack" onSubmit={passwordSignIn}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
-   <label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/></label>
-   <button className="button fullButton" disabled={loading||!deployment}>{loading?"Signing in…":"Sign in with password"}</button>
-   <button type="button" className="button ghost" disabled={loading} onClick={()=>void forgotPassword()}>Forgot password?</button>
+   <div style={{display:"grid",gap:6}}>
+    <label htmlFor="login-password">Password</label>
+    <div style={{position:"relative",width:"100%"}}>
+     <input id="login-password" className="input" style={{width:"100%",paddingRight:46}} type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/>
+     <button type="button" disabled={loading} aria-label={showPassword?"Hide password":"Show password"} aria-pressed={showPassword} title={showPassword?"Hide password":"Show password"} onClick={()=>setShowPassword(v=>!v)} style={{position:"absolute",right:9,top:"50%",transform:"translateY(-50%)",display:"grid",placeItems:"center",width:34,height:34,padding:0,background:"transparent",border:0,borderRadius:8,color:"#645a80",cursor:loading?"not-allowed":"pointer",opacity:loading?.5:1}}>
+      {showPassword?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.58 10.59a2 2 0 0 0 2.83 2.82"/><path d="M9.88 5.09A10.9 10.9 0 0 1 12 4.9c4.8 0 8.3 3.6 9.5 7.1a11.9 11.9 0 0 1-4.1 5.4"/><path d="M6.7 6.7A12.4 12.4 0 0 0 2.5 12c1.2 3.5 4.7 7.1 9.5 7.1 1.5 0 2.9-.4 4.1-1"/><path d="m3 3 18 18"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 12S5.9 5 12 5s9.5 7 9.5 7-3.4 7-9.5 7-9.5-7-9.5-7Z"/><circle cx="12" cy="12" r="3"/></svg>}
+     </button>
+    </div>
+   </div>
+   <div style={{display:"flex",justifyContent:"flex-end",marginTop:-4}}>
+    <button type="button" disabled={loading} onClick={()=>void forgotPassword()} style={{background:"transparent",border:0,boxShadow:"none",padding:"4px 0",fontSize:13,fontWeight:650,color:"var(--brand-primary, #6d3cc9)",textDecoration:"underline",textUnderlineOffset:3,cursor:loading?"not-allowed":"pointer",opacity:loading?.55:1}}>Forgot password?</button>
+   </div>
+   <button className="button fullButton" disabled={loading||!deployment}>{loading?"Signing in…":"Sign In"}</button>
    {canRegister&&<button type="button" className="button secondary fullButton" disabled={loading||!email||password.length<8} onClick={register}>Create a new account</button>}
    {notice&&<p role="status" className="infoBanner">{notice}</p>}
   </form>
-  {isSuite&&<p style={{textAlign:"center",margin:"14px 0"}}>New organization? <Link href="/signup">Create an owner account</Link></p>}
+  {isSuite&&<p style={{textAlign:"center",margin:"14px 0"}}>New to Robotronix? <Link href="/signup">Create an academy account</Link></p>}
   <div className="authDivider"><span>or</span></div>
   <button className="button secondary fullButton" disabled={loading||!deployment} onClick={google}>Continue with Google</button>
-  <details className="topGap"><summary>Sign in with a one-time email code</summary>
+  <details className="topGap"><summary>Sign in with email code</summary>
   <p className="fieldHint">An email code requires access to the account inbox. Password sign-in above does not.</p>
   <form className="formStack" onSubmit={codeSent?verifyCode:sendCode}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
@@ -164,6 +175,6 @@ return <main className={isSuite?"loginSuite":"authPage"} style={academyName?them
   </form>
   </details>
   {!isSuite&&hasPortal&&<div className="entityBoundaryNote"><b>New family?</b><span>Start family onboarding to link your child. Trainers and existing students receive access from Admin.</span><Link href="/onboarding" className="tableAction">Start family onboarding →</Link></div>}
-  <p style={{textAlign:"center",margin:"18px 0 0",fontSize:13,color:"#66738c"}}><Link href="/privacy" style={{color:"#4537a5",textDecoration:"underline"}}>Privacy Policy</Link> · <Link href="/terms" style={{color:"#4537a5",textDecoration:"underline"}}>Terms of Use</Link> · <Link href="/support" style={{color:"#4537a5",textDecoration:"underline"}}>Support</Link>{hasPortal&&<> · <Link href="/zoom-guide" style={{color:"#4537a5",textDecoration:"underline"}}>Zoom Guide</Link></>}</p>
+  <p style={{textAlign:"center",margin:"18px 0 0",fontSize:13,color:"#66738c"}}><Link href="/privacy" style={{color:"#4537a5",textDecoration:"underline"}}>Privacy Policy</Link> · <Link href="/terms" style={{color:"#4537a5",textDecoration:"underline"}}>Terms of Use</Link> · <Link href="/support" style={{color:"#4537a5",textDecoration:"underline"}}>Support</Link></p>
  </section></div></main>;
 }

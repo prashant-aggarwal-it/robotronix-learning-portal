@@ -1,4 +1,5 @@
 "use client";
+import {formatPlatformLabel} from "./formatPlatformLabel";
 import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 type Check={id:string;name:string;status:"healthy"|"degraded"|"down"|"unknown";latencyMs:number;detail:string};
@@ -28,10 +29,10 @@ export default function PlatformServiceHealth({compact=false}:{compact?:boolean}
   </div>
   {error&&<p role="alert">Health unknown: {error}</p>}
   {health&&<div>
-   <p><strong>Current probe: {health.overall}</strong> · Checked {new Date(health.observedAt).toLocaleString()}</p>
+   <p><strong>Current probe: {formatPlatformLabel(health.overall)}</strong> · Checked {new Date(health.observedAt).toLocaleString()}</p>
    <div className="platformMonitorTiles">
     {health.checks.map(c=><div key={c.id} style={{border:"1px solid #ded6e8",borderRadius:10,padding:16}}>
-     <strong>{c.name}</strong><p>Status: {c.status}</p><p>Request time: {c.latencyMs} ms</p><small>{c.detail}</small>
+     <strong>{c.name}</strong><p>Status: {formatPlatformLabel(c.status)}</p><p>Request time: {c.latencyMs} ms</p><small>{c.detail}</small>
     </div>)}
    </div>
    {!compact&&<p>Uptime %, platform-wide error rate and historical p95 latency: not measured yet. These require persistent instrumentation and external availability checks.</p>}

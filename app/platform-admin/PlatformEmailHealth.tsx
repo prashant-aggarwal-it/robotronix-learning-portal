@@ -1,4 +1,5 @@
 "use client";
+import {formatPlatformLabel} from "./formatPlatformLabel";
 import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 
@@ -28,7 +29,7 @@ export default function PlatformEmailHealth(){
   </div>
   {error&&<p role="alert">{error}</p>}
   {data&&<><div className="platformHealthStats">
-   {(["queued","sending","sent","failed"] as const).map(status=><div key={status}><strong style={{fontSize:22,display:"block"}}>{data.jobs[status]||0}</strong><span>{status==="sent"?"Provider accepted":status}</span></div>)}
+   {(["queued","sending","sent","failed"] as const).map(status=><div key={status}><strong style={{fontSize:22,display:"block"}}>{data.jobs[status]||0}</strong><span>{status==="sent"?"Provider Accepted":formatPlatformLabel(status)}</span></div>)}
    <div><strong style={{fontSize:22,display:"block"}}>{data.connections.attention}</strong><span>Connections needing attention</span></div>
   </div><p>Connected accounts: {data.connections.connected}. “Provider accepted” does not guarantee inbox delivery.</p>
   {data.connectionsTruncated&&<p role="status">Connection totals are partial due to a bounded result limit.</p>}</>}

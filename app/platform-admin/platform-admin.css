@@ -157,3 +157,263 @@
 .platformTabSections>.platformPanel:not([hidden]) .platformPanel select{max-width:720px}
 .platformTabSections>.platformPanel:not([hidden]) .platformForm{max-width:780px}
 @media(max-width:740px){.platformTabSections>.platformPanel:not([hidden]){width:100%}.platformTabSections>.platformPanel:not([hidden])>section{padding:18px!important}}
+
+/* Customer hub and sensitive access controls */
+.platformSecurity{width:100%;min-width:0;max-width:none}
+.platformSecurityForm{display:grid;gap:12px;width:min(100%,720px);margin-top:20px}
+.platformSecurityForm>label{font-size:13px;font-weight:700;color:#403157}
+.platformSecurityForm>input{width:100%;min-height:44px;padding:11px 13px;border:1px solid #d8cde7;border-radius:10px;background:#fff;color:#2e2046;font:inherit}
+.platformSecurityActions{display:flex;flex-wrap:wrap;gap:10px}
+.platformSecurityActions button{min-height:42px;padding:10px 16px;border:1px solid #bca4dc;border-radius:10px;background:#fff;color:#5e319f;font:inherit;font-weight:750;cursor:pointer}
+.platformSecurityActions button:first-child{background:#6d3db4;color:#fff;border-color:#6d3db4}
+.platformSecurityActions button:disabled{opacity:.48;cursor:not-allowed}
+.platformSecurityForm input:focus-visible,.platformSecurityActions button:focus-visible{outline:3px solid #9470d1;outline-offset:3px}
+.platformSecurityForm [role=alert]{color:#9a2a37}
+.platformSecurityForm [role=status]{color:#27633a}
+
+/* Responsive customer creation and invitation management */
+.platformOnboardingWorkspace{display:grid;gap:18px;min-width:0;width:100%}
+.platformOnboardingGrid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(280px,1fr);gap:18px;align-items:start;min-width:0}
+.platformOnboardingWorkspace>.platformOnboardingGrid>.platformOnboarding{padding:25px 28px;min-width:0}
+.platformOnboardingWorkspace .platformOnboarding h2{margin:6px 0 9px}
+.platformOnboardingForm{max-width:none!important;gap:10px}
+.platformOnboardingForm>h3{font-size:14px;margin:12px 0 1px;color:#34214e}
+.platformOnboardingFormGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.platformOnboardingFormGrid label{min-width:0;margin-bottom:0!important}
+.platformOnboardingFormGrid input{min-width:0}
+.platformFieldHint{font-size:11px;font-weight:450;color:#766d8c;line-height:1.4}
+.platformOnboardingType{width:min(100%,460px)}
+.platformOnboardingForm .platformModuleChoices{grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+.platformOnboardingForm .platformModuleOption{align-items:flex-start!important;min-width:0;padding:14px!important}
+.platformOnboardingForm .platformModuleCopy{overflow-wrap:anywhere}
+.platformOnboardingActionRow{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:12px;border-top:1px solid #ede8f5;padding-top:18px}
+.platformOnboardingActionRow>span{max-width:270px;color:#777087;font-size:12px;line-height:1.6}
+.platformOnboarding .platformOnboardingActionRow .platformCreateInvitation{width:auto;min-width:230px;padding:12px 17px}
+.platformOnboardingAside{display:grid;gap:16px;min-width:0}
+.platformOnboardingPreview,.platformOnboardingSteps{padding:22px;min-width:0}
+.platformOnboardingPreview dl{display:grid;gap:12px;margin:16px 0}
+.platformOnboardingPreview dl>div{border-bottom:1px solid #eee8f6;padding-bottom:10px;min-width:0}
+.platformOnboardingPreview dt{font-size:11px;color:#81768c;margin-bottom:4px}
+.platformOnboardingPreview dd{margin:0;font-size:13px;font-weight:750;color:#34214e;overflow-wrap:anywhere}
+.platformOnboardingPreview>small{font-size:11px;color:#887e9c;line-height:1.5}
+.platformOnboardingSteps ol{margin:14px 0 12px;padding-left:22px;display:grid;gap:11px;color:#49395f;font-size:12px;line-height:1.5}
+.platformOnboardingSteps li::marker{font-weight:800;color:#7944b9}
+.platformRecoveryArea{margin-top:16px;display:grid;gap:10px}
+.platformRecoveryArea>div{min-width:0;display:grid;gap:8px}
+.platformRecoveryArea input{width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.platformInvitationsPanel{padding:24px 28px;min-width:0}
+.platformInvitationsHeading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:17px}
+.platformInvitationsHeading h2{margin:6px 0}
+.platformInvitationsHeading button{white-space:nowrap}
+.platformInvitationsTable,.platformSecurityTable{width:100%;border-collapse:collapse;font-size:12px;text-align:left}
+.platformInvitationsTable th,.platformSecurityTable th{color:#777087;background:#f8f6fc;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:13px;white-space:nowrap}
+.platformInvitationsTable td,.platformSecurityTable td{padding:14px 13px;border-top:1px solid #eeeaf6;color:#514766;vertical-align:middle;overflow-wrap:anywhere}
+.platformInvitationsTable td strong,.platformSecurityTable td strong{color:#32234c}
+.platformInvitationActions{display:flex;flex-wrap:wrap;gap:7px}
+.platformInvitationActions button{white-space:nowrap}
+.platformInvitationActions .platformRevokeButton,.platformSecurityTable .platformRevokeButton{border-color:#efd4dc;background:#fff8fa;color:#9c3255}
+.platformInvitationActions .platformRevokeButton:hover:not(:disabled),.platformSecurityTable .platformRevokeButton:hover:not(:disabled){background:#ffedf2}
+@media(max-width:1280px){.platformOnboardingGrid{grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr)}.platformOnboardingForm .platformModuleChoices{grid-template-columns:1fr}}
+@media(max-width:1000px){.platformOnboardingGrid{grid-template-columns:minmax(0,1fr)}.platformOnboardingAside{grid-template-columns:repeat(2,minmax(0,1fr))}.platformOnboardingForm .platformModuleChoices{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:740px){.platformOnboardingWorkspace>.platformOnboardingGrid>.platformOnboarding,.platformInvitationsPanel{padding:18px}.platformOnboardingAside{grid-template-columns:1fr}.platformOnboardingFormGrid{grid-template-columns:1fr}.platformOnboardingForm .platformModuleChoices{grid-template-columns:1fr}.platformOnboardingActionRow{align-items:stretch;flex-direction:column}.platformOnboarding .platformOnboardingActionRow .platformCreateInvitation{width:100%;min-width:0}.platformInvitationsHeading{align-items:flex-start;flex-direction:column}}
+
+/* Security console: compact actionable records without displaying technical user IDs */
+.platformSecurityWorkspace{display:grid;gap:16px;min-width:0}
+.platformSecuritySummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.platformSecurityMetric{display:grid;gap:7px;border:1px solid #e9e1f3;background:#fff;border-radius:15px;padding:18px 22px;min-width:0}
+.platformSecurityMetric>span{color:#665b77;font-size:12px;font-weight:750}
+.platformSecurityMetric strong{font-size:28px;color:#31204e;line-height:1.2}
+.platformSecurityMetric small{color:#867b92;font-size:11px}
+.platformSecurityWorkspace .platformSecurity{padding:23px 26px;margin:0}
+.platformSecurityHeading{display:flex;justify-content:space-between;gap:14px;align-items:start;margin-bottom:12px}
+.platformSecurityHeading>button{white-space:nowrap}
+.platformSecurityTable td strong,.platformSecurityTable td small{display:block}
+.platformSecurityTable td small{font-size:11px;color:#81768b;margin-top:3px}
+.platformSecurityStatus{display:inline-flex;border-radius:100px;padding:5px 10px;color:#906b44;background:#fff4e9;font-size:11px;font-weight:750}
+.platformSecurityStatus.isActive{color:#237d53;background:#e8f8ef}
+.platformSecurityWorkspace .platformSecurityForm{width:100%;max-width:720px;margin:15px 0 0}
+.platformSecurityGrantRow{display:flex;align-items:stretch;gap:10px;min-width:0}
+.platformSecurityGrantRow input{flex:1;min-width:0}
+.platformSecurityGrantRow button{white-space:nowrap;padding:10px 19px!important;background:#703bb3!important;color:#fff!important;border-color:#703bb3!important}
+.platformSecurityError{color:#9c3255!important}
+.platformSecuritySuccess{color:#276b4a!important}
+@media(max-width:740px){.platformSecuritySummary{grid-template-columns:1fr}.platformSecurityWorkspace .platformSecurity{padding:18px}.platformSecurityGrantRow{flex-direction:column}.platformSecurityHeading{align-items:flex-start;flex-direction:column}}
+
+/* Single Customers hub: directory, invitations and Add customer entry point */
+.platformDirectory .platformDirectoryHead{align-items:center}
+.platformDirectory .platformCustomerAddButton{white-space:nowrap;background:linear-gradient(100deg,var(--platform-action-start),var(--platform-action-end));color:#fff;border-color:transparent;padding:12px 20px}
+.platformCustomerTabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px;padding-bottom:13px;border-bottom:1px solid #ede7f6}
+.platformDirectory .platformCustomerTabs button{border-radius:10px;background:#f8f5fd;color:#625777;padding:10px 16px}
+.platformDirectory .platformCustomerTabs button.isActive{background:#efe8fb;color:#6133ac;border-color:#d9c7f4}
+.platformCustomerSearch{max-width:420px;margin:0 0 16px}
+.platformCustomerSearch label{margin-bottom:0!important}
+.platformDirectory>.platformInvitationsPanel,.platformDirectory .platformInvitationsPanel{box-shadow:none;border-radius:12px;margin:0;padding:0!important;border:0}
+.platformDirectory .platformInvitationsHeading{margin-top:3px}
+.platformDirectory .platformRecoveryArea{max-width:700px;margin-top:18px}
+@media(max-width:740px){.platformDirectory .platformDirectoryHead{align-items:stretch}.platformDirectory .platformCustomerAddButton{width:100%}.platformCustomerSearch{max-width:none}}
+
+.platformOnboardingBack{display:inline-flex;align-items:center;margin-bottom:18px;background:transparent!important;border:0!important;box-shadow:none;color:#7142ae!important;padding:6px 0!important;font-weight:750}
+.platformOnboardingBack:hover:not(:disabled){background:transparent!important;text-decoration:underline}
+
+/* Platform administration control language: role drives styling, not page or tag.
+   Primary = create/commit, secondary = refresh/utility, segment = navigation,
+   destructive = revoke/suspend. Card widgets remain visually distinct. */
+.platformConsole{
+ --pa-primary-start:#6f35b9;
+ --pa-primary-end:#973aa7;
+ --pa-primary-solid:#6932ae;
+ --pa-secondary-bg:#f6f2fc;
+ --pa-secondary-hover:#eee5f9;
+ --pa-secondary-border:#dfd2f0;
+ --pa-secondary-text:#60359a;
+ --pa-action-radius:11px;
+ --pa-action-height:42px;
+}
+.platformConsole .platformPanel button,
+.platformConsole .platformPagination button,
+.platformConsole .platformSecurityWorkspace button,
+.platformConsole .platformSystemHealth button:not(.platformHealthSummaryItem),
+.platformConsole .platformOverviewAddCustomer {
+ font-family:inherit;
+ font-size:13px;
+ font-weight:700;
+ line-height:1.3;
+ border-radius:var(--pa-action-radius);
+ min-height:var(--pa-action-height);
+ transition:background-color .14s ease,border-color .14s ease,box-shadow .14s ease;
+}
+.platformConsole .platformPanel button:not(:disabled):hover,
+.platformConsole .platformPagination button:not(:disabled):hover {
+ transform:none;
+}
+.platformConsole .platformPanel button:focus-visible,
+.platformConsole .platformSystemHealth button:focus-visible,
+.platformConsole .platformOverviewAddCustomer:focus-visible{
+ outline:3px solid #ab83e2;
+ outline-offset:3px;
+}
+.platformConsole .platformButtonPrimary,
+.platformConsole .platformDirectory .platformCustomerAddButton,
+.platformConsole .platformOverviewAddCustomer,
+.platformConsole .platformOnboarding .platformCreateInvitation[type=submit],
+.platformConsole .platformSecurityGrantRow button[type=submit]{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+ min-height:44px;
+ padding:11px 19px;
+ border:1px solid transparent!important;
+ border-radius:var(--pa-action-radius);
+ background:linear-gradient(105deg,var(--pa-primary-start),var(--pa-primary-end))!important;
+ color:#fff!important;
+ text-decoration:none;
+ box-shadow:0 5px 13px rgba(79,35,126,.12);
+ white-space:normal;
+ text-align:center;
+ opacity:1;
+}
+.platformConsole .platformButtonPrimary:hover:not(:disabled),
+.platformConsole .platformDirectory .platformCustomerAddButton:hover:not(:disabled),
+.platformConsole .platformOverviewAddCustomer:hover,
+.platformConsole .platformOnboarding .platformCreateInvitation[type=submit]:hover:not(:disabled),
+.platformConsole .platformSecurityGrantRow button[type=submit]:hover:not(:disabled){
+ background:linear-gradient(105deg,#60299e,#853090)!important;
+ filter:none;
+ box-shadow:0 6px 17px rgba(79,35,126,.2);
+}
+.platformConsole .platformPanel .platformButtonPrimary:disabled,
+.platformConsole .platformOnboarding .platformCreateInvitation[type=submit]:disabled,
+.platformConsole .platformSecurityGrantRow button[type=submit]:disabled{
+ background:#e8e0f3!important;
+ border-color:#e8e0f3!important;
+ color:#6d6081!important;
+ box-shadow:none!important;
+ opacity:1!important;
+ cursor:not-allowed;
+}
+/* Disabled controls must look disabled but remain readable */
+.platformConsole .platformPanel button:disabled,
+.platformConsole .platformPagination button:disabled,
+.platformConsole .platformSystemHealth button:disabled{
+ opacity:.65;
+ cursor:not-allowed;
+ transform:none;
+}
+.platformConsole .platformPanel button.platformCreateInvitation:disabled{
+ opacity:1;
+}
+.platformConsole .platformPanel .platformButtonSecondary,
+.platformConsole .platformSystemHealth .platformButtonSecondary,
+.platformConsole .platformSecurityWorkspace .platformButtonSecondary,
+.platformConsole .platformPagination button{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:7px;
+ min-height:var(--pa-action-height);
+ padding:9px 15px;
+ background:var(--pa-secondary-bg);
+ color:var(--pa-secondary-text);
+ border:1px solid var(--pa-secondary-border);
+ box-shadow:none;
+}
+.platformConsole .platformPanel .platformButtonSecondary:hover:not(:disabled),
+.platformConsole .platformSystemHealth .platformButtonSecondary:hover:not(:disabled),
+.platformConsole .platformPagination button:hover:not(:disabled){
+ background:var(--pa-secondary-hover);
+ border-color:#c9b0e7;
+ transform:none;
+}
+.platformConsole .platformMonitorTabs,
+.platformConsole .platformCustomerTabs{gap:8px}
+.platformConsole .platformMonitorTabs .platformSegmentTab,
+.platformConsole .platformDirectory .platformCustomerTabs .platformSegmentTab{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ min-height:42px;
+ padding:9px 16px;
+ border-radius:var(--pa-action-radius);
+ border:1px solid #e4dcf0;
+ background:#fff;
+ color:#59496e;
+ font-size:13px;
+ font-weight:600;
+ cursor:pointer;
+ box-shadow:none;
+}
+.platformConsole .platformMonitorTabs .platformSegmentTab:hover:not(.active),
+.platformConsole .platformDirectory .platformCustomerTabs .platformSegmentTab:hover:not(.isActive){
+ background:#f8f5fd;
+ border-color:#d6c4ed;
+}
+.platformConsole .platformMonitorTabs .platformSegmentTab.active,
+.platformConsole .platformDirectory .platformCustomerTabs .platformSegmentTab.isActive{
+ background:#f1e8fd;
+ border-color:#ba92e9;
+ color:#642caf;
+ font-weight:750;
+}
+.platformConsole .platformInvitationActions .platformRevokeButton,
+.platformConsole .platformSecurityTable .platformRevokeButton{
+ background:#fff8fa;
+ color:#982f52;
+ border-color:#e9c3cf;
+}
+.platformConsole .platformInvitationActions .platformRevokeButton:hover:not(:disabled),
+.platformConsole .platformSecurityTable .platformRevokeButton:hover:not(:disabled){
+ background:#ffeaf1;
+ border-color:#dca4b6;
+}
+/* The primary CTA should remain a practical button, not an entire card width. */
+.platformConsole .platformOnboarding .platformOnboardingActionRow .platformCreateInvitation{
+ width:auto;
+ max-width:100%;
+ min-width:230px;
+}
+@media(max-width:740px){
+ .platformConsole .platformOnboarding .platformOnboardingActionRow .platformCreateInvitation{width:100%;min-width:0}
+ .platformConsole .platformMonitorTabs .platformSegmentTab,
+ .platformConsole .platformDirectory .platformCustomerTabs .platformSegmentTab{min-height:42px}
+}

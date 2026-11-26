@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
+import {formatPlatformLabel} from "./formatPlatformLabel";
 import Link from "next/link";
 import {SignOutButton} from "@/components/SignOutButton";
 import "./platform-admin.css";
@@ -9,6 +10,7 @@ import PlatformSubscriptions from "./PlatformSubscriptions";
 import PlatformSystemHealth from "./PlatformSystemHealth";
 import PlatformTenantBranding from "./PlatformTenantBranding";
 import PlatformBrandingEntitlements from "./PlatformBrandingEntitlements";
+import PlatformSecurity from "./PlatformSecurity";
 type Org={id:string;slug:string;display_name:string;status:string;created_at:string};
 type Ops={subscriptions:{organization_id:string;organization_name:string|null;plan_code:string;status:string;ends_at:string|null}[];metrics:{expiringTrials:number;expiredTrials:number;pendingInvitations:number;expiredInvitations:number;pastDueSubscriptions:number};alerts:{type:string;organizationId?:string;organizationName?:string;invitationId?:string;expiresAt:string}[];truncated:boolean};
 type Overview={organizations:Org[];page:number;total:number;metrics:{organizations:number;trials:number;activeSubscriptions:number}};
@@ -25,12 +27,13 @@ export default function PlatformAdminPage(){
  const [loading,setLoading]=useState(true);
  const [refresh,setRefresh]=useState(0);
  const [activeSection,setActiveSection]=useState("overview");
+ const [customerTab,setCustomerTab]=useState<"all"|"invitations">("all");
  const [selectedCustomerId,setSelectedCustomerId]=useState("");
  const [subscriptionFilter,setSubscriptionFilter]=useState<"all"|"active"|"active_trials"|"expiring_trials"|"expired_trials"|"past_due">("all");
  useEffect(()=>{
   const sync=()=>{
    const id=window.location.hash.slice(1);
-   setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory","system-health"].includes(id)?id:"overview");
+   setActiveSection(["overview","customers","subscriptions","branding","onboarding","directory","security","system-health"].includes(id)?id:"overview");
    window.scrollTo({top:0,behavior:"instant"});
   };
   sync();window.addEventListener("hashchange",sync);window.addEventListener("popstate",sync);
@@ -76,7 +79,7 @@ export default function PlatformAdminPage(){
   if(status==="pending")return "Awaiting owner activation";
   return status;
  };
- useEffect(()=>{if(activeSection==="onboarding")void loadPendingCustomers();},[activeSection]);
+ useEffect(()=>{if(activeSection==="onboarding"||(activeSection==="directory"&&customerTab==="invitations"))void loadPendingCustomers();},[activeSection,customerTab]);
  useEffect(()=>{
   let active=true;setLoading(true);setError("");
   async function load(){
@@ -146,7 +149,7 @@ export default function PlatformAdminPage(){
   finally{setInvitationActionId("")}
  }
  async function createAssisted(){
-  if(assistedBusy)return;setAssistedBusy(true);setAssistedMessage("");setInvitationUrl("");
+  if(assistedBusy)return;setAssistedBusy(true);setAssistedMessage("");setInvitationUrl("");setLatestDelivery("");
   try{
    const client=getSupabaseBrowserClient();if(!client)throw Error("Sign in first");
    const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
@@ -166,18 +169,18 @@ export default function PlatformAdminPage(){
     <div className="platformWorkspaceName"><span className="platformWorkspaceIcon">✦</span><span>Control Centre<small>Platform administration</small></span></div>
     <nav className="platformNav">
      <a href="#overview" onClick={e=>{e.preventDefault();navigate("overview")}} className={activeSection==="overview"?"platformNavActive":undefined} aria-current={activeSection==="overview"?"location":undefined}>◫ <span>Overview</span></a>
-     <a href="#customers" onClick={e=>{e.preventDefault();navigate("customers")}} className={activeSection==="customers"?"platformNavActive":undefined} aria-current={activeSection==="customers"?"location":undefined}>♧ <span>Customers & access</span></a>
      <a href="#subscriptions" onClick={e=>{e.preventDefault();openSubscriptionList("all")}} className={activeSection==="subscriptions"?"platformNavActive":undefined} aria-current={activeSection==="subscriptions"?"location":undefined}>▤ <span>Subscriptions</span></a>
      <a href="#branding" onClick={e=>{e.preventDefault();navigate("branding")}} className={activeSection==="branding"?"platformNavActive":undefined} aria-current={activeSection==="branding"?"location":undefined}>◈ <span>Tenant branding</span></a>
-     <a href="#onboarding" onClick={e=>{e.preventDefault();navigate("onboarding")}} className={activeSection==="onboarding"?"platformNavActive":undefined} aria-current={activeSection==="onboarding"?"location":undefined}>✚ <span>New customer</span></a>
-     <a href="#directory" onClick={e=>{e.preventDefault();navigate("directory")}} className={activeSection==="directory"?"platformNavActive":undefined} aria-current={activeSection==="directory"?"location":undefined}>▦ <span>Directory</span></a>
+     <a href="#directory" onClick={e=>{e.preventDefault();setCustomerTab("all");navigate("directory")}} className={["directory","onboarding","customers"].includes(activeSection)?"platformNavActive":undefined} aria-current={["directory","onboarding","customers"].includes(activeSection)?"location":undefined}>▦ <span>Customers</span></a>
+     <span className="platformNavGroupTitle">PLATFORM SETTINGS</span>
+     <a href="#security" onClick={e=>{e.preventDefault();navigate("security")}} className={activeSection==="security"?"platformNavActive":undefined} aria-current={activeSection==="security"?"location":undefined}>♙ <span>Security & admins</span></a>
      <span className="platformNavGroupTitle">PLATFORM OPERATIONS</span>
      <a href="#system-health" onClick={e=>{e.preventDefault();navigate("system-health")}} className={activeSection==="system-health"?"platformNavActive":undefined} aria-current={activeSection==="system-health"?"location":undefined}>◉ <span>System Health &amp; Monitoring</span></a>
     </nav>
     <div className="platformSidebarFoot"><strong>Secure platform console</strong><span>Organization data remains separated by tenant and role.</span><Link href="/suite">Return to Suite</Link><SignOutButton className="platformSignout" label="Sign out"/></div>
    </aside>
    <div className="platformMain">
-    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"New customer",directory:"Customer directory","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage access, invitations and commercial branding entitlements.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
+    <header className="platformTopbar"><div><span className="platformEyebrow">PLATFORM / ADMINISTRATION</span><h1>{activeSection==="overview"?"Control Centre":({customers:"Customers & access",subscriptions:"Subscriptions",branding:"Tenant branding",onboarding:"Customers",directory:"Customers",security:"Security & administrators","system-health":"System Health & Monitoring"} as Record<string,string>)[activeSection]}</h1><p>{activeSection==="system-health"?"Monitor platform operations, email delivery and privileged access.":activeSection==="branding"?"Configure customer identity, logos and theme colors.":activeSection==="customers"?"Manage customer status and owner invitations.":activeSection==="onboarding"?"Add a customer workspace and securely invite the owner.":activeSection==="directory"?"Find customers, manage pending invitations and add new workspaces.":activeSection==="security"?"Control privileged administrator access and review security activity.":"Manage your customers, access and subscriptions in one place."}</p></div><span className="platformRolePill"><span aria-hidden="true">●</span> Super Admin</span></header>
     <div className="platformContent">
      {loading&&<div className="platformFeedback" role="status">Loading platform overview…</div>}
      {error&&<div className="platformFeedback platformError" role="alert">{error}</div>}
@@ -185,7 +188,7 @@ export default function PlatformAdminPage(){
       <section id="overview" hidden={activeSection!=="overview"} className="platformOverview" aria-label="Platform overview">
        <div className="platformSectionIntro platformOverviewHeading">
         <div><span className="platformEyebrow">YOUR PLATFORM AT A GLANCE</span><h2>Overview</h2><small className="platformReadOnlyHint">Live platform records · Refresh to update</small></div>
-        <a href="#onboarding" className="platformOverviewAddCustomer" onClick={e=>{e.preventDefault();navigate("onboarding")}}>＋ Add customer</a>
+        <a href="#onboarding" className="platformOverviewAddCustomer platformButtonPrimary" onClick={e=>{e.preventDefault();navigate("onboarding")}}>＋ Add customer</a>
        </div>
        <div className="platformKpiGrid" aria-label="Platform key metrics">
         {([
@@ -201,7 +204,7 @@ export default function PlatformAdminPage(){
       {activeSection==="overview"&&<div className="platformOverviewBody">
        {operationsError&&<p role="alert">Operations summary: {operationsError}</p>}
        {operations&&<section className="platformPanel" aria-label="Action required" style={{padding:20,marginBottom:0}}>
-        <div className="platformActionHeading"><div><h2>Action required</h2><p>Outstanding customer and subscription follow-ups</p></div><button type="button" onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
+        <div className="platformActionHeading"><div><h2>Action required</h2><p>Outstanding customer and subscription follow-ups</p></div><button type="button" className="platformButtonSecondary" onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
         <div className="platformActionWidgetGrid">
          {([
           {label:"Trials expiring in 7 days",value:operations.metrics.expiringTrials,filter:"expiring_trials" as const,kind:"subscription" as const,cta:"Review trials"},
@@ -237,7 +240,7 @@ export default function PlatformAdminPage(){
         {operations.truncated&&<p role="status">Summary is limited to the first records; use filtered customer lookup for a complete audit.</p>}
        </section>}
        <div className="platformRecentCard">
-        <div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Customer preview</h2><p>Three most recently created active organizations first, across the platform.</p></div>
+        <div><span className="platformEyebrow">CUSTOMER DIRECTORY</span><h2>Customer preview</h2><p>Recently created active customer workspaces.</p></div>
         <a href="#directory" onClick={e=>{e.preventDefault();setSearch("");setPage(1);navigate("directory")}}>View directory →</a>
        </div>
        <div className="platformCompactList" aria-label="Customer preview">
@@ -245,16 +248,17 @@ export default function PlatformAdminPage(){
         {!customerPreviewLoading&&customerPreviewError&&<p role="alert">Customer preview unavailable: {customerPreviewError}</p>}
         {!customerPreviewLoading&&!customerPreviewError&&customerPreview.map(o=><button type="button" className="platformRecentCustomer" key={o.id} onClick={()=>{setSelectedCustomerId(o.id);setSearch(o.display_name);setPage(1);navigate("directory");}} aria-label={"View customer "+o.display_name}>
          <span className="platformOrgAvatar" aria-hidden="true">{o.display_name.slice(0,1).toUpperCase()}</span>
-         <span className="platformRecentCustomerInfo"><strong>{o.display_name}</strong><small>{o.slug}</small></span>
-         <span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span>
+         <span className="platformRecentCustomerInfo"><strong>{o.display_name}</strong><small>Customer workspace</small></span>
+         <span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{formatPlatformLabel(o.status)}</span>
          <span className="platformRecentCustomerAction">View customer <span aria-hidden="true">↗</span></span>
         </button>)}
         {!customerPreviewLoading&&!customerPreviewError&&customerPreview.length===0&&<p>No organizations available.</p>}
        </div>
       </div>}
+      {activeSection==="security"&&<PlatformSecurity/>}
       {activeSection==="system-health"&&<PlatformSystemHealth/>}
       <div className="platformColumns platformTabSections">
-       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/><PlatformBrandingEntitlements organizations={overview.organizations}/></div>
+       <div id="customers" hidden={activeSection!=="customers"} className="platformPanel"><PlatformCustomerActions key={selectedCustomerId||"unselected"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations} onChanged={()=>setRefresh(x=>x+1)}/></div>
        <div id="subscriptions" hidden={activeSection!=="subscriptions"} className="platformPanel">
         {selectedCustomerId?<>
          <section className="platformSubscriptionSelection" aria-label="Selected customer subscription" style={{padding:"22px 24px 4px"}}>
@@ -297,45 +301,103 @@ export default function PlatformAdminPage(){
        </div>
       </div>
       <div className="platformColumns platformTabSections">
-       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformTenantBranding organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
-       <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformPanel platformOnboarding">
-        <span className="platformEyebrow">NEW WORKSPACE</span><h2>Assisted onboarding</h2><p>Enter the customer details and Owner email. The system will send a secure activation email when delivery is configured.</p>
-        <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm">
-         <label>Owner email<input required type="email" value={assisted.ownerEmail} onChange={e=>setAssisted(v=>({...v,ownerEmail:e.target.value}))} placeholder="owner@example.com"/></label>
-         <label>Owner name (optional)<input value={assisted.ownerName} onChange={e=>setAssisted(v=>({...v,ownerName:e.target.value}))} placeholder="Owner name"/></label>
-         <label>Organization name<input required value={assisted.name} onChange={e=>setAssisted(s=>({...s,name:e.target.value,slug:s.slug||e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}))} placeholder="e.g. ABC Learning Academy"/></label>
-         <label>URL slug<input required value={assisted.slug} onChange={e=>setAssisted(s=>({...s,slug:e.target.value}))} placeholder="abc-learning-academy"/></label>
-         <label>Organization type<select value={assisted.kind} onChange={e=>setAssisted(s=>({...s,kind:e.target.value}))}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Tutor</option></select></label>
-         <fieldset className="platformModuleFieldset"><legend>Enabled trial modules</legend><p className="platformModuleHint">Choose which applications the customer can try.</p><div className="platformModuleChoices">{(["academy","crm","tasks"] as const).map(m=><label key={m} className="platformModuleOption"><input type="checkbox" checked={assisted.modules.includes(m)} onChange={e=>setAssisted(s=>({...s,modules:e.target.checked?[...s.modules,m]:s.modules.filter(x=>x!==m)}))}/><span className="platformModuleCopy"><strong>{m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks"}</strong><small>{m==="academy"?"Students, trainers, classes and fees":m==="crm"?"Enquiries, admissions and follow-ups":"Daily tasks and team coordination"}</small></span></label>)}</div></fieldset>
-         <button className="platformCreateInvitation" type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create academy & attempt invitation delivery"}</button>
-         {invitationUrl&&<div><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. This link grants access to the invitation process; share privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(invitationUrl);setAssistedMessage("Secure invitation link copied. Share it privately only.");}catch{setAssistedMessage("Copy failed. Select and copy the link manually from the field above.");}}}>Copy secure link</button></div>}</div>}
-         {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}{latestDelivery&&<p role="status">Email result: <strong>{deliveryLabel(latestDelivery)}</strong></p>}
-         <div><button type="button" disabled={pendingLoading} onClick={()=>void loadPendingCustomers()}>{pendingLoading?"Refreshing…":"Refresh customer invitations"}</button>
-          {pendingError&&<p role="alert">{pendingError}</p>}
-          {!pendingLoading&&!pendingError&&pendingCustomers.length===0?<p>No customer invitations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Academy</th><th>Owner email</th><th>Invitation</th><th>Email delivery</th><th>Expires</th><th>Actions</th></tr></thead><tbody>{pendingCustomers.map(inv=><tr key={inv.id}><td><strong>{inv.organization_name}</strong><small style={{display:"block"}}>{inv.organization_slug}</small></td><td>{inv.owner_email}</td><td>{invitationLabel(inv.status,inv.expires_at)}</td><td aria-label={"Delivery status: "+deliveryLabel(deliveryStatus[inv.id]||"")}>{deliveryLabel(deliveryStatus[inv.id]||"")}</td><td>{new Date(inv.expires_at).toLocaleDateString()}</td><td>{inv.status==="pending"&&<><button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void rotatePending(inv.id)}>Resend invitation</button> <button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</td></tr>)}</tbody></table></div>}
-         </div>
-        </form>
+       <div id="branding" hidden={activeSection!=="branding"} className="platformPanel"><PlatformBrandingEntitlements key={selectedCustomerId||"all"} initialOrganizationId={selectedCustomerId} organizations={overview.organizations}/><PlatformTenantBranding initialOrganizationId={selectedCustomerId} organizations={overview.organizations.filter(o=>o.status==="active")}/></div>
+       <section id="onboarding" hidden={activeSection!=="onboarding"} className="platformOnboardingWorkspace" aria-label="New customer onboarding">
+        <div className="platformOnboardingGrid">
+         <section className="platformPanel platformOnboarding">
+          <button type="button" className="platformOnboardingBack" onClick={()=>{setCustomerTab("all");navigate("directory")}}>← Back to customers</button>
+          <span className="platformEyebrow">NEW WORKSPACE</span>
+          <h2>Create customer workspace</h2>
+          <p>Set up the owner, organization and trial access. The system attempts to send an activation email when delivery is configured.</p>
+          <form onSubmit={e=>{e.preventDefault();void createAssisted()}} className="platformForm platformOnboardingForm">
+           <h3>Owner details</h3>
+           <div className="platformOnboardingFormGrid">
+            <label>Owner email<input required type="email" value={assisted.ownerEmail} onChange={e=>setAssisted(v=>({...v,ownerEmail:e.target.value}))} placeholder="owner@example.com"/></label>
+            <label>Owner name (optional)<input value={assisted.ownerName} onChange={e=>setAssisted(v=>({...v,ownerName:e.target.value}))} placeholder="Full name"/></label>
+           </div>
+           <h3>Organization details</h3>
+           <div className="platformOnboardingFormGrid">
+            <label>Organization name<input required value={assisted.name} onChange={e=>setAssisted(v=>({...v,name:e.target.value,slug:v.slug||e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}))} placeholder="e.g. ABC Learning Academy"/></label>
+            <label>Workspace URL name<input required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" title="Lowercase letters, numbers and hyphens only" value={assisted.slug} onChange={e=>setAssisted(v=>({...v,slug:e.target.value.toLowerCase()}))} placeholder="abc-learning-academy"/><small className="platformFieldHint">Used to identify the workspace; lowercase letters, numbers and hyphens.</small></label>
+           </div>
+           <label className="platformOnboardingType">Organization type<select value={assisted.kind} onChange={e=>setAssisted(v=>({...v,kind:e.target.value}))}><option value="academy">Academy</option><option value="institute">Institute</option><option value="tutor">Tutor</option></select></label>
+           <fieldset className="platformModuleFieldset"><legend>Enabled trial modules</legend>
+            <p className="platformModuleHint">Choose which applications the customer can try.</p>
+            <div className="platformModuleChoices">{(["academy","crm","tasks"] as const).map(m=><label key={m} className="platformModuleOption"><input type="checkbox" checked={assisted.modules.includes(m)} onChange={e=>setAssisted(v=>({...v,modules:e.target.checked?[...v.modules,m]:v.modules.filter(x=>x!==m)}))}/><span className="platformModuleCopy"><strong>{m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks"}</strong><small>{m==="academy"?"Students, trainers, classes and fees":m==="crm"?"Enquiries, admissions and follow-ups":"Daily tasks and team coordination"}</small></span></label>)}</div>
+           </fieldset>
+           <div className="platformOnboardingActionRow"><span>Workspace creation will attempt secure owner invitation delivery.</span>
+            <button className="platformCreateInvitation platformButtonPrimary" type="submit" disabled={assistedBusy||!assisted.ownerEmail||!assisted.name||!assisted.slug||assisted.modules.length===0}>{assistedBusy?"Creating…":"Create customer & send invitation"}</button>
+           </div>
+          </form>
+          {invitationUrl&&<div className="platformRecoveryArea"><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. Share this link privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation link"/><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(invitationUrl);setAssistedMessage("Secure invitation link copied. Share privately.");}catch{setAssistedMessage("Copy failed. Select and copy the link manually.");}}}>Copy secure link</button></div>}</div>}
+          {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
+          {latestDelivery&&<p role="status">Email result: <strong>{deliveryLabel(latestDelivery)}</strong></p>}
+          {latestDelivery&&<button type="button" onClick={()=>{setCustomerTab("invitations");navigate("directory")}}>View customer invitations</button>}
+         </section>
+         <aside className="platformOnboardingAside" aria-label="Workspace setup preview">
+          <section className="platformPanel platformOnboardingPreview">
+           <span className="platformEyebrow">LIVE SUMMARY</span><h2>Workspace preview</h2>
+           <dl>
+            <div><dt>Organization</dt><dd>{assisted.name.trim()||"Not entered"}</dd></div>
+            <div><dt>Owner</dt><dd>{assisted.ownerEmail.trim()||"Not entered"}</dd></div>
+            <div><dt>Workspace URL name</dt><dd>{assisted.slug||"Not entered"}</dd></div>
+            <div><dt>Type</dt><dd>{assisted.kind[0].toUpperCase()+assisted.kind.slice(1)}</dd></div>
+            <div><dt>Trial modules</dt><dd>{assisted.modules.length?assisted.modules.map(m=>m==="academy"?"Academy":m==="crm"?"Connect CRM":"My Tasks").join(", "):"None selected"}</dd></div>
+           </dl>
+           <small>Preview only. No workspace is created until you submit.</small>
+          </section>
+          <section className="platformPanel platformOnboardingSteps">
+           <h2>What happens next</h2>
+           <ol><li>Customer workspace is created</li><li>Owner invitation is generated</li><li>Delivery is attempted when configured</li><li>Owner activates their account</li></ol>
+           <p>Provider acceptance does not confirm inbox delivery. Track activation in Customers → Pending invitations.</p>
+          </section>
+         </aside>
+        </div>
+
        </section>
       </div>
       <section id="directory" hidden={activeSection!=="directory"} className="platformDirectory platformPanel">
-       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Organization directory</h2><p>Find and review registered organizations.</p></div><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
-       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Workspace slug</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><code>{o.slug}</code></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{o.status}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
+       <div className="platformDirectoryHead"><div><span className="platformEyebrow">CUSTOMER WORKSPACES</span><h2>Customers</h2><p>Manage workspaces, owner invitations and activation from one place.</p></div><button type="button" className="platformCustomerAddButton platformButtonPrimary" onClick={()=>navigate("onboarding")}>＋ Add customer</button></div>
+       <nav className="platformCustomerTabs" aria-label="Customer views">
+        <button type="button" aria-pressed={customerTab==="all"} className={"platformSegmentTab "+(customerTab==="all"?"isActive":"")} onClick={()=>setCustomerTab("all")}>All customers</button>
+        <button type="button" aria-pressed={customerTab==="invitations"} className={"platformSegmentTab "+(customerTab==="invitations"?"isActive":"")} onClick={()=>setCustomerTab("invitations")}>Pending invitations</button>
+       </nav>
+       {customerTab==="all"&&<>
+       <div className="platformCustomerSearch"><label htmlFor="org-search">Search organizations<input id="org-search" value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} placeholder="Search by name"/></label></div>
+       {overview.organizations.length===0?<p className="platformEmpty">No matching organizations found.</p>:<div className="platformTableScroll"><table><thead><tr><th>Organization</th><th>Status</th><th>Created</th><th>Manage</th></tr></thead><tbody>{overview.organizations.map(o=><tr key={o.id}><td><strong>{o.display_name}</strong></td><td><span className={"platformStatus "+(o.status==="active"?"platformStatusActive":"")}>{formatPlatformLabel(o.status)}</span></td><td>{new Date(o.created_at).toLocaleDateString()}</td><td><button type="button" onClick={()=>setSelectedCustomerId(current=>current===o.id?"":o.id)} aria-expanded={selectedCustomerId===o.id}>{selectedCustomerId===o.id?"Close":"View customer"}</button></td></tr>)}</tbody></table></div>}
        {selectedCustomerId&&overview.organizations.some(o=>o.id===selectedCustomerId)&&<section className="platformPanel" aria-label="Selected customer actions" style={{marginTop:20,padding:22}}>
         <span className="platformEyebrow">CUSTOMER WORKSPACE</span>
         <h3>{overview.organizations.find(o=>o.id===selectedCustomerId)?.display_name}</h3>
-        <p>Customer details and actions. Select an operation to work with this organization.</p>
+        <p>Manage this customer’s access, subscription or branding from one place. Your selection carries across the sections.</p>
         <dl style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12}}>
-         <div><dt>Organization ID</dt><dd style={{overflowWrap:"anywhere"}}>{selectedCustomerId}</dd></div>
-         <div><dt>Workspace slug</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.slug}</dd></div>
-         <div><dt>Status</dt><dd>{overview.organizations.find(o=>o.id===selectedCustomerId)?.status}</dd></div>
+         <div><dt>Status</dt><dd>{formatPlatformLabel(overview.organizations.find(o=>o.id===selectedCustomerId)?.status)}</dd></div>
         </dl>
         <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
-         <button type="button" onClick={()=>navigate("customers")}>Manage access and status</button>
+         <button type="button" onClick={()=>navigate("customers")}>Manage customer & access</button>
          <button type="button" onClick={()=>navigate("subscriptions")}>Manage subscription</button>
          <button type="button" onClick={()=>navigate("branding")}>Manage branding</button>
         </div>
        </section>}
        <div className="platformPagination"><span>{overview.total} matching organizations · Page {page}</span><div><button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Previous</button><button disabled={page*20>=overview.total} onClick={()=>setPage(p=>p+1)}>Next</button></div></div>
+       </>}
+       {customerTab==="invitations"&&<>
+        <section className="platformPanel platformInvitationsPanel" aria-label="Customer invitation management">
+         <div className="platformInvitationsHeading"><div><span className="platformEyebrow">CUSTOMER ACTIVATION</span><h2>Customer invitations</h2><p>Monitor activation and delivery; resend or revoke pending invitations when necessary.</p></div>
+          <button type="button" className="platformButtonSecondary" disabled={pendingLoading||!!invitationActionId} onClick={()=>void loadPendingCustomers()}>{pendingLoading?"Refreshing…":"Refresh invitations"}</button>
+         </div>
+         {pendingError&&<p role="alert">{pendingError}</p>}
+         {pendingLoading&&<p role="status">Loading invitations…</p>}
+         {!pendingLoading&&!pendingError&&(pendingCustomers.length===0?<p>No customer invitations found.</p>:
+          <div className="platformTableScroll"><table className="platformInvitationsTable"><thead><tr><th>Customer</th><th>Owner email</th><th>Invitation</th><th>Email delivery</th><th>Expires</th><th>Actions</th></tr></thead><tbody>
+           {pendingCustomers.map(inv=><tr key={inv.id}><td><strong>{inv.organization_name}</strong></td><td>{inv.owner_email}</td><td>{invitationLabel(inv.status,inv.expires_at)}</td><td>{deliveryLabel(deliveryStatus[inv.id]||"")}</td><td>{new Date(inv.expires_at).toLocaleDateString()}</td>
+            <td><div className="platformInvitationActions">{inv.status==="pending"&&<><button type="button" disabled={assistedBusy||!!invitationActionId} onClick={()=>void rotatePending(inv.id)}>{invitationActionId===inv.id?"Working…":"Resend"}</button><button type="button" className="platformRevokeButton" disabled={assistedBusy||!!invitationActionId} onClick={()=>void revokePending(inv.id)}>Revoke</button></>}</div></td>
+           </tr>)}
+          </tbody></table></div>)}
+        </section>
+        {assistedMessage&&<p role="status" className="platformInlineMessage">{assistedMessage}</p>}
+        {latestDelivery&&<p role="status">Email result: <strong>{deliveryLabel(latestDelivery)}</strong></p>}
+        {invitationUrl&&<div className="platformRecoveryArea"><button type="button" onClick={()=>setShowRecovery(x=>!x)}>{showRecovery?"Hide recovery link":"Advanced · Manual invitation recovery"}</button>{showRecovery&&<div role="status"><p>Use only when automatic delivery is unavailable. Share this link privately.</p><input value={invitationUrl} readOnly aria-label="Owner invitation recovery link"/><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(invitationUrl);setAssistedMessage("Secure invitation link copied. Share privately.");}catch{setAssistedMessage("Copy failed. Select and copy the link manually.");}}}>Copy secure link</button></div>}</div>}
+       </>}
       </section>
      </>}
     </div>

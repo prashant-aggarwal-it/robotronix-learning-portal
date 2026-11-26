@@ -1,8 +1,8 @@
 "use client";
+import {formatPlatformLabel} from "./formatPlatformLabel";
 import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 import PlatformEmailHealth from "./PlatformEmailHealth";
-import PlatformAdminSafety from "./PlatformAdminSafety";
 import PlatformServiceHealth from "./PlatformServiceHealth";
 import PlatformWorkerHealth from "./PlatformWorkerHealth";
 import PlatformCustomerHealth from "./PlatformCustomerHealth";
@@ -39,8 +39,8 @@ export default function PlatformSystemHealth(){
   const map=Object.fromEntries(results) as Record<string,any>;
   const date=(d:any)=>typeof d==="string"?d:undefined;
   setChecks({
-   services:map.services?{status:map.services.overall==="healthy"?"Healthy":map.services.overall||"Unknown",detail:"On-demand API and database probes; not historical uptime",checkedAt:date(map.services.observedAt),target:"services"}:blank.services,
-   jobs:map.jobs?{status:map.jobs.status||"Unknown",detail:map.jobs.scheduledExecutionVerified?"Scheduler execution verified":"Scheduled execution not verified",checkedAt:date(map.jobs.observedAt),target:"services"}:blank.jobs,
+   services:map.services?{status:formatPlatformLabel(map.services.overall),detail:"On-demand API and database probes; not historical uptime",checkedAt:date(map.services.observedAt),target:"services"}:blank.services,
+   jobs:map.jobs?{status:formatPlatformLabel(map.jobs.status),detail:map.jobs.scheduledExecutionVerified?"Scheduler execution verified":"Scheduled execution not verified",checkedAt:date(map.jobs.observedAt),target:"services"}:blank.jobs,
    email:map.email?{status:((map.email.jobs?.queued??0)+(map.email.jobs?.sending??0)+(map.email.jobs?.sent??0)+(map.email.jobs?.failed??0))===0?"No recent jobs":"Activity recorded",detail:"Queued: "+(map.email.jobs?.queued??0)+" · Failed: "+(map.email.jobs?.failed??0)+" · No activity does not mean healthy delivery",target:"email"}:blank.email,
    incidents:map.incidents?{status:"Records available",detail:"Open incidents: "+(map.incidents.incidents||[]).filter((i:any)=>i.status!=="resolved").length+" · On-demand detection only",target:"security"}:blank.incidents,
    database:map.recovery?{status:map.recovery.database?.reachable?"Reachable":"Unknown",detail:"Connectivity observed; not a recovery guarantee",checkedAt:date(map.recovery.observedAt),target:"recovery"}:blank.database,
@@ -51,10 +51,10 @@ export default function PlatformSystemHealth(){
  return <section className="platformSystemHealth" aria-label="System health and monitoring">
   <div className="platformSectionIntro"><div><span className="platformEyebrow">PLATFORM OPERATIONS</span><h2>System Health & Monitoring</h2><p>Operational checks and unresolved verification gaps. Unknown is not healthy.</p></div></div>
   <nav className="platformMonitorTabs" aria-label="Monitoring sections">
-   {tabs.map(t=><button type="button" key={t.id} className={panel===t.id?"platformMonitorTab active":"platformMonitorTab"} aria-current={panel===t.id?"page":undefined} onClick={()=>setPanel(t.id)}>{t.label}</button>)}
+   {tabs.map(t=><button type="button" key={t.id} className={panel===t.id?"platformMonitorTab platformSegmentTab active":"platformMonitorTab platformSegmentTab"} aria-current={panel===t.id?"page":undefined} onClick={()=>setPanel(t.id)}>{t.label}</button>)}
   </nav>
   {panel==="overview"&&<section className="platformPanel platformMonitorTile">
-   <div className="platformHealthHeading"><div><h3>Operational overview</h3><p>Latest observations, not continuous monitoring or proof of uptime.</p></div><button type="button" disabled={loading} onClick={()=>setRefresh(n=>n+1)}>{loading?"Checking…":"Refresh checks"}</button></div>
+   <div className="platformHealthHeading"><div><h3>Operational overview</h3><p>Latest observations, not continuous monitoring or proof of uptime.</p></div><button type="button" className="platformButtonSecondary" disabled={loading} onClick={()=>setRefresh(n=>n+1)}>{loading?"Checking…":"Refresh checks"}</button></div>
    <div className="platformHealthGrid">{Object.entries(checks).map(([key,c])=><button type="button" className="platformHealthSummaryItem" key={key} onClick={()=>setPanel(c.target)}>
     <span className="platformHealthLabel">{({services:"Services & APIs",jobs:"Background worker",email:"Email delivery",incidents:"Incidents",database:"Database",backups:"Backup & recovery"} as Record<string,string>)[key]}</span>
     <strong className={c.status.toLowerCase()==="healthy"||c.status.toLowerCase()==="reachable"?"platformHealthSuccess":"platformHealthUnknown"}>{c.status}</strong>
@@ -64,7 +64,7 @@ export default function PlatformSystemHealth(){
   </section>}
   {panel==="services"&&<div className="platformHealthStack"><PlatformServiceHealth/><PlatformWorkerHealth/></div>}
   {panel==="email"&&<div className="platformHealthStack"><PlatformEmailHealth/><PlatformCustomerHealth compact/></div>}
-  {panel==="security"&&<div className="platformHealthStack"><PlatformIncidents/><PlatformAdminSafety/></div>}
+  {panel==="security"&&<div className="platformHealthStack"><PlatformIncidents/><section className="platformPanel platformMonitorTile"><h3>Privileged administrator access</h3><p>Manage verified administrator accounts and review access changes in Platform Settings → Security &amp; Admins.</p><a href="/platform-admin#security">Open administrator security</a></section></div>}
   {panel==="recovery"&&<PlatformReliability/>}
  </section>;
 }

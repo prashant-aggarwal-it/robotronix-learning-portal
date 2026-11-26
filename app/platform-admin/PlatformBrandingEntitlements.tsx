@@ -1,4 +1,5 @@
 "use client";
+import {formatPlatformLabel} from "./formatPlatformLabel";
 import {useEffect,useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 type Org={id:string;display_name:string;status:string};
@@ -6,18 +7,19 @@ type Level="standard"|"custom"|"white_label";
 const descriptions:Record<Level,string>={
  standard:"Robotronix theme; saved customer branding is retained but not available to Owners",
  custom:"Customer logo, colors and tagline; Robotronix platform identity remains",
- white_label:"Premium custom branding; vendor-brand removal is scheduled for Phase 6D"
+ white_label:"Full white-label branding access; effective appearance depends on the customer theme configuration"
 };
 async function authHeader(){
  const client=getSupabaseBrowserClient();if(!client)throw Error("Sign in first");
  const {data:{session}}=await client.auth.getSession();if(!session)throw Error("Sign in first");
  return {Authorization:"Bearer "+session.access_token};
 }
-export default function PlatformBrandingEntitlements({organizations}:{organizations:Org[]}){
- const [orgId,setOrgId]=useState(""),[level,setLevel]=useState<Level|null>(null),[draft,setDraft]=useState<Level>("standard");
+export default function PlatformBrandingEntitlements({organizations,initialOrganizationId=""}:{organizations:Org[];initialOrganizationId?:string}){
+ const [orgId,setOrgId]=useState(initialOrganizationId),[level,setLevel]=useState<Level|null>(null),[draft,setDraft]=useState<Level>("standard");
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
  const [error,setError]=useState(""),[message,setMessage]=useState("");
  const selected=organizations.find(o=>o.id===orgId);
+ useEffect(()=>{setOrgId(initialOrganizationId)},[initialOrganizationId]);
  useEffect(()=>{
   let current=true;setLevel(null);setDraft("standard");setError("");setMessage("");
   if(!orgId)return;
@@ -56,11 +58,11 @@ export default function PlatformBrandingEntitlements({organizations}:{organizati
   <label>Customer organization
    <select value={orgId} disabled={busy} onChange={e=>setOrgId(e.target.value)} aria-label="Branding customer">
     <option value="">Choose a customer</option>
-    {organizations.map(o=><option key={o.id} value={o.id}>{o.display_name} ({o.status})</option>)}
+    {organizations.map(o=><option key={o.id} value={o.id}>{o.display_name} ({formatPlatformLabel(o.status)})</option>)}
    </select>
   </label>
   {selected&&<div className="platformBrandingTierCard">
-   <p role="status">{loading?"Loading branding entitlement…":level?"Current level: "+level.replace("_"," "):"Level unavailable"}</p>
+   <p role="status">{loading?"Loading branding entitlement…":level?"Current level: "+formatPlatformLabel(level):"Level unavailable"}</p>
    <label>Branding level
     <select aria-label="Branding level" disabled={busy||loading||!level||selected.status==="archived"} value={draft} onChange={e=>setDraft(e.target.value as Level)}>
      <option value="standard">Standard</option><option value="custom">Custom Branding</option><option value="white_label">Full White-label</option>
