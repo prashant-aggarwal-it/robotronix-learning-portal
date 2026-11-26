@@ -42,3 +42,23 @@ test("Avoid duplicated access administration and show section-specific subtitles
  assert.match(page,/Control privileged administrator access and review security activity/);
  assert.match(page,/PLATFORM SETTINGS/);
 });
+
+test("One Customers navigation entry houses both the directory and onboarding",()=>{
+ assert.equal((page.match(/<span>Customers<\\/span>/g)||[]).length,1);
+ assert.doesNotMatch(page,/<span>New customer<\\/span>/);
+ assert.match(page,/\["directory","onboarding","customers"\]\.includes\(activeSection\)/);
+ assert.match(page,/className="platformCustomerAddButton"/);
+ assert.match(page,/setCustomerTab\("invitations"\)/);
+ assert.match(page,/View customer invitations/);
+ assert.match(page,/← Back to customers/);
+});
+test("Pending invitations are managed in Customers, without duplicate tables",()=>{
+ assert.equal((page.match(/className="platformInvitationsTable"/g)||[]).length,1);
+ assert.match(page,/customerTab==="invitations"&&/);
+ assert.match(page,/activeSection==="directory"&&customerTab==="invitations"/);
+ assert.match(page,/void rotatePending\(inv.id\)/);
+ assert.match(page,/void revokePending\(inv.id\)/);
+ assert.match(page,/Advanced · Manual invitation recovery/);
+ assert.match(css,/\.platformCustomerTabs\{display:flex/);
+ assert.match(css,/\.platformCustomerAddButton/);
+});
