@@ -29,7 +29,7 @@ export default function PlatformCustomerHealth({compact=false}:{compact?:boolean
    {compact&&<p>Customer trials, activation and subscription status are managed from the main Control Centre Overview and Subscriptions screens.</p>}
    <h3>Integration coverage</h3>
    <p>These are monitoring-coverage states, not provider uptime checks.</p>
-   <div className="platformMonitorTiles">{Object.entries(data.integrationCoverage).map(([provider,coverage])=><div key={provider} style={{padding:14,border:"1px solid #e4ddeb",borderRadius:10}}><strong>{formatPlatformLabel(provider)}</strong><p>{coverage==="not_instrumented"?"Not monitored":coverage==="connection_records_only"?"Connection records only — provider not live-tested":coverage}</p></div>)}</div>
+   <div className="platformMonitorTiles">{Object.entries(data.integrationCoverage).map(([provider,coverage])=><div key={provider} style={{padding:14,border:"1px solid #e4ddeb",borderRadius:10}}><strong>{formatPlatformLabel(provider)}</strong><p>{coverage==="not_instrumented"?"Not monitored":coverage==="connection_records_only"?"Connection records only — provider not live-tested":formatPlatformLabel(coverage)}</p></div>)}</div>
    <p>Manage individual customers in the Directory and Subscriptions screens. Live Zoom, Razorpay and OAuth token refresh testing are not included in Phase 9D.</p>
   </>}
  </section>;
