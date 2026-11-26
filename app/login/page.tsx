@@ -33,6 +33,7 @@ function LoginContent(){
  const isSuite=Boolean(deployment?.mode==="combined"&&!deployment.legacyDefault);
  const canRegister=Boolean(deployment&&!deployment.legacyDefault&&!isSuite&&(deployment.products.includes("tasks")||deployment.products.includes("crm")));
  const[email,setEmail]=useState(""),[password,setPassword]=useState(""),[code,setCode]=useState("");
+ const [showPassword,setShowPassword]=useState(false);
  const[codeSent,setCodeSent]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(false);
  async function finish(){
   try{
@@ -144,7 +145,15 @@ return <main className={isSuite?"loginSuite":"authPage"} style={academyName?them
   {error&&<div role="alert" className="errorBanner">{error}</div>}
   <form className="formStack" onSubmit={passwordSignIn}>
    <label>Email<input className="input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setCodeSent(false);setCode("");}} disabled={loading} autoComplete="email" required/></label>
-   <label>Password<input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/></label>
+   <div style={{display:"grid",gap:6}}>
+    <label htmlFor="login-password">Password</label>
+    <div style={{position:"relative",width:"100%"}}>
+     <input id="login-password" className="input" style={{width:"100%",paddingRight:46}} type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} autoComplete="current-password" required/>
+     <button type="button" disabled={loading} aria-label={showPassword?"Hide password":"Show password"} aria-pressed={showPassword} title={showPassword?"Hide password":"Show password"} onClick={()=>setShowPassword(v=>!v)} style={{position:"absolute",right:9,top:"50%",transform:"translateY(-50%)",display:"grid",placeItems:"center",width:34,height:34,padding:0,background:"transparent",border:0,borderRadius:8,color:"#645a80",cursor:loading?"not-allowed":"pointer",opacity:loading?.5:1}}>
+      {showPassword?<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.58 10.59a2 2 0 0 0 2.83 2.82"/><path d="M9.88 5.09A10.9 10.9 0 0 1 12 4.9c4.8 0 8.3 3.6 9.5 7.1a11.9 11.9 0 0 1-4.1 5.4"/><path d="M6.7 6.7A12.4 12.4 0 0 0 2.5 12c1.2 3.5 4.7 7.1 9.5 7.1 1.5 0 2.9-.4 4.1-1"/><path d="m3 3 18 18"/></svg>:<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 12S5.9 5 12 5s9.5 7 9.5 7-3.4 7-9.5 7-9.5-7-9.5-7Z"/><circle cx="12" cy="12" r="3"/></svg>}
+     </button>
+    </div>
+   </div>
    <div style={{display:"flex",justifyContent:"flex-end",marginTop:-4}}>
     <button type="button" disabled={loading} onClick={()=>void forgotPassword()} style={{background:"transparent",border:0,boxShadow:"none",padding:"4px 0",fontSize:13,fontWeight:650,color:"var(--brand-primary, #6d3cc9)",textDecoration:"underline",textUnderlineOffset:3,cursor:loading?"not-allowed":"pointer",opacity:loading?.55:1}}>Forgot password?</button>
    </div>
