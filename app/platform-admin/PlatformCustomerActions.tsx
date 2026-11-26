@@ -1,4 +1,5 @@
 "use client";
+import {formatPlatformLabel} from "./formatPlatformLabel";
 import {useState} from "react";
 import {getSupabaseBrowserClient} from "@/lib/supabase/browser";
 type Org={id:string;display_name:string;status:string};
@@ -43,7 +44,7 @@ export default function PlatformCustomerActions({organizations,onChanged,initial
   <h2>Customer management</h2><p>Manage workspace status and owner invitations. Changes are audited.</p>
   <label>Organization <select value={organizationId} onChange={e=>{setOrganizationId(e.target.value);setInvitations([])}}><option value="">Select organization</option>{organizations.map(o=><option key={o.id} value={o.id}>{o.display_name}</option>)}</select></label>
   {selected&&<div style={{display:"grid",gap:12,marginTop:18,maxWidth:620}}>
-   <div><strong>Status: {selected.status}</strong>{" "}<button disabled={busy} onClick={()=>void call("set_organization_status",{value:selected.status==="active"?"suspended":"active"})}>{selected.status==="active"?"Suspend":"Activate"}</button></div>
+   <div><strong>Status: {formatPlatformLabel(selected.status)}</strong>{" "}<button disabled={busy} onClick={()=>void call("set_organization_status",{value:selected.status==="active"?"suspended":"active"})}>{selected.status==="active"?"Suspend":"Activate"}</button></div>
    <label>Rename organization <input value={name} maxLength={160} onChange={e=>setName(e.target.value)} placeholder={selected.display_name}/></label>
    <button disabled={busy||name.trim().length<2} onClick={()=>void call("rename_organization",{value:name.trim()})}>Save name</button>
    <label>Invite owner by verified email <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="owner@example.com"/></label>
